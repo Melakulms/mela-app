@@ -16,7 +16,7 @@ const MODULES: { key: string; label: string; blurb: string; view?: string; icon:
   { key: 'practice', label: 'Practice', blurb: 'Drill curriculum topics', view: 'practice', icon: BookOpen, cls: 'mc-practice' },
   { key: 'arena', label: 'Arena', blurb: 'Join the arena', view: 'arena', icon: Swords, cls: 'mc-arena' },
   { key: 'study_materials', label: 'Study Materials', blurb: 'Short notes & summaries', view: 'materials', icon: FileText, cls: 'mc-materials' },
-  { key: 'scholarships', label: 'EthioScholar Connect', blurb: 'Global scholarship discovery', icon: Globe, cls: 'mc-scholarships' },
+  { key: 'scholarships', label: 'EthioScholar Connect', blurb: 'Global scholarship discovery', view: 'scholarships', icon: Globe, cls: 'mc-scholarships' },
   { key: 'mentorship', label: 'Mentorship', blurb: '1:1 mentorship & interview practice', view: 'mentorship', icon: Video, cls: 'mc-mentorship' },
   { key: 'earn_work', label: 'Earn & Work', blurb: 'Freelance & escrow tasks', icon: DollarSign, cls: 'mc-earn_work' },
 ]

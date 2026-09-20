@@ -3,6 +3,7 @@ import {
   fetchTopics, startSession, fetchSessionQuestions, submitResponse, completeSession,
   type PracticeTopic, type PracticeQuestion, type SubmitResult, type SessionSummary,
 } from '../lib/practice'
+import { fetchDashboard, type PracticeRecommendation } from '../lib/dashboard'
 
 type View =
   | { stage: 'topics' }
@@ -12,11 +13,13 @@ type View =
 
 export default function Practice({ onBack }: { onBack: () => void }) {
   const [topics, setTopics] = useState<PracticeTopic[] | null>(null)
+  const [recommendations, setRecommendations] = useState<PracticeRecommendation[]>([])
   const [error, setError] = useState('')
   const [view, setView] = useState<View>({ stage: 'topics' })
 
   useEffect(() => {
     fetchTopics().then(setTopics).catch((e) => setError(e.message ?? 'Could not load topics.'))
+    fetchDashboard().then((d) => setRecommendations(d.practice.recommendations)).catch(() => {})
   }, [])
 
   const beginTopic = async (topicId: string) => {
@@ -73,6 +76,25 @@ export default function Practice({ onBack }: { onBack: () => void }) {
           <button className="btn btn-secondary" onClick={onBack}>Back to dashboard</button>
         </div>
         {error && <div className="banner banner-error">{error}</div>}
+
+        {recommendations.length > 0 && (
+          <>
+            <div className="section-heading"><h2>Recommended for you</h2></div>
+            <div className="list-panel">
+              {recommendations.slice(0, 3).map((r) => (
+                <div className="list-row" key={r.topic_id}>
+                  <div>
+                    <div className="list-row-title">{r.topic}</div>
+                    <div className="list-row-meta">{r.subject}</div>
+                  </div>
+                  <button className="btn btn-primary" onClick={() => beginTopic(r.topic_id)}>Start</button>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        <div className="section-heading"><h2>All topics</h2></div>
         {!topics && !error && <p className="muted">Loading topics…</p>}
         {topics && topics.length === 0 && <div className="empty-panel">No practice topics are published yet.</div>}
         {topics && topics.length > 0 && (

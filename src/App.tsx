@@ -18,9 +18,10 @@ import EmployerPortal from './pages/EmployerPortal'
 import AiCareerCoach from './pages/AiCareerCoach'
 import Arena from './pages/Arena'
 import Profile from './pages/Profile'
+import EthioScholarConnect from './pages/EthioScholarConnect'
 
 type AuthView = 'login' | 'register'
-type StudentView = 'dashboard' | 'practice' | 'opportunities' | 'materials' | 'academy' | 'mentorship' | 'passport' | 'coach' | 'arena' | 'profile'
+type StudentView = 'dashboard' | 'practice' | 'opportunities' | 'materials' | 'academy' | 'mentorship' | 'passport' | 'coach' | 'arena' | 'profile' | 'scholarships'
 
 const BOTTOM_NAV: { view: StudentView; label: string }[] = [
   { view: 'dashboard', label: 'Dashboard' },
@@ -112,6 +113,7 @@ export default function App() {
           {studentView === 'coach' && <AiCareerCoach onBack={() => setStudentView('dashboard')} />}
           {studentView === 'arena' && <Arena onBack={() => setStudentView('dashboard')} />}
           {studentView === 'profile' && <Profile profile={profile} onProfileUpdated={reloadProfile} />}
+          {studentView === 'scholarships' && <EthioScholarConnect onBack={() => setStudentView('dashboard')} />}
           {studentView === 'dashboard' && <StudentDashboard onNavigate={(view) => setStudentView(view as StudentView)} />}
 
           <nav className="bottom-nav">

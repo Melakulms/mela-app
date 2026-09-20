@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { logoutUser } from '../lib/auth'
 
-type Props = { role: 'parent' | 'teacher' | 'mentor'; fullName: string | null }
+type Props = { role: 'parent' | 'teacher' | 'mentor'; fullName?: string | null }
 
 type Summary = {
   title: string

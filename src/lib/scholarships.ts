@@ -20,7 +20,7 @@ export async function fetchOpenScholarships(): Promise<Scholarship[]> {
     .eq('status', 'open')
     .eq('moderation_status', 'approved')
     .eq('verified_active', true)
-    .eq('opportunity_type', 'scholarship')
+    .eq('opportunity_type', 'scholarships')
     .order('deadline', { ascending: true, nullsFirst: false })
     .limit(100)
   if (error) throw error

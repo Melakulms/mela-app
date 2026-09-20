@@ -172,7 +172,7 @@ function RegistrationForm({ onSubmitted, error: parentError }: { onSubmitted: ()
 
 function CreateOpportunityForm({ employerId, onCreated, onCancel }: { employerId: string; onCreated: () => void; onCancel: () => void }) {
   const [title, setTitle] = useState('')
-  const [opportunityType, setOpportunityType] = useState('job')
+  const [opportunityType, setOpportunityType] = useState('jobs')
   const [location, setLocation] = useState('')
   const [deadline, setDeadline] = useState('')
   const [summary, setSummary] = useState('')
@@ -202,10 +202,11 @@ function CreateOpportunityForm({ employerId, onCreated, onCancel }: { employerId
         <div className="field">
           <label>Type</label>
           <select value={opportunityType} onChange={(e) => setOpportunityType(e.target.value)}>
-            <option value="job">Job</option>
-            <option value="internship">Internship</option>
-            <option value="training">Training</option>
-            <option value="volunteer">Volunteer</option>
+            <option value="jobs">Job</option>
+            <option value="internships">Internship</option>
+            <option value="scholarships">Scholarship</option>
+            <option value="challenges">Challenge</option>
+            <option value="freelance">Freelance / gig</option>
           </select>
         </div>
         <div className="field"><label>Location</label><input value={location} onChange={(e) => setLocation(e.target.value)} /></div>

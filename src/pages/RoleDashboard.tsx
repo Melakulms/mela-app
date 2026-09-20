@@ -57,7 +57,7 @@ async function loadRoleSummary(role: Props['role']): Promise<Summary> {
 
   const [{ data: mentor, error: mentorError }, { data: requests, error: requestError }] = await Promise.all([
     supabase.from('mentor_profiles').select('headline, organization, years_experience, verified, active').eq('user_id', id).maybeSingle(),
-    supabase.from('mentorship_requests').select('id, topic, status, created_at').eq('mentor_id', id).order('created_at', { ascending: false }),
+    supabase.from('mentorship_requests').select('id, mentee_id, topic, status, created_at').eq('mentor_id', id).order('created_at', { ascending: false }),
   ])
   if (mentorError) throw mentorError
   if (requestError) throw requestError
@@ -72,6 +72,14 @@ async function loadRoleSummary(role: Props['role']): Promise<Summary> {
     ],
     details: rows.slice(0, 5).map((r) => `${r.topic ?? 'Mentorship request'} · ${r.status}`),
   }
+}
+
+function MentorActions(){
+ const [rows,setRows]=useState<any[]>([]);const [error,setError]=useState('');
+ const load=()=>supabase.auth.getUser().then(({data})=>data.user&&supabase.from('mentorship_requests').select('id,mentee_id,topic,status,created_at').eq('mentor_id',data.user.id).order('created_at',{ascending:false}).then(({data,error})=>{if(error)setError(error.message);else setRows(data??[])}));
+ useEffect(()=>{load()},[]);
+ const decide=(id:string,decision:'accept'|'decline')=>supabase.rpc('respond_mentorship_request',{p_request_id:id,p_decision:decision}).then(({error})=>{if(error)setError(error.message);else load()});
+ return <section><div className="section-heading"><h2>Mentorship requests</h2></div>{error&&<div className="banner banner-error">{error}</div>}{rows.length===0?<div className="empty-panel">No mentorship requests.</div>:<div className="list-panel">{rows.map(r=><div className="list-row" key={r.id}><div><b>{r.topic??'Request'}</b><div className="list-row-meta">{r.status}</div></div>{r.status==='pending'&&<span><button className="btn btn-primary" onClick={()=>decide(r.id,'accept')}>Accept</button> <button className="btn btn-secondary" onClick={()=>decide(r.id,'decline')}>Reject</button></span>}</div>)}</div>}</section>
 }
 
 export default function RoleDashboard({ role, fullName }: Props) {
@@ -98,6 +106,7 @@ export default function RoleDashboard({ role, fullName }: Props) {
       {summary.details.length === 0
         ? <div className="empty-panel">No activity yet. Complete your profile or start using your MELA tools.</div>
         : <div className="list-panel">{summary.details.map((d, i) => <div className="list-row" key={i}><span className="list-row-title">{d}</span></div>)}</div>}
+      {role === 'mentor' && <MentorActions />}
       <button className="btn btn-secondary" onClick={() => logoutUser()}>Log out</button>
     </div>
   )

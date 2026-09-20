@@ -115,3 +115,8 @@ export async function fetchApplicants(opportunityId: string): Promise<Applicant[
     email: byId.get(a.user_id)?.email ?? null,
   }))
 }
+
+export async function updateApplicationStatus(applicationId: string, status: 'reviewing'|'shortlisted'|'interview'|'offered'|'hired'|'rejected') {
+  const { error } = await supabase.from('applications').update({ status, reviewed_at: new Date().toISOString() }).eq('id', applicationId)
+  if (error) throw error
+}

@@ -72,7 +72,7 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: st
       </div>
       <div className="module-grid">
         {MODULES.map((m) => {
-          const enabled = m.key === 'study_materials' || m.key === 'student_services' ? true : feature_flags[m.key]
+          const enabled = !!m.view || m.key === 'student_services' || feature_flags[m.key]
           const isBuilt = !!m.view
           return (
             <div

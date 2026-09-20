@@ -104,11 +104,17 @@ export default function App() {
           <AiCareerCoach onBack={() => setStudentView('dashboard')} />
         ) : studentView === 'arena' ? (
           <Arena onBack={() => setStudentView('dashboard')} />
+        ) : studentView === 'services' ? (
+          <StudentServices onBack={() => setStudentView('dashboard')} />
         ) : (
           <StudentDashboard onNavigate={(view) => setStudentView(view as StudentView)} />
         )
       ) : profile.role === 'company' || profile.role === 'employer' ? (
         <EmployerPortal role={profile.role} />
+      ) : profile.role === 'parent' || profile.role === 'teacher' || profile.role === 'mentor' ? (
+        <RoleDashboard role={profile.role} />
+      ) : profile.role === 'admin' ? (
+        <div className="dash-main"><h1>Central Admin</h1><p className="muted">Administrative access is separated from the learner application. Use the separate MELA Central Dashboard.</p></div>
       ) : (
         <div className="dash-main">
           <h1>Welcome, {profile.full_name}</h1>

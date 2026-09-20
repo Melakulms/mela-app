@@ -113,6 +113,7 @@ export default function RoleDashboard({ role, fullName }: Props) {
         ? <div className="empty-panel">No activity yet. Complete your profile or start using your MELA tools.</div>
         : <div className="list-panel">{summary.details.map((d, i) => <div className="list-row" key={i}><span className="list-row-title">{d}</span></div>)}</div>}
       {role === 'mentor' && <MentorActions />}
+      {role === 'parent' && <ParentActions />}
       <button className="btn btn-secondary" onClick={() => logoutUser()}>Log out</button>
     </div>
   )

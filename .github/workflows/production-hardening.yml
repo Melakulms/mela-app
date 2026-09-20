@@ -19,4 +19,4 @@ jobs:
       - run: npm run build
         env:
           VITE_SUPABASE_URL: https://duizgtmbptmlbyipreqg.supabase.co
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_flQNx6AE3_dbPDHfYGNwWQ_7cMSsAng

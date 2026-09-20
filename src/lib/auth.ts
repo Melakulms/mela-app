@@ -37,6 +37,8 @@ export interface MelaProfile {
   account_status: string
   email_verified: boolean
   profile_completion: number | null
+  coin_balance: number
+  preferred_language: string
 }
 
 export async function fetchOwnProfile(): Promise<MelaProfile | null> {
@@ -44,9 +46,16 @@ export async function fetchOwnProfile(): Promise<MelaProfile | null> {
   if (!auth.user) return null
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, full_name, email, role, account_status, email_verified, profile_completion')
+    .select('id, full_name, email, role, account_status, email_verified, profile_completion, coin_balance, preferred_language')
     .eq('id', auth.user.id)
     .maybeSingle()
   if (error) throw error
   return data as MelaProfile | null
+}
+
+export async function updatePreferredLanguage(languageCode: string): Promise<void> {
+  const { data: auth } = await supabase.auth.getUser()
+  if (!auth.user) throw new Error('Not logged in.')
+  const { error } = await supabase.from('profiles').update({ preferred_language: languageCode }).eq('id', auth.user.id)
+  if (error) throw error
 }

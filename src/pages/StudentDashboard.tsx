@@ -14,6 +14,7 @@ const MODULES: { key: string; label: string; blurb: string; view?: string }[] = 
   { key: 'earn_work', label: 'Earn & Work', blurb: 'Freelance tasks and micro-work.' },
   { key: 'challenges', label: 'Sponsored Challenges', blurb: 'Competitions run by employers.' },
   { key: 'study_materials', label: 'Study Materials', blurb: 'Notes, PDFs, and videos by subject.', view: 'materials' },
+  { key: 'student_services', label: 'Scholarships, Wallet & More', blurb: 'Scholarships, notifications, earnings, applications, documents, challenges, and progress.', view: 'services' },
 ]
 
 export default function StudentDashboard({ onNavigate }: { onNavigate: (view: string) => void }) {

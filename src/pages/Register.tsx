@@ -5,6 +5,7 @@ const ROLES: { value: MelaRole; label: string }[] = [
   { value: 'student', label: 'Student' },
   { value: 'parent', label: 'Parent / Guardian' },
   { value: 'teacher', label: 'Teacher' },
+  { value: 'mentor', label: 'Mentor' },
   { value: 'company', label: 'Employer' },
 ]
 

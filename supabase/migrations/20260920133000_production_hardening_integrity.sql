@@ -120,3 +120,16 @@ exception when unique_violation then
   raise exception 'You have already submitted a review for this completed contract';
 end;
 $$;
+
+-- Financial provider callbacks are backend/service operations, not end-user RPCs.
+-- They have no caller authentication/authorization boundary in their current implementation,
+-- so authenticated clients must not be able to invoke them directly.
+revoke execute on function public.record_escrow_funding(uuid,bigint,text,text) from public, anon, authenticated;
+revoke execute on function public.record_milestone_escrow_funding(uuid,bigint,text,text) from public, anon, authenticated;
+revoke execute on function public.record_milestone_payout(uuid,text,text) from public, anon, authenticated;
+grant execute on function public.record_escrow_funding(uuid,bigint,text,text) to service_role;
+grant execute on function public.record_milestone_escrow_funding(uuid,bigint,text,text) to service_role;
+grant execute on function public.record_milestone_payout(uuid,text,text) to service_role;
+
+-- Learning material content is authenticated-only; anonymous callers receive no content.
+revoke execute on function public.get_mela_learning_material(text) from anon;

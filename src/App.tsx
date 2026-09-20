@@ -15,9 +15,11 @@ import CareerPassport from './pages/CareerPassport'
 import EmployerPortal from './pages/EmployerPortal'
 import AiCareerCoach from './pages/AiCareerCoach'
 import Arena from './pages/Arena'
+import StudentServices from './pages/StudentServices'
+import RoleDashboard from './pages/RoleDashboard'
 
 type AuthView = 'login' | 'register'
-type StudentView = 'dashboard' | 'practice' | 'opportunities' | 'materials' | 'academy' | 'mentorship' | 'passport' | 'coach' | 'arena'
+type StudentView = 'dashboard' | 'practice' | 'opportunities' | 'materials' | 'academy' | 'mentorship' | 'passport' | 'coach' | 'arena' | 'services'
 
 export default function App() {
   const [loading, setLoading] = useState(true)

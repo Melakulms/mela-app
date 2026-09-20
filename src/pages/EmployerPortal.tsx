@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import {
   fetchMyRegistrationRequest, submitRegistration, fetchMyEmployer, fetchMyOpportunities,
   createOpportunity, fetchApplicants,
-  type MyEmployerRequest, type MyEmployer, type MyOpportunity, type Applicant,
+  type MyEmployerRequest, type MyEmployer, type MyOpportunity, type Applicant, updateApplicationStatus,
 } from '../lib/employer'
 
 export default function EmployerPortal({ role }: { role: string }) {
@@ -119,7 +119,7 @@ export default function EmployerPortal({ role }: { role: string }) {
                     <div className="list-row-title">{a.full_name ?? 'Applicant'}</div>
                     <div className="list-row-meta">{a.email}</div>
                   </div>
-                  <span className="pill">{a.status}</span>
+                  <span className="pill">{a.status}</span><select value={a.status} disabled={['hired','rejected','withdrawn'].includes(a.status)} aria-label={`Application status for ${a.full_name ?? 'applicant'}`} onChange={e=>updateApplicationStatus(a.id,e.target.value as any).then(()=>openApplicants(viewingApplicants!)).catch((e:any)=>setError(e.message))}><option value="submitted">submitted</option><option value="reviewing">reviewing</option><option value="shortlisted">shortlisted</option><option value="interview">interview</option><option value="offered">offered</option><option value="hired">hired</option><option value="rejected">rejected</option></select>
                 </div>
               ))}
             </div>

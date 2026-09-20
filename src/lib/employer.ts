@@ -115,3 +115,26 @@ export async function fetchApplicants(opportunityId: string): Promise<Applicant[
     email: byId.get(a.user_id)?.email ?? null,
   }))
 }
+
+export async function updateApplicationStatus(applicationId: string, status: 'reviewing'|'shortlisted'|'interview'|'offered'|'hired'|'rejected') {
+  const { data: auth } = await supabase.auth.getUser()
+  if (!auth.user) throw new Error('Your session has expired. Please sign in again.')
+
+  const { data: current, error: readError } = await supabase
+    .from('applications')
+    .select('id, status')
+    .eq('id', applicationId)
+    .single()
+  if (readError) throw readError
+
+  const terminal = new Set(['hired', 'rejected', 'withdrawn'])
+  if (terminal.has(current.status) && current.status !== status) {
+    throw new Error(`This application is already ${current.status} and cannot be moved to ${status}.`)
+  }
+
+  const { error } = await supabase
+    .from('applications')
+    .update({ status, reviewed_at: new Date().toISOString(), reviewer_id: auth.user.id })
+    .eq('id', applicationId)
+  if (error) throw error
+}

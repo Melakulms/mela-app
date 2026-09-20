@@ -15,9 +15,11 @@ import CareerPassport from './pages/CareerPassport'
 import EmployerPortal from './pages/EmployerPortal'
 import AiCareerCoach from './pages/AiCareerCoach'
 import Arena from './pages/Arena'
+import StudentServices from './pages/StudentServices'
+import RoleDashboard from './pages/RoleDashboard'
 
 type AuthView = 'login' | 'register'
-type StudentView = 'dashboard' | 'practice' | 'opportunities' | 'materials' | 'academy' | 'mentorship' | 'passport' | 'coach' | 'arena'
+type StudentView = 'dashboard' | 'practice' | 'opportunities' | 'materials' | 'academy' | 'mentorship' | 'passport' | 'coach' | 'arena' | 'services'
 
 export default function App() {
   const [loading, setLoading] = useState(true)
@@ -102,11 +104,17 @@ export default function App() {
           <AiCareerCoach onBack={() => setStudentView('dashboard')} />
         ) : studentView === 'arena' ? (
           <Arena onBack={() => setStudentView('dashboard')} />
+        ) : studentView === 'services' ? (
+          <StudentServices onBack={() => setStudentView('dashboard')} />
         ) : (
           <StudentDashboard onNavigate={(view) => setStudentView(view as StudentView)} />
         )
       ) : profile.role === 'company' || profile.role === 'employer' ? (
         <EmployerPortal role={profile.role} />
+      ) : profile.role === 'parent' || profile.role === 'teacher' || profile.role === 'mentor' ? (
+        <RoleDashboard role={profile.role} fullName={profile.full_name} />
+      ) : profile.role === 'admin' ? (
+        <div className="dash-main"><h1>Central Admin</h1><p className="muted">Administrative access is separated from the learner application. Use the separate MELA Central Dashboard.</p></div>
       ) : (
         <div className="dash-main">
           <h1>Welcome, {profile.full_name}</h1>

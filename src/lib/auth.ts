@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
 
-export type MelaRole = 'student' | 'parent' | 'teacher' | 'company'
+export type MelaRole = 'student' | 'parent' | 'teacher' | 'company' | 'mentor'
 
 export interface RegisterInput {
   email: string

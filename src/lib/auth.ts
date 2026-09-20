@@ -10,24 +10,11 @@ export interface RegisterInput {
 }
 
 export async function registerUser({ email, password, fullName, role }: RegisterInput) {
-  return supabase.auth.signUp({
-    email,
-    password,
-    options: { data: { full_name: fullName, role, preferred_language: 'en' } },
-  })
+  return supabase.auth.signUp({ email, password, options: { data: { full_name: fullName, role, preferred_language: 'en' } } })
 }
-
-export async function loginUser(email: string, password: string) {
-  return supabase.auth.signInWithPassword({ email, password })
-}
-
-export async function logoutUser() {
-  return supabase.auth.signOut()
-}
-
-export async function requestPasswordReset(email: string) {
-  return supabase.auth.resetPasswordForEmail(email)
-}
+export async function loginUser(email: string, password: string) { return supabase.auth.signInWithPassword({ email, password }) }
+export async function logoutUser() { return supabase.auth.signOut() }
+export async function requestPasswordReset(email: string) { return supabase.auth.resetPasswordForEmail(email) }
 
 export interface MelaProfile {
   id: string
@@ -37,16 +24,23 @@ export interface MelaProfile {
   account_status: string
   email_verified: boolean
   profile_completion: number | null
+  coin_balance: number
+  preferred_language: string
 }
 
 export async function fetchOwnProfile(): Promise<MelaProfile | null> {
   const { data: auth } = await supabase.auth.getUser()
   if (!auth.user) return null
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, full_name, email, role, account_status, email_verified, profile_completion')
-    .eq('id', auth.user.id)
-    .maybeSingle()
+  const { data, error } = await supabase.from('profiles')
+    .select('id, full_name, email, role, account_status, email_verified, profile_completion, coin_balance, preferred_language')
+    .eq('id', auth.user.id).maybeSingle()
   if (error) throw error
   return data as MelaProfile | null
+}
+
+export async function updatePreferredLanguage(languageCode: string): Promise<void> {
+  const { data: auth } = await supabase.auth.getUser()
+  if (!auth.user) throw new Error('Not logged in.')
+  const { error } = await supabase.from('profiles').update({ preferred_language: languageCode }).eq('id', auth.user.id)
+  if (error) throw error
 }

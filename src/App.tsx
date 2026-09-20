@@ -112,7 +112,7 @@ export default function App() {
       ) : profile.role === 'company' || profile.role === 'employer' ? (
         <EmployerPortal role={profile.role} />
       ) : profile.role === 'parent' || profile.role === 'teacher' || profile.role === 'mentor' ? (
-        <RoleDashboard role={profile.role} />
+        <RoleDashboard role={profile.role} fullName={profile.full_name} />
       ) : profile.role === 'admin' ? (
         <div className="dash-main"><h1>Central Admin</h1><p className="muted">Administrative access is separated from the learner application. Use the separate MELA Central Dashboard.</p></div>
       ) : (

@@ -38,7 +38,7 @@ export default function Profile({ profile, onProfileUpdated }: { profile: MelaPr
 
       <div className="section-heading"><h2>Language</h2></div>
       <div className="field">
-        <select value={profile.preferred_language} onChange={(e) => changeLanguage(e.target.value)} disabled={saving}>
+        <select value={languages.find((l) => l.language_name === profile.preferred_language)?.language_code ?? 'en'} onChange={(e) => changeLanguage(e.target.value)} disabled={saving}>
           {languages.map((l) => (
             <option key={l.language_code} value={l.language_code}>{l.native_name}</option>
           ))}

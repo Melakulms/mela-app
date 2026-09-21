@@ -42,16 +42,21 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
         <div className="module-grid">
           {courses.map((c) => {
             const enrollment = enrollments.get(c.id)
+            const isFree = (c.price_cents ?? 0) === 0
             return (
-              <div className="module-card" key={c.id}>
-                <h3>{c.title}</h3>
-                <p>{c.description ?? c.category}</p>
+              <div className="module-card" key={c.id} style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}>
+                <h3 style={{ color: 'var(--ink)' }}>{c.title}</h3>
+                <p style={{ color: 'var(--muted)' }}>{c.description ?? c.category}</p>
                 {enrollment ? (
                   <span className="pill">{enrollment.completed_at ? 'Completed' : `${Math.round(enrollment.progress_pct ?? 0)}% complete`}</span>
-                ) : (
+                ) : isFree ? (
                   <button className="btn btn-primary" onClick={() => enroll(c.id)} disabled={busy === c.id}>
-                    {busy === c.id ? 'Enrolling…' : 'Enroll'}
+                    {busy === c.id ? 'Enrolling…' : 'Enroll free'}
                   </button>
+                ) : (
+                  <span className="pill">
+                    {((c.price_cents ?? 0) / 100).toFixed(0)} ETB · purchasing isn't available yet
+                  </span>
                 )}
               </div>
             )

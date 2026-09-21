@@ -39,6 +39,7 @@ export interface MelaProfile {
   profile_completion: number | null
   coin_balance: number
   preferred_language: string
+  education_stage_key: string | null
 }
 
 export async function fetchOwnProfile(): Promise<MelaProfile | null> {
@@ -46,7 +47,7 @@ export async function fetchOwnProfile(): Promise<MelaProfile | null> {
   if (!auth.user) return null
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, full_name, email, role, account_status, email_verified, profile_completion, coin_balance, preferred_language')
+    .select('id, full_name, email, role, account_status, email_verified, profile_completion, coin_balance, preferred_language, education_stage_key')
     .eq('id', auth.user.id)
     .maybeSingle()
   if (error) throw error

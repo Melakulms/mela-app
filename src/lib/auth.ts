@@ -1,19 +1,19 @@
 import { supabase } from './supabase'
 
-export type MelaRole = 'student' | 'parent' | 'teacher' | 'company'
+export type MelaRole = 'student' | 'parent' | 'teacher' | 'employer' | 'company' | 'mentor' | 'admin'
 
 export interface RegisterInput {
   email: string
   password: string
   fullName: string
-  role: MelaRole
+  role: Extract<MelaRole, 'student' | 'parent' | 'teacher' | 'employer' | 'company'>
 }
 
 export async function registerUser({ email, password, fullName, role }: RegisterInput) {
   return supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName, role, preferred_language: 'en' } },
+    options: { data: { full_name: fullName, role, preferred_language: 'English' } },
   })
 }
 
@@ -57,6 +57,21 @@ export async function fetchOwnProfile(): Promise<MelaProfile | null> {
 export async function updatePreferredLanguage(languageCode: string): Promise<void> {
   const { data: auth } = await supabase.auth.getUser()
   if (!auth.user) throw new Error('Not logged in.')
-  const { error } = await supabase.from('profiles').update({ preferred_language: languageCode }).eq('id', auth.user.id)
+
+  const { data: language, error: languageError } = await supabase
+    .from('platform_languages')
+    .select('language_name')
+    .eq('language_code', languageCode)
+    .eq('enabled', true)
+    .maybeSingle()
+
+  if (languageError) throw languageError
+  if (!language) throw new Error('Selected language is not available.')
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ preferred_language: language.language_name })
+    .eq('id', auth.user.id)
+
   if (error) throw error
 }

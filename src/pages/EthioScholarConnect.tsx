@@ -18,12 +18,17 @@ export default function EthioScholarConnect({ onBack }: { onBack: () => void }) 
   }
   useEffect(load, [])
 
-  const apply = async (id: string) => {
-    setApplying(id)
+  const apply = async (s: Scholarship) => {
+    if (s.application_method === 'external') {
+      if (s.external_url) window.open(s.external_url, '_blank', 'noopener,noreferrer')
+      else setError('This scholarship requires an external application link, but no official link is available.')
+      return
+    }
+    setApplying(s.id)
     setError('')
     try {
-      await applyToOpportunity(id, '')
-      setAppliedIds((prev) => new Set(prev).add(id))
+      await applyToOpportunity(s.id, '')
+      setAppliedIds((prev) => new Set(prev).add(s.id))
     } catch (e: any) {
       setError(e.message ?? 'Could not submit that application.')
     } finally {
@@ -40,7 +45,7 @@ export default function EthioScholarConnect({ onBack }: { onBack: () => void }) 
       {error && <div className="banner banner-error">{error}</div>}
       {!scholarships && !error && <p className="muted">Loading scholarships…</p>}
       {scholarships && scholarships.length === 0 && (
-        <div className="empty-panel">No open scholarships right now — check back soon.</div>
+        <div className="empty-panel">No currently open scholarships are available.</div>
       )}
       {scholarships && scholarships.length > 0 && (
         <div className="list-panel">
@@ -51,16 +56,22 @@ export default function EthioScholarConnect({ onBack }: { onBack: () => void }) 
                 <div>
                   <div className="list-row-title">{s.title}</div>
                   <div className="list-row-meta">
-                    {s.institution ?? s.program_name}{s.study_country ? ` · ${s.study_country}` : ''}
+                    {s.institution ?? s.program_name ?? 'Scholarship'}
+                    {s.study_country ? ` · ${s.study_country}` : ''}
                     {s.award_amount ? ` · ${s.award_amount} ${s.award_currency ?? ''}` : ''}
                     {s.deadline ? ` · Due ${s.deadline}` : ''}
                   </div>
+                  {s.external_url && (
+                    <a href={s.external_url} target="_blank" rel="noopener noreferrer" className="muted">
+                      Official application link
+                    </a>
+                  )}
                 </div>
                 {applied ? (
                   <span className="pill">Applied</span>
                 ) : (
-                  <button className="btn btn-primary" onClick={() => apply(s.id)} disabled={applying === s.id}>
-                    {applying === s.id ? 'Applying…' : 'Apply'}
+                  <button className="btn btn-primary" onClick={() => apply(s)} disabled={applying === s.id}>
+                    {applying === s.id ? 'Applying…' : s.application_method === 'external' ? 'Apply externally' : 'Apply'}
                   </button>
                 )}
               </div>

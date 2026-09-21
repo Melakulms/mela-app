@@ -1,18 +1,18 @@
 import { useState } from 'react'
 import { registerUser, type MelaRole } from '../lib/auth'
 
-const ROLES: { value: MelaRole; label: string }[] = [
+const ROLES: { value: Extract<MelaRole, 'student' | 'parent' | 'teacher' | 'company'>; label: string }[] = [
   { value: 'student', label: 'Student' },
   { value: 'parent', label: 'Parent / Guardian' },
   { value: 'teacher', label: 'Teacher' },
-  { value: 'company', label: 'Employer' },
+  { value: 'company', label: 'Employer / Company' },
 ]
 
 export default function Register({ onSwitchToLogin, onRegistered }: {
   onSwitchToLogin: () => void
   onRegistered: (email: string) => void
 }) {
-  const [role, setRole] = useState<MelaRole>('student')
+  const [role, setRole] = useState<Extract<MelaRole, 'student' | 'parent' | 'teacher' | 'company'>>('student')
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -22,18 +22,34 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    const name = fullName.trim()
+    const address = email.trim().toLowerCase()
+
+    if (name.length < 2) {
+      setError('Please enter your full name.')
+      return
+    }
     if (password.length < 12) {
       setError('Password needs to be at least 12 characters.')
       return
     }
+
     setBusy(true)
-    const { error: signUpError } = await registerUser({ email, password, fullName, role })
+    const { error: signUpError } = await registerUser({
+      email: address,
+      password,
+      fullName: name,
+      role,
+    })
     setBusy(false)
+
     if (signUpError) {
       setError(signUpError.message)
       return
     }
-    onRegistered(email)
+
+    onRegistered(address)
   }
 
   return (
@@ -56,6 +72,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
                   className="role-option"
                   aria-pressed={role === r.value}
                   onClick={() => setRole(r.value)}
+                  disabled={busy}
                 >
                   {r.label}
                 </button>
@@ -65,17 +82,17 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
 
           <div className="field">
             <label htmlFor="fullName">Full name</label>
-            <input id="fullName" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
+            <input id="fullName" required minLength={2} autoComplete="name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
           </div>
 
           <div className="field">
             <label htmlFor="email">Email</label>
-            <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input id="email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
 
           <div className="field">
             <label htmlFor="password">Password</label>
-            <input id="password" type="password" required minLength={12} value={password} onChange={(e) => setPassword(e.target.value)} />
+            <input id="password" type="password" required minLength={12} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
             <span className="field-hint">At least 12 characters.</span>
           </div>
 

@@ -54,24 +54,19 @@ export async function fetchOwnProfile(): Promise<MelaProfile | null> {
   return data as MelaProfile | null
 }
 
-export async function updatePreferredLanguage(languageCode: string): Promise<void> {
+export async function updatePreferredLanguage(languageName: string): Promise<void> {
   const { data: auth } = await supabase.auth.getUser()
   if (!auth.user) throw new Error('Not logged in.')
 
   const { data: language, error: languageError } = await supabase
     .from('platform_languages')
     .select('language_name')
-    .eq('language_code', languageCode)
+    .eq('language_name', languageName)
     .eq('enabled', true)
     .maybeSingle()
-
   if (languageError) throw languageError
   if (!language) throw new Error('Selected language is not available.')
 
-  const { error } = await supabase
-    .from('profiles')
-    .update({ preferred_language: language.language_name })
-    .eq('id', auth.user.id)
-
+  const { error } = await supabase.from('profiles').update({ preferred_language: languageName }).eq('id', auth.user.id)
   if (error) throw error
 }

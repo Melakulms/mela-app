@@ -46,6 +46,34 @@ complete." Known shallow spots, honestly:
   switcher updates `profiles.preferred_language` for real, but the app's own
   strings aren't localized yet.
 
+## Working alongside another contributor
+Another AI tool has been making real, independent changes to this same repo
+(commits authored under this GitHub account). Confirmed and settled during one
+merge, for future reference:
+- **`profiles.preferred_language` stores the full language name** (`"English"`,
+  `"Amharic"`), not a short code. Verified against real existing rows before
+  settling this — don't assume otherwise from the signup trigger's own
+  fallback default, which uses a code but is apparently never what's actually
+  relied on in practice.
+- **GitHub Pages requires `base: '/mela-app/'`** in `vite.config.ts`, not `'/'`
+  — this repo has no custom domain (no CNAME), and `.github/workflows/deploy.yml`
+  deploys to the project subpath `melakulms.github.io/mela-app/`, not the
+  account root. A root-relative base will build successfully (no compile
+  error) but 404 every asset on the live site. This has been reverted once
+  already; if you see it changed to `/` again, check whether a custom domain
+  or different host was actually set up before assuming it's a fix.
+- `study_materials` (the table) is real but has an RLS policy of `USING
+  (false)` for authenticated users — it cannot be read directly from the
+  client under any circumstance, by design. The actual content lives behind
+  `get_mela_learning_library(p_stage_key, ...)`, which returns a real
+  programs → units → materials hierarchy with server-computed access flags.
+  If a future edit points `StudyMaterials.tsx` back at the raw table, it will
+  silently show empty forever, table content or not.
+- Opportunity type values are `jobs`, `internships`, `scholarships`,
+  `challenges`, `freelance` (plural, matching the real enum) — not the
+  singular/human-sounding versions that seem intuitive. Verify against
+  `pg_enum` before adding a new option here.
+
 ## Deployment
 GitHub Actions (`.github/workflows/deploy.yml`) builds and deploys to GitHub Pages
 on every push to `main`. No manual deploy step. Supabase URL and publishable key

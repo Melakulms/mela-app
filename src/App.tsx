@@ -91,9 +91,9 @@ export default function App() {
       <header className="app-topbar">
         <span className="auth-wordmark">⚡ MELA</span>
         <div className="app-topbar-right">
-          <select className="lang-select" value={languages.find((l) => l.language_name === profile.preferred_language)?.language_code ?? 'en'} onChange={(e) => changeLanguage(e.target.value)}>
+          <select className="lang-select" value={profile.preferred_language} onChange={(e) => changeLanguage(e.target.value)}>
             {languages.map((l) => (
-              <option key={l.language_code} value={l.language_code}>{l.native_name}</option>
+              <option key={l.language_code} value={l.language_name}>{l.native_name}</option>
             ))}
           </select>
           <span className="pill-stat coins">🪙 {profile.coin_balance}</span>

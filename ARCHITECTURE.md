@@ -79,3 +79,8 @@ GitHub Actions (`.github/workflows/deploy.yml`) builds and deploys to GitHub Pag
 on every push to `main`. No manual deploy step. Supabase URL and publishable key
 are hardcoded in the workflow file (the publishable key is meant to be public —
 it's not a secret, it's protected by Supabase RLS on the backend).
+
+
+## Verification
+
+Production-readiness work is validated through the main GitHub Actions build before release.

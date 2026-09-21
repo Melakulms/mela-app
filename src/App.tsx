@@ -19,6 +19,7 @@ import AiCareerCoach from './pages/AiCareerCoach'
 import Arena from './pages/Arena'
 import Profile from './pages/Profile'
 import EthioScholarConnect from './pages/EthioScholarConnect'
+import RoleDashboard from './pages/RoleDashboard'
 
 type AuthView = 'login' | 'register'
 type StudentView = 'dashboard' | 'practice' | 'opportunities' | 'materials' | 'academy' | 'mentorship' | 'passport' | 'coach' | 'arena' | 'profile' | 'scholarships'
@@ -27,7 +28,7 @@ const BOTTOM_NAV: { view: StudentView; label: string }[] = [
   { view: 'dashboard', label: 'Dashboard' },
   { view: 'practice', label: 'Practice' },
   { view: 'arena', label: 'Arena' },
-  { view: 'arena', label: 'Rank' },
+  { view: 'scholarships', label: 'Scholarships' },
   { view: 'profile', label: 'Profile' },
 ]
 
@@ -130,14 +131,12 @@ export default function App() {
         </>
       ) : profile.role === 'company' || profile.role === 'employer' ? (
         <EmployerPortal role={profile.role} />
+      ) : profile.role === 'parent' || profile.role === 'teacher' || profile.role === 'mentor' ? (
+        <RoleDashboard role={profile.role} fullName={profile.full_name} />
+      ) : profile.role === 'admin' ? (
+        <div className="dash-main"><h1>Central Admin</h1><p className="muted">Use the separate MELA Central Dashboard for administrative operations.</p></div>
       ) : (
-        <div className="dash-main">
-          <h1>Welcome, {profile.full_name}</h1>
-          <p className="muted">
-            Your account is set up and verified. The {profile.role} experience is being built next —
-            it isn't ready yet, so there's nothing to show here honestly. The student experience is live if you want to see it working end to end.
-          </p>
-        </div>
+        <div className="dash-main"><h1>Account setup</h1><p className="muted">Your account role is not yet supported by this frontend.</p></div>
       )}
     </div>
   )

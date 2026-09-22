@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
-  ShieldCheck, Briefcase, GraduationCap, Trophy, Sparkles, Building2,
+  ShieldCheck, Briefcase, GraduationCap, Trophy, Sparkles,
   BookOpen, Swords, FileText, Globe, Video, DollarSign, Medal, Brain, Map, Route, WalletCards, ClipboardCheck,
 } from 'lucide-react'
 import { fetchDashboard, type MelaDashboard } from '../lib/dashboard'

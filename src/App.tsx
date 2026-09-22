@@ -26,7 +26,7 @@ import StudentOnboarding from './pages/StudentOnboarding'
 import QuestionBank from './pages/QuestionBank'
 
 type AuthView = 'login' | 'register'
-type StudentView = 'dashboard' | 'practice' | 'opportunities' | 'materials' | 'academy' | 'mentorship' | 'passport' | 'coach' | 'arena' | 'profile' | 'scholarships' | 'mastery' | 'opportunity-graph' | 'mela-next' | 'wallet' | 'challenges' | 'assessments' | 'earn-work'
+type StudentView = 'dashboard' | 'practice' | 'opportunities' | 'materials' | 'academy' | 'mentorship' | 'passport' | 'coach' | 'arena' | 'profile' | 'scholarships' | 'mastery' | 'opportunity-graph' | 'mela-next' | 'wallet' | 'challenges' | 'assessments' | 'earn-work' | 'question-bank'
 
 const BOTTOM_NAV: { view: StudentView; label: string }[] = [
   { view: 'dashboard', label: 'Dashboard' },

@@ -6,7 +6,7 @@ import {
 import { fetchDashboard, type MelaDashboard } from '../lib/dashboard'
 import { fetchMyBadges, type EarnedBadge } from '../lib/badges'
 
-const MODULES: { key: string; label: string; blurb: string; view?: string; icon: any; cls: string }[] = [
+const MODULES: { key: string; label: string; blurb: string; view?: string; icon: any; cls: string; enabled?: boolean }[] = [
   { key: 'career_passport', label: 'Career Passport', blurb: 'Verified skills, badges & portable identity', view: 'passport', icon: ShieldCheck, cls: 'mc-career_passport' },
   { key: 'opportunities', label: 'Opportunity Hub', blurb: 'Verified jobs, internships & gigs', view: 'opportunities', icon: Briefcase, cls: 'mc-opportunities' },
   { key: 'academy', label: 'Skill Academy', blurb: 'Career-tied learning paths', view: 'academy', icon: GraduationCap, cls: 'mc-academy' },

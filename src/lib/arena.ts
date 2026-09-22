@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
 
-export type ArenaMode = 'skill_sprint' | 'interview_practice' | 'case_sprint'
+export type ArenaMode = 'speed_quiz' | 'skill_sprint' | 'interview_practice' | 'case_sprint'
 
 export interface LeaderboardRow {
   rank: number
@@ -24,9 +24,9 @@ export async function fetchLeaderboard(): Promise<LeaderboardRow[]> {
   return data as LeaderboardRow[]
 }
 
-export async function joinMatchmaking(mode: ArenaMode): Promise<void> {
+export async function joinMatchmaking(mode: ArenaMode, assessmentId: string | null = null): Promise<void> {
   const { error } = await supabase.rpc('join_arena_matchmaking', {
-    p_arena_type: mode, p_assessment_id: null, p_career_path_id: null, p_rating_range: 200,
+    p_arena_type: mode, p_assessment_id: assessmentId, p_career_path_id: null, p_rating_range: 200,
   })
   if (error) throw error
 }

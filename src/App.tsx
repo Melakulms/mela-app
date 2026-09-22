@@ -20,9 +20,10 @@ import Arena from './pages/Arena'
 import Profile from './pages/Profile'
 import EthioScholarConnect from './pages/EthioScholarConnect'
 import RoleDashboard from './pages/RoleDashboard'
+import LearnerTools from './pages/LearnerTools'
 
 type AuthView = 'login' | 'register'
-type StudentView = 'dashboard' | 'practice' | 'opportunities' | 'materials' | 'academy' | 'mentorship' | 'passport' | 'coach' | 'arena' | 'profile' | 'scholarships'
+type StudentView = 'dashboard' | 'practice' | 'opportunities' | 'materials' | 'academy' | 'mentorship' | 'passport' | 'coach' | 'arena' | 'profile' | 'scholarships' | 'mastery' | 'opportunity-graph' | 'mela-next' | 'wallet'
 
 const BOTTOM_NAV: { view: StudentView; label: string }[] = [
   { view: 'dashboard', label: 'Dashboard' },
@@ -115,6 +116,10 @@ export default function App() {
           {studentView === 'arena' && <Arena onBack={() => setStudentView('dashboard')} />}
           {studentView === 'profile' && <Profile profile={profile} onProfileUpdated={reloadProfile} />}
           {studentView === 'scholarships' && <EthioScholarConnect onBack={() => setStudentView('dashboard')} />}
+          {studentView === 'mastery' && <LearnerTools view="mastery" onBack={() => setStudentView('dashboard')} />}
+          {studentView === 'opportunity-graph' && <LearnerTools view="graph" onBack={() => setStudentView('dashboard')} />}
+          {studentView === 'mela-next' && <LearnerTools view="next" onBack={() => setStudentView('dashboard')} />}
+          {studentView === 'wallet' && <LearnerTools view="wallet" onBack={() => setStudentView('dashboard')} />}
           {studentView === 'dashboard' && <StudentDashboard onNavigate={(view) => setStudentView(view as StudentView)} />}
 
           <nav className="bottom-nav">

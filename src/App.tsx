@@ -23,6 +23,7 @@ import RoleDashboard from './pages/RoleDashboard'
 import LearnerTools from './pages/LearnerTools'
 import LearnerSubsections from './pages/LearnerSubsections'
 import StudentOnboarding from './pages/StudentOnboarding'
+import QuestionBank from './pages/QuestionBank'
 
 type AuthView = 'login' | 'register'
 type StudentView = 'dashboard' | 'practice' | 'opportunities' | 'materials' | 'academy' | 'mentorship' | 'passport' | 'coach' | 'arena' | 'profile' | 'scholarships' | 'mastery' | 'opportunity-graph' | 'mela-next' | 'wallet' | 'challenges' | 'assessments' | 'earn-work'
@@ -113,6 +114,7 @@ export default function App() {
       {isStudent ? (
         <>
           {studentView === 'practice' && <Practice onBack={() => setStudentView('dashboard')} />}
+          {studentView === 'question-bank' && <QuestionBank onBack={() => setStudentView('dashboard')} />}
           {studentView === 'opportunities' && <OpportunityHub onBack={() => setStudentView('dashboard')} />}
           {studentView === 'materials' && <StudyMaterials stageKey={profile.education_stage_key} onBack={() => setStudentView('dashboard')} />}
           {studentView === 'academy' && <SkillAcademy onBack={() => setStudentView('dashboard')} />}

@@ -9,7 +9,7 @@ type Subject = {
 
 export default function StudentOnboarding({ onComplete }: { onComplete: () => void }) {
   const [grade, setGrade] = useState<number>(9)
-  const [track, setTrack] = useState('common')
+  const [track, setTrack] = useState('natural_sciences')
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [selected, setSelected] = useState<string[]>([])
   const [school, setSchool] = useState('')
@@ -25,6 +25,8 @@ export default function StudentOnboarding({ onComplete }: { onComplete: () => vo
 
   useEffect(() => {
     setError('')
+    if (grade < 11) setTrack('common')
+    else if (track === 'common') setTrack('natural_sciences')
     supabase
       .from('mela_national_subject_catalog')
       .select('subject_key, subject_title, optional')
@@ -85,14 +87,14 @@ export default function StudentOnboarding({ onComplete }: { onComplete: () => vo
       <div className="auth-card" style={{ maxWidth: 720 }}>
         <span className="auth-wordmark">MELA</span>
         <h1>Set up your learning profile</h1>
-        <p className="auth-subtitle">Choose your grade and subjects so MELA can show the correct curriculum and question bank.</p>
+        <p className="auth-subtitle">Choose your grade and subjects so MELA can show the correct Ethiopian curriculum and question bank for Grades 1–12.</p>
 
         {error && <div className="banner banner-error">{error}</div>}
 
         <div className="field">
           <label htmlFor="grade">Grade</label>
           <select id="grade" value={grade} onChange={e => setGrade(Number(e.target.value))} disabled={busy}>
-            {[9, 10, 11, 12].map(g => <option key={g} value={g}>Grade {g}</option>)}
+            {Array.from({ length: 12 }, (_, i) => i + 1).map(g => <option key={g} value={g}>Grade {g}</option>)}
           </select>
         </div>
 

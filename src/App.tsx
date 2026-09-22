@@ -22,6 +22,7 @@ import EthioScholarConnect from './pages/EthioScholarConnect'
 import RoleDashboard from './pages/RoleDashboard'
 import LearnerTools from './pages/LearnerTools'
 import LearnerSubsections from './pages/LearnerSubsections'
+import StudentOnboarding from './pages/StudentOnboarding'
 
 type AuthView = 'login' | 'register'
 type StudentView = 'dashboard' | 'practice' | 'opportunities' | 'materials' | 'academy' | 'mentorship' | 'passport' | 'coach' | 'arena' | 'profile' | 'scholarships' | 'mastery' | 'opportunity-graph' | 'mela-next' | 'wallet' | 'challenges' | 'assessments' | 'earn-work'
@@ -81,6 +82,10 @@ export default function App() {
   }
 
   const isStudent = profile.role === 'student'
+
+  if (isStudent && !profile.education_onboarding_completed) {
+    return <StudentOnboarding onComplete={reloadProfile} />
+  }
 
   const changeLanguage = async (code: string) => {
     try {

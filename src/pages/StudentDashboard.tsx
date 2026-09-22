@@ -10,7 +10,7 @@ const MODULES: { key: string; label: string; blurb: string; view?: string; icon:
   { key: 'career_passport', label: 'Career Passport', blurb: 'Verified skills, badges & portable identity', view: 'passport', icon: ShieldCheck, cls: 'mc-career_passport' },
   { key: 'opportunities', label: 'Opportunity Hub', blurb: 'Verified jobs, internships & gigs', view: 'opportunities', icon: Briefcase, cls: 'mc-opportunities' },
   { key: 'academy', label: 'Skill Academy', blurb: 'Career-tied learning paths', view: 'academy', icon: GraduationCap, cls: 'mc-academy' },
-  { key: 'challenges', label: 'Sponsored Challenges', blurb: 'Bank & company competitions', icon: Trophy, cls: 'mc-challenges' },
+  { key: 'challenges', label: 'Sponsored Challenges', blurb: 'Bank & company competitions', view: 'challenges', icon: Trophy, cls: 'mc-challenges' },
   { key: 'ai_career_coach', label: 'AI Career Coach', blurb: 'Personalized career pathing', view: 'coach', icon: Sparkles, cls: 'mc-coach' },
   { key: 'employer', label: 'Employer Portal', blurb: 'For companies to hire talent', icon: Building2, cls: 'mc-employer' },
   { key: 'practice', label: 'Practice', blurb: 'Drill curriculum topics', view: 'practice', icon: BookOpen, cls: 'mc-practice' },
@@ -22,8 +22,8 @@ const MODULES: { key: string; label: string; blurb: string; view?: string; icon:
   { key: 'opportunity_graph', label: 'My Future Map', blurb: 'Connect learning to future pathways', view: 'opportunity-graph', icon: Map, cls: 'mc-graph' },
   { key: 'mela_next', label: 'Mela Next', blurb: 'Set and follow your next transition goal', view: 'mela-next', icon: Route, cls: 'mc-next' },
   { key: 'wallet', label: 'Mela Wallet', blurb: 'Earnings, ledger and payout status', view: 'wallet', icon: WalletCards, cls: 'mc-wallet' },
-  { key: 'assessments', label: 'Verified Assessments', blurb: 'Skill verification for career readiness', icon: ClipboardCheck, cls: 'mc-assessments' },
-  { key: 'earn_work', label: 'Earn & Work', blurb: 'Freelance & escrow tasks', icon: DollarSign, cls: 'mc-earn_work' },
+  { key: 'assessments', label: 'Verified Assessments', blurb: 'Skill verification for career readiness', view: 'assessments', icon: ClipboardCheck, cls: 'mc-assessments' },
+  { key: 'earn_work', label: 'Earn & Work', blurb: 'Freelance & escrow tasks', view: 'earn-work', icon: DollarSign, cls: 'mc-earn_work' },
 ]
 
 export default function StudentDashboard({ onNavigate }: { onNavigate: (view: string) => void }) {

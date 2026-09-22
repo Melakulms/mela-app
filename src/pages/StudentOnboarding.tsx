@@ -16,7 +16,12 @@ export default function StudentOnboarding({ onComplete }: { onComplete: () => vo
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
-  const stageKey = useMemo(() => grade >= 11 ? 'school_11_12' : 'school_9_10', [grade])
+  const stageKey = useMemo(() => {
+    if (grade <= 6) return 'school_1_6'
+    if (grade <= 8) return 'school_7_8'
+    if (grade <= 10) return 'school_9_10'
+    return 'school_11_12'
+  }, [grade])
 
   useEffect(() => {
     setError('')

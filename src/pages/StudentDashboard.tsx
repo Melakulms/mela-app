@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   ShieldCheck, Briefcase, GraduationCap, Trophy, Sparkles, Building2,
-  BookOpen, Swords, FileText, Globe, Video, DollarSign, Medal,
+  BookOpen, Swords, FileText, Globe, Video, DollarSign, Medal, Brain, Map, Route, WalletCards, ClipboardCheck,
 } from 'lucide-react'
 import { fetchDashboard, type MelaDashboard } from '../lib/dashboard'
 import { fetchMyBadges, type EarnedBadge } from '../lib/badges'

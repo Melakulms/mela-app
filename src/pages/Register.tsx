@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { registerUser, type MelaRole } from '../lib/auth'
 
 const ROLES: { value: Extract<MelaRole, 'student' | 'parent' | 'teacher' | 'company'>; label: string }[] = [
@@ -16,8 +16,17 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+
+  const passwordChecks = useMemo(() => ({
+    length: password.length >= 12,
+    upper: /[A-Z]/.test(password),
+    lower: /[a-z]/.test(password),
+    number: /\\d/.test(password),
+  }), [password])
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,8 +39,12 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
       setError('Please enter your full name.')
       return
     }
-    if (password.length < 12) {
-      setError('Password needs to be at least 12 characters.')
+    if (!passwordChecks.length || !passwordChecks.upper || !passwordChecks.lower || !passwordChecks.number) {
+      setError('Password must be at least 12 characters and include uppercase, lowercase, and a number.')
+      return
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.')
       return
     }
 
@@ -45,7 +58,14 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
     setBusy(false)
 
     if (signUpError) {
-      setError(signUpError.message)
+      const message = signUpError.message.toLowerCase()
+      if (message.includes('already registered') || message.includes('already exists') || message.includes('user already')) {
+        setError('An account with this email already exists. Please log in or use a different email.')
+      } else if (message.includes('rate limit')) {
+        setError('Too many registration attempts. Please wait a few minutes and try again.')
+      } else {
+        setError(signUpError.message)
+      }
       return
     }
 
@@ -92,8 +112,14 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
 
           <div className="field">
             <label htmlFor="password">Password</label>
-            <input id="password" type="password" required minLength={12} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            <span className="field-hint">At least 12 characters.</span>
+            <input id="password" type={showPassword ? "text" : "password"} required minLength={12} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} aria-describedby="password-help" />
+            <span id="password-help" className="field-hint">At least 12 characters, with uppercase, lowercase, and a number.</span>
+            <button type="button" className="btn btn-secondary" onClick={() => setShowPassword(v => !v)} disabled={busy} aria-pressed={showPassword}>{showPassword ? "Hide password" : "Show password"}</button>
+          </div>
+
+          <div className="field">
+            <label htmlFor="confirmPassword">Confirm password</label>
+            <input id="confirmPassword" type={showPassword ? "text" : "password"} required minLength={12} autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
           </div>
 
           <button className="btn btn-primary btn-block" type="submit" disabled={busy}>

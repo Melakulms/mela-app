@@ -58,6 +58,6 @@ grant execute on function private.refresh_global_source_link_health(integer) to 
 do $$
 begin
   if not exists (select 1 from cron.job where jobname = 'mela-source-link-health') then
-    perform cron.schedule('mela-source-link-health', '*/30 * * * *', $$select private.refresh_global_source_link_health(10);$$);
+    perform cron.schedule('mela-source-link-health', '*/30 * * * *', $job$select private.refresh_global_source_link_health(10);$job$);
   end if;
 end $$;

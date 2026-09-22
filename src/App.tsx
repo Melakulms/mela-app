@@ -20,6 +20,7 @@ import Arena from './pages/Arena'
 import Profile from './pages/Profile'
 import EthioScholarConnect from './pages/EthioScholarConnect'
 import RoleDashboard from './pages/RoleDashboard'
+import RoleProfileSetup from './pages/RoleProfileSetup'
 import LearnerTools from './pages/LearnerTools'
 import LearnerSubsections from './pages/LearnerSubsections'
 import StudentOnboarding from './pages/StudentOnboarding'
@@ -86,6 +87,10 @@ export default function App() {
 
   if (isStudent && !profile.education_onboarding_completed) {
     return <StudentOnboarding onComplete={reloadProfile} />
+  }
+
+  if ((profile.role === 'parent' || profile.role === 'teacher' || profile.role === 'company') && (profile.profile_completion ?? 0) < 100) {
+    return <RoleProfileSetup role={profile.role} fullName={profile.full_name} email={profile.email} onComplete={reloadProfile} />
   }
 
   const changeLanguage = async (code: string) => {

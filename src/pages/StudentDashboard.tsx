@@ -12,7 +12,6 @@ const MODULES: { key: string; label: string; blurb: string; view?: string; icon:
   { key: 'academy', label: 'Skill Academy', blurb: 'Career-tied learning paths', view: 'academy', icon: GraduationCap, cls: 'mc-academy' },
   { key: 'challenges', label: 'Sponsored Challenges', blurb: 'Bank & company competitions', view: 'challenges', icon: Trophy, cls: 'mc-challenges' },
   { key: 'ai_career_coach', label: 'AI Career Coach', blurb: 'Personalized career pathing', view: 'coach', icon: Sparkles, cls: 'mc-coach' },
-  { key: 'employer', label: 'Employer Portal', blurb: 'For companies to hire talent', icon: Building2, cls: 'mc-employer' },
   { key: 'practice', label: 'Practice', blurb: 'Drill curriculum topics', view: 'practice', icon: BookOpen, cls: 'mc-practice' },
   { key: 'arena', label: 'Arena', blurb: 'Join the arena', view: 'arena', icon: Swords, cls: 'mc-arena' },
   { key: 'study_materials', label: 'Study Materials', blurb: 'Short notes & summaries', view: 'materials', icon: FileText, cls: 'mc-materials' },

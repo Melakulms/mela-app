@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabase'
 import {
   fetchLeaderboard, joinMatchmaking, cancelMatchmaking, checkMyQueueStatus,
   fetchMatchState, fetchScoreboard, fetchCurrentRoundDetail, submitRound,
@@ -6,6 +7,7 @@ import {
 } from '../lib/arena'
 
 const MODES: { value: ArenaMode; label: string; blurb: string }[] = [
+  { value: 'speed_quiz', label: '8-Question Quiz Battle', blurb: 'Head-to-head: exactly 8 curriculum questions.' },
   { value: 'skill_sprint', label: 'Skill Sprint', blurb: 'Fast rounds on your strongest subjects.' },
   { value: 'interview_practice', label: 'Interview Practice', blurb: 'Simulated interview-style rounds.' },
   { value: 'case_sprint', label: 'Case Sprint', blurb: 'Scenario-based problem solving.' },
@@ -19,8 +21,14 @@ export default function Arena({ onBack }: { onBack: () => void }) {
   const [queueState, setQueueState] = useState<QueueState>('idle')
   const [matchId, setMatchId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [assessments, setAssessments] = useState<{ id: string; title: string; question_count: number }[]>([])
+  const [assessmentId, setAssessmentId] = useState('')
 
   useEffect(() => {
+    supabase.from('skill_assessments').select('id,title,question_count').eq('status','published').gte('question_count',8).order('title').then(({ data }) => {
+      setAssessments((data ?? []) as { id: string; title: string; question_count: number }[])
+      if (data?.[0]) setAssessmentId(data[0].id)
+    })
     fetchLeaderboard().then(setLeaderboard).catch((e) => setError(e.message ?? 'Could not load the leaderboard.'))
     checkMyQueueStatus().then((q) => {
       if (q?.matched_match_id) { setMatchId(q.matched_match_id); setQueueState('matched') }
@@ -32,7 +40,8 @@ export default function Arena({ onBack }: { onBack: () => void }) {
     setBusy(true)
     setError('')
     try {
-      await joinMatchmaking(mode)
+      if (mode === 'speed_quiz' && !assessmentId) throw new Error('Select a quiz assessment first.')
+      await joinMatchmaking(mode, mode === 'speed_quiz' ? assessmentId : null)
       setQueueState('searching')
     } catch (e: any) {
       setError(e.message ?? 'Could not join matchmaking.')
@@ -82,6 +91,12 @@ export default function Arena({ onBack }: { onBack: () => void }) {
       {queueState === 'idle' && (
         <>
           <div className="section-heading"><h2>Find a match</h2></div>
+          <div className="field" style={{ maxWidth: 520 }}>
+            <label htmlFor="arena-assessment">Quiz assessment for the 8-question battle</label>
+            <select id="arena-assessment" value={assessmentId} onChange={e => setAssessmentId(e.target.value)}>
+              {assessments.map(a => <option key={a.id} value={a.id}>{a.title} · {a.question_count} questions</option>)}
+            </select>
+          </div>
           <div className="module-grid">
             {MODES.map((m) => (
               <div className="module-card" key={m.value}>

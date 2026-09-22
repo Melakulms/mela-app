@@ -18,6 +18,11 @@ const MODULES: { key: string; label: string; blurb: string; view?: string; icon:
   { key: 'study_materials', label: 'Study Materials', blurb: 'Short notes & summaries', view: 'materials', icon: FileText, cls: 'mc-materials' },
   { key: 'scholarships', label: 'EthioScholar Connect', blurb: 'Global scholarship discovery', view: 'scholarships', icon: Globe, cls: 'mc-scholarships' },
   { key: 'mentorship', label: 'Mentorship', blurb: '1:1 mentorship & interview practice', view: 'mentorship', icon: Video, cls: 'mc-mentorship' },
+  { key: 'mastery', label: 'My Mastery Map', blurb: 'See mastered, developing and next skills', view: 'mastery', icon: Brain, cls: 'mc-mastery' },
+  { key: 'opportunity_graph', label: 'My Future Map', blurb: 'Connect learning to future pathways', view: 'opportunity-graph', icon: Map, cls: 'mc-graph' },
+  { key: 'mela_next', label: 'Mela Next', blurb: 'Set and follow your next transition goal', view: 'mela-next', icon: Route, cls: 'mc-next' },
+  { key: 'wallet', label: 'Mela Wallet', blurb: 'Earnings, ledger and payout status', view: 'wallet', icon: WalletCards, cls: 'mc-wallet' },
+  { key: 'assessments', label: 'Verified Assessments', blurb: 'Skill verification for career readiness', icon: ClipboardCheck, cls: 'mc-assessments' },
   { key: 'earn_work', label: 'Earn & Work', blurb: 'Freelance & escrow tasks', icon: DollarSign, cls: 'mc-earn_work' },
 ]
 
@@ -54,7 +59,7 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: st
       <div className="section-heading"><h2>Quick Actions</h2></div>
       <div className="module-grid">
         {MODULES.map((m) => {
-          const enabled = m.key === 'study_materials' ? true : feature_flags[m.key]
+          const enabled = ['study_materials','mastery','opportunity_graph','mela_next','wallet'].includes(m.key) ? true : feature_flags[m.key]
           const isBuilt = !!m.view
           const Icon = m.icon
           return (

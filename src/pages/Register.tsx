@@ -25,7 +25,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
     length: password.length >= 12,
     upper: /[A-Z]/.test(password),
     lower: /[a-z]/.test(password),
-    number: /\\d/.test(password),
+    number: /\d/.test(password),
   }), [password])
 
   const submit = async (e: React.FormEvent) => {

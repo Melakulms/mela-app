@@ -19,6 +19,7 @@ type Question = {
 
 export default function QuestionBank({ onBack }: { onBack: () => void }) {
   const [programs, setPrograms] = useState<Program[]>([])
+  const [grade, setGrade] = useState<number | null>(null)
   const [program, setProgram] = useState('')
   const [questions, setQuestions] = useState<Question[]>([])
   const [answers, setAnswers] = useState<Record<string, string>>({})
@@ -34,6 +35,7 @@ export default function QuestionBank({ onBack }: { onBack: () => void }) {
       if (!auth.user) return
       const { data: profile } = await supabase.from('profiles').select('education_stage_key,grade_level').eq('id', auth.user.id).maybeSingle()
       if (!profile?.education_stage_key) return
+      setGrade(profile.grade_level ?? null)
       let query = supabase
         .from('mela_learning_programs')
         .select('program_key,subject_title,grade_level,track_key,stage_key')
@@ -95,7 +97,7 @@ export default function QuestionBank({ onBack }: { onBack: () => void }) {
   return (
     <div className="dash-main">
       <div className="section-heading"><h1>Curriculum Question Bank</h1><button className="btn btn-secondary" onClick={onBack}>Back</button></div>
-      <p className="muted">These sessions use the production MELA question bank, filtered to your grade and curriculum program.</p>
+      <p className="muted">These sessions use the production MELA question bank, filtered to your Grade {grade ?? '—'} curriculum program. MELA covers Grades 1–12.</p>
       {error && <div className="banner banner-error">{error}</div>}
 
       {!sessionId ? (

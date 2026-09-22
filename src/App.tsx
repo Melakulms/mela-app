@@ -21,9 +21,10 @@ import Profile from './pages/Profile'
 import EthioScholarConnect from './pages/EthioScholarConnect'
 import RoleDashboard from './pages/RoleDashboard'
 import LearnerTools from './pages/LearnerTools'
+import LearnerSubsections from './pages/LearnerSubsections'
 
 type AuthView = 'login' | 'register'
-type StudentView = 'dashboard' | 'practice' | 'opportunities' | 'materials' | 'academy' | 'mentorship' | 'passport' | 'coach' | 'arena' | 'profile' | 'scholarships' | 'mastery' | 'opportunity-graph' | 'mela-next' | 'wallet'
+type StudentView = 'dashboard' | 'practice' | 'opportunities' | 'materials' | 'academy' | 'mentorship' | 'passport' | 'coach' | 'arena' | 'profile' | 'scholarships' | 'mastery' | 'opportunity-graph' | 'mela-next' | 'wallet' | 'challenges' | 'assessments' | 'earn-work'
 
 const BOTTOM_NAV: { view: StudentView; label: string }[] = [
   { view: 'dashboard', label: 'Dashboard' },
@@ -120,6 +121,9 @@ export default function App() {
           {studentView === 'opportunity-graph' && <LearnerTools view="graph" onBack={() => setStudentView('dashboard')} />}
           {studentView === 'mela-next' && <LearnerTools view="next" onBack={() => setStudentView('dashboard')} />}
           {studentView === 'wallet' && <LearnerTools view="wallet" onBack={() => setStudentView('dashboard')} />}
+          {studentView === 'challenges' && <LearnerSubsections view="challenges" onBack={() => setStudentView('dashboard')} />}
+          {studentView === 'assessments' && <LearnerSubsections view="assessments" onBack={() => setStudentView('dashboard')} />}
+          {studentView === 'earn-work' && <LearnerSubsections view="earn" onBack={() => setStudentView('dashboard')} />}
           {studentView === 'dashboard' && <StudentDashboard onNavigate={(view) => setStudentView(view as StudentView)} />}
 
           <nav className="bottom-nav">

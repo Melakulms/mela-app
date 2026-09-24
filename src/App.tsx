@@ -44,7 +44,7 @@ export default function App() {
   const [authView, setAuthView] = useState<AuthView>('login')
   const [pendingEmail, setPendingEmail] = useState('')
   const [studentView, setStudentView] = useState<StudentView>('dashboard')
-  const [languages, setLanguages] = useState<PlatformLanguage[]>([])\n  const [employerRegistration, setEmployerRegistration] = useState<{ status: string; company_name: string | null } | null>(null)
+  const [languages, setLanguages] = useState<PlatformLanguage[]>([])\n  const [employerRegistration, setEmployerRegistration] = useState<{ status: string; company_name: string | null } | null>(null)\n  const [editingEmployerProfile, setEditingEmployerProfile] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -105,7 +105,7 @@ export default function App() {
         status={employerRegistration.status}
         companyName={employerRegistration.company_name}
         onRefresh={reloadProfile}
-        onEdit={() => window.location.reload()}
+        onEdit={() => setEditingEmployerProfile(true)}
       />
     )
   }

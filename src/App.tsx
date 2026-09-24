@@ -46,7 +46,8 @@ export default function App() {
   const [pendingEmail, setPendingEmail] = useState('')
   const [studentView, setStudentView] = useState<StudentView>('dashboard')
   const [languages, setLanguages] = useState<PlatformLanguage[]>([])
-  const [employerRegistration, setEmployerRegistration] = useState<{ status: string; company_name: string | null } | null>(null)\n  const [editingEmployerProfile, setEditingEmployerProfile] = useState(false)
+  const [employerRegistration, setEmployerRegistration] = useState<{ status: string; company_name: string | null } | null>(null)
+  const [editingEmployerProfile, setEditingEmployerProfile] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -69,6 +70,21 @@ export default function App() {
     fetchEnabledLanguages().then(setLanguages).catch(() => {})
   }, [session])
 
+  useEffect(() => {
+    if (!session || !profile || (profile.role !== 'company' && profile.role !== 'employer')) {
+      setEmployerRegistration(null)
+      return
+    }
+    supabase
+      .from('employer_registration_requests')
+      .select('status, company_name, created_at')
+      .eq('applicant_user_id', session.user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => setEmployerRegistration(data ? { status: data.status, company_name: data.company_name } : null))
+  }, [session, profile?.role, profile?.profile_completion])
+
   if (loading) return <div className="centered-loading">Loading…</div>
 
   if (!session) {
@@ -87,17 +103,17 @@ export default function App() {
 
   if (!profile) return <div className="centered-loading">Setting up your account…</div>
   if (profile.account_status === 'pending_verification' || !profile.email_verified) {
-    return <VerifyEmail email={profile.email ?? pendingEmail} />
+    return <VerifyEmail email={profile.email ?? pendingEmail} onUseDifferentAccount={() => { setPendingEmail(''); setAuthView('login') }} />
   }
 
   const isStudent = profile.role === 'student'
 
   if (isStudent && !profile.education_onboarding_completed) {
-    return <StudentOnboarding onComplete={() => { setEditingEmployerProfile(false); reloadProfile() }} />
+    return <StudentOnboarding onComplete={reloadProfile} />
   }
 
   if ((profile.role === 'parent' || profile.role === 'teacher' || profile.role === 'company') && ((profile.profile_completion ?? 0) < 100 || (profile.role === 'company' && editingEmployerProfile))) {
-    return <RoleProfileSetup role={profile.role} fullName={profile.full_name} email={profile.email} onComplete={reloadProfile} />
+    return <RoleProfileSetup role={profile.role} fullName={profile.full_name} email={profile.email} onComplete={() => { setEditingEmployerProfile(false); reloadProfile() }} />
   }
 
   if ((profile.role === 'company' || profile.role === 'employer') && employerRegistration && employerRegistration.status.toLowerCase() !== 'approved') {

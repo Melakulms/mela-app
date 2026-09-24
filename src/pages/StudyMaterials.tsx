@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { fetchLearningLibrary, type LearningProgram } from '../lib/materials'
 
-export default function StudyMaterials({ stageKey, onBack }: { stageKey: string | null; onBack: () => void }) {
+export default function StudyMaterials({ stageKey, gradeLevel, onBack }: { stageKey: string | null; gradeLevel: number | null; onBack: () => void }) {
   const [programs, setPrograms] = useState<LearningProgram[] | null>(null)
   const [error, setError] = useState('')
   const [openProgram, setOpenProgram] = useState<string | null>(null)
@@ -11,10 +11,10 @@ export default function StudyMaterials({ stageKey, onBack }: { stageKey: string 
       setError("We don't know your education stage yet, so we can't load the right materials for you.")
       return
     }
-    fetchLearningLibrary(stageKey)
+    fetchLearningLibrary(stageKey, gradeLevel)
       .then((lib) => setPrograms(lib.programs))
       .catch((e) => setError(e.message ?? 'Could not load study materials.'))
-  }, [stageKey])
+  }, [stageKey, gradeLevel])
 
   return (
     <div className="dash-main">

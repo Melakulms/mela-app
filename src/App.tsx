@@ -20,7 +20,7 @@ import Arena from './pages/Arena'
 import Profile from './pages/Profile'
 import EthioScholarConnect from './pages/EthioScholarConnect'
 import RoleDashboard from './pages/RoleDashboard'
-import RoleProfileSetup from './pages/RoleProfileSetup'
+import RoleProfileSetup from './pages/RoleProfileSetup'\nimport EmployerApprovalPending from './pages/EmployerApprovalPending'
 import LearnerTools from './pages/LearnerTools'
 import LearnerSubsections from './pages/LearnerSubsections'
 import StudentOnboarding from './pages/StudentOnboarding'
@@ -44,7 +44,7 @@ export default function App() {
   const [authView, setAuthView] = useState<AuthView>('login')
   const [pendingEmail, setPendingEmail] = useState('')
   const [studentView, setStudentView] = useState<StudentView>('dashboard')
-  const [languages, setLanguages] = useState<PlatformLanguage[]>([])
+  const [languages, setLanguages] = useState<PlatformLanguage[]>([])\n  const [employerRegistration, setEmployerRegistration] = useState<{ status: string; company_name: string | null } | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -70,6 +70,12 @@ export default function App() {
   if (loading) return <div className="centered-loading">Loading…</div>
 
   if (!session) {
+    if (pendingEmail) {
+      return <VerifyEmail email={pendingEmail} onUseDifferentAccount={() => {
+        setPendingEmail('')
+        setAuthView('login')
+      }} />
+    }
     return authView === 'login' ? (
       <Login onSwitchToRegister={() => setAuthView('register')} />
     ) : (
@@ -91,6 +97,17 @@ export default function App() {
 
   if ((profile.role === 'parent' || profile.role === 'teacher' || profile.role === 'company') && (profile.profile_completion ?? 0) < 100) {
     return <RoleProfileSetup role={profile.role} fullName={profile.full_name} email={profile.email} onComplete={reloadProfile} />
+  }
+
+  if ((profile.role === 'company' || profile.role === 'employer') && employerRegistration && employerRegistration.status.toLowerCase() !== 'approved') {
+    return (
+      <EmployerApprovalPending
+        status={employerRegistration.status}
+        companyName={employerRegistration.company_name}
+        onRefresh={reloadProfile}
+        onEdit={() => window.location.reload()}
+      />
+    )
   }
 
   const changeLanguage = async (code: string) => {

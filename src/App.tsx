@@ -20,7 +20,8 @@ import Arena from './pages/Arena'
 import Profile from './pages/Profile'
 import EthioScholarConnect from './pages/EthioScholarConnect'
 import RoleDashboard from './pages/RoleDashboard'
-import RoleProfileSetup from './pages/RoleProfileSetup'\nimport EmployerApprovalPending from './pages/EmployerApprovalPending'
+import RoleProfileSetup from './pages/RoleProfileSetup'
+import EmployerApprovalPending from './pages/EmployerApprovalPending'
 import LearnerTools from './pages/LearnerTools'
 import LearnerSubsections from './pages/LearnerSubsections'
 import StudentOnboarding from './pages/StudentOnboarding'
@@ -44,7 +45,8 @@ export default function App() {
   const [authView, setAuthView] = useState<AuthView>('login')
   const [pendingEmail, setPendingEmail] = useState('')
   const [studentView, setStudentView] = useState<StudentView>('dashboard')
-  const [languages, setLanguages] = useState<PlatformLanguage[]>([])\n  const [employerRegistration, setEmployerRegistration] = useState<{ status: string; company_name: string | null } | null>(null)\n  const [editingEmployerProfile, setEditingEmployerProfile] = useState(false)
+  const [languages, setLanguages] = useState<PlatformLanguage[]>([])
+  const [employerRegistration, setEmployerRegistration] = useState<{ status: string; company_name: string | null } | null>(null)\n  const [editingEmployerProfile, setEditingEmployerProfile] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -62,7 +64,7 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (!session) { setProfile(null); return }
+    if (!session) { setProfile(null); setEmployerRegistration(null); return }
     reloadProfile()
     fetchEnabledLanguages().then(setLanguages).catch(() => {})
   }, [session])
@@ -83,7 +85,6 @@ export default function App() {
     )
   }
 
-  if (pendingEmail && !profile) return <VerifyEmail email={pendingEmail} />
   if (!profile) return <div className="centered-loading">Setting up your account…</div>
   if (profile.account_status === 'pending_verification' || !profile.email_verified) {
     return <VerifyEmail email={profile.email ?? pendingEmail} />
@@ -92,10 +93,10 @@ export default function App() {
   const isStudent = profile.role === 'student'
 
   if (isStudent && !profile.education_onboarding_completed) {
-    return <StudentOnboarding onComplete={reloadProfile} />
+    return <StudentOnboarding onComplete={() => { setEditingEmployerProfile(false); reloadProfile() }} />
   }
 
-  if ((profile.role === 'parent' || profile.role === 'teacher' || profile.role === 'company') && (profile.profile_completion ?? 0) < 100) {
+  if ((profile.role === 'parent' || profile.role === 'teacher' || profile.role === 'company') && ((profile.profile_completion ?? 0) < 100 || (profile.role === 'company' && editingEmployerProfile))) {
     return <RoleProfileSetup role={profile.role} fullName={profile.full_name} email={profile.email} onComplete={reloadProfile} />
   }
 

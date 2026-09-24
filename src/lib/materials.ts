@@ -38,9 +38,9 @@ export interface LearningLibrary {
   products: LearningProduct[]
 }
 
-export async function fetchLearningLibrary(stageKey: string): Promise<LearningLibrary> {
+export async function fetchLearningLibrary(stageKey: string, gradeLevel: number | null = null, trackKey: string | null = null): Promise<LearningLibrary> {
   const { data, error } = await supabase.rpc('get_mela_learning_library', {
-    p_stage_key: stageKey, p_grade_level: null, p_track_key: null,
+    p_stage_key: stageKey, p_grade_level: gradeLevel, p_track_key: trackKey,
   })
   if (error) throw error
   return data as LearningLibrary

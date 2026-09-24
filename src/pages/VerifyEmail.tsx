@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { logoutUser } from '../lib/auth'
 
-export default function VerifyEmail({ email }: { email: string }) {
+export default function VerifyEmail({ email, onUseDifferentAccount }: { email: string; onUseDifferentAccount: () => void }) {
   const [sent, setSent] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -16,7 +16,7 @@ export default function VerifyEmail({ email }: { email: string }) {
     else setSent(true)
   }
 
-  return (
+  const changeAccount = async () => {\n    await logoutUser()\n    onUseDifferentAccount()\n  }\n\n  return (
     <div className="auth-shell">
       <div className="auth-card">
         <span className="auth-wordmark">MELA</span>
@@ -32,7 +32,7 @@ export default function VerifyEmail({ email }: { email: string }) {
           {busy ? 'Sending…' : 'Resend email'}
         </button>
         <div className="auth-switch">
-          <button type="button" onClick={() => logoutUser()}>Use a different account</button>
+          <button type="button" onClick={changeAccount}>Use a different account</button>
         </div>
       </div>
     </div>

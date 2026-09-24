@@ -47,6 +47,17 @@ export async function fetchMyApplications(): Promise<MyApplication[]> {
 export async function applyToOpportunity(opportunityId: string, coverNote: string): Promise<void> {
   const { data: auth } = await supabase.auth.getUser()
   if (!auth.user) throw new Error('You need to be logged in to apply.')
+  const { data: opportunity, error: opportunityError } = await supabase
+    .from('opportunities')
+    .select('id, status, verified_active, deadline, application_method')
+    .eq('id', opportunityId)
+    .maybeSingle()
+  if (opportunityError) throw opportunityError
+  if (!opportunity) throw new Error('Opportunity not found.')
+  if (opportunity.status !== 'open' || !opportunity.verified_active) throw new Error('This opportunity is not currently open for applications.')
+  if (opportunity.deadline < new Date().toISOString().slice(0, 10)) throw new Error('The application deadline has passed.')
+  if (opportunity.application_method !== 'mela' && opportunity.application_method !== 'both') throw new Error('This opportunity uses an external application process.')
+
   const { error } = await supabase.from('applications').insert({
     user_id: auth.user.id,
     applicant_id: auth.user.id,
@@ -54,6 +65,8 @@ export async function applyToOpportunity(opportunityId: string, coverNote: strin
     cover_note: coverNote || null,
     status: 'submitted',
     submitted_at: new Date().toISOString(),
+    applied_at: new Date().toISOString(),
+    screening_answers: {},
   })
   if (error) throw error
 }

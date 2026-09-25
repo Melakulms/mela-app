@@ -125,8 +125,12 @@ function AssessmentRunner({ assessment, onBack, onChanged }: any) {
     const { data: userData } = await supabase.auth.getUser()
     const user = userData.user
     if (!user) { setError('Please sign in again.'); setBusy(false); return }
-    const { count } = await supabase.from('assessment_attempts').select('id', { count: 'exact', head: true }).eq('assessment_id', assessment.id)
-    const attemptNo = (count ?? 0) + 1
+    const { data: existingAttempts, error: attemptsError } = await supabase.from('assessment_attempts').select('id,attempt_no,status').eq('assessment_id', assessment.id).eq('user_id', user.id)
+    if (attemptsError) { setError(attemptsError.message); setBusy(false); return }
+    const completedOrActive = existingAttempts ?? []
+    const maxAttempts = Number(assessment.max_attempts ?? 1)
+    if (completedOrActive.length >= maxAttempts) { setError('You have reached the maximum number of attempts for this assessment.'); setBusy(false); return }
+    const attemptNo = completedOrActive.reduce((max: number, a: any) => Math.max(max, Number(a.attempt_no ?? 0)), 0) + 1
     const { data, error } = await supabase.from('assessment_attempts').insert({ assessment_id: assessment.id, user_id: user.id, attempt_no: attemptNo, proctored: assessment.is_proctored, language_code: 'en' }).select('id').single()
     if (error) { setError(error.message); setBusy(false); return }
     const q = await supabase.rpc('get_assessment_attempt_questions_localized', { p_attempt_id: data.id })

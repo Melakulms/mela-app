@@ -34,11 +34,21 @@ export interface SessionSummary {
 }
 
 export async function fetchTopics(): Promise<PracticeTopic[]> {
-  const { data, error } = await supabase
+  const { data: auth } = await supabase.auth.getUser()
+  if (!auth.user) throw new Error('You need to be signed in to practice.')
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('grade_level')
+    .eq('id', auth.user.id)
+    .single()
+  if (profileError) throw profileError
+  const grade = profile?.grade_level == null ? null : Number(profile.grade_level)
+  let query = supabase
     .from('practice_topics')
     .select('id, subject, topic, grade_level, description')
     .eq('is_published', true)
-    .order('subject')
+  if (grade != null) query = query.or('grade_level.eq.' + grade + ',grade_level.is.null')
+  const { data, error } = await query.order('subject').order('topic')
   if (error) throw error
   return data as PracticeTopic[]
 }

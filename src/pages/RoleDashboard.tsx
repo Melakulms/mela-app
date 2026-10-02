@@ -82,19 +82,42 @@ function MentorActions(){
  return <section><div className="section-heading"><h2>Mentorship requests</h2></div>{error&&<div className="banner banner-error">{error}</div>}{rows.length===0?<div className="empty-panel">No mentorship requests.</div>:<div className="list-panel">{rows.map(r=><div className="list-row" key={r.id}><div><b>{r.topic??'Request'}</b><div className="list-row-meta">{r.status}</div></div>{r.status==='pending'&&<span><button className="btn btn-primary" onClick={()=>decide(r.id,'accepted')}>Accept</button> <button className="btn btn-secondary" onClick={()=>decide(r.id,'declined')}>Reject</button></span>}</div>)}</div>}</section>
 }
 
-function ParentActions(){
- const [result,setResult]=useState<any>(null);const [error,setError]=useState('');
- const create=()=>supabase.rpc('create_parent_link_invite_v35').then(({data,error})=>{if(error)setError(error.message);else setResult(data)});
- return <section><div className="section-heading"><h2>Parent–learner relationship</h2></div>{error&&<div className="banner banner-error">{error}</div>}<p className="muted">Generate a secure invitation for your learner to connect this account.</p><button className="btn btn-primary" onClick={create}>Generate learner invite</button>{result&&<div className="banner banner-info" style={{marginTop:'1rem'}}>Invitation generated. Share it securely with your learner.</div>}</section>
+function ParentActions({ onLinked }: { onLinked: () => void }) {
+  const [token, setToken] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [linked, setLinked] = useState(false)
+  const redeem = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setBusy(true); setError(''); setLinked(false)
+    try {
+      const { error } = await supabase.rpc('redeem_parent_link_invite_v35', { p_token: token.trim() })
+      if (error) throw error
+      setToken(''); setLinked(true); onLinked()
+    } catch (error) { setError(error instanceof Error ? error.message : 'Could not connect this learner.') }
+    finally { setBusy(false) }
+  }
+  return <section><div className="section-heading"><h2>Connect your learner</h2></div>
+    <p className="muted">Ask your learner to generate a parent link code in their MELA profile. Codes expire after 30 minutes and can be used once.</p>
+    {error && <div className="banner banner-error" role="alert">{error}</div>}
+    {linked && <div className="banner banner-info" role="status">Your learner is connected.</div>}
+    <form onSubmit={redeem}><div className="field"><label htmlFor="learner-link-code">Learner link code</label>
+      <input id="learner-link-code" value={token} onChange={e => setToken(e.target.value)} required autoComplete="off" disabled={busy} />
+    </div><button className="btn btn-primary" disabled={busy}>{busy ? 'Connecting…' : 'Connect learner'}</button></form>
+  </section>
 }
 
 export default function RoleDashboard({ role, fullName }: Props) {
+  const [revision, setRevision] = useState(0)
   const [summary, setSummary] = useState<Summary | null>(null)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    loadRoleSummary(role).then(setSummary).catch((e) => setError(e.message ?? 'Could not load your dashboard.'))
-  }, [role])
+    let active = true
+    setError('')
+    loadRoleSummary(role).then(data => { if (active) setSummary(data) }).catch(e => { if (active) setError(e.message ?? 'Could not load your dashboard.') })
+    return () => { active = false }
+  }, [role, revision])
 
   if (error) return <div className="dash-main"><div className="banner banner-error">{error}</div><button className="btn btn-secondary" onClick={() => logoutUser()}>Log out</button></div>
   if (!summary) return <div className="centered-loading">Loading your dashboard…</div>
@@ -113,7 +136,7 @@ export default function RoleDashboard({ role, fullName }: Props) {
         ? <div className="empty-panel">No activity yet. Complete your profile or start using your MELA tools.</div>
         : <div className="list-panel">{summary.details.map((d, i) => <div className="list-row" key={i}><span className="list-row-title">{d}</span></div>)}</div>}
       {role === 'mentor' && <MentorActions />}
-      {role === 'parent' && <ParentActions />}
+      {role === 'parent' && <ParentActions onLinked={() => setRevision(value => value + 1)} />}
       <button className="btn btn-secondary" onClick={() => logoutUser()}>Log out</button>
     </div>
   )

@@ -49,6 +49,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
     }
 
     setBusy(true)
+    try {
     const { error: signUpError } = await registerUser({
       email: address,
       password,
@@ -70,6 +71,8 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
     }
 
     onRegistered(address)
+    } catch { setError("Could not connect. Check your connection and try again.") }
+    finally { setBusy(false) }
   }
 
   return (

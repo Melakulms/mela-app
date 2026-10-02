@@ -12,20 +12,22 @@ export default function Login({ onSwitchToRegister }: { onSwitchToRegister: () =
     e.preventDefault()
     setError('')
     setBusy(true)
-    const { error: loginError } = await loginUser(email, password)
-    setBusy(false)
-    if (loginError) setError(loginError.message)
+    try {
+      const { error: loginError } = await loginUser(email.trim(), password)
+      if (loginError) setError(loginError.message)
+    } catch { setError('Could not connect. Check your connection and try again.') }
+    finally { setBusy(false) }
   }
 
   const forgotPassword = async () => {
-    if (!email) {
-      setError('Enter your email above first, then tap "Forgot password".')
-      return
-    }
-    setError('')
-    const { error: resetError } = await requestPasswordReset(email)
-    if (resetError) setError(resetError.message)
-    else setResetSent(true)
+    if (!email.trim()) { setError('Enter your email above first, then tap "Forgot password".'); return }
+    setError(''); setResetSent(false); setBusy(true)
+    try {
+      const { error: resetError } = await requestPasswordReset(email)
+      if (resetError) setError(resetError.message)
+      else setResetSent(true)
+    } catch { setError('Could not send the reset email. Please try again.') }
+    finally { setBusy(false) }
   }
 
   return (
@@ -35,17 +37,17 @@ export default function Login({ onSwitchToRegister }: { onSwitchToRegister: () =
         <h1>Welcome back</h1>
         <p className="auth-subtitle">Log in to keep building your career passport.</p>
 
-        {error && <div className="banner banner-error">{error}</div>}
-        {resetSent && <div className="banner banner-info">Check your email for a password reset link.</div>}
+        {error && <div className="banner banner-error" role="alert">{error}</div>}
+        {resetSent && <div className="banner banner-info" role="status">Check your email for a password reset link.</div>}
 
         <form onSubmit={submit}>
           <div className="field">
             <label htmlFor="email">Email</label>
-            <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="field">
             <label htmlFor="password">Password</label>
-            <input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+            <input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
           <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
             {busy ? 'Logging in…' : 'Log in'}
@@ -53,7 +55,7 @@ export default function Login({ onSwitchToRegister }: { onSwitchToRegister: () =
         </form>
 
         <div className="auth-switch">
-          <button type="button" onClick={forgotPassword}>Forgot password?</button>
+          <button type="button" onClick={forgotPassword} disabled={busy}>Forgot password?</button>
         </div>
         <div className="auth-switch">
           New to MELA? <button type="button" onClick={onSwitchToRegister}>Create an account</button>

@@ -1,3 +1,4 @@
+import ContractDisputes from '../components/ContractDisputes'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
@@ -61,6 +62,7 @@ export default function LearnerSubsections({ view, onBack }: { view: View; onBac
   return <div className="dash-main">
     <div className="section-heading"><h1>{title}</h1><button className="btn btn-secondary" onClick={onBack}>Back</button></div>
     {error && <div className="banner banner-error">{error}</div>}
+    {view === 'earn' && <ContractDisputes />}
     {loading ? <div className="centered-loading">Loading {title}…</div> : <>
       <div className="section-heading"><h2>{view === 'assessments' ? 'Published assessments' : view === 'challenges' ? 'Open challenges' : 'Available work'}</h2></div>
       {rows.length === 0 ? <div className="empty-panel">Nothing is available in this section right now. Check back after content is published.</div> :

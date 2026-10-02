@@ -1,3 +1,4 @@
+import ContractDisputes from '../components/ContractDisputes'
 import { launchCategories } from '../lib/opportunity-input'
 import { useEffect, useState } from 'react'
 import {
@@ -90,6 +91,7 @@ export default function EmployerPortal({ role }: { role: string }) {
         />
       )}
 
+      <ContractDisputes />
       <div className="section-heading"><h2>Your opportunities</h2></div>
       {opportunities.length === 0 ? (
         <div className="empty-panel">You haven't posted anything yet.</div>

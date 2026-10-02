@@ -1,3 +1,4 @@
+import { authRedirectUrl } from '../lib/auth-redirect'
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { logoutUser } from '../lib/auth'
@@ -11,7 +12,7 @@ export default function VerifyEmail({ email, onUseDifferentAccount, onRefresh }:
     setBusy(true)
     setError('')
     try {
-      const { error: resendError } = await supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: window.location.origin } })
+      const { error: resendError } = await supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: authRedirectUrl() } })
       if (resendError) setError(resendError.message)
       else setSent(true)
     } catch { setError('Could not send your verification email. Please try again.') }

@@ -48,11 +48,15 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      APP_URL: https://melakulms.github.io/mela-app/
+      SUPABASE_URL: https://duizgtmbptmlbyipreqg.supabase.co
+      SUPABASE_PUBLISHABLE_KEY: sb_publishable_flQNx6AE3_dbPDHfYGNwWQ_7cMSsAng
     steps:
       - uses: actions/checkout@v4
-      - name: Verify production app and backend health
-        env:
-          APP_URL: https://melakulms.github.io/mela-app/
-          SUPABASE_URL: https://duizgtmbptmlbyipreqg.supabase.co
-          SUPABASE_PUBLISHABLE_KEY: sb_publishable_flQNx6AE3_dbPDHfYGNwWQ_7cMSsAng
-        run: bash scripts/production-smoke.sh
+      - name: Verify published learner app
+        run: bash scripts/production-smoke.sh app
+      - name: Verify Supabase Auth health
+        run: bash scripts/production-smoke.sh auth
+      - name: Verify Supabase Data API
+        run: bash scripts/production-smoke.sh data

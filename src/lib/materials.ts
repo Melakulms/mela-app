@@ -45,3 +45,18 @@ export async function fetchLearningLibrary(stageKey: string, gradeLevel: number 
   if (error) throw error
   return data as LearningLibrary
 }
+
+export interface MaterialContent {
+  material_key: string
+  title: string
+  summary: string | null
+  content_markdown?: string | null
+  locked: boolean
+}
+
+export async function fetchLearningMaterial(materialKey: string): Promise<MaterialContent> {
+  const { data, error } = await supabase.rpc('get_mela_learning_material', { p_material_key: materialKey })
+  if (error) throw error
+  if (!data) throw new Error('This learning material is unavailable.')
+  return data as MaterialContent
+}

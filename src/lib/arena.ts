@@ -50,15 +50,14 @@ export async function checkMyQueueStatus(): Promise<QueueStatus | null> {
   return data as QueueStatus | null
 }
 
-// --- Live match (verified against the real function source; no live match
-// data exists yet to test end-to-end, so `config` shape for choices follows
-// the same convention as practice_questions rather than a confirmed sample) ---
+// Live match contracts follow the deployed Arena functions.
 
 export interface CurrentRound {
   round_order: number
   title: string
   state: string
   time_limit_seconds: number | null
+  ends_at: string | null
 }
 
 export interface MatchState {
@@ -75,7 +74,7 @@ export interface RoundDetail {
   id: string
   prompt: string
   max_points: number
-  config: { choices?: string[] } | null
+  config: { choices?: { id: string; text: string }[] } | null
 }
 
 export interface ScoreboardRow {
@@ -87,7 +86,6 @@ export interface ScoreboardRow {
 }
 
 export interface RoundResult {
-  is_correct: boolean | null
   score: number | null
   feedback: string | null
 }
@@ -117,8 +115,34 @@ export async function fetchCurrentRoundDetail(matchId: string, roundOrder: numbe
 
 export async function submitRound(roundId: string, answer: string): Promise<RoundResult> {
   const { data, error } = await supabase.rpc('submit_arena_round', {
-    p_round_id: roundId, p_response: { answer }, p_attachment_url: null,
+    p_round_id: roundId, p_response: answer, p_attachment_url: null,
   })
   if (error) throw error
   return data as RoundResult
+}
+
+export async function fetchMatchContext(matchId: string) {
+  const { data: auth, error: authError } = await supabase.auth.getUser()
+  if (authError) throw authError
+  if (!auth.user) throw new Error('Sign in to join your match.')
+  const { data: match, error } = await supabase.from('arena_matches').select('creator_id').eq('id', matchId).single()
+  if (error) throw error
+  return { userId: auth.user.id, isCreator: match.creator_id === auth.user.id }
+}
+
+export async function readyForMatch(matchId: string) {
+  const { error } = await supabase.rpc('set_arena_ready', { p_match_id: matchId, p_ready: true })
+  if (error) throw error
+}
+
+export async function startMatch(matchId: string) {
+  const { error } = await supabase.rpc('start_arena', { p_match_id: matchId })
+  if (error) throw error
+}
+
+export async function fetchMyRoundResult(roundId: string, userId: string): Promise<RoundResult | null> {
+  const { data, error } = await supabase.from('arena_round_submissions').select('score,feedback')
+    .eq('round_id', roundId).eq('user_id', userId).maybeSingle()
+  if (error) throw error
+  return data
 }

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { fetchLearningLibrary, type LearningProgram } from '../lib/materials'
+import { fetchLearningLibrary, fetchLearningMaterial, type MaterialContent, type LearningProgram } from '../lib/materials'
 
 export default function StudyMaterials({ stageKey, gradeLevel, onBack }: { stageKey: string | null; gradeLevel: number | null; onBack: () => void }) {
   const [programs, setPrograms] = useState<LearningProgram[] | null>(null)
   const [error, setError] = useState('')
+  const [material, setMaterial] = useState<MaterialContent | null>(null)
+  const [busy, setBusy] = useState(false)
   const [openProgram, setOpenProgram] = useState<string | null>(null)
 
   useEffect(() => {
@@ -16,19 +18,36 @@ export default function StudyMaterials({ stageKey, gradeLevel, onBack }: { stage
       .catch((e) => setError(e.message ?? 'Could not load study materials.'))
   }, [stageKey, gradeLevel])
 
+  const openMaterial = async (key: string) => {
+    if (busy) return
+    setBusy(true); setError('')
+    try { setMaterial(await fetchLearningMaterial(key)) }
+    catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not open this material.') }
+    finally { setBusy(false) }
+  }
+
+  if (material) return <div className="dash-main">
+    <div className="section-heading"><h1>{material.title}</h1><button className="btn btn-secondary" onClick={() => setMaterial(null)}>Back to materials</button></div>
+    {material.summary && <p>{material.summary}</p>}
+    {material.locked ? <div className="banner banner-info">Your account does not have access to this material.</div>
+      : material.content_markdown ? <article style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', lineHeight: 1.7 }}>{material.content_markdown}</article>
+      : <div className="empty-panel">Content is not available yet.</div>}
+  </div>
+
   return (
     <div className="dash-main">
       <div className="section-heading">
         <h1>Study Materials</h1>
         <button className="btn btn-secondary" onClick={onBack}>Back</button>
       </div>
-      {error && <div className="banner banner-error">{error}</div>}
+      {error && <div role="alert" className="banner banner-error">{error}</div>}
       {!programs && !error && <p className="muted">Loading…</p>}
       {programs && programs.length === 0 && <div className="empty-panel">No materials published for your stage yet.</div>}
 
       {programs?.map((p) => (
         <div key={p.program_key} className="list-panel">
           <button
+            aria-expanded={openProgram === p.program_key}
             className="list-row"
             style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'left', cursor: 'pointer' }}
             onClick={() => setOpenProgram(openProgram === p.program_key ? null : p.program_key)}
@@ -50,7 +69,7 @@ export default function StudyMaterials({ stageKey, gradeLevel, onBack }: { stage
                   <div key={m.material_key} className="list-row" style={{ padding: '0.6rem 0' }}>
                     <div className="list-row-title" style={{ fontSize: '0.9rem' }}>{m.title}</div>
                     {m.can_access ? (
-                      <span className="pill" style={{ background: 'var(--surface-2)', color: 'var(--success)' }}>Available</span>
+                      <button className="btn btn-secondary" disabled={busy} onClick={() => void openMaterial(m.material_key)}>Open material</button>
                     ) : (
                       <span className="pill">{m.access_tier === 'subscription' ? 'Needs subscription' : 'Needs purchase'}</span>
                     )}

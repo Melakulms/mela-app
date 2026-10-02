@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import {
   fetchLeaderboard, joinMatchmaking, cancelMatchmaking, checkMyQueueStatus,
   fetchMatchState, fetchScoreboard, fetchCurrentRoundDetail, submitRound,
+  fetchMatchContext, readyForMatch, startMatch, fetchMyRoundResult,
   type LeaderboardRow, type ArenaMode, type MatchState, type ScoreboardRow, type RoundDetail, type RoundResult,
 } from '../lib/arena'
 
@@ -25,16 +26,40 @@ export default function Arena({ onBack }: { onBack: () => void }) {
   const [assessmentId, setAssessmentId] = useState('')
 
   useEffect(() => {
-    supabase.from('skill_assessments').select('id,title,question_count').eq('status','published').gte('question_count',8).order('title').then(({ data }) => {
+    supabase.from('skill_assessments').select('id,title,question_count').eq('status','published').gte('question_count',8).order('title').then(({ data, error }) => {
+      if (error) { setError(error.message); return }
       setAssessments((data ?? []) as { id: string; title: string; question_count: number }[])
       if (data?.[0]) setAssessmentId(data[0].id)
     })
     fetchLeaderboard().then(setLeaderboard).catch((e) => setError(e.message ?? 'Could not load the leaderboard.'))
     checkMyQueueStatus().then((q) => {
-      if (q?.matched_match_id) { setMatchId(q.matched_match_id); setQueueState('matched') }
+      if (q?.status === 'matched' && q.matched_match_id) { setMatchId(q.matched_match_id); setQueueState('matched') }
       else if (q?.status === 'waiting') setQueueState('searching')
     }).catch(() => {})
   }, [])
+
+  useEffect(() => {
+    if (queueState !== 'searching') return
+    let active = true
+    let checking = false
+    const check = async () => {
+      if (checking) return
+      checking = true
+      try {
+        const q = await checkMyQueueStatus()
+        if (!active) return
+        if (q?.status === 'matched' && q.matched_match_id) {
+          setMatchId(q.matched_match_id); setQueueState('matched')
+        } else if (!q || ['cancelled', 'expired'].includes(q.status)) {
+          setQueueState('idle'); setError('Your search ended. Start a new search to find an opponent.')
+        }
+      } catch (cause) { if (active) setError(cause instanceof Error ? cause.message : 'Could not check matchmaking.') }
+      finally { checking = false }
+    }
+    void check()
+    const timer = window.setInterval(() => void check(), 5000)
+    return () => { active = false; window.clearInterval(timer) }
+  }, [queueState])
 
   const startSearching = async (mode: ArenaMode) => {
     setBusy(true)
@@ -67,7 +92,7 @@ export default function Arena({ onBack }: { onBack: () => void }) {
     setError('')
     try {
       const q = await checkMyQueueStatus()
-      if (q?.matched_match_id) { setMatchId(q.matched_match_id); setQueueState('matched') }
+      if (q?.status === 'matched' && q.matched_match_id) { setMatchId(q.matched_match_id); setQueueState('matched') }
       else setError('Still searching — no opponent found yet. Try again in a moment.')
     } catch (e: any) {
       setError(e.message ?? 'Could not check matchmaking status.')
@@ -102,7 +127,7 @@ export default function Arena({ onBack }: { onBack: () => void }) {
               <div className="module-card" key={m.value}>
                 <h3>{m.label}</h3>
                 <p>{m.blurb}</p>
-                <button className="btn btn-primary" onClick={() => startSearching(m.value)} disabled={busy}>Search for opponent</button>
+                <button className="btn btn-primary" onClick={() => startSearching(m.value)} disabled={busy || (m.value === 'speed_quiz' && !assessmentId)}>Search for opponent</button>
               </div>
             ))}
           </div>
@@ -141,126 +166,102 @@ export default function Arena({ onBack }: { onBack: () => void }) {
   )
 }
 
-function LiveMatch({ matchId, onLeave, onBack }: { matchId: string; onLeave: () => void; onBack: () => void }) {
+export function LiveMatch({ matchId, onLeave, onBack }: { matchId: string; onLeave: () => void; onBack: () => void }) {
   const [state, setState] = useState<MatchState | null>(null)
   const [round, setRound] = useState<RoundDetail | null>(null)
   const [scoreboard, setScoreboard] = useState<ScoreboardRow[]>([])
+  const [context, setContext] = useState<{ userId: string; isCreator: boolean } | null>(null)
+  const [serverResult, setServerResult] = useState<RoundResult | null>(null)
   const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const active = useRef(false)
+  const fetching = useRef(false)
+
+  const load = useCallback(async () => {
+    if (fetching.current) return
+    fetching.current = true
+    try {
+      const [s, c] = await Promise.all([fetchMatchState(matchId), fetchMatchContext(matchId)])
+      const [board, r] = await Promise.all([
+        fetchScoreboard(matchId),
+        s.current_round ? fetchCurrentRoundDetail(matchId, s.current_round.round_order) : Promise.resolve(null),
+      ])
+      const submission = r ? await fetchMyRoundResult(r.id, c.userId) : null
+      if (!active.current) return
+      setState(s); setContext(c); setScoreboard(board); setRound(r); setServerResult(submission); setError('')
+    } catch (cause) {
+      if (active.current) setError(cause instanceof Error ? cause.message : 'Could not load the match.')
+    } finally { fetching.current = false }
+  }, [matchId])
+
+  useEffect(() => {
+    active.current = true
+    void load()
+    const timer = window.setInterval(() => void load(), 5000)
+    return () => { active.current = false; window.clearInterval(timer) }
+  }, [load])
+
+  const prepare = async (start: boolean) => {
+    if (busy) return
+    setBusy(true); setError('')
+    try {
+      if (start) await startMatch(matchId)
+      else await readyForMatch(matchId)
+      await load()
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not prepare the match.') }
+    finally { setBusy(false) }
+  }
+
+  if (!state) return <div className="dash-main">
+    <h1>Arena match</h1>
+    {error ? <><div className="banner banner-error" role="alert">{error}</div><button className="btn btn-primary" onClick={() => void load()}>Retry</button></> : <p role="status">Loading match…</p>}
+    <button className="btn btn-secondary" onClick={onBack}>Back to dashboard</button>
+  </div>
+
+  return <div className="dash-main">
+    <div className="section-heading"><h1>{state.title}</h1><button className="btn btn-secondary" onClick={onBack}>Back to dashboard</button></div>
+    {error && <div className="banner banner-error" role="alert">{error}</div>}
+    <p className="muted">{state.participant_count} players · status: {state.status}</p>
+    {['open', 'ready'].includes(state.status) ? <div className="banner banner-info">
+      <p>Both players must be ready before the match creator can start.</p>
+      <button className="btn btn-primary" disabled={busy} onClick={() => void prepare(false)}>I'm ready</button>
+      {context?.isCreator && <button className="btn btn-primary" disabled={busy || state.status !== 'ready'} onClick={() => void prepare(true)}>Start match</button>}
+      <button className="btn btn-secondary" disabled={busy} onClick={() => void load()}>Refresh match</button>
+    </div> : state.status === 'completed' ? <div className="banner banner-info">This match has ended.</div>
+      : state.status === 'cancelled' ? <div className="banner banner-info">This match was cancelled.</div>
+      : round && state.current_round?.state === 'open' ? <RoundPanel key={round.id} round={round} order={state.current_round.round_order} serverResult={serverResult} onSubmitted={() => void load()} />
+      : <div className="banner banner-info">Waiting for the next round to open. The match refreshes automatically.</div>}
+    <div className="section-heading"><h2>Scoreboard</h2></div>
+    {!scoreboard.length ? <div className="empty-panel">Scores will appear once the match is underway.</div> : <div className="list-panel">
+      {scoreboard.map(row => <div className="list-row" key={row.user_id}><div className="list-row-title">#{row.rank} {row.full_name ?? 'Player'}</div><span className="pill">{row.score} pts</span></div>)}
+    </div>}
+    <button className="btn btn-secondary" onClick={onLeave}>Leave match view</button>
+  </div>
+}
+
+function RoundPanel({ round, order, serverResult, onSubmitted }: { round: RoundDetail; order: number; serverResult: RoundResult | null; onSubmitted: () => void }) {
   const [answer, setAnswer] = useState('')
   const [result, setResult] = useState<RoundResult | null>(null)
+  const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-
-  const load = async () => {
-    setError('')
-    try {
-      const s = await fetchMatchState(matchId)
-      setState(s)
-      const board = await fetchScoreboard(matchId).catch(() => [])
-      setScoreboard(board)
-      if (s.current_round) {
-        const r = await fetchCurrentRoundDetail(matchId, s.current_round.round_order)
-        setRound(r)
-      } else {
-        setRound(null)
-      }
-    } catch (e: any) {
-      setError(e.message ?? 'Could not load the match.')
-    }
-  }
-
-  useEffect(() => { load() }, [matchId])
-
+  const submitting = useRef(false)
+  const submitted = result ?? serverResult
   const submit = async () => {
-    if (!round || !answer.trim()) return
-    setBusy(true)
-    setError('')
-    try {
-      const r = await submitRound(round.id, answer)
-      setResult(r)
-    } catch (e: any) {
-      setError(e.message ?? 'Could not submit that answer.')
-    } finally {
-      setBusy(false)
-    }
+    if (submitting.current || submitted || !answer.trim()) return
+    submitting.current = true; setBusy(true); setError('')
+    try { setResult(await submitRound(round.id, answer)); onSubmitted() }
+    catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not submit that answer.') }
+    finally { submitting.current = false; setBusy(false) }
   }
-
-  const refresh = () => { setResult(null); setAnswer(''); load() }
-
-  if (!state) {
-    return <div className="centered-loading">Loading match…</div>
-  }
-
-  return (
-    <div className="dash-main">
-      <div className="section-heading">
-        <h1>{state.title}</h1>
-        <button className="btn btn-secondary" onClick={onBack}>Back to dashboard</button>
-      </div>
-      {error && <div className="banner banner-error">{error}</div>}
-      <p className="muted">{state.participant_count} players · status: {state.status}</p>
-
-      {state.status === 'completed' ? (
-        <div className="banner banner-info">This match has ended.</div>
-      ) : round ? (
-        <>
-          <div className="section-heading"><h2>Round {state.current_round?.round_order}</h2></div>
-          <p style={{ fontSize: '1.1rem', fontWeight: 600 }}>{round.prompt}</p>
-
-          {round.config?.choices ? (
-            <div className="list-panel">
-              {round.config.choices.map((choice) => (
-                <button
-                  key={choice}
-                  className="list-row"
-                  style={{ width: '100%', border: 'none', textAlign: 'left', cursor: result ? 'default' : 'pointer', background: answer === choice ? 'var(--gold-soft)' : 'transparent' }}
-                  onClick={() => !result && setAnswer(choice)}
-                  disabled={!!result}
-                >
-                  <span className="list-row-title">{choice}</span>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="field">
-              <input value={answer} onChange={(e) => setAnswer(e.target.value)} disabled={!!result} placeholder="Your answer" />
-            </div>
-          )}
-
-          {!result ? (
-            <button className="btn btn-primary" onClick={submit} disabled={busy || !answer.trim()}>Submit answer</button>
-          ) : (
-            <>
-              <div className={`banner ${result.is_correct ? 'banner-info' : 'banner-error'}`}>
-                {result.is_correct === null ? 'Answer submitted.' : result.is_correct ? 'Correct.' : 'Not quite.'} {result.feedback}
-              </div>
-              <button className="btn btn-primary" onClick={refresh}>Check for next round</button>
-            </>
-          )}
-        </>
-      ) : (
-        <div className="banner banner-info">
-          Waiting for the next round to open.
-          <div style={{ marginTop: '0.6rem' }}>
-            <button className="btn btn-secondary" onClick={refresh}>Refresh</button>
-          </div>
-        </div>
-      )}
-
-      <div className="section-heading"><h2>Scoreboard</h2></div>
-      {scoreboard.length === 0 ? (
-        <div className="empty-panel">Scores will appear once the match is underway.</div>
-      ) : (
-        <div className="list-panel">
-          {scoreboard.map((row) => (
-            <div className="list-row" key={row.user_id}>
-              <div className="list-row-title">#{row.rank} {row.full_name ?? 'Player'}</div>
-              <span className="pill">{row.score} pts</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <button className="btn btn-secondary" onClick={onLeave}>Leave match view</button>
-    </div>
-  )
+  return <>
+    <h2>Round {order}</h2><p>{round.prompt}</p>
+    {error && <div className="banner banner-error" role="alert">{error}</div>}
+    {round.config?.choices?.length ? <div className="list-panel">
+      {round.config.choices.map(choice => <button key={choice.id} className="list-row" style={{ width: '100%', textAlign: 'left', background: answer === choice.id ? 'var(--gold-soft)' : 'transparent' }} disabled={busy || !!submitted} onClick={() => setAnswer(choice.id)}>{choice.text}</button>)}
+    </div> : <div className="field"><label htmlFor="arena-answer">Your answer</label><input id="arena-answer" value={answer} onChange={e => setAnswer(e.target.value)} disabled={busy || !!submitted} /></div>}
+    {submitted ? <div className="banner banner-info" role="status">
+      {submitted.score == null ? 'Answer submitted. Awaiting review.' : `Answer submitted. Score: ${submitted.score} / ${round.max_points}.`} {submitted.feedback}
+      <p>The next round will appear automatically.</p>
+    </div> : <button className="btn btn-primary" disabled={busy || !answer.trim()} onClick={() => void submit()}>{busy ? 'Submitting…' : 'Submit answer'}</button>}
+  </>
 }

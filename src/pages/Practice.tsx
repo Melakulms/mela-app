@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   fetchTopics, startSession, fetchSessionQuestions, submitResponse, completeSession,
   type PracticeTopic, type PracticeQuestion, type SubmitResult, type SessionSummary,
@@ -15,6 +15,9 @@ export default function Practice({ onBack }: { onBack: () => void }) {
   const [topics, setTopics] = useState<PracticeTopic[] | null>(null)
   const [recommendations, setRecommendations] = useState<PracticeRecommendation[]>([])
   const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [textAnswer, setTextAnswer] = useState('')
+  const submitting = useRef(false)
   const [view, setView] = useState<View>({ stage: 'topics' })
 
   useEffect(() => {
@@ -41,7 +44,10 @@ export default function Practice({ onBack }: { onBack: () => void }) {
   }
 
   const pickAnswer = async (choice: string) => {
-    if (view.stage !== 'in_session' || view.result) return
+    if (view.stage !== 'in_session' || view.result || submitting.current || !choice.trim()) return
+    submitting.current = true
+    setBusy(true)
+    setError('')
     const current = view.questions[view.index]
     const timeSpent = Math.round((Date.now() - view.questionStartedAt) / 1000)
     setView({ ...view, selected: choice })
@@ -50,19 +56,22 @@ export default function Practice({ onBack }: { onBack: () => void }) {
       setView((v) => (v.stage === 'in_session' ? { ...v, result, selected: choice } : v))
     } catch (e: any) {
       setError(e.message ?? 'Could not submit that answer.')
-    }
+    } finally { submitting.current = false; setBusy(false) }
   }
 
   const nextQuestion = async () => {
-    if (view.stage !== 'in_session') return
+    if (view.stage !== 'in_session' || !view.result || submitting.current) return
+    setError('')
+    setTextAnswer('')
     const isLast = view.index + 1 >= view.questions.length
     if (isLast) {
+      submitting.current = true; setBusy(true)
       try {
         const summary = await completeSession(view.sessionId)
         setView({ stage: 'complete', summary })
       } catch (e: any) {
         setError(e.message ?? 'Could not finish the session.')
-      }
+      } finally { submitting.current = false; setBusy(false) }
       return
     }
     setView({ ...view, index: view.index + 1, questionStartedAt: Date.now(), result: null, selected: null })
@@ -137,20 +146,26 @@ export default function Practice({ onBack }: { onBack: () => void }) {
                 className="list-row"
                 style={{ width: '100%', border: 'none', textAlign: 'left', cursor: view.result ? 'default' : 'pointer', background: showResult ? (view.result?.is_correct ? '#eaf5ee' : '#fbeceb') : 'transparent' }}
                 onClick={() => pickAnswer(choice)}
-                disabled={!!view.result}
+                disabled={busy || !!view.result}
               >
                 <span className="list-row-title">{choice}</span>
               </button>
             )
           })}
         </div>
+        {!q.choices?.length && <div className="field">
+          <label htmlFor="practice-answer">Your answer</label>
+          <input id="practice-answer" value={textAnswer} onChange={event => setTextAnswer(event.target.value)} disabled={busy || !!view.result} />
+          {!view.result && <button className="btn btn-primary" disabled={busy || !textAnswer.trim()} onClick={() => void pickAnswer(textAnswer)}>Submit answer</button>}
+        </div>}
+        {busy && <p role="status">Saving…</p>}
         {view.result && (
           <div className={`banner ${view.result.is_correct ? 'banner-info' : 'banner-error'}`}>
-            {view.result.is_correct ? 'Correct.' : 'Not quite.'} {view.result.feedback}
+            {view.result.is_correct == null ? 'Answer submitted.' : view.result.is_correct ? 'Correct.' : 'Not quite.'} {view.result.feedback}
           </div>
         )}
         {view.result && (
-          <button className="btn btn-primary" onClick={nextQuestion}>
+          <button className="btn btn-primary" onClick={nextQuestion} disabled={busy}>
             {view.index + 1 >= view.questions.length ? 'Finish session' : 'Next question'}
           </button>
         )}

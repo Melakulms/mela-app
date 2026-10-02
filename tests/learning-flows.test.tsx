@@ -1,0 +1,56 @@
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import StudyMaterials from '../src/pages/StudyMaterials'
+import Practice from '../src/pages/Practice'
+const mocks = vi.hoisted(() => ({ fetchLearningLibrary: vi.fn(), fetchLearningMaterial: vi.fn(), fetchTopics: vi.fn(), startSession: vi.fn(), fetchSessionQuestions: vi.fn(), submitResponse: vi.fn(), completeSession: vi.fn(), fetchDashboard: vi.fn() }))
+vi.mock('../src/lib/materials', () => mocks)
+vi.mock('../src/lib/practice', () => mocks)
+vi.mock('../src/lib/dashboard', () => mocks)
+beforeEach(() => {
+  vi.resetAllMocks()
+  mocks.fetchLearningLibrary.mockResolvedValue({ programs: [{ program_key: 'program', title: 'Mathematics', subject_title: 'Math', units: [{ id: 'unit', unit_number: 1, title: 'Numbers', materials: [{ material_key: 'notes', title: 'Notes', can_access: true }] }] }] })
+  mocks.fetchTopics.mockResolvedValue([{ id: 'topic', subject: 'Math', topic: 'Numbers' }])
+  mocks.fetchDashboard.mockResolvedValue({ practice: { recommendations: [] } })
+  mocks.startSession.mockResolvedValue('session')
+})
+afterEach(cleanup)
+async function openMaterial() {
+  render(<StudyMaterials stageKey="secondary" gradeLevel={9} onBack={vi.fn()} />)
+  fireEvent.click(await screen.findByRole('button', { name: /Mathematics/ }))
+  fireEvent.click(screen.getByRole('button', { name: 'Open material' }))
+}
+it('opens available study content as safe text and returns to the library', async () => {
+  mocks.fetchLearningMaterial.mockResolvedValue({ title: 'Notes', locked: false, content_markdown: '## Numbers\n<script>alert(1)</script>' })
+  await openMaterial()
+  await screen.findByRole('article')
+  expect(screen.getByRole('article').textContent).toContain('<script>alert(1)</script>')
+  fireEvent.click(screen.getByRole('button', { name: 'Back to materials' }))
+  expect(screen.getByRole('heading', { name: 'Study Materials' })).toBeTruthy()
+})
+it('respects a locked server response even when the library previously showed access', async () => {
+  mocks.fetchLearningMaterial.mockResolvedValue({ title: 'Notes', locked: true, content_markdown: 'Protected content' })
+  await openMaterial()
+  await screen.findByText(/does not have access/)
+  expect(screen.queryByText('Protected content')).toBeNull()
+})
+it('accepts a written practice answer and shows pending grading accurately', async () => {
+  mocks.fetchSessionQuestions.mockResolvedValue([{ question_id: 'question', question: 'Explain your answer', choices: null }])
+  mocks.submitResponse.mockResolvedValue({ is_correct: null, feedback: 'Awaiting review.' })
+  render(<Practice onBack={vi.fn()} />)
+  fireEvent.click(await screen.findByRole('button', { name: 'Start' }))
+  fireEvent.change(await screen.findByLabelText('Your answer'), { target: { value: 'My explanation' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Submit answer' }))
+  await screen.findByText(/Answer submitted/)
+  expect(mocks.submitResponse).toHaveBeenCalledWith('session', 'question', 'My explanation', expect.any(Number))
+  expect(screen.queryByText(/Not quite/)).toBeNull()
+})
+it('prevents another practice answer while a submission is pending', async () => {
+  mocks.fetchSessionQuestions.mockResolvedValue([{ question_id: 'question', question: 'Choose', choices: ['A', 'B'] }])
+  mocks.submitResponse.mockReturnValue(new Promise(() => {}))
+  render(<Practice onBack={vi.fn()} />)
+  fireEvent.click(await screen.findByRole('button', { name: 'Start' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'A' }))
+  expect((screen.getByRole('button', { name: 'B' }) as HTMLButtonElement).disabled).toBe(true)
+  fireEvent.click(screen.getByRole('button', { name: 'B' }))
+  expect(mocks.submitResponse).toHaveBeenCalledOnce()
+})

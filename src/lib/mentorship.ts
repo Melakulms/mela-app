@@ -33,8 +33,9 @@ export async function fetchVerifiedMentors(): Promise<Mentor[]> {
 }
 
 export async function fetchMyMentorshipRequests(): Promise<MyMentorshipRequest[]> {
-  const { data: auth } = await supabase.auth.getUser()
-  if (!auth.user) return []
+  const { data: auth, error: authError } = await supabase.auth.getUser()
+  if (authError) throw authError
+  if (!auth.user) throw new Error('Your session has expired. Please sign in again.')
   const { data, error } = await supabase
     .from('mentorship_requests')
     .select('id, mentor_id, topic, status, created_at')
@@ -45,13 +46,22 @@ export async function fetchMyMentorshipRequests(): Promise<MyMentorshipRequest[]
 }
 
 export async function requestMentor(mentorId: string, topic: string, message: string): Promise<void> {
-  const { data: auth } = await supabase.auth.getUser()
+  const cleanMentorId = mentorId.trim()
+  const cleanTopic = topic.trim()
+  const cleanMessage = message.trim()
+  if (!cleanMentorId) throw new Error('Choose a mentor before sending your request.')
+  if (cleanTopic.length < 2) throw new Error('Add a short topic before sending the request.')
+  if (cleanTopic.length > 120) throw new Error('Keep the mentorship topic to 120 characters or fewer.')
+  if (cleanMessage.length > 1000) throw new Error('Keep the message to 1000 characters or fewer.')
+
+  const { data: auth, error: authError } = await supabase.auth.getUser()
+  if (authError) throw authError
   if (!auth.user) throw new Error('You need to be logged in to request a mentor.')
   const { error } = await supabase.from('mentorship_requests').insert({
     mentee_id: auth.user.id,
-    mentor_id: mentorId,
-    topic,
-    message: message || null,
+    mentor_id: cleanMentorId,
+    topic: cleanTopic,
+    message: cleanMessage || null,
     status: 'pending',
   })
   if (error) throw error

@@ -25,6 +25,7 @@ const RoleProfileSetup = lazy(() => import('./pages/RoleProfileSetup'))
 const EmployerApprovalPending = lazy(() => import('./pages/EmployerApprovalPending'))
 const LearnerTools = lazy(() => import('./pages/LearnerTools'))
 const LearnerSubsections = lazy(() => import('./pages/LearnerSubsections'))
+const VerifiedAssessments = lazy(() => import('./pages/VerifiedAssessments'))
 const StudentOnboarding = lazy(() => import('./pages/StudentOnboarding'))
 const QuestionBank = lazy(() => import('./pages/QuestionBank'))
 
@@ -251,7 +252,7 @@ export default function App() {
           {studentView === 'mela-next' && <LearnerTools view="next" onBack={() => setStudentView('dashboard')} />}
           {studentView === 'wallet' && <LearnerTools view="wallet" onBack={() => setStudentView('dashboard')} />}
           {studentView === 'challenges' && <LearnerSubsections view="challenges" onBack={() => setStudentView('dashboard')} />}
-          {studentView === 'assessments' && <LearnerSubsections view="assessments" onBack={() => setStudentView('dashboard')} />}
+          {studentView === 'assessments' && <VerifiedAssessments onBack={() => setStudentView('dashboard')} />}
           {studentView === 'earn-work' && <LearnerSubsections view="earn" onBack={() => setStudentView('dashboard')} />}
           {studentView === 'dashboard' && <StudentDashboard onNavigate={setStudentView} />}
         </>

@@ -37,7 +37,7 @@ describe('Mentorship', () => {
     mocks.fetchVerifiedMentors.mockRejectedValueOnce(new Error('Network unavailable'))
     render(<Mentorship onBack={vi.fn()} />)
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Network unavailable')
+    expect((await screen.findByRole('alert')).textContent).toContain('Network unavailable')
     fireEvent.click(screen.getByRole('button', { name: 'Retry mentorship' }))
 
     expect(await screen.findByText('Mentor One')).toBeTruthy()

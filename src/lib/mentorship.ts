@@ -17,6 +17,26 @@ export interface MyMentorshipRequest {
   created_at: string
 }
 
+export interface MentorshipSession {
+  id: string
+  request_id: string | null
+  mentor_id: string | null
+  mentee_id: string | null
+  scheduled_at: string
+  duration_min: number | null
+  status: string
+  call_room_id: string | null
+  completed_at: string | null
+  cancelled_at: string | null
+}
+
+async function requireUserId(): Promise<string> {
+  const { data: auth, error } = await supabase.auth.getUser()
+  if (error) throw error
+  if (!auth.user) throw new Error('Your session has expired. Please sign in again.')
+  return auth.user.id
+}
+
 export async function fetchVerifiedMentors(): Promise<Mentor[]> {
   const { data: mentors, error } = await supabase
     .from('mentor_profiles')
@@ -33,16 +53,25 @@ export async function fetchVerifiedMentors(): Promise<Mentor[]> {
 }
 
 export async function fetchMyMentorshipRequests(): Promise<MyMentorshipRequest[]> {
-  const { data: auth, error: authError } = await supabase.auth.getUser()
-  if (authError) throw authError
-  if (!auth.user) throw new Error('Your session has expired. Please sign in again.')
+  const userId = await requireUserId()
   const { data, error } = await supabase
     .from('mentorship_requests')
     .select('id, mentor_id, topic, status, created_at')
-    .eq('mentee_id', auth.user.id)
+    .eq('mentee_id', userId)
     .order('created_at', { ascending: false })
   if (error) throw error
   return data as MyMentorshipRequest[]
+}
+
+export async function fetchMyMentorshipSessions(): Promise<MentorshipSession[]> {
+  const userId = await requireUserId()
+  const { data, error } = await supabase
+    .from('mentorship_sessions')
+    .select('id,request_id,mentor_id,mentee_id,scheduled_at,duration_min,status,call_room_id,completed_at,cancelled_at')
+    .or(`mentor_id.eq.${userId},mentee_id.eq.${userId}`)
+    .order('scheduled_at', { ascending: false })
+  if (error) throw error
+  return data as MentorshipSession[]
 }
 
 export async function requestMentor(mentorId: string, topic: string, message: string): Promise<void> {
@@ -54,15 +83,48 @@ export async function requestMentor(mentorId: string, topic: string, message: st
   if (cleanTopic.length > 120) throw new Error('Keep the mentorship topic to 120 characters or fewer.')
   if (cleanMessage.length > 1000) throw new Error('Keep the message to 1000 characters or fewer.')
 
-  const { data: auth, error: authError } = await supabase.auth.getUser()
-  if (authError) throw authError
-  if (!auth.user) throw new Error('You need to be logged in to request a mentor.')
+  const userId = await requireUserId()
   const { error } = await supabase.from('mentorship_requests').insert({
-    mentee_id: auth.user.id,
+    mentee_id: userId,
     mentor_id: cleanMentorId,
     topic: cleanTopic,
     message: cleanMessage || null,
     status: 'pending',
+  })
+  if (error) throw error
+}
+
+export async function cancelMentorshipRequest(requestId: string): Promise<void> {
+  const { error } = await supabase.rpc('cancel_mentorship_request', { p_request_id: requestId })
+  if (error) throw error
+}
+
+export async function scheduleMentorshipSession(requestId: string, scheduledAt: string, durationMin: number): Promise<void> {
+  if (!requestId) throw new Error('Choose an accepted mentorship request.')
+  const when = new Date(scheduledAt)
+  if (Number.isNaN(when.getTime()) || when.getTime() <= Date.now()) throw new Error('Choose a future session time.')
+  if (!Number.isInteger(durationMin) || durationMin < 15 || durationMin > 180) throw new Error('Session duration must be 15 to 180 minutes.')
+  const { error } = await supabase.rpc('schedule_mentorship_session', {
+    p_request_id: requestId,
+    p_scheduled_at: when.toISOString(),
+    p_duration_min: durationMin,
+    p_call_room_id: null,
+  })
+  if (error) throw error
+}
+
+export async function cancelMentorshipSession(sessionId: string, reason = ''): Promise<void> {
+  const { error } = await supabase.rpc('cancel_mentorship_session', {
+    p_session_id: sessionId,
+    p_reason: reason.trim() || null,
+  })
+  if (error) throw error
+}
+
+export async function completeMentorshipSession(sessionId: string, notes = ''): Promise<void> {
+  const { error } = await supabase.rpc('complete_mentorship_session', {
+    p_session_id: sessionId,
+    p_notes: notes.trim() || null,
   })
   if (error) throw error
 }

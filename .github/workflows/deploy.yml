@@ -42,3 +42,17 @@ jobs:
     steps:
       - uses: actions/deploy-pages@v4
         id: deployment
+
+  smoke:
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify production app and backend health
+        env:
+          APP_URL: https://melakulms.github.io/mela-app/
+          SUPABASE_URL: https://duizgtmbptmlbyipreqg.supabase.co
+          SUPABASE_PUBLISHABLE_KEY: sb_publishable_flQNx6AE3_dbPDHfYGNwWQ_7cMSsAng
+        run: bash scripts/production-smoke.sh

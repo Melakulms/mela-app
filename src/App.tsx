@@ -40,6 +40,14 @@ const BOTTOM_NAV: { view: StudentView; label: string }[] = [
 ]
 
 export default function App() {
+  const [online, setOnline] = useState(() => navigator.onLine)
+  const [preferenceError, setPreferenceError] = useState('')
+  const [languageBusy, setLanguageBusy] = useState(false)
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine)
+    window.addEventListener('online', update); window.addEventListener('offline', update)
+    return () => {window.removeEventListener('online', update);window.removeEventListener('offline', update)}
+  }, [])
   const [recovering, setRecovering] = useState(() => new URLSearchParams(window.location.search).get('recovery') === '1')
   const [accountError, setAccountError] = useState('')
   const [profileLoading, setProfileLoading] = useState(true)
@@ -173,10 +181,13 @@ export default function App() {
   }
 
   const changeLanguage = async (code: string) => {
+    if (languageBusy) return
+    setLanguageBusy(true); setPreferenceError('')
     try {
       await updatePreferredLanguage(code)
       reloadProfile()
-    } catch { /* surfaced within Profile page if changed from there */ }
+    } catch { setPreferenceError('Could not save your language. Please try again.') }
+    finally { setLanguageBusy(false) }
   }
 
   return (
@@ -184,17 +195,19 @@ export default function App() {
       <header className="app-topbar">
         <span className="auth-wordmark">⚡ MELA</span>
         <div className="app-topbar-right">
-          <select className="lang-select" value={profile.preferred_language} onChange={(e) => changeLanguage(e.target.value)}>
+          <select aria-label="Preferred language" disabled={languageBusy} className="lang-select" value={profile.preferred_language} onChange={(e) => changeLanguage(e.target.value)}>
             {languages.map((l) => (
               <option key={l.language_code} value={l.language_name}>{l.native_name}</option>
             ))}
           </select>
           <span className="pill-stat coins">🪙 {profile.coin_balance}</span>
-          <span className="pill-stat online"><Wifi size={13} /> Online</span>
+          <span className="pill-stat online"><Wifi size={13} /> {online ? 'Connected' : 'Offline'}</span>
           <button className="icon-btn" onClick={() => logoutUser()} aria-label="Log out"><LogOut size={18} /></button>
         </div>
       </header>
 
+      {preferenceError && <div className="banner banner-error" role="alert">{preferenceError}</div>}
+      {!online && <div className="banner banner-info" role="status">You are offline. Reconnect before saving changes.</div>}
       {isStudent ? (
         <>
           {studentView === 'practice' && <Practice onBack={() => setStudentView('dashboard')} />}

@@ -10,6 +10,7 @@ export interface Opportunity {
   deadline: string | null
   summary: string | null
   stipend_or_reward: string | null
+  application_method: string | null
   external_url: string | null
 }
 
@@ -23,7 +24,7 @@ export interface MyApplication {
 export async function fetchOpenOpportunities(): Promise<Opportunity[]> {
   const { data, error } = await supabase
     .from('opportunities')
-    .select('id, title, organization_name, opportunity_type, location, is_remote, deadline, summary, stipend_or_reward, external_url')
+    .select('id, title, organization_name, opportunity_type, location, is_remote, deadline, summary, stipend_or_reward, application_method, external_url')
     .eq('status', 'open')
     .eq('moderation_status', 'approved')
     .eq('verified_active', true)

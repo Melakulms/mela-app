@@ -1,3 +1,4 @@
+import JoinClassroom from '../components/JoinClassroom'
 import { supabase } from '../lib/supabase'
 import { useEffect, useState } from 'react'
 import { fetchEnabledLanguages, type PlatformLanguage } from '../lib/languages'
@@ -59,6 +60,7 @@ export default function Profile({ profile, onProfileUpdated }: { profile: MelaPr
         </select>
       </div>
 
+      {profile.role === 'student' && <JoinClassroom />}
       {profile.role === 'student' && <section>
         <div className="section-heading"><h2>Connect a parent or guardian</h2></div>
         <p className="muted">Share this code only with your parent or guardian. It expires after 30 minutes. Generating a new code replaces the previous one.</p>

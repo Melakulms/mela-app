@@ -27,16 +27,18 @@ const MODULES: { key: string; label: string; blurb: string; view?: string; icon:
 ]
 
 export default function StudentDashboard({ onNavigate }: { onNavigate: (view: string) => void }) {
+  const [revision, setRevision] = useState(0)
   const [data, setData] = useState<MelaDashboard | null>(null)
   const [badges, setBadges] = useState<EarnedBadge[]>([])
   const [error, setError] = useState('')
 
   useEffect(() => {
+    setError('')
     fetchDashboard().then(setData).catch((e) => setError(e.message ?? 'Could not load your dashboard.'))
     fetchMyBadges().then(setBadges).catch(() => {})
-  }, [])
+  }, [revision])
 
-  if (error) return <div className="dash-main"><div className="banner banner-error">{error}</div></div>
+  if (error) return <div className="dash-main"><div className="banner banner-error" role="alert">{error}</div><button className="btn btn-primary" onClick={() => setRevision(value => value + 1)}>Retry dashboard</button></div>
   if (!data) return <div className="centered-loading">Loading your dashboard…</div>
 
   const { profile, passport, practice, arena, feature_flags } = data

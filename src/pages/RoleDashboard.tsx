@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import TeacherClassrooms from '../components/TeacherClassrooms'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { logoutUser } from '../lib/auth'
 
@@ -74,12 +75,32 @@ async function loadRoleSummary(role: Props['role']): Promise<Summary> {
   }
 }
 
-function MentorActions(){
- const [rows,setRows]=useState<any[]>([]);const [error,setError]=useState('');
- const load=()=>supabase.auth.getUser().then(({data})=>data.user&&supabase.from('mentorship_requests').select('id,mentee_id,topic,status,created_at').eq('mentor_id',data.user.id).order('created_at',{ascending:false}).then(({data,error})=>{if(error)setError(error.message);else setRows(data??[])}));
- useEffect(()=>{load()},[]);
- const decide=(id:string,decision:'accepted'|'declined')=>supabase.rpc('respond_mentorship_request',{p_request_id:id,p_decision:decision}).then(({error})=>{if(error)setError(error.message);else load()});
- return <section><div className="section-heading"><h2>Mentorship requests</h2></div>{error&&<div className="banner banner-error">{error}</div>}{rows.length===0?<div className="empty-panel">No mentorship requests.</div>:<div className="list-panel">{rows.map(r=><div className="list-row" key={r.id}><div><b>{r.topic??'Request'}</b><div className="list-row-meta">{r.status}</div></div>{r.status==='pending'&&<span><button className="btn btn-primary" onClick={()=>decide(r.id,'accepted')}>Accept</button> <button className="btn btn-secondary" onClick={()=>decide(r.id,'declined')}>Reject</button></span>}</div>)}</div>}</section>
+function MentorActions({ onChanged }: { onChanged: () => void }) {
+ const [rows,setRows]=useState<any[]>([]), [error,setError]=useState(''), [loading,setLoading]=useState(true), [busy,setBusy]=useState(false), [revision,setRevision]=useState(0)
+ const lock=useRef(false)
+ useEffect(()=>{
+  let active=true; setLoading(true); setError('')
+  void (async()=>{try{
+   const {data:auth,error:authError}=await supabase.auth.getUser()
+   if(authError)throw authError
+   if(!auth.user)throw new Error('Please sign in again.')
+   const {data,error}=await supabase.from('mentorship_requests').select('id,mentee_id,topic,status,created_at').eq('mentor_id',auth.user.id).order('created_at',{ascending:false})
+   if(error)throw error
+   if(active)setRows(data??[])
+  }catch(cause:any){if(active)setError(cause?.message??'Could not load requests.')}
+  finally{if(active)setLoading(false)}})()
+  return()=>{active=false}
+ },[revision])
+ const decide=async(id:string,decision:'accepted'|'declined')=>{
+  if(lock.current)return
+  lock.current=true;setBusy(true);setError('')
+  try{const {error}=await supabase.rpc('respond_mentorship_request',{p_request_id:id,p_decision:decision});if(error)throw error;setRevision(value=>value+1);onChanged()}
+  catch(cause:any){setError(cause?.message??'Could not save this decision. Please retry.')}
+  finally{lock.current=false;setBusy(false)}
+ }
+ return <section><div className="section-heading"><h2>Mentorship requests</h2><button className="btn btn-secondary" disabled={loading||busy} onClick={()=>setRevision(value=>value+1)}>Refresh requests</button></div>
+ {error&&<div className="banner banner-error" role="alert">{error}</div>}
+ {loading?<p role="status">Loading requests…</p>:rows.length===0?<div className="empty-panel">No mentorship requests.</div>:<div className="list-panel">{rows.map(r=><div className="list-row" key={r.id}><div><b>{r.topic??'Request'}</b><div className="list-row-meta">{r.status}</div></div>{r.status==='pending'&&<span><button className="btn btn-primary" disabled={busy} onClick={()=>decide(r.id,'accepted')}>Accept</button> <button className="btn btn-secondary" disabled={busy} onClick={()=>decide(r.id,'declined')}>Reject</button></span>}</div>)}</div>}</section>
 }
 
 function ParentActions({ onLinked }: { onLinked: () => void }) {
@@ -119,7 +140,7 @@ export default function RoleDashboard({ role, fullName }: Props) {
     return () => { active = false }
   }, [role, revision])
 
-  if (error) return <div className="dash-main"><div className="banner banner-error">{error}</div><button className="btn btn-secondary" onClick={() => logoutUser()}>Log out</button></div>
+  if (error) return <div className="dash-main"><div className="banner banner-error" role="alert">{error}</div><button className="btn btn-primary" onClick={() => setRevision(value => value + 1)}>Retry dashboard</button><button className="btn btn-secondary" onClick={() => logoutUser()}>Log out</button></div>
   if (!summary) return <div className="centered-loading">Loading your dashboard…</div>
 
   return (
@@ -135,7 +156,8 @@ export default function RoleDashboard({ role, fullName }: Props) {
       {summary.details.length === 0
         ? <div className="empty-panel">No activity yet. Complete your profile or start using your MELA tools.</div>
         : <div className="list-panel">{summary.details.map((d, i) => <div className="list-row" key={i}><span className="list-row-title">{d}</span></div>)}</div>}
-      {role === 'mentor' && <MentorActions />}
+      {role === 'teacher' && <TeacherClassrooms onChanged={() => setRevision(value => value + 1)} />}
+      {role === 'mentor' && <MentorActions onChanged={() => setRevision(value => value + 1)} />}
       {role === 'parent' && <ParentActions onLinked={() => setRevision(value => value + 1)} />}
       <button className="btn btn-secondary" onClick={() => logoutUser()}>Log out</button>
     </div>

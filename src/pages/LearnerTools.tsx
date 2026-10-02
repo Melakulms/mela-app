@@ -9,39 +9,40 @@ export default function LearnerTools({ view, onBack }: { view: ToolView; onBack:
   const [goalTitle, setGoalTitle] = useState('')
   const [goalType, setGoalType] = useState('education')
   const [targetDate, setTargetDate] = useState('')
+  const [revision, setRevision] = useState(0)
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
+    let active = true
     setData(null); setError('')
     const rpc = view === 'mastery' ? 'get_my_mastery_engine'
       : view === 'graph' ? 'get_my_opportunity_graph'
       : view === 'next' ? 'get_my_mela_next'
       : 'get_my_wallet'
-    supabase.rpc(rpc).then(({ data, error }) => {
+    Promise.resolve(supabase.rpc(rpc)).then(({ data, error }) => {
+      if (!active) return
       if (error) setError(error.message)
       else setData(data)
-    })
-  }, [view])
+    }).catch(() => { if (active) setError('Could not connect. Please retry.') })
+    return () => { active = false }
+  }, [view, revision])
 
   const saveGoal = async () => {
-    if (!goalTitle.trim()) return
+    if (!goalTitle.trim() || busy) return
     setBusy(true); setError('')
-    const { error } = await supabase.rpc('set_my_mela_next_goal', {
-      p_goal_type: goalType,
-      p_goal_title: goalTitle.trim(),
-      p_career_path_id: null,
-      p_target_date: targetDate || null,
-    })
-    setBusy(false)
-    if (error) setError(error.message)
-    else {
+    try {
+      const { error } = await supabase.rpc('set_my_mela_next_goal', {
+        p_goal_type: goalType, p_goal_title: goalTitle.trim(),
+        p_career_path_id: null, p_target_date: targetDate || null,
+      })
+      if (error) throw error
       setGoalTitle('')
-      const { data } = await supabase.rpc('get_my_mela_next')
-      setData(data)
-    }
+      setRevision(value => value + 1)
+    } catch (cause: any) { setError(cause?.message ?? 'Could not save your goal. Please retry.') }
+    finally { setBusy(false) }
   }
 
-  if (error) return <div className="dash-main"><div className="section-heading"><h1>{title(view)}</h1><button className="btn btn-secondary" onClick={onBack}>Back</button></div><div className="banner banner-error">{error}</div></div>
+  if (error && !data) return <div className="dash-main"><div className="section-heading"><h1>{title(view)}</h1><button className="btn btn-secondary" onClick={onBack}>Back</button></div><div className="banner banner-error" role="alert">{error}</div><button className="btn btn-primary" onClick={() => setRevision(value => value + 1)}>Retry</button></div>
   if (!data) return <div className="centered-loading">Loading {title(view)}…</div>
 
   if (view === 'mastery') return <Mastery data={data} onBack={onBack} />
@@ -59,9 +60,9 @@ export default function LearnerTools({ view, onBack }: { view: ToolView; onBack:
     </div> : <div className="empty-panel">You do not have an active transition plan yet. Set your first goal below.</div>}
     <div className="section-heading"><h2>Set a goal</h2></div>
     {error && <div className="banner banner-error">{error}</div>}
-    <div className="field"><label>Goal</label><input value={goalTitle} onChange={e=>setGoalTitle(e.target.value)} placeholder="e.g. Prepare for university admission" /></div>
-    <div className="field"><label>Goal type</label><select value={goalType} onChange={e=>setGoalType(e.target.value)}><option value="education">Education</option><option value="career">Career</option><option value="skills">Skills</option><option value="entrepreneurship">Entrepreneurship</option></select></div>
-    <div className="field"><label>Target date</label><input type="date" value={targetDate} onChange={e=>setTargetDate(e.target.value)} /></div>
+    <div className="field"><label htmlFor="goal-title">Goal</label><input id="goal-title" value={goalTitle} onChange={e=>setGoalTitle(e.target.value)} placeholder="e.g. Prepare for university admission" /></div>
+    <div className="field"><label htmlFor="goal-type">Goal type</label><select id="goal-type" value={goalType} onChange={e=>setGoalType(e.target.value)}><option value="education">Education</option><option value="career">Career</option><option value="skills">Skills</option><option value="entrepreneurship">Entrepreneurship</option></select></div>
+    <div className="field"><label htmlFor="goal-date">Target date</label><input id="goal-date" type="date" value={targetDate} onChange={e=>setTargetDate(e.target.value)} /></div>
     <button className="btn btn-primary" onClick={saveGoal} disabled={busy || !goalTitle.trim()}>{busy ? 'Saving…' : 'Save goal'}</button>
   </div>
 }

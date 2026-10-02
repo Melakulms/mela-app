@@ -1,3 +1,4 @@
+import { launchCategories } from '../lib/opportunity-input'
 import { useEffect, useState } from 'react'
 import {
   fetchMyRegistrationRequest, submitRegistration, fetchMyEmployer, fetchMyOpportunities,
@@ -74,10 +75,10 @@ export default function EmployerPortal({ role }: { role: string }) {
     <div className="dash-main">
       <div className="section-heading">
         <h1>{employer.company_name}</h1>
-        <button className="btn btn-primary" onClick={() => setShowCreate(true)}>Post an opportunity</button>
+        <button className="btn btn-primary" disabled={!employer.verified || employer.verification_status!=='verified'} onClick={() => setShowCreate(true)}>Post an opportunity</button>
       </div>
       {!employer.verified && (
-        <div className="banner banner-info">Your company isn't verified yet — opportunities you post still go through moderation before students can see them.</div>
+        <div className="banner banner-info">Your company must be verified before you can submit opportunities. Contact the MELA team to complete verification.</div>
       )}
       {error && <div className="banner banner-error">{error}</div>}
 
@@ -176,6 +177,10 @@ function CreateOpportunityForm({ employerId, onCreated, onCancel }: { employerId
   const [location, setLocation] = useState('')
   const [deadline, setDeadline] = useState('')
   const [summary, setSummary] = useState('')
+  const [description,setDescription]=useState('')
+  const [sectorCategory,setSectorCategory]=useState('')
+  const [employmentType,setEmploymentType]=useState('')
+  const [reward,setReward]=useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -184,7 +189,7 @@ function CreateOpportunityForm({ employerId, onCreated, onCancel }: { employerId
     setBusy(true)
     setError('')
     try {
-      await createOpportunity(employerId, { title, opportunityType, location, deadline, summary })
+      await createOpportunity(employerId, { title, opportunityType, location, deadline, summary, description, sectorCategory, employmentType, reward })
       onCreated()
     } catch (e: any) {
       setError(e.message ?? 'Could not post that opportunity.')
@@ -209,9 +214,13 @@ function CreateOpportunityForm({ employerId, onCreated, onCancel }: { employerId
             <option value="freelance">Freelance / gig</option>
           </select>
         </div>
-        <div className="field"><label>Location</label><input value={location} onChange={(e) => setLocation(e.target.value)} /></div>
-        <div className="field"><label>Deadline</label><input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} /></div>
+        <div className="field"><label>Location</label><input required value={location} onChange={(e) => setLocation(e.target.value)} /></div>
+        <div className="field"><label>Deadline</label><input required type="date" min={new Date().toISOString().slice(0,10)} value={deadline} onChange={(e) => setDeadline(e.target.value)} /></div>
         <div className="field"><label>Summary</label><input value={summary} onChange={(e) => setSummary(e.target.value)} /></div>
+        <div className="field"><label>Description</label><textarea required value={description} onChange={event=>setDescription(event.target.value)}/></div>
+        <div className="field"><label>Sector</label><select required value={sectorCategory} onChange={event=>setSectorCategory(event.target.value)}><option value="">Choose sector</option>{launchCategories.map(category=><option key={category}>{category}</option>)}</select></div>
+        <div className="field"><label>Employment or participation type</label><input required placeholder="For example: full time, part time, or competition" value={employmentType} onChange={event=>setEmploymentType(event.target.value)}/></div>
+        <div className="field"><label>Compensation, funding or reward</label><input required placeholder="Specify the amount, or state unpaid / not disclosed" value={reward} onChange={event=>setReward(event.target.value)}/></div>
         <button className="btn btn-primary" type="submit" disabled={busy}>{busy ? 'Posting…' : 'Submit for review'}</button>
         <button className="btn btn-secondary" type="button" onClick={onCancel} style={{ marginLeft: '0.6rem' }}>Cancel</button>
       </form>

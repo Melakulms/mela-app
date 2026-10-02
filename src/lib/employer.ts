@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { opportunityFields, type OpportunityInput } from './opportunity-input'
 
 export interface MyEmployerRequest {
   id: string
@@ -81,20 +82,12 @@ export async function fetchMyOpportunities(employerId: string): Promise<MyOpport
   return data as MyOpportunity[]
 }
 
-export async function createOpportunity(employerId: string, input: { title: string; opportunityType: string; location: string; deadline: string; summary: string }): Promise<void> {
-  const { data: auth } = await supabase.auth.getUser()
+export async function createOpportunity(employerId: string, input: OpportunityInput): Promise<void> {
+  const fields = opportunityFields(input)
+  const { data: auth, error: authError } = await supabase.auth.getUser()
+  if(authError)throw authError
   if (!auth.user) throw new Error('You need to be logged in.')
-  const { error } = await supabase.from('opportunities').insert({
-    posted_by: auth.user.id,
-    employer_id: employerId,
-    title: input.title,
-    opportunity_type: input.opportunityType,
-    location: input.location || null,
-    deadline: input.deadline || null,
-    summary: input.summary || null,
-    status: 'pending_review',
-    moderation_status: 'pending_review',
-  })
+  const { error } = await supabase.from('opportunities').insert({ ...fields, posted_by:auth.user.id, employer_id:employerId })
   if (error) throw error
 }
 

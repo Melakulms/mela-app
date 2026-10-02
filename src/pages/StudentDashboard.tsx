@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import type { LucideIcon } from 'lucide-react'
+import type { StudentView } from '../hooks/useStudentNavigation'
 import {
   ShieldCheck, Briefcase, GraduationCap, Trophy, Sparkles,
   BookOpen, Swords, FileText, Globe, Video, DollarSign, Medal, Brain, Map, Route, WalletCards, ClipboardCheck,
@@ -6,7 +8,7 @@ import {
 import { fetchDashboard, type MelaDashboard } from '../lib/dashboard'
 import { fetchMyBadges, type EarnedBadge } from '../lib/badges'
 
-const MODULES: { key: string; label: string; blurb: string; view?: string; icon: any; cls: string; enabled?: boolean }[] = [
+const MODULES: { key: string; label: string; blurb: string; view?: StudentView; icon: LucideIcon; cls: string; enabled?: boolean }[] = [
   { key: 'career_passport', label: 'Career Passport', blurb: 'Verified skills, badges & portable identity', view: 'passport', icon: ShieldCheck, cls: 'mc-career_passport' },
   { key: 'opportunities', label: 'Opportunity Hub', blurb: 'Verified jobs, internships & gigs', view: 'opportunities', icon: Briefcase, cls: 'mc-opportunities' },
   { key: 'academy', label: 'Skill Academy', blurb: 'Career-tied learning paths', view: 'academy', icon: GraduationCap, cls: 'mc-academy' },
@@ -26,29 +28,32 @@ const MODULES: { key: string; label: string; blurb: string; view?: string; icon:
   { key: 'earn_work', label: 'Earn & Work', blurb: 'Freelance & escrow tasks', view: 'earn-work', icon: DollarSign, cls: 'mc-earn_work' },
 ]
 
-export default function StudentDashboard({ onNavigate }: { onNavigate: (view: string) => void }) {
-  const [revision, setRevision] = useState(0)
+export default function StudentDashboard({ onNavigate }: { onNavigate: (view: StudentView) => void }) {
   const [data, setData] = useState<MelaDashboard | null>(null)
   const [badges, setBadges] = useState<EarnedBadge[]>([])
   const [error, setError] = useState('')
+  const [revision, setRevision] = useState(0)
+  const [query, setQuery] = useState('')
+  const [badgeError, setBadgeError] = useState(false)
 
   useEffect(() => {
-    setError('')
-    fetchDashboard().then(setData).catch((e) => setError(e.message ?? 'Could not load your dashboard.'))
-    fetchMyBadges().then(setBadges).catch(() => {})
+    let active = true
+    setError(''); setBadgeError(false)
+    fetchDashboard().then(value => { if (active) setData(value) }).catch(() => { if (active) setError('Could not load your dashboard. Check your connection and try again.') })
+    fetchMyBadges().then(value => { if (active) setBadges(value) }).catch(() => { if (active) setBadgeError(true) })
+    return () => { active = false }
   }, [revision])
 
-  if (error) return <div className="dash-main"><div className="banner banner-error" role="alert">{error}</div><button className="btn btn-primary" onClick={() => setRevision(value => value + 1)}>Retry dashboard</button></div>
-  if (!data) return <div className="centered-loading">Loading your dashboard…</div>
+  if (error) return <div className="dash-main"><h1>Your dashboard</h1><div className="banner banner-error" role="alert">{error}</div><button className="btn btn-primary" onClick={() => setRevision(value => value + 1)}>Try again</button></div>
+  if (!data) return <div className="dash-main" role="status"><div className="skeleton skeleton-title" /><div className="skeleton skeleton-card" /><p>Loading your dashboard…</p></div>
 
   const { profile, passport, practice, arena, feature_flags } = data
 
   return (
-    <div className="dash-main">
-      <p className="dash-quote">"Education is the most powerful weapon which you can use to change the world."</p>
+    <div className="dash-main dashboard-main">
 
       <div className="dash-greeting">
-        <h1>Hi, {profile.full_name?.split(' ')[0] ?? 'there'}</h1>
+        <div><span className="eyebrow">YOUR LEARNING SPACE</span><h1>Hi, {profile.full_name?.split(' ')[0] ?? 'there'} <span className="greeting-dot">.</span></h1><p>A little progress today. More possibilities tomorrow.</p></div>
       </div>
 
       <div className="stat-strip">
@@ -58,10 +63,13 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: st
         <div><span className="stat-value">{arena.arena_achievements}</span><span className="stat-label">Arena</span></div>
       </div>
 
-      <div className="section-heading"><h2>Quick Actions</h2></div>
+      <section className="dashboard-hero"><div><span className="eyebrow">KEEP YOUR MOMENTUM</span><h2>What will you learn today?</h2><p>Explore your curriculum, sharpen a skill, or discover your next opportunity.</p></div>{feature_flags.practice && <button className="btn btn-primary" onClick={() => onNavigate('practice')}>Start practicing <BookOpen size={18} /></button>}</section>
+      <div className="section-heading"><div><h2>Explore MELA</h2><p>Everything you need for your next step.</p></div></div>
+      <div className="field module-search"><label htmlFor="module-search">Find a learning tool</label><input id="module-search" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search practice, scholarships, skills…" /></div>
+      {MODULES.filter(m => `${m.label} ${m.blurb}`.toLowerCase().includes(query.trim().toLowerCase())).length === 0 && <div className="empty-panel" role="status">No tools match “{query}”. <button className="password-toggle" onClick={() => setQuery('')}>Clear search</button></div>}
       <div className="module-grid">
-        {MODULES.map((m) => {
-          const enabled = ['study_materials','mastery','opportunity_graph','mela_next','wallet'].includes(m.key) ? true : feature_flags[m.key]
+        {MODULES.filter(m => `${m.label} ${m.blurb}`.toLowerCase().includes(query.trim().toLowerCase())).map((m) => {
+          const enabled = ['study_materials','mastery','opportunity_graph','mela_next','wallet'].includes(m.key) ? true : (feature_flags[m.key] ?? m.enabled ?? false)
           const isBuilt = !!m.view
           const Icon = m.icon
           return (
@@ -72,7 +80,7 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: st
               disabled={!isBuilt || !enabled}
             >
               <div>
-                <div className="module-icon"><Icon size={18} color="#fff" /></div>
+                <div className="module-icon"><Icon size={20} /></div>
                 <h3>{m.label}</h3>
                 <p>{m.blurb}</p>
               </div>
@@ -84,7 +92,7 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: st
       </div>
 
       <div className="section-heading"><h2>Your Badges</h2></div>
-      {badges.length === 0 ? (
+      {badgeError ? <div className="empty-panel" role="status">Your badges couldn’t load. <button className="password-toggle" onClick={() => setRevision(value => value + 1)}>Retry</button></div> : badges.length === 0 ? (
         <div className="empty-panel">No badges earned yet — they come from verified skills, courses, and mentorship.</div>
       ) : (
         <div className="badge-row">

@@ -21,7 +21,7 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
         setEnrollments(new Map(e.map((en) => [en.course_id, en])))
       })
       .catch((err) => { if (active) setError(err.message ?? 'Could not load courses.') })
-  return () => { active = false }
+    return () => { active = false }
   }, [revision])
 
   const enroll = async (courseId: string) => {
@@ -40,7 +40,7 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
     }
   }
 
-  if (selected) return <CourseReader course={selected} onBack={() => {setSelected(null);setRevision(value => value + 1)}} />
+  if (selected) return <CourseReader course={selected} onBack={() => { setSelected(null); setRevision(value => value + 1) }} />
 
   return (
     <div className="dash-main">
@@ -56,10 +56,12 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
           {courses.map((c) => {
             const enrollment = enrollments.get(c.id)
             const isFree = (c.price_cents ?? 0) === 0
+            const progress = Math.max(0, Math.min(100, enrollment?.progress_pct ?? 0))
             return (
               <div className="module-card" key={c.id} style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}>
                 <h3 style={{ color: 'var(--ink)' }}>{c.title}</h3>
                 <p style={{ color: 'var(--muted)' }}>{c.description ?? c.category}</p>
+                {enrollment && <div className="list-row-meta">{enrollment.completed_at ? '100% complete · credential earned' : `${progress}% complete`}</div>}
                 {enrollment ? (
                   <button className="btn btn-primary" onClick={() => setSelected(c)}>{enrollment.completed_at ? 'Review course' : 'Continue learning'}</button>
                 ) : isFree ? (

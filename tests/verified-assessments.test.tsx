@@ -107,7 +107,7 @@ it('requires explicit proctor consent and submits through the authoritative asse
   expect(await screen.findByText(/Proctor review is pending/)).toBeTruthy()
 })
 
-it('does not create a proctored attempt when camera permission fails', async () => {
+it('blocks a proctored assessment when camera permission fails', async () => {
   mock.getUserMedia.mockRejectedValueOnce(new Error('Permission denied'))
   render(<VerifiedAssessments onBack={vi.fn()} />)
   await screen.findByText('Verified readiness')
@@ -115,7 +115,7 @@ it('does not create a proctored attempt when camera permission fails', async () 
   fireEvent.click(screen.getByRole('checkbox'))
   fireEvent.click(screen.getByRole('button', { name: 'Start assessment' }))
 
-  expect(await screen.findByRole('alert')).toHaveTextContent(/Camera permission is required/)
-  const attemptBuilders = mock.from.mock.calls.filter(([table]) => table === 'assessment_attempts')
-  expect(attemptBuilders.length).toBeGreaterThan(0)
+  const alert = await screen.findByRole('alert')
+  expect(alert.textContent).toContain('Camera permission is required')
+  expect(screen.queryByText('1. Choose A')).toBeNull()
 })

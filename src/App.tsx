@@ -45,6 +45,7 @@ export default function App() {
   const [profileLoading, setProfileLoading] = useState(true)
   const [profileRevision, setProfileRevision] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [sessionRevision, setSessionRevision] = useState(0)
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<MelaProfile | null>(null)
   const [authView, setAuthView] = useState<AuthView>('login')
@@ -56,6 +57,8 @@ export default function App() {
 
   useEffect(() => {
     let active = true
+    setLoading(true)
+    setAccountError('')
     const { data: sub } = supabase.auth.onAuthStateChange((event, newSession) => {
       if (!active) return
       if (event === 'PASSWORD_RECOVERY') setRecovering(true)
@@ -73,7 +76,7 @@ export default function App() {
       if (active) { setAccountError('Could not connect. Please try again.'); setLoading(false) }
     })
     return () => { active = false; sub.subscription.unsubscribe() }
-  }, [])
+  }, [sessionRevision])
 
   useEffect(() => { setStudentView('dashboard'); setEditingEmployerProfile(false) }, [session?.user.id])
 
@@ -118,7 +121,7 @@ export default function App() {
 
   if (accountError) return <div className="auth-shell"><div className="auth-card">
     <h1>Unable to load your account</h1><div className="banner banner-error" role="alert">{accountError}</div>
-    <button className="btn btn-primary" onClick={reloadProfile}>Retry</button>
+    <button className="btn btn-primary" onClick={() => session ? reloadProfile() : setSessionRevision(value => value + 1)}>Retry</button>
     <button className="btn btn-secondary" onClick={() => logoutUser()}>Log out</button>
   </div></div>
 

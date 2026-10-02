@@ -1,3 +1,5 @@
+import { logoutUser } from '../lib/auth'
+
 type Props = { status: string; companyName?: string | null; onRefresh: () => void; onEdit: () => void }
 
 export default function EmployerApprovalPending({ status, companyName, onRefresh, onEdit }: Props) {
@@ -19,7 +21,7 @@ export default function EmployerApprovalPending({ status, companyName, onRefresh
         <div style={{ display: 'grid', gap: 10 }}>
           <button className="btn btn-primary btn-block" onClick={onRefresh}>Check status again</button>
           {rejected && <button className="btn btn-secondary btn-block" onClick={onEdit}>Review and resubmit information</button>}
-          <button className="btn btn-secondary btn-block" onClick={() => window.location.reload()}>Reload MELA</button>
+          <button className="btn btn-secondary btn-block" onClick={() => logoutUser()}>Log out</button>
         </div>
       </div>
     </div>

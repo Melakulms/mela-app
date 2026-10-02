@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { authRedirectUrl } from './auth-redirect'
 
 export type MelaRole = 'student' | 'parent' | 'teacher' | 'employer' | 'company' | 'mentor' | 'admin'
 
@@ -13,7 +14,7 @@ export async function registerUser({ email, password, fullName, role }: Register
   return supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName, role, preferred_language: 'English' } },
+    options: { emailRedirectTo: authRedirectUrl(), data: { full_name: fullName, role, preferred_language: 'English' } },
   })
 }
 
@@ -26,7 +27,7 @@ export async function logoutUser() {
 }
 
 export async function requestPasswordReset(email: string) {
-  return supabase.auth.resetPasswordForEmail(email)
+  return supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: authRedirectUrl(undefined,undefined,true) })
 }
 
 export interface MelaProfile {

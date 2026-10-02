@@ -21,8 +21,11 @@ The main MELA frontend (separate from the Central Admin Dashboard repo).
   (verified against the actual function source; the live-match UI itself has not been
   exercised against a real second player yet, since none has existed to test with)
 
-Parent/teacher accounts can register, verify, and log in, but land on an honest
-"not built yet" screen — no fake data, no mocked screens.
+Parent/teacher accounts have profile setup and live role dashboards. Students can
+generate a parent link code from Profile; parents redeem that code from their
+dashboard. Full educator workflows and production browser verification remain
+release gates. See the Central Dashboard repository’s docs/LAUNCH_READINESS.md
+for the current cross-platform release status.
 
 ## Stack
 

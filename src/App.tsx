@@ -1,31 +1,32 @@
-import { useEffect, useState } from 'react'
+import { lazy, useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { Wifi, LogOut } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { fetchOwnProfile, logoutUser, updatePreferredLanguage, type MelaProfile } from './lib/auth'
 import { fetchEnabledLanguages, type PlatformLanguage } from './lib/languages'
+import ResetPassword from './pages/ResetPassword'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import VerifyEmail from './pages/VerifyEmail'
-import StudentDashboard from './pages/StudentDashboard'
-import Practice from './pages/Practice'
-import OpportunityHub from './pages/OpportunityHub'
-import StudyMaterials from './pages/StudyMaterials'
-import SkillAcademy from './pages/SkillAcademy'
-import Mentorship from './pages/Mentorship'
-import CareerPassport from './pages/CareerPassport'
-import EmployerPortal from './pages/EmployerPortal'
-import AiCareerCoach from './pages/AiCareerCoach'
-import Arena from './pages/Arena'
-import Profile from './pages/Profile'
-import EthioScholarConnect from './pages/EthioScholarConnect'
-import RoleDashboard from './pages/RoleDashboard'
-import RoleProfileSetup from './pages/RoleProfileSetup'
-import EmployerApprovalPending from './pages/EmployerApprovalPending'
-import LearnerTools from './pages/LearnerTools'
-import LearnerSubsections from './pages/LearnerSubsections'
-import StudentOnboarding from './pages/StudentOnboarding'
-import QuestionBank from './pages/QuestionBank'
+const StudentDashboard = lazy(() => import('./pages/StudentDashboard'))
+const Practice = lazy(() => import('./pages/Practice'))
+const OpportunityHub = lazy(() => import('./pages/OpportunityHub'))
+const StudyMaterials = lazy(() => import('./pages/StudyMaterials'))
+const SkillAcademy = lazy(() => import('./pages/SkillAcademy'))
+const Mentorship = lazy(() => import('./pages/Mentorship'))
+const CareerPassport = lazy(() => import('./pages/CareerPassport'))
+const EmployerPortal = lazy(() => import('./pages/EmployerPortal'))
+const AiCareerCoach = lazy(() => import('./pages/AiCareerCoach'))
+const Arena = lazy(() => import('./pages/Arena'))
+const Profile = lazy(() => import('./pages/Profile'))
+const EthioScholarConnect = lazy(() => import('./pages/EthioScholarConnect'))
+const RoleDashboard = lazy(() => import('./pages/RoleDashboard'))
+const RoleProfileSetup = lazy(() => import('./pages/RoleProfileSetup'))
+const EmployerApprovalPending = lazy(() => import('./pages/EmployerApprovalPending'))
+const LearnerTools = lazy(() => import('./pages/LearnerTools'))
+const LearnerSubsections = lazy(() => import('./pages/LearnerSubsections'))
+const StudentOnboarding = lazy(() => import('./pages/StudentOnboarding'))
+const QuestionBank = lazy(() => import('./pages/QuestionBank'))
 
 type AuthView = 'login' | 'register'
 type StudentView = 'dashboard' | 'practice' | 'opportunities' | 'materials' | 'academy' | 'mentorship' | 'passport' | 'coach' | 'arena' | 'profile' | 'scholarships' | 'mastery' | 'opportunity-graph' | 'mela-next' | 'wallet' | 'challenges' | 'assessments' | 'earn-work' | 'question-bank'
@@ -39,6 +40,10 @@ const BOTTOM_NAV: { view: StudentView; label: string }[] = [
 ]
 
 export default function App() {
+  const [recovering, setRecovering] = useState(() => new URLSearchParams(window.location.search).get('recovery') === '1')
+  const [accountError, setAccountError] = useState('')
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [profileRevision, setProfileRevision] = useState(0)
   const [loading, setLoading] = useState(true)
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<MelaProfile | null>(null)
@@ -50,42 +55,72 @@ export default function App() {
   const [editingEmployerProfile, setEditingEmployerProfile] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
+    let active = true
+    const { data: sub } = supabase.auth.onAuthStateChange((event, newSession) => {
+      if (!active) return
+      if (event === 'PASSWORD_RECOVERY') setRecovering(true)
+      if (event === 'USER_UPDATED' || event === 'SIGNED_IN') setProfileRevision(value => value + 1)
+      if (event === 'SIGNED_OUT') setRecovering(false)
+      setSession(newSession)
       setLoading(false)
     })
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession)
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (!active) return
+      if (error) setAccountError('Could not restore your session. Please try again.')
+      setSession(data.session)
+      setLoading(false)
+    }).catch(() => {
+      if (active) { setAccountError('Could not connect. Please try again.'); setLoading(false) }
     })
-    return () => sub.subscription.unsubscribe()
+    return () => { active = false; sub.subscription.unsubscribe() }
   }, [])
 
-  const reloadProfile = () => {
-    fetchOwnProfile().then(setProfile).catch(() => setProfile(null))
-  }
+  useEffect(() => { setStudentView('dashboard'); setEditingEmployerProfile(false) }, [session?.user.id])
+
+  const reloadProfile = () => setProfileRevision((value) => value + 1)
 
   useEffect(() => {
-    if (!session) { setProfile(null); setEmployerRegistration(null); return }
-    reloadProfile()
-    fetchEnabledLanguages().then(setLanguages).catch(() => {})
-  }, [session])
-
-  useEffect(() => {
-    if (!session || !profile || (profile.role !== 'company' && profile.role !== 'employer')) {
-      setEmployerRegistration(null)
-      return
+    let active = true
+    setProfile(null)
+    setEmployerRegistration(null)
+    setAccountError('')
+    if (!session?.user.id) { setProfileLoading(false); return }
+    setProfileLoading(true)
+    const load = async () => {
+      try {
+        const nextProfile = await fetchOwnProfile()
+        if (!nextProfile || nextProfile.id !== session.user.id) throw new Error('Your profile could not be loaded. Please retry or sign in again.')
+        let registration = null
+        if (nextProfile.role === 'company' || nextProfile.role === 'employer') {
+          const { data, error } = await supabase.from('employer_registration_requests')
+            .select('status, company_name').eq('applicant_user_id', session.user.id)
+            .order('created_at', { ascending: false }).limit(1).maybeSingle()
+          if (error) throw error
+          registration = data
+        }
+        if (active) { setProfile(nextProfile); setEmployerRegistration(registration) }
+      } catch (error) {
+        if (active) setAccountError(error instanceof Error ? error.message : 'Could not load your account. Please retry.')
+      } finally { if (active) setProfileLoading(false) }
     }
-    supabase
-      .from('employer_registration_requests')
-      .select('status, company_name, created_at')
-      .eq('applicant_user_id', session.user.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => setEmployerRegistration(data ? { status: data.status, company_name: data.company_name } : null))
-  }, [session, profile?.role, profile?.profile_completion])
+    void load()
+    fetchEnabledLanguages().then((data) => { if (active) setLanguages(data) }).catch(() => {})
+    return () => { active = false }
+  }, [session?.user.id, profileRevision])
 
   if (loading) return <div className="centered-loading">Loading…</div>
+
+  if (recovering) return <ResetPassword sessionReady={!!session} onComplete={() => {
+    setRecovering(false)
+    window.history.replaceState(null, '', window.location.pathname)
+    reloadProfile()
+  }} />
+
+  if (accountError) return <div className="auth-shell"><div className="auth-card">
+    <h1>Unable to load your account</h1><div className="banner banner-error" role="alert">{accountError}</div>
+    <button className="btn btn-primary" onClick={reloadProfile}>Retry</button>
+    <button className="btn btn-secondary" onClick={() => logoutUser()}>Log out</button>
+  </div></div>
 
   if (!session) {
     if (pendingEmail) {
@@ -101,9 +136,16 @@ export default function App() {
     )
   }
 
-  if (!profile) return <div className="centered-loading">Setting up your account…</div>
+  if (profileLoading || !profile || profile.id !== session.user.id) return <div className="centered-loading">Setting up your account…</div>
   if (profile.account_status === 'pending_verification' || !profile.email_verified) {
-    return <VerifyEmail email={profile.email ?? pendingEmail} onUseDifferentAccount={() => { setPendingEmail(''); setAuthView('login') }} />
+    return <VerifyEmail onRefresh={reloadProfile} email={profile.email ?? pendingEmail} onUseDifferentAccount={() => { setPendingEmail(''); setAuthView('login') }} />
+  }
+
+  if (profile.account_status !== 'active') {
+    return <div className="auth-shell"><div className="auth-card"><h1>Account unavailable</h1>
+      <p>Your account is {profile.account_status}. Contact MELA support for assistance.</p>
+      <button className="btn btn-secondary" onClick={() => logoutUser()}>Log out</button>
+    </div></div>
   }
 
   const isStudent = profile.role === 'student'
@@ -112,8 +154,8 @@ export default function App() {
     return <StudentOnboarding onComplete={reloadProfile} />
   }
 
-  if ((profile.role === 'parent' || profile.role === 'teacher' || profile.role === 'company') && ((profile.profile_completion ?? 0) < 100 || (profile.role === 'company' && editingEmployerProfile))) {
-    return <RoleProfileSetup role={profile.role} fullName={profile.full_name} email={profile.email} onComplete={() => { setEditingEmployerProfile(false); reloadProfile() }} />
+  if ((profile.role === 'parent' || profile.role === 'teacher' || profile.role === 'company' || profile.role === 'employer') && ((profile.profile_completion ?? 0) < 100 || ((profile.role === 'company' || profile.role === 'employer') && editingEmployerProfile))) {
+    return <RoleProfileSetup role={profile.role === 'employer' ? 'company' : profile.role} fullName={profile.full_name} email={profile.email} onComplete={() => { setEditingEmployerProfile(false); reloadProfile() }} />
   }
 
   if ((profile.role === 'company' || profile.role === 'employer') && employerRegistration && employerRegistration.status.toLowerCase() !== 'approved') {

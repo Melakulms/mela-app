@@ -71,7 +71,9 @@ export async function fetchSessionQuestions(sessionId: string): Promise<Practice
     .eq('session_id', sessionId)
     .order('question_order')
   if (error) throw error
-  return (data as any[]).map((row) => ({
+  const rows = (data ?? []) as any[]
+  if (rows.some(row => !row.practice_questions)) throw new Error("Some questions are unavailable. Please start a new practice session.")
+  return rows.map((row) => ({
     question_order: row.question_order,
     question_id: row.question_id,
     max_points: Number(row.max_points),

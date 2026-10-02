@@ -1,6 +1,6 @@
-import { lazy, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { Wifi, LogOut } from 'lucide-react'
+import { Wifi, WifiOff, LogOut, LayoutDashboard, BookOpen, Swords, Globe, UserRound, GraduationCap } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { fetchOwnProfile, logoutUser, updatePreferredLanguage, type MelaProfile } from './lib/auth'
 import { fetchEnabledLanguages, type PlatformLanguage } from './lib/languages'
@@ -28,15 +28,17 @@ const LearnerSubsections = lazy(() => import('./pages/LearnerSubsections'))
 const StudentOnboarding = lazy(() => import('./pages/StudentOnboarding'))
 const QuestionBank = lazy(() => import('./pages/QuestionBank'))
 
-type AuthView = 'login' | 'register'
-type StudentView = 'dashboard' | 'practice' | 'opportunities' | 'materials' | 'academy' | 'mentorship' | 'passport' | 'coach' | 'arena' | 'profile' | 'scholarships' | 'mastery' | 'opportunity-graph' | 'mela-next' | 'wallet' | 'challenges' | 'assessments' | 'earn-work' | 'question-bank'
+import ErrorBoundary from './components/ErrorBoundary'
+import { useStudentNavigation, VIEW_LABELS, type StudentView } from './hooks/useStudentNavigation'
 
-const BOTTOM_NAV: { view: StudentView; label: string }[] = [
-  { view: 'dashboard', label: 'Dashboard' },
-  { view: 'practice', label: 'Practice' },
-  { view: 'arena', label: 'Arena' },
-  { view: 'scholarships', label: 'Scholarships' },
-  { view: 'profile', label: 'Profile' },
+type AuthView = 'login' | 'register'
+
+const BOTTOM_NAV: { view: StudentView; label: string; icon: typeof BookOpen }[] = [
+  { icon: LayoutDashboard, view: 'dashboard', label: 'Dashboard' },
+  { icon: BookOpen, view: 'practice', label: 'Practice' },
+  { icon: Swords, view: 'arena', label: 'Arena' },
+  { icon: Globe, view: 'scholarships', label: 'Scholarships' },
+  { icon: UserRound, view: 'profile', label: 'Profile' },
 ]
 
 export default function App() {
@@ -50,7 +52,11 @@ export default function App() {
   const [profile, setProfile] = useState<MelaProfile | null>(null)
   const [authView, setAuthView] = useState<AuthView>('login')
   const [pendingEmail, setPendingEmail] = useState('')
-  const [studentView, setStudentView] = useState<StudentView>('dashboard')
+  const [studentView, setStudentView] = useStudentNavigation()
+  const [online, setOnline] = useState(navigator.onLine)
+  const [actionError, setActionError] = useState('')
+  const [signingOut, setSigningOut] = useState(false)
+  const [savingLanguage, setSavingLanguage] = useState(false)
   const [languages, setLanguages] = useState<PlatformLanguage[]>([])
   const [employerRegistration, setEmployerRegistration] = useState<{ status: string; company_name: string | null } | null>(null)
   const [editingEmployerProfile, setEditingEmployerProfile] = useState(false)
@@ -78,7 +84,31 @@ export default function App() {
     return () => { active = false; sub.subscription.unsubscribe() }
   }, [sessionRevision])
 
-  useEffect(() => { setStudentView('dashboard'); setEditingEmployerProfile(false) }, [session?.user.id])
+  useEffect(() => { setEditingEmployerProfile(false) }, [session?.user.id])
+
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine)
+    window.addEventListener('online', update)
+    window.addEventListener('offline', update)
+    return () => { window.removeEventListener('online', update); window.removeEventListener('offline', update) }
+  }, [])
+
+  useEffect(() => {
+    if (profile?.role !== 'student') return
+    document.title = `${VIEW_LABELS[studentView]} · MELA`
+    document.getElementById('main-content')?.focus()
+    window.scrollTo?.(0, 0)
+  }, [studentView, profile?.role])
+
+  const signOut = async () => {
+    setSigningOut(true); setActionError('')
+    try {
+      const result = await logoutUser()
+      if (result?.error) throw result.error
+      setStudentView('dashboard')
+    } catch { setActionError('Could not log out. Please try again.') }
+    finally { setSigningOut(false) }
+  }
 
   const reloadProfile = () => setProfileRevision((value) => value + 1)
 
@@ -120,9 +150,9 @@ export default function App() {
   }} />
 
   if (accountError) return <div className="auth-shell"><div className="auth-card">
-    <h1>Unable to load your account</h1><div className="banner banner-error" role="alert">{accountError}</div>
+    <h1>Unable to load your account</h1><div className="banner banner-error" role="alert">{accountError}</div>{actionError && <p role="alert">{actionError}</p>}
     <button className="btn btn-primary" onClick={() => session ? reloadProfile() : setSessionRevision(value => value + 1)}>Retry</button>
-    <button className="btn btn-secondary" onClick={() => logoutUser()}>Log out</button>
+    <button className="btn btn-secondary" onClick={signOut} disabled={signingOut}>Log out</button>
   </div></div>
 
   if (!session) {
@@ -146,8 +176,8 @@ export default function App() {
 
   if (profile.account_status !== 'active') {
     return <div className="auth-shell"><div className="auth-card"><h1>Account unavailable</h1>
-      <p>Your account is {profile.account_status}. Contact MELA support for assistance.</p>
-      <button className="btn btn-secondary" onClick={() => logoutUser()}>Log out</button>
+      <p>Your account is {profile.account_status}. Contact MELA support for assistance.</p>{actionError && <p role="alert">{actionError}</p>}
+      <button className="btn btn-secondary" onClick={signOut} disabled={signingOut}>Log out</button>
     </div></div>
   }
 
@@ -173,28 +203,36 @@ export default function App() {
   }
 
   const changeLanguage = async (code: string) => {
+    setSavingLanguage(true); setActionError('')
     try {
       await updatePreferredLanguage(code)
-      reloadProfile()
-    } catch { /* surfaced within Profile page if changed from there */ }
+      setProfile(current => current ? { ...current, preferred_language: code } : current)
+    } catch { setActionError('Could not save your language preference. Please try again.') }
+    finally { setSavingLanguage(false) }
   }
 
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">Skip to content</a>
       <header className="app-topbar">
-        <span className="auth-wordmark">⚡ MELA</span>
+        <span className="auth-wordmark"><GraduationCap size={26} /> MELA</span>
         <div className="app-topbar-right">
-          <select className="lang-select" value={profile.preferred_language} onChange={(e) => changeLanguage(e.target.value)}>
+          <select aria-label="Preferred language" disabled={savingLanguage || !languages.length} className="lang-select" value={profile.preferred_language} onChange={(e) => changeLanguage(e.target.value)}>
+            {!languages.some(l => l.language_name === profile.preferred_language) && <option value={profile.preferred_language}>{profile.preferred_language}</option>}
             {languages.map((l) => (
               <option key={l.language_code} value={l.language_name}>{l.native_name}</option>
             ))}
           </select>
           <span className="pill-stat coins">🪙 {profile.coin_balance}</span>
-          <span className="pill-stat online"><Wifi size={13} /> Online</span>
-          <button className="icon-btn" onClick={() => logoutUser()} aria-label="Log out"><LogOut size={18} /></button>
+          <span className={`pill-stat ${online ? "online" : "offline"}`} role="status">{online ? <Wifi size={13} /> : <WifiOff size={13} />}{online ? "Connected" : "Offline"}</span>
+          <button className="icon-btn" onClick={signOut} disabled={signingOut} aria-label="Log out"><LogOut size={18} /></button>
         </div>
       </header>
 
+      {!online && <div className="connection-banner" role="status">You’re offline. Reconnect to load lessons and save your progress.</div>}
+      {actionError && <div className="banner banner-error shell-message" role="alert">{actionError}</div>}
+      <main id="main-content" tabIndex={-1}>
+      <ErrorBoundary key={studentView}><Suspense fallback={<div className="page-loading" role="status">Loading your page…</div>}>
       {isStudent ? (
         <>
           {studentView === 'practice' && <Practice onBack={() => setStudentView('dashboard')} />}
@@ -215,19 +253,7 @@ export default function App() {
           {studentView === 'challenges' && <LearnerSubsections view="challenges" onBack={() => setStudentView('dashboard')} />}
           {studentView === 'assessments' && <LearnerSubsections view="assessments" onBack={() => setStudentView('dashboard')} />}
           {studentView === 'earn-work' && <LearnerSubsections view="earn" onBack={() => setStudentView('dashboard')} />}
-          {studentView === 'dashboard' && <StudentDashboard onNavigate={(view) => setStudentView(view as StudentView)} />}
-
-          <nav className="bottom-nav">
-            {BOTTOM_NAV.map((item) => (
-              <button
-                key={item.label}
-                className={studentView === item.view ? 'active' : ''}
-                onClick={() => setStudentView(item.view)}
-              >
-                {item.label}
-              </button>
-            ))}
-          </nav>
+          {studentView === 'dashboard' && <StudentDashboard onNavigate={setStudentView} />}
         </>
       ) : profile.role === 'company' || profile.role === 'employer' ? (
         <EmployerPortal role={profile.role} />
@@ -237,6 +263,22 @@ export default function App() {
         <div className="dash-main"><h1>Central Admin</h1><p className="muted">Use the separate MELA Central Dashboard for administrative operations.</p></div>
       ) : (
         <div className="dash-main"><h1>Account setup</h1><p className="muted">Your account role is not yet supported by this frontend.</p></div>
+      )}
+      </Suspense></ErrorBoundary>
+      </main>
+      {isStudent && (
+          <nav className="bottom-nav" aria-label="Main navigation">
+            {BOTTOM_NAV.map((item) => (
+              <button
+                key={item.label}
+                className={studentView === item.view ? 'active' : ''}
+                aria-current={studentView === item.view ? 'page' : undefined}
+                onClick={() => setStudentView(item.view)}
+              >
+                <item.icon size={20} aria-hidden="true" />{item.label}
+              </button>
+            ))}
+          </nav>
       )}
     </div>
   )

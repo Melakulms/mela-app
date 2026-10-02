@@ -1,3 +1,4 @@
+import AuthLayout from '../components/AuthLayout'
 import { useMemo, useState } from 'react'
 import { registerUser, type MelaRole } from '../lib/auth'
 
@@ -76,13 +77,12 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
   }
 
   return (
-    <div className="auth-shell">
-      <div className="auth-card">
+    <AuthLayout>
         <span className="auth-wordmark">MELA</span>
         <h1>Start your career passport</h1>
         <p className="auth-subtitle">One account, built around where you're headed.</p>
 
-        {error && <div className="banner banner-error">{error}</div>}
+        {error && <div className="banner banner-error" role="alert">{error}</div>}
 
         <form onSubmit={submit}>
           <div className="field">
@@ -133,7 +133,6 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
         <div className="auth-switch">
           Already have an account? <button type="button" onClick={onSwitchToLogin}>Log in</button>
         </div>
-      </div>
-    </div>
+    </AuthLayout>
   )
 }

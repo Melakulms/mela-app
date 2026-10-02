@@ -1,9 +1,11 @@
+import AuthLayout from '../components/AuthLayout'
 import { useState } from 'react'
 import { loginUser, requestPasswordReset } from '../lib/auth'
 
 export default function Login({ onSwitchToRegister }: { onSwitchToRegister: () => void }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [resetSent, setResetSent] = useState(false)
@@ -31,8 +33,7 @@ export default function Login({ onSwitchToRegister }: { onSwitchToRegister: () =
   }
 
   return (
-    <div className="auth-shell">
-      <div className="auth-card">
+    <AuthLayout>
         <span className="auth-wordmark">MELA</span>
         <h1>Welcome back</h1>
         <p className="auth-subtitle">Log in to keep building your career passport.</p>
@@ -47,7 +48,8 @@ export default function Login({ onSwitchToRegister }: { onSwitchToRegister: () =
           </div>
           <div className="field">
             <label htmlFor="password">Password</label>
-            <input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+            <input id="password" type={showPassword ? "text" : "password"} autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <button type="button" className="password-toggle" aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>{showPassword ? "Hide password" : "Show password"}</button>
           </div>
           <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
             {busy ? 'Logging in…' : 'Log in'}
@@ -60,7 +62,6 @@ export default function Login({ onSwitchToRegister }: { onSwitchToRegister: () =
         <div className="auth-switch">
           New to MELA? <button type="button" onClick={onSwitchToRegister}>Create an account</button>
         </div>
-      </div>
-    </div>
+    </AuthLayout>
   )
 }

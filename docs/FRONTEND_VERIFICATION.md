@@ -20,3 +20,11 @@
 ## Limits
 
 The browser fixture checks intercept Supabase requests and do not verify live authentication, email delivery, database authorization, or saving real answers. No real accounts or production records were created or modified. Full authenticated role journeys, live Arena play, financial settlement and teacher workflows remain separate release work. Financial feature flags were not changed. This update changes the consumer repository only; the central admin frontend was inspected but not modified.
+
+## Teacher refresh follow-up (3 October)
+
+On current main, classroom creation, joining, learner rosters and observation entry are already implemented. Earlier unmerged classroom work was not reapplied.
+
+Fixed teacher classroom loading failures displaying stale roster/creation controls or misleading empty/unverified states. Refresh now clears the selected roster and educator status until loading succeeds. Education stages display their published titles; inactive rooms do not advertise a join code. A successful creation stays visibly confirmed even when its subsequent refresh fails, discouraging accidental duplicate creation.
+
+45 regression tests and the production build pass. Three new regressions cover initial load recovery, hiding stale roster/controls after a failed permission refresh, and distinguishing creation success from refresh failure. These are mocked UI regressions, not live teacher-account verification.

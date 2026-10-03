@@ -1,26 +1,18 @@
 import AuthLayout from '../components/AuthLayout'
 import { useMemo, useState } from 'react'
-import { registerUser, type MelaRole } from '../lib/auth'
+import { registerBetaUser, type BetaRegisterResult } from '../lib/auth'
 
-const ROLES: { value: Extract<MelaRole, 'student' | 'parent' | 'teacher' | 'company'>; label: string }[] = [
-  { value: 'student', label: 'Student' },
-  { value: 'parent', label: 'Parent / Guardian' },
-  { value: 'teacher', label: 'Teacher' },
-  { value: 'company', label: 'Employer / Company' },
-]
-
-export default function Register({ onSwitchToLogin, onRegistered }: {
-  onSwitchToLogin: () => void
-  onRegistered: (email: string) => void
-}) {
-  const [role, setRole] = useState<Extract<MelaRole, 'student' | 'parent' | 'teacher' | 'company'>>('student')
+export default function Register({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
   const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
+  const [accessCode, setAccessCode] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [created, setCreated] = useState<BetaRegisterResult | null>(null)
+  const [copied, setCopied] = useState(false)
 
   const passwordChecks = useMemo(() => ({
     length: password.length >= 12,
@@ -32,107 +24,99 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-
     const name = fullName.trim()
-    const address = email.trim().toLowerCase()
+    const handle = username.trim().toLowerCase()
 
-    if (name.length < 2) {
-      setError('Please enter your full name.')
+    if (name.length < 2) { setError('Please enter your full name.'); return }
+    if (!/^[a-z0-9][a-z0-9._-]{2,31}$/.test(handle)) {
+      setError('Username must be 3–32 characters using letters, numbers, dot, dash, or underscore.')
       return
     }
     if (!passwordChecks.length || !passwordChecks.upper || !passwordChecks.lower || !passwordChecks.number) {
       setError('Password must be at least 12 characters and include uppercase, lowercase, and a number.')
       return
     }
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.')
-      return
-    }
+    if (password !== confirmPassword) { setError('Passwords do not match.'); return }
+    if (accessCode.trim().length < 16) { setError('Enter your MELA beta access code.'); return }
 
     setBusy(true)
     try {
-    const { error: signUpError } = await registerUser({
-      email: address,
-      password,
-      fullName: name,
-      role,
-    })
-    setBusy(false)
+      const result = await registerBetaUser({ username: handle, password, fullName: name, accessCode })
+      setCreated(result)
+      setPassword('')
+      setConfirmPassword('')
+      setAccessCode('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not create the beta account.')
+    } finally { setBusy(false) }
+  }
 
-    if (signUpError) {
-      const message = signUpError.message.toLowerCase()
-      if (message.includes('already registered') || message.includes('already exists') || message.includes('user already')) {
-        setError('An account with this email already exists. Please log in or use a different email.')
-      } else if (message.includes('rate limit')) {
-        setError('Too many registration attempts. Please wait a few minutes and try again.')
-      } else {
-        setError(signUpError.message)
-      }
-      return
-    }
-
-    onRegistered(address)
-    } catch { setError("Could not connect. Check your connection and try again.") }
-    finally { setBusy(false) }
+  if (created) {
+    return (
+      <AuthLayout>
+        <span className="auth-wordmark">MELA</span>
+        <h1>Beta account ready</h1>
+        <p className="auth-subtitle">Your username is <strong>{created.username}</strong>. Your access role is {created.role}.</p>
+        <div className="banner banner-info" role="status">
+          <strong>Save this recovery code now.</strong><br />
+          It is the only way to reset your beta password without email.
+        </div>
+        <div className="field">
+          <label htmlFor="recovery-code">Recovery code</label>
+          <input id="recovery-code" readOnly value={created.recovery_code} onFocus={(e) => e.currentTarget.select()} />
+        </div>
+        <button className="btn btn-secondary btn-block" type="button" onClick={async () => {
+          try { await navigator.clipboard.writeText(created.recovery_code); setCopied(true) } catch { setCopied(false) }
+        }}>{copied ? 'Recovery code copied' : 'Copy recovery code'}</button>
+        <button className="btn btn-primary btn-block" type="button" onClick={onSwitchToLogin}>Continue to log in</button>
+      </AuthLayout>
+    )
   }
 
   return (
     <AuthLayout>
-        <span className="auth-wordmark">MELA</span>
-        <h1>Start your career passport</h1>
-        <p className="auth-subtitle">One account, built around where you're headed.</p>
+      <span className="auth-wordmark">MELA</span>
+      <h1>Join the MELA beta</h1>
+      <p className="auth-subtitle">Beta access is invite-only while MELA launches on a zero-budget infrastructure plan.</p>
 
-        {error && <div className="banner banner-error" role="alert">{error}</div>}
+      {error && <div className="banner banner-error" role="alert">{error}</div>}
 
-        <form onSubmit={submit}>
-          <div className="field">
-            <label>I am a...</label>
-            <div className="role-grid" role="group" aria-label="Account type">
-              {ROLES.map((r) => (
-                <button
-                  type="button"
-                  key={r.value}
-                  className="role-option"
-                  aria-pressed={role === r.value}
-                  onClick={() => setRole(r.value)}
-                  disabled={busy}
-                >
-                  {r.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="field">
-            <label htmlFor="fullName">Full name</label>
-            <input id="fullName" required minLength={2} autoComplete="name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-          </div>
-
-          <div className="field">
-            <label htmlFor="email">Email</label>
-            <input id="email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-
-          <div className="field">
-            <label htmlFor="password">Password</label>
-            <input id="password" type={showPassword ? "text" : "password"} required minLength={12} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} aria-describedby="password-help" />
-            <span id="password-help" className="field-hint">At least 12 characters, with uppercase, lowercase, and a number.</span>
-            <button type="button" className="btn btn-secondary" onClick={() => setShowPassword(v => !v)} disabled={busy} aria-pressed={showPassword}>{showPassword ? "Hide password" : "Show password"}</button>
-          </div>
-
-          <div className="field">
-            <label htmlFor="confirmPassword">Confirm password</label>
-            <input id="confirmPassword" type={showPassword ? "text" : "password"} required minLength={12} autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-          </div>
-
-          <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
-            {busy ? 'Creating your account…' : 'Create account'}
-          </button>
-        </form>
-
-        <div className="auth-switch">
-          Already have an account? <button type="button" onClick={onSwitchToLogin}>Log in</button>
+      <form onSubmit={submit}>
+        <div className="field">
+          <label htmlFor="fullName">Full name</label>
+          <input id="fullName" required minLength={2} maxLength={100} autoComplete="name" value={fullName} onChange={(e) => setFullName(e.target.value)} disabled={busy} />
         </div>
+
+        <div className="field">
+          <label htmlFor="username">Username</label>
+          <input id="username" required minLength={3} maxLength={32} autoComplete="username" spellCheck={false} value={username} onChange={(e) => setUsername(e.target.value)} disabled={busy} />
+          <span className="field-hint">3–32 characters: letters, numbers, dot, dash, or underscore.</span>
+        </div>
+
+        <div className="field">
+          <label htmlFor="accessCode">Beta access code</label>
+          <input id="accessCode" required autoComplete="off" spellCheck={false} value={accessCode} onChange={(e) => setAccessCode(e.target.value)} disabled={busy} />
+          <span className="field-hint">Each access code works once and determines the account role.</span>
+        </div>
+
+        <div className="field">
+          <label htmlFor="password">Password</label>
+          <input id="password" type={showPassword ? 'text' : 'password'} required minLength={12} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} aria-describedby="password-help" disabled={busy} />
+          <span id="password-help" className="field-hint">At least 12 characters, with uppercase, lowercase, and a number.</span>
+          <button type="button" className="btn btn-secondary" onClick={() => setShowPassword(v => !v)} disabled={busy} aria-pressed={showPassword}>{showPassword ? 'Hide password' : 'Show password'}</button>
+        </div>
+
+        <div className="field">
+          <label htmlFor="confirmPassword">Confirm password</label>
+          <input id="confirmPassword" type={showPassword ? 'text' : 'password'} required minLength={12} autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={busy} />
+        </div>
+
+        <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
+          {busy ? 'Creating your beta account…' : 'Create beta account'}
+        </button>
+      </form>
+
+      <div className="auth-switch">Already have an account? <button type="button" onClick={onSwitchToLogin}>Log in</button></div>
     </AuthLayout>
   )
 }

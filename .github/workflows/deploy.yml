@@ -60,5 +60,7 @@ jobs:
         run: bash scripts/production-smoke.sh auth
       - name: Verify launch-critical Auth settings
         run: bash scripts/production-smoke.sh auth-settings
+      - name: Verify zero-budget beta authentication
+        run: bash scripts/production-smoke.sh beta-auth
       - name: Verify Supabase Data API
         run: bash scripts/production-smoke.sh data

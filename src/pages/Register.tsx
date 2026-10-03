@@ -2,7 +2,10 @@ import AuthLayout from '../components/AuthLayout'
 import { useMemo, useState } from 'react'
 import { registerBetaUser, type BetaRegisterResult } from '../lib/auth'
 
-export default function Register({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
+export default function Register({ onSwitchToLogin }: {
+  onSwitchToLogin: () => void
+  onRegistered?: (email: string) => void
+}) {
   const [fullName, setFullName] = useState('')
   const [username, setUsername] = useState('')
   const [accessCode, setAccessCode] = useState('')

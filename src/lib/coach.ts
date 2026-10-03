@@ -26,5 +26,8 @@ export async function askCareerCoach(message: string): Promise<CoachResult> {
   if (!data?.ok) {
     return { kind: 'error', message: data?.error ?? 'The AI coach could not answer that.' }
   }
+  if (typeof data.response !== 'string' || !data.response.trim()) {
+    return { kind: 'error', message: 'The AI coach returned an empty reply. Please try again.' }
+  }
   return { kind: 'reply', reply: { response: data.response, agent: data.agent, tool: data.tool } }
 }

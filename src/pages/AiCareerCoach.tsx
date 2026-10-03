@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { askCareerCoach } from '../lib/coach'
 
 interface ChatTurn {
@@ -7,6 +7,7 @@ interface ChatTurn {
 }
 
 export default function AiCareerCoach({ onBack }: { onBack: () => void }) {
+  const sending = useRef(false)
   const [turns, setTurns] = useState<ChatTurn[]>([])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
@@ -15,19 +16,25 @@ export default function AiCareerCoach({ onBack }: { onBack: () => void }) {
   const send = async (e: React.FormEvent) => {
     e.preventDefault()
     const message = input.trim()
-    if (!message) return
-    setTurns((t) => [...t, { role: 'user', text: message }])
-    setInput('')
+    if (!message || sending.current) return
+    sending.current = true
     setBusy(true)
     setError('')
-    const result = await askCareerCoach(message)
-    setBusy(false)
-    if (result.kind === 'reply') {
-      setTurns((t) => [...t, { role: 'coach', text: result.reply.response }])
-    } else if (result.kind === 'approval_required') {
-      setTurns((t) => [...t, { role: 'coach', text: "That needs an administrator's approval before I can act on it. Try asking a more general question in the meantime." }])
-    } else {
-      setError(result.message)
+    try {
+      const result = await askCareerCoach(message)
+      if (result.kind === 'error') {
+        setError(result.message)
+        return
+      }
+      const response = result.kind === 'reply' ? result.reply.response
+        : "That needs an administrator's approval before I can act on it. Try asking a more general question in the meantime."
+      setTurns(t => [...t, { role: 'user', text: message }, { role: 'coach', text: response }])
+      setInput('')
+    } catch {
+      setError('Could not reach the career coach. Your question is saved below; you can send it again.')
+    } finally {
+      sending.current = false
+      setBusy(false)
     }
   }
 
@@ -37,7 +44,7 @@ export default function AiCareerCoach({ onBack }: { onBack: () => void }) {
         <h1>AI Career Coach</h1>
         <button className="btn btn-secondary" onClick={onBack}>Back</button>
       </div>
-      {error && <div className="banner banner-error">{error}</div>}
+      {error && <div className="banner banner-error" role="alert">{error}</div>}
 
       <div className="list-panel" style={{ minHeight: 240, padding: '1rem' }}>
         {turns.length === 0 && <p className="muted">Ask about your next step — a skill to focus on, how to prepare for an opportunity, anything career-related.</p>}
@@ -57,6 +64,8 @@ export default function AiCareerCoach({ onBack }: { onBack: () => void }) {
       <form onSubmit={send} style={{ display: 'flex', gap: '0.6rem', marginTop: '1rem' }}>
         <input
           style={{ flex: 1, padding: '0.65rem 0.8rem', border: '1px solid var(--line)', borderRadius: 'var(--radius)' }}
+          aria-label="Question for your career coach"
+          disabled={busy}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask your career coach…"

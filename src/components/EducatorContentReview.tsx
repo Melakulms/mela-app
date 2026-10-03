@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 type ReviewMode = 'chapters' | 'questions'
@@ -116,7 +116,7 @@ const display = (value: unknown) => {
 }
 
 const errorMessage = (cause: unknown) => {
-  const message = cause instanceof Error ? cause.message : String(cause ?? '')
+  const message = cause && typeof cause === 'object' && 'message' in cause ? String(cause.message) : String(cause ?? '')
   if (/verified educator subject access required/i.test(message)) {
     return 'Content review requires a verified, active educator profile linked to a verified education partner and matching subject access.'
   }
@@ -124,8 +124,11 @@ const errorMessage = (cause: unknown) => {
 }
 
 export default function EducatorContentReview() {
+  const actionPending = useRef(false)
   const [mode, setMode] = useState<ReviewMode>('chapters')
   const [eligible, setEligible] = useState<boolean | null>(null)
+  const [accessError, setAccessError] = useState('')
+  const [accessRevision, setAccessRevision] = useState(0)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -145,20 +148,26 @@ export default function EducatorContentReview() {
   useEffect(() => {
     let active = true
     const check = async () => {
-      const { data, error } = await supabase.rpc('can_review_questions_v18')
-      if (!active) return
-      if (error) { setEligible(false); return }
-      setEligible(data === true)
+      setEligible(null); setAccessError('')
+      setChapterDetail(null); setQuestionDetail(null); setQuestionDrafts({})
+      try {
+        const { data, error } = await supabase.rpc('can_review_questions_v18')
+        if (error) throw error
+        if (active) setEligible(data === true)
+      } catch (cause) {
+        if (active) setAccessError(errorMessage(cause))
+      }
     }
     void check()
     return () => { active = false }
-  }, [revision])
+  }, [accessRevision])
 
   useEffect(() => {
     if (!eligible) return
     let active = true
     const load = async () => {
       setBusy(true); setError('')
+      setChapterItems([]); setChapterSummary({}); setQuestionSlices([])
       try {
         if (mode === 'chapters') {
           const { data, error } = await supabase.rpc('get_chapter_review_queue', {
@@ -185,6 +194,8 @@ export default function EducatorContentReview() {
   }, [eligible, mode, chapterStatus, revision])
 
   const openChapter = async (item: ChapterQueueItem) => {
+    if (busy || actionPending.current) return
+    actionPending.current = true
     setBusy(true); setError(''); setSuccess('')
     try {
       const { data, error } = await supabase.rpc('get_chapter_review_item', { p_queue_id: item.queue_id })
@@ -193,11 +204,13 @@ export default function EducatorContentReview() {
       setChapterDecision('')
       setChapterNote('')
     } catch (cause) { setError(errorMessage(cause)) }
-    finally { setBusy(false) }
+    finally { actionPending.current = false; setBusy(false) }
   }
 
   const claimChapter = async () => {
     if (!chapterDetail) return
+    if (busy || actionPending.current) return
+    actionPending.current = true
     setBusy(true); setError(''); setSuccess('')
     try {
       const { error } = await supabase.rpc('claim_chapter_review', { p_queue_id: chapterDetail.task.queue_id })
@@ -208,12 +221,14 @@ export default function EducatorContentReview() {
       setSuccess('This review task is assigned to you.')
       setRevision(value => value + 1)
     } catch (cause) { setError(errorMessage(cause)) }
-    finally { setBusy(false) }
+    finally { actionPending.current = false; setBusy(false) }
   }
 
   const submitChapter = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!chapterDetail || !chapterDecision || chapterNote.trim().length < 5) return
+    if (busy || actionPending.current) return
+    actionPending.current = true
     setBusy(true); setError(''); setSuccess('')
     try {
       const { error } = await supabase.rpc('submit_chapter_review', {
@@ -226,10 +241,12 @@ export default function EducatorContentReview() {
       setChapterDetail(null); setChapterDecision(''); setChapterNote('')
       setRevision(value => value + 1)
     } catch (cause) { setError(errorMessage(cause)) }
-    finally { setBusy(false) }
+    finally { actionPending.current = false; setBusy(false) }
   }
 
   const openQuestionSlice = async (slice: QuestionSlice) => {
+    if (busy || actionPending.current) return
+    actionPending.current = true
     setBusy(true); setError(''); setSuccess('')
     try {
       const { data, error } = await supabase.rpc('get_question_review_slice_v18', { p_slice_id: slice.slice_id })
@@ -241,7 +258,7 @@ export default function EducatorContentReview() {
         note: question.existing_note ?? '',
       }])))
     } catch (cause) { setError(errorMessage(cause)) }
-    finally { setBusy(false) }
+    finally { actionPending.current = false; setBusy(false) }
   }
 
   const updateQuestion = (id: string, patch: Partial<QuestionReviewDraft>) => {
@@ -266,6 +283,8 @@ export default function EducatorContentReview() {
     })
     if (invalidChanges) { setError('Explain every “changes required” decision with at least 5 characters.'); return }
 
+    if (busy || actionPending.current) return
+    actionPending.current = true
     setBusy(true); setError(''); setSuccess('')
     try {
       const { error } = await supabase.rpc('review_question_slice_v18', { p_slice_id: questionDetail.slice_id, p_decisions: decisions })
@@ -274,8 +293,10 @@ export default function EducatorContentReview() {
       setQuestionDetail(null); setQuestionDrafts({})
       setRevision(value => value + 1)
     } catch (cause) { setError(errorMessage(cause)) }
-    finally { setBusy(false) }
+    finally { actionPending.current = false; setBusy(false) }
   }
+
+  if (accessError) return <section><h2>Educator content review</h2><p role="alert">Could not check reviewer access: {accessError}</p><button className="btn btn-secondary" onClick={() => setAccessRevision(value => value + 1)}>Retry access check</button></section>
 
   if (eligible === null) return <section><div className="section-heading"><h2>Educator content review</h2></div><p className="muted">Checking reviewer access…</p></section>
 
@@ -290,9 +311,9 @@ export default function EducatorContentReview() {
   return <section aria-label="Educator content review">
     <div className="section-heading"><div><h2>Educator content review</h2><p className="muted">Help clear MELA’s launch content review backlog. Decisions are identity-bound and auditable.</p></div></div>
     <div className="toolbar" role="tablist" aria-label="Content review type">
-      <button className={`btn ${mode === 'chapters' ? 'btn-primary' : 'btn-secondary'}`} role="tab" aria-selected={mode === 'chapters'} onClick={() => { setMode('chapters'); setChapterDetail(null); setQuestionDetail(null); setError(''); setSuccess('') }}>Chapter reviews</button>
-      <button className={`btn ${mode === 'questions' ? 'btn-primary' : 'btn-secondary'}`} role="tab" aria-selected={mode === 'questions'} onClick={() => { setMode('questions'); setChapterDetail(null); setQuestionDetail(null); setError(''); setSuccess('') }}>Question reviews</button>
-      <button className="btn btn-secondary" onClick={() => setRevision(value => value + 1)} disabled={busy}>Refresh</button>
+      <button className={`btn ${mode === 'chapters' ? 'btn-primary' : 'btn-secondary'}`} role="tab" disabled={busy} aria-selected={mode === 'chapters'} onClick={() => { setMode('chapters'); setChapterDetail(null); setQuestionDetail(null); setError(''); setSuccess('') }}>Chapter reviews</button>
+      <button className={`btn ${mode === 'questions' ? 'btn-primary' : 'btn-secondary'}`} role="tab" disabled={busy} aria-selected={mode === 'questions'} onClick={() => { setMode('questions'); setChapterDetail(null); setQuestionDetail(null); setError(''); setSuccess('') }}>Question reviews</button>
+      <button className="btn btn-secondary" onClick={() => { setAccessRevision(value => value + 1); setRevision(value => value + 1) }} disabled={busy}>Refresh</button>
     </div>
     {error && <div className="banner banner-error" role="alert">{error}</div>}
     {success && <div className="banner banner-info" role="status">{success}</div>}

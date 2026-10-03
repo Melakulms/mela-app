@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
+
+import { goalOptionsForStage } from '../lib/transition-goals'
 
 type ToolView = 'mastery' | 'graph' | 'next' | 'wallet'
 
@@ -7,7 +9,10 @@ export default function LearnerTools({ view, onBack }: { view: ToolView; onBack:
   const [data, setData] = useState<any>(null)
   const [error, setError] = useState('')
   const [goalTitle, setGoalTitle] = useState('')
-  const [goalType, setGoalType] = useState('education')
+  const [goalType, setGoalType] = useState('')
+  const saving = useRef(false)
+  const goalOptions = goalOptionsForStage(data?.audience?.stage_key)
+  const selectedGoalType = goalOptions.some(option => option.value === goalType) ? goalType : goalOptions[0]?.value ?? ''
   const [targetDate, setTargetDate] = useState('')
   const [revision, setRevision] = useState(0)
   const [busy, setBusy] = useState(false)
@@ -28,18 +33,19 @@ export default function LearnerTools({ view, onBack }: { view: ToolView; onBack:
   }, [view, revision])
 
   const saveGoal = async () => {
-    if (!goalTitle.trim() || busy) return
+    if (!goalTitle.trim() || !selectedGoalType || saving.current) return
+    saving.current = true
     setBusy(true); setError('')
     try {
       const { error } = await supabase.rpc('set_my_mela_next_goal', {
-        p_goal_type: goalType, p_goal_title: goalTitle.trim(),
+        p_goal_type: selectedGoalType, p_goal_title: goalTitle.trim(),
         p_career_path_id: null, p_target_date: targetDate || null,
       })
       if (error) throw error
       setGoalTitle('')
       setRevision(value => value + 1)
     } catch (cause: any) { setError(cause?.message ?? 'Could not save your goal. Please retry.') }
-    finally { setBusy(false) }
+    finally { saving.current = false; setBusy(false) }
   }
 
   if (error && !data) return <div className="dash-main"><div className="section-heading"><h1>{title(view)}</h1><button className="btn btn-secondary" onClick={onBack}>Back</button></div><div className="banner banner-error" role="alert">{error}</div><button className="btn btn-primary" onClick={() => setRevision(value => value + 1)}>Retry</button></div>
@@ -60,10 +66,11 @@ export default function LearnerTools({ view, onBack }: { view: ToolView; onBack:
     </div> : <div className="empty-panel">You do not have an active transition plan yet. Set your first goal below.</div>}
     <div className="section-heading"><h2>Set a goal</h2></div>
     {error && <div className="banner banner-error">{error}</div>}
+    {!goalOptions.length && <p role="status">Complete your learner education stage before setting a goal.</p>}
     <div className="field"><label htmlFor="goal-title">Goal</label><input id="goal-title" value={goalTitle} onChange={e=>setGoalTitle(e.target.value)} placeholder="e.g. Prepare for university admission" /></div>
-    <div className="field"><label htmlFor="goal-type">Goal type</label><select id="goal-type" value={goalType} onChange={e=>setGoalType(e.target.value)}><option value="education">Education</option><option value="career">Career</option><option value="skills">Skills</option><option value="entrepreneurship">Entrepreneurship</option></select></div>
+    <div className="field"><label htmlFor="goal-type">Goal type</label><select id="goal-type" disabled={busy || !goalOptions.length} value={selectedGoalType} onChange={e=>setGoalType(e.target.value)}>{goalOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div>
     <div className="field"><label htmlFor="goal-date">Target date</label><input id="goal-date" type="date" value={targetDate} onChange={e=>setTargetDate(e.target.value)} /></div>
-    <button className="btn btn-primary" onClick={saveGoal} disabled={busy || !goalTitle.trim()}>{busy ? 'Saving…' : 'Save goal'}</button>
+    <button className="btn btn-primary" onClick={saveGoal} disabled={busy || !goalTitle.trim() || !selectedGoalType}>{busy ? 'Saving…' : 'Save goal'}</button>
   </div>
 }
 

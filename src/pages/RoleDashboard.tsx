@@ -1,5 +1,6 @@
 import TeacherClassrooms from '../components/TeacherClassrooms'
 import EducatorContentReview from '../components/EducatorContentReview'
+import AssessmentLanguageReview from '../components/AssessmentLanguageReview'
 import MentorLifecycle from '../components/MentorLifecycle'
 import ParentLearnerProgress from '../components/ParentLearnerProgress'
 import { useEffect, useState } from 'react'
@@ -133,6 +134,7 @@ export default function RoleDashboard({ role, fullName }: Props) {
         : <div className="list-panel">{summary.details.map((d, i) => <div className="list-row" key={i}><span className="list-row-title">{d}</span></div>)}</div>}
       {role === 'teacher' && <TeacherClassrooms onChanged={() => setRevision(value => value + 1)} />}
       {role === 'teacher' && <EducatorContentReview />}
+      <AssessmentLanguageReview />
       {role === 'mentor' && <MentorLifecycle onChanged={() => setRevision(value => value + 1)} />}
       {role === 'parent' && <ParentLearnerProgress />}
       {role === 'parent' && <ParentActions onLinked={() => setRevision(value => value + 1)} />}

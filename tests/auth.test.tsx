@@ -7,8 +7,8 @@ import App from '../src/App'
 
 const mocks = vi.hoisted(() => ({
   updateUser: vi.fn(), getSession: vi.fn(), onAuthStateChange: vi.fn(),
-  loginUser: vi.fn(), requestPasswordReset: vi.fn(), logoutUser: vi.fn(), fetchOwnProfile: vi.fn(),
-  fetchEnabledLanguages: vi.fn(),
+  loginUser: vi.fn(), requestPasswordReset: vi.fn(), resetBetaPassword: vi.fn(), registerBetaUser: vi.fn(),
+  logoutUser: vi.fn(), fetchOwnProfile: vi.fn(), fetchEnabledLanguages: vi.fn(),
 }))
 vi.mock('../src/lib/supabase', () => ({ supabase: { auth: {
   updateUser: mocks.updateUser, getSession: mocks.getSession, onAuthStateChange: mocks.onAuthStateChange,
@@ -63,13 +63,22 @@ describe('Password recovery', () => {
     await act(async () => callback('PASSWORD_RECOVERY', { user: { id: 'recovery-user' } }))
     expect(screen.getByLabelText('New password')).toBeTruthy()
   })
+
+  it('uses recovery-code flow for beta usernames instead of email reset', async () => {
+    render(<Login onSwitchToRegister={vi.fn()} />)
+    fireEvent.change(screen.getByLabelText('Email or beta username'), { target: { value: 'beta.learner' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
+    expect(await screen.findByRole('heading', { name: 'Recover beta access' })).toBeTruthy()
+    expect(screen.getByLabelText('Recovery code')).toBeTruthy()
+    expect(mocks.requestPasswordReset).not.toHaveBeenCalled()
+  })
 })
 
 describe('Authentication failures', () => {
   it('restores the login button after a network failure', async () => {
     mocks.loginUser.mockRejectedValue(new Error('offline'))
     render(<Login onSwitchToRegister={vi.fn()} />)
-    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'learner@example.invalid' } })
+    fireEvent.change(screen.getByLabelText('Email or beta username'), { target: { value: 'learner@example.invalid' } })
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Password123456' } })
     fireEvent.click(screen.getByRole('button', { name: 'Log in' }))
     await screen.findByRole('alert')

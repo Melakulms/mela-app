@@ -4,6 +4,7 @@ import { Wifi, WifiOff, LogOut, LayoutDashboard, BookOpen, Swords, Globe, UserRo
 import { supabase } from './lib/supabase'
 import { fetchOwnProfile, logoutUser, updatePreferredLanguage, type MelaProfile } from './lib/auth'
 import { fetchEnabledLanguages, type PlatformLanguage } from './lib/languages'
+import { useI18n, type TranslationKey } from './i18n'
 import ResetPassword from './pages/ResetPassword'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -28,21 +29,23 @@ const LearnerSubsections = lazy(() => import('./pages/LearnerSubsections'))
 const VerifiedAssessments = lazy(() => import('./pages/VerifiedAssessments'))
 const StudentOnboarding = lazy(() => import('./pages/StudentOnboarding'))
 const QuestionBank = lazy(() => import('./pages/QuestionBank'))
+const SafetyCenter = lazy(() => import('./pages/SafetyCenter'))
 
 import ErrorBoundary from './components/ErrorBoundary'
 import { useStudentNavigation, VIEW_LABELS, type StudentView } from './hooks/useStudentNavigation'
 
 type AuthView = 'login' | 'register'
 
-const BOTTOM_NAV: { view: StudentView; label: string; icon: typeof BookOpen }[] = [
-  { icon: LayoutDashboard, view: 'dashboard', label: 'Dashboard' },
-  { icon: BookOpen, view: 'practice', label: 'Practice' },
-  { icon: Swords, view: 'arena', label: 'Arena' },
-  { icon: Globe, view: 'scholarships', label: 'Scholarships' },
-  { icon: UserRound, view: 'profile', label: 'Profile' },
+const BOTTOM_NAV: { view: StudentView; labelKey: TranslationKey; icon: typeof BookOpen }[] = [
+  { icon: LayoutDashboard, view: 'dashboard', labelKey: 'dashboard' },
+  { icon: BookOpen, view: 'practice', labelKey: 'practice' },
+  { icon: Swords, view: 'arena', labelKey: 'arena' },
+  { icon: Globe, view: 'scholarships', labelKey: 'scholarships' },
+  { icon: UserRound, view: 'profile', labelKey: 'profile' },
 ]
 
 export default function App() {
+  const { t, setLanguage } = useI18n()
   const [recovering, setRecovering] = useState(() => new URLSearchParams(window.location.search).get('recovery') === '1')
   const [accountError, setAccountError] = useState('')
   const [profileLoading, setProfileLoading] = useState(true)
@@ -76,14 +79,14 @@ export default function App() {
     })
     supabase.auth.getSession().then(({ data, error }) => {
       if (!active) return
-      if (error) setAccountError('Could not restore your session. Please try again.')
+      if (error) setAccountError(t('sessionRestoreError'))
       setSession(data.session)
       setLoading(false)
     }).catch(() => {
-      if (active) { setAccountError('Could not connect. Please try again.'); setLoading(false) }
+      if (active) { setAccountError(t('connectionError')); setLoading(false) }
     })
     return () => { active = false; sub.subscription.unsubscribe() }
-  }, [sessionRevision])
+  }, [sessionRevision, t])
 
   useEffect(() => { setEditingEmployerProfile(false) }, [session?.user.id])
 
@@ -96,10 +99,11 @@ export default function App() {
 
   useEffect(() => {
     if (profile?.role !== 'student') return
-    document.title = `${VIEW_LABELS[studentView]} · MELA`
+    const navItem = BOTTOM_NAV.find((item) => item.view === studentView)
+    document.title = `${navItem ? t(navItem.labelKey) : VIEW_LABELS[studentView]} · MELA`
     document.getElementById('main-content')?.focus()
     window.scrollTo?.(0, 0)
-  }, [studentView, profile?.role])
+  }, [studentView, profile?.role, t])
 
   const signOut = async () => {
     setSigningOut(true); setActionError('')
@@ -107,7 +111,7 @@ export default function App() {
       const result = await logoutUser()
       if (result?.error) throw result.error
       setStudentView('dashboard')
-    } catch { setActionError('Could not log out. Please try again.') }
+    } catch { setActionError(t('connectionError')) }
     finally { setSigningOut(false) }
   }
 
@@ -123,7 +127,8 @@ export default function App() {
     const load = async () => {
       try {
         const nextProfile = await fetchOwnProfile()
-        if (!nextProfile || nextProfile.id !== session.user.id) throw new Error('Your profile could not be loaded. Please retry or sign in again.')
+        if (!nextProfile || nextProfile.id !== session.user.id) throw new Error(t('profileLoadError'))
+        setLanguage(nextProfile.preferred_language)
         let registration = null
         if (nextProfile.role === 'company' || nextProfile.role === 'employer') {
           const { data, error } = await supabase.from('employer_registration_requests')
@@ -134,15 +139,15 @@ export default function App() {
         }
         if (active) { setProfile(nextProfile); setEmployerRegistration(registration) }
       } catch (error) {
-        if (active) setAccountError(error instanceof Error ? error.message : 'Could not load your account. Please retry.')
+        if (active) setAccountError(error instanceof Error ? error.message : t('profileLoadError'))
       } finally { if (active) setProfileLoading(false) }
     }
     void load()
     fetchEnabledLanguages().then((data) => { if (active) setLanguages(data) }).catch(() => {})
     return () => { active = false }
-  }, [session?.user.id, profileRevision])
+  }, [session?.user.id, profileRevision, setLanguage, t])
 
-  if (loading) return <div className="centered-loading">Loading…</div>
+  if (loading) return <div className="centered-loading">{t('loading')}</div>
 
   if (recovering) return <ResetPassword sessionReady={!!session} onComplete={() => {
     setRecovering(false)
@@ -151,9 +156,9 @@ export default function App() {
   }} />
 
   if (accountError) return <div className="auth-shell"><div className="auth-card">
-    <h1>Unable to load your account</h1><div className="banner banner-error" role="alert">{accountError}</div>{actionError && <p role="alert">{actionError}</p>}
-    <button className="btn btn-primary" onClick={() => session ? reloadProfile() : setSessionRevision(value => value + 1)}>Retry</button>
-    <button className="btn btn-secondary" onClick={signOut} disabled={signingOut}>Log out</button>
+    <h1>{t('unableToLoadAccount')}</h1><div className="banner banner-error" role="alert">{accountError}</div>{actionError && <p role="alert">{actionError}</p>}
+    <button className="btn btn-primary" onClick={() => session ? reloadProfile() : setSessionRevision(value => value + 1)}>{t('retry')}</button>
+    <button className="btn btn-secondary" onClick={signOut} disabled={signingOut}>{t('logout')}</button>
   </div></div>
 
   if (!session) {
@@ -170,15 +175,15 @@ export default function App() {
     )
   }
 
-  if (profileLoading || !profile || profile.id !== session.user.id) return <div className="centered-loading">Setting up your account…</div>
+  if (profileLoading || !profile || profile.id !== session.user.id) return <div className="centered-loading">{t('settingUpAccount')}</div>
   if (profile.account_status === 'pending_verification' || !profile.email_verified) {
     return <VerifyEmail onRefresh={reloadProfile} email={profile.email ?? pendingEmail} onUseDifferentAccount={() => { setPendingEmail(''); setAuthView('login') }} />
   }
 
   if (profile.account_status !== 'active') {
-    return <div className="auth-shell"><div className="auth-card"><h1>Account unavailable</h1>
-      <p>Your account is {profile.account_status}. Contact MELA support for assistance.</p>{actionError && <p role="alert">{actionError}</p>}
-      <button className="btn btn-secondary" onClick={signOut} disabled={signingOut}>Log out</button>
+    return <div className="auth-shell"><div className="auth-card"><h1>{t('accountUnavailable')}</h1>
+      <p>{profile.account_status}. {t('accountUnavailableHelp')}</p>{actionError && <p role="alert">{actionError}</p>}
+      <button className="btn btn-secondary" onClick={signOut} disabled={signingOut}>{t('logout')}</button>
     </div></div>
   }
 
@@ -203,37 +208,38 @@ export default function App() {
     )
   }
 
-  const changeLanguage = async (code: string) => {
+  const changeLanguage = async (languageName: string) => {
     setSavingLanguage(true); setActionError('')
     try {
-      await updatePreferredLanguage(code)
-      setProfile(current => current ? { ...current, preferred_language: code } : current)
-    } catch { setActionError('Could not save your language preference. Please try again.') }
+      await updatePreferredLanguage(languageName)
+      setLanguage(languageName)
+      setProfile(current => current ? { ...current, preferred_language: languageName } : current)
+    } catch { setActionError(t('languageSaveError')) }
     finally { setSavingLanguage(false) }
   }
 
   return (
     <div className="app-shell">
-      <a className="skip-link" href="#main-content">Skip to content</a>
+      <a className="skip-link" href="#main-content">{t('skipToContent')}</a>
       <header className="app-topbar">
         <span className="auth-wordmark"><GraduationCap size={26} /> MELA</span>
         <div className="app-topbar-right">
-          <select aria-label="Preferred language" disabled={savingLanguage || !languages.length} className="lang-select" value={profile.preferred_language} onChange={(e) => changeLanguage(e.target.value)}>
+          <select aria-label={t('preferredLanguage')} disabled={savingLanguage || !languages.length} className="lang-select" value={profile.preferred_language} onChange={(e) => changeLanguage(e.target.value)}>
             {!languages.some(l => l.language_name === profile.preferred_language) && <option value={profile.preferred_language}>{profile.preferred_language}</option>}
             {languages.map((l) => (
               <option key={l.language_code} value={l.language_name}>{l.native_name}</option>
             ))}
           </select>
           <span className="pill-stat coins">🪙 {profile.coin_balance}</span>
-          <span className={`pill-stat ${online ? "online" : "offline"}`} role="status">{online ? <Wifi size={13} /> : <WifiOff size={13} />}{online ? "Connected" : "Offline"}</span>
-          <button className="icon-btn" onClick={signOut} disabled={signingOut} aria-label="Log out"><LogOut size={18} /></button>
+          <span className={`pill-stat ${online ? 'online' : 'offline'}`} role="status">{online ? <Wifi size={13} /> : <WifiOff size={13} />}{online ? t('connected') : t('offline')}</span>
+          <button className="icon-btn" onClick={signOut} disabled={signingOut} aria-label={t('logout')}><LogOut size={18} /></button>
         </div>
       </header>
 
-      {!online && <div className="connection-banner" role="status">You’re offline. Reconnect to load lessons and save your progress.</div>}
+      {!online && <div className="connection-banner" role="status">{t('offlineBanner')}</div>}
       {actionError && <div className="banner banner-error shell-message" role="alert">{actionError}</div>}
       <main id="main-content" tabIndex={-1}>
-      <ErrorBoundary key={studentView}><Suspense fallback={<div className="page-loading" role="status">Loading your page…</div>}>
+      <ErrorBoundary key={studentView}><Suspense fallback={<div className="page-loading" role="status">{t('loadingPage')}</div>}>
       {isStudent ? (
         <>
           {studentView === 'practice' && <Practice onBack={() => setStudentView('dashboard')} />}
@@ -254,6 +260,7 @@ export default function App() {
           {studentView === 'challenges' && <LearnerSubsections view="challenges" onBack={() => setStudentView('dashboard')} />}
           {studentView === 'assessments' && <VerifiedAssessments onBack={() => setStudentView('dashboard')} />}
           {studentView === 'earn-work' && <LearnerSubsections view="earn" onBack={() => setStudentView('dashboard')} />}
+          {studentView === 'safety' && <SafetyCenter onBack={() => setStudentView('dashboard')} />}
           {studentView === 'dashboard' && <StudentDashboard onNavigate={setStudentView} />}
         </>
       ) : profile.role === 'company' || profile.role === 'employer' ? (
@@ -261,22 +268,22 @@ export default function App() {
       ) : profile.role === 'parent' || profile.role === 'teacher' || profile.role === 'mentor' ? (
         <RoleDashboard role={profile.role} fullName={profile.full_name} />
       ) : profile.role === 'admin' ? (
-        <div className="dash-main"><h1>Central Admin</h1><p className="muted">Use the separate MELA Central Dashboard for administrative operations.</p></div>
+        <div className="dash-main"><h1>{t('centralAdmin')}</h1><p className="muted">{t('centralAdminHelp')}</p></div>
       ) : (
-        <div className="dash-main"><h1>Account setup</h1><p className="muted">Your account role is not yet supported by this frontend.</p></div>
+        <div className="dash-main"><h1>{t('accountSetup')}</h1><p className="muted">{t('unsupportedRole')}</p></div>
       )}
       </Suspense></ErrorBoundary>
       </main>
       {isStudent && (
-          <nav className="bottom-nav" aria-label="Main navigation">
+          <nav className="bottom-nav" aria-label={t('mainNavigation')}>
             {BOTTOM_NAV.map((item) => (
               <button
-                key={item.label}
+                key={item.view}
                 className={studentView === item.view ? 'active' : ''}
                 aria-current={studentView === item.view ? 'page' : undefined}
                 onClick={() => setStudentView(item.view)}
               >
-                <item.icon size={20} aria-hidden="true" />{item.label}
+                <item.icon size={20} aria-hidden="true" />{t(item.labelKey)}
               </button>
             ))}
           </nav>

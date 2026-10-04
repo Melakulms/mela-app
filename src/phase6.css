@@ -1,0 +1,41 @@
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+html[lang='am'] body,
+html[lang='ti'] body,
+html[lang='am'] button,
+html[lang='ti'] button,
+html[lang='am'] input,
+html[lang='ti'] input,
+html[lang='am'] select,
+html[lang='ti'] select,
+html[lang='am'] textarea,
+html[lang='ti'] textarea,
+html[lang='am'] h1,
+html[lang='am'] h2,
+html[lang='am'] h3,
+html[lang='ti'] h1,
+html[lang='ti'] h2,
+html[lang='ti'] h3 {
+  font-family: system-ui, 'Noto Sans Ethiopic', 'Nyala', sans-serif;
+  letter-spacing: normal;
+}
+
+body { overflow-wrap: anywhere; }
+button, input, select, textarea { min-height: 44px; }
+.icon-btn { min-width: 44px; min-height: 44px; justify-content: center; }
+.lang-select { max-width: min(42vw, 13rem); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .app-topbar { gap: .5rem; }
+  .app-topbar-right { gap: .25rem; }
+  .pill-stat.coins { display: none; }
+}

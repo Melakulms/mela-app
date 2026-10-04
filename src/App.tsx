@@ -29,6 +29,7 @@ const LearnerSubsections = lazy(() => import('./pages/LearnerSubsections'))
 const VerifiedAssessments = lazy(() => import('./pages/VerifiedAssessments'))
 const StudentOnboarding = lazy(() => import('./pages/StudentOnboarding'))
 const QuestionBank = lazy(() => import('./pages/QuestionBank'))
+const SafetyCenter = lazy(() => import('./pages/SafetyCenter'))
 
 import ErrorBoundary from './components/ErrorBoundary'
 import { useStudentNavigation, VIEW_LABELS, type StudentView } from './hooks/useStudentNavigation'
@@ -259,6 +260,7 @@ export default function App() {
           {studentView === 'challenges' && <LearnerSubsections view="challenges" onBack={() => setStudentView('dashboard')} />}
           {studentView === 'assessments' && <VerifiedAssessments onBack={() => setStudentView('dashboard')} />}
           {studentView === 'earn-work' && <LearnerSubsections view="earn" onBack={() => setStudentView('dashboard')} />}
+          {studentView === 'safety' && <SafetyCenter onBack={() => setStudentView('dashboard')} />}
           {studentView === 'dashboard' && <StudentDashboard onNavigate={setStudentView} />}
         </>
       ) : profile.role === 'company' || profile.role === 'employer' ? (

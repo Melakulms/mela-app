@@ -6,6 +6,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import { I18nProvider } from './i18n'
 import { clearLegacyAdminSession } from './lib/security-boundary'
 import './styles.css'
+import './phase6.css'
 
 // Historical admin deployments shared this origin and persisted a privileged
 // Supabase session. Remove that legacy credential before rendering any MELA UI.

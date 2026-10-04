@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   requestMentor: vi.fn(),
   cancelMentorshipRequest: vi.fn(),
   cancelMentorshipSession: vi.fn(),
+  rateMentorshipSession: vi.fn(),
 }))
 
 vi.mock('../src/lib/mentorship', () => ({
@@ -18,6 +19,7 @@ vi.mock('../src/lib/mentorship', () => ({
   requestMentor: mocks.requestMentor,
   cancelMentorshipRequest: mocks.cancelMentorshipRequest,
   cancelMentorshipSession: mocks.cancelMentorshipSession,
+  rateMentorshipSession: mocks.rateMentorshipSession,
 }))
 
 const mentor = {
@@ -27,6 +29,8 @@ const mentor = {
   bio: null,
   organization: null,
   years_experience: 5,
+  rating_average: 4.75,
+  rating_count: 8,
 }
 
 beforeEach(() => {
@@ -37,6 +41,7 @@ beforeEach(() => {
   mocks.requestMentor.mockResolvedValue(undefined)
   mocks.cancelMentorshipRequest.mockResolvedValue(undefined)
   mocks.cancelMentorshipSession.mockResolvedValue(undefined)
+  mocks.rateMentorshipSession.mockResolvedValue(undefined)
 })
 
 afterEach(cleanup)
@@ -74,7 +79,7 @@ describe('Mentorship', () => {
 
   it('allows learners to cancel a pending request and a scheduled session', async () => {
     mocks.fetchMyMentorshipRequests.mockResolvedValue([{ id: 'request-1', mentor_id: 'mentor-1', topic: 'Interview prep', status: 'pending', created_at: '2026-10-02T10:00:00Z' }])
-    mocks.fetchMyMentorshipSessions.mockResolvedValue([{ id: 'session-1', request_id: 'request-2', mentor_id: 'mentor-1', mentee_id: 'learner', scheduled_at: '2026-10-04T10:00:00Z', duration_min: 30, status: 'scheduled', call_room_id: null, completed_at: null, cancelled_at: null }])
+    mocks.fetchMyMentorshipSessions.mockResolvedValue([{ id: 'session-1', request_id: 'request-2', mentor_id: 'mentor-1', mentee_id: 'learner', scheduled_at: '2026-10-04T10:00:00Z', duration_min: 30, status: 'scheduled', call_room_id: null, completed_at: null, cancelled_at: null, rating: null, rating_comment: null }])
     render(<Mentorship onBack={vi.fn()} />)
 
     await screen.findByText('Your sessions')
@@ -84,5 +89,23 @@ describe('Mentorship', () => {
     await waitFor(() => expect(mocks.fetchMyMentorshipRequests).toHaveBeenCalledTimes(2))
     fireEvent.click(screen.getByRole('button', { name: 'Cancel request' }))
     await waitFor(() => expect(mocks.cancelMentorshipRequest).toHaveBeenCalledWith('request-1'))
+  })
+
+  it('shows mentor rating summaries and submits one rating for a completed session', async () => {
+    mocks.fetchMyMentorshipSessions
+      .mockResolvedValueOnce([{ id: 'session-2', request_id: 'request-3', mentor_id: 'mentor-1', mentee_id: 'learner', scheduled_at: '2026-10-03T10:00:00Z', duration_min: 45, status: 'completed', call_room_id: null, completed_at: '2026-10-03T10:45:00Z', cancelled_at: null, rating: null, rating_comment: null }])
+      .mockResolvedValueOnce([{ id: 'session-2', request_id: 'request-3', mentor_id: 'mentor-1', mentee_id: 'learner', scheduled_at: '2026-10-03T10:00:00Z', duration_min: 45, status: 'completed', call_room_id: null, completed_at: '2026-10-03T10:45:00Z', cancelled_at: null, rating: 4, rating_comment: 'Helpful feedback.' }])
+
+    render(<Mentorship onBack={vi.fn()} />)
+    expect(await screen.findByText('4.75/5 · 8 ratings')).toBeTruthy()
+
+    fireEvent.change(screen.getByLabelText('Rate this completed session'), { target: { value: '4' } })
+    fireEvent.change(screen.getByLabelText('Rating comment (optional)'), { target: { value: 'Helpful feedback.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Submit rating' }))
+
+    await waitFor(() => expect(mocks.rateMentorshipSession).toHaveBeenCalledTimes(1))
+    expect(mocks.rateMentorshipSession).toHaveBeenCalledWith('session-2', 4, 'Helpful feedback.')
+    expect(await screen.findByText('Rated 4/5 · Helpful feedback.')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Submit rating' })).toBeNull()
   })
 })

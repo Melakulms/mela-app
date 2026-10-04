@@ -5,6 +5,7 @@ import {
   fetchMyMentorshipRequests,
   fetchMyMentorshipSessions,
   fetchVerifiedMentors,
+  rateMentorshipSession,
   requestMentor,
   type Mentor,
   type MentorshipSession,
@@ -19,6 +20,8 @@ export default function Mentorship({ onBack }: { onBack: () => void }) {
   const [openMentor, setOpenMentor] = useState<string | null>(null)
   const [topic, setTopic] = useState('')
   const [message, setMessage] = useState('')
+  const [ratingDraft, setRatingDraft] = useState<Record<string, number>>({})
+  const [ratingComment, setRatingComment] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [revision, setRevision] = useState(0)
@@ -74,6 +77,17 @@ export default function Mentorship({ onBack }: { onBack: () => void }) {
     })
   }
 
+  const submitRating = async (sessionId: string) => {
+    const rating = ratingDraft[sessionId] ?? 5
+    const comment = ratingComment[sessionId] ?? ''
+    if (comment.length > 2000) { setError('Keep the rating comment to 2000 characters or fewer.'); return }
+    await runAction(`rating-${sessionId}`, async () => {
+      await rateMentorshipSession(sessionId, rating, comment)
+      setRatingDraft((current) => { const next = { ...current }; delete next[sessionId]; return next })
+      setRatingComment((current) => { const next = { ...current }; delete next[sessionId]; return next })
+    })
+  }
+
   const closeComposer = () => {
     if (busy) return
     setOpenMentor(null)
@@ -95,15 +109,48 @@ export default function Mentorship({ onBack }: { onBack: () => void }) {
       {!loading && sessions.length > 0 && <>
         <div className="section-heading"><h2>Your sessions</h2></div>
         <div className="list-panel">
-          {sessions.map((session) => <div className="list-row" key={session.id}>
-            <div>
-              <div className="list-row-title">{new Date(session.scheduled_at).toLocaleString()}</div>
-              <div className="list-row-meta">{session.duration_min ?? 30} minutes · {session.status}</div>
+          {sessions.map((session) => {
+            const ratingId = `session-rating-${session.id}`
+            const commentId = `session-rating-comment-${session.id}`
+            return <div className="list-row" key={session.id}>
+              <div style={{ flex: 1 }}>
+                <div className="list-row-title">{new Date(session.scheduled_at).toLocaleString()}</div>
+                <div className="list-row-meta">{session.duration_min ?? 30} minutes · {session.status}</div>
+                {session.status === 'completed' && session.rating !== null && <div className="list-row-meta">Rated {session.rating}/5{session.rating_comment ? ` · ${session.rating_comment}` : ''}</div>}
+                {session.status === 'completed' && session.rating === null && <div style={{ marginTop: '.75rem', display: 'grid', gap: '.5rem', maxWidth: '32rem' }}>
+                  <label htmlFor={ratingId}>Rate this completed session</label>
+                  <select
+                    id={ratingId}
+                    value={ratingDraft[session.id] ?? 5}
+                    disabled={!!busy}
+                    onChange={(event) => setRatingDraft((current) => ({ ...current, [session.id]: Number(event.target.value) }))}
+                  >
+                    <option value={5}>5 — Excellent</option>
+                    <option value={4}>4 — Very good</option>
+                    <option value={3}>3 — Good</option>
+                    <option value={2}>2 — Needs improvement</option>
+                    <option value={1}>1 — Poor</option>
+                  </select>
+                  <label htmlFor={commentId}>Rating comment (optional)</label>
+                  <textarea
+                    id={commentId}
+                    rows={3}
+                    maxLength={2000}
+                    value={ratingComment[session.id] ?? ''}
+                    disabled={!!busy}
+                    onChange={(event) => setRatingComment((current) => ({ ...current, [session.id]: event.target.value }))}
+                  />
+                  <span className="field-hint">{(ratingComment[session.id] ?? '').length}/2000</span>
+                  <button className="btn btn-primary" disabled={!!busy} onClick={() => submitRating(session.id)}>
+                    {busy === `rating-${session.id}` ? 'Submitting rating…' : 'Submit rating'}
+                  </button>
+                </div>}
+              </div>
+              {session.status === 'scheduled'
+                ? <button className="btn btn-secondary" disabled={!!busy} onClick={() => runAction(`session-${session.id}`, () => cancelMentorshipSession(session.id, 'Cancelled by learner'))}>{busy === `session-${session.id}` ? 'Cancelling…' : 'Cancel session'}</button>
+                : <span className="pill">{session.status}</span>}
             </div>
-            {session.status === 'scheduled'
-              ? <button className="btn btn-secondary" disabled={!!busy} onClick={() => runAction(`session-${session.id}`, () => cancelMentorshipSession(session.id, 'Cancelled by learner'))}>{busy === `session-${session.id}` ? 'Cancelling…' : 'Cancel session'}</button>
-              : <span className="pill">{session.status}</span>}
-          </div>)}
+          })}
         </div>
       </>}
 
@@ -131,6 +178,7 @@ export default function Mentorship({ onBack }: { onBack: () => void }) {
           return <div className="module-card" key={m.user_id} style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}>
             <h3 style={{ color: 'var(--ink)' }}>{m.full_name}</h3>
             <p style={{ color: 'var(--muted)' }}>{m.headline ?? m.organization ?? 'MELA mentor'}</p>
+            {m.rating_count > 0 && <p className="muted">{m.rating_average.toFixed(2)}/5 · {m.rating_count} {m.rating_count === 1 ? 'rating' : 'ratings'}</p>}
             {alreadyRequested(m.user_id) ? <span className="pill">Requested</span> : openMentor === m.user_id ? <div>
               <div className="field">
                 <label htmlFor={topicId}>Topic</label>

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import type { StudentView } from '../hooks/useStudentNavigation'
 import {
-  ShieldCheck, Briefcase, GraduationCap, Trophy, Sparkles,
+  ShieldCheck, ShieldAlert, Briefcase, GraduationCap, Trophy, Sparkles,
   BookOpen, Swords, FileText, Globe, Video, DollarSign, Medal, Brain, Map, Route, WalletCards, ClipboardCheck,
 } from 'lucide-react'
 import { fetchDashboard, type MelaDashboard } from '../lib/dashboard'
@@ -10,6 +10,7 @@ import { fetchMyBadges, type EarnedBadge } from '../lib/badges'
 
 const MODULES: { key: string; label: string; blurb: string; view?: StudentView; icon: LucideIcon; cls: string; enabled?: boolean }[] = [
   { key: 'career_passport', label: 'Career Passport', blurb: 'Verified skills, badges & portable identity', view: 'passport', icon: ShieldCheck, cls: 'mc-career_passport' },
+  { key: 'safety_center', label: 'Safety & Privacy', blurb: 'Report concerns and manage guardian protection', view: 'safety', icon: ShieldAlert, cls: 'mc-career_passport', enabled: true },
   { key: 'opportunities', label: 'Opportunity Hub', blurb: 'Verified jobs, internships & gigs', view: 'opportunities', icon: Briefcase, cls: 'mc-opportunities' },
   { key: 'academy', label: 'Skill Academy', blurb: 'Career-tied learning paths', view: 'academy', icon: GraduationCap, cls: 'mc-academy' },
   { key: 'challenges', label: 'Sponsored Challenges', blurb: 'Bank & company competitions', view: 'challenges', icon: Trophy, cls: 'mc-challenges' },
@@ -69,7 +70,7 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
       {MODULES.filter(m => `${m.label} ${m.blurb}`.toLowerCase().includes(query.trim().toLowerCase())).length === 0 && <div className="empty-panel" role="status">No tools match “{query}”. <button className="password-toggle" onClick={() => setQuery('')}>Clear search</button></div>}
       <div className="module-grid">
         {MODULES.filter(m => `${m.label} ${m.blurb}`.toLowerCase().includes(query.trim().toLowerCase())).map((m) => {
-          const enabled = ['study_materials','mastery','opportunity_graph','mela_next','wallet'].includes(m.key) ? true : (feature_flags[m.key] ?? m.enabled ?? false)
+          const enabled = ['study_materials','mastery','opportunity_graph','mela_next','wallet','safety_center'].includes(m.key) ? true : (feature_flags[m.key] ?? m.enabled ?? false)
           const isBuilt = !!m.view
           const Icon = m.icon
           return (

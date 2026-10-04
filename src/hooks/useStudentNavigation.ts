@@ -7,6 +7,7 @@ export const VIEW_LABELS = {
   scholarships: 'Scholarships', mastery: 'My Mastery Map', 'opportunity-graph': 'My Future Map',
   'mela-next': 'Mela Next', wallet: 'Mela Wallet', challenges: 'Challenges',
   assessments: 'Assessments', 'earn-work': 'Earn & Work', 'question-bank': 'Question Bank',
+  safety: 'Safety & Privacy',
 } as const
 export type StudentView = keyof typeof VIEW_LABELS
 

@@ -33,6 +33,15 @@ it('respects a locked server response even when the library previously showed ac
   await screen.findByText(/does not have access/)
   expect(screen.queryByText('Protected content')).toBeNull()
 })
+it('explains empty programs without presenting unreviewed content as published', async () => {
+  mocks.fetchLearningLibrary.mockResolvedValue({ programs: [{ program_key: 'tvet_pathway_ict', title: 'ICT Support & Networking Foundations', subject_title: 'ICT Support', units: [] }] })
+  render(<StudyMaterials stageKey="college_tvet" gradeLevel={null} onBack={vi.fn()} />)
+  const program = await screen.findByRole('button', { name: /ICT Support & Networking Foundations/ })
+  expect(program.textContent).toContain('In review')
+  fireEvent.click(program)
+  expect(await screen.findByText(/must pass qualified educator review before publication/i)).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'Open material' })).toBeNull()
+})
 it('accepts a written practice answer and shows pending grading accurately', async () => {
   mocks.fetchSessionQuestions.mockResolvedValue([{ question_id: 'question', question: 'Explain your answer', choices: null }])
   mocks.submitResponse.mockResolvedValue({ is_correct: null, feedback: 'Awaiting review.' })

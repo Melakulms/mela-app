@@ -56,14 +56,20 @@ export default function StudyMaterials({ stageKey, gradeLevel, onBack }: { stage
               <div className="list-row-title">{p.title}</div>
               <div className="list-row-meta">{p.subject_title}</div>
             </div>
-            <span className="pill">{p.units.length} units</span>
+            <span className="pill">{p.units.length ? `${p.units.length} units` : 'In review'}</span>
           </button>
+
+          {openProgram === p.program_key && p.units.length === 0 && (
+            <div className="empty-panel" role="status" style={{ margin: '0.8rem 1.1rem' }}>
+              Learning content for this program is being prepared and must pass qualified educator review before publication. No unreviewed lesson has been substituted.
+            </div>
+          )}
 
           {openProgram === p.program_key && p.units.map((u) => (
             <div key={u.id} style={{ borderTop: '1px solid var(--line)', padding: '0.8rem 1.1rem' }}>
               <div className="list-row-title" style={{ marginBottom: '0.5rem' }}>Unit {u.unit_number}: {u.title}</div>
               {u.materials.length === 0 ? (
-                <p className="muted" style={{ fontSize: '0.85rem' }}>No materials in this unit yet.</p>
+                <p className="muted" style={{ fontSize: '0.85rem' }}>Materials for this unit are still under qualified review.</p>
               ) : (
                 u.materials.map((m) => (
                   <div key={m.material_key} className="list-row" style={{ padding: '0.6rem 0' }}>

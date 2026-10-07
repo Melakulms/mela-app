@@ -130,3 +130,16 @@ describe('App session ordering', () => {
     expect(mocks.fetchOwnProfile).not.toHaveBeenCalled()
   })
 })
+
+
+it('preserves a retryable profile error during token refresh', async () => {
+  const session = { user: { id: 'missing-profile' } }
+  mocks.getSession.mockResolvedValue({ data: { session }, error: null })
+  mocks.fetchOwnProfile.mockResolvedValue(null)
+  render(<App />)
+  await screen.findByRole('alert')
+  const callback = mocks.onAuthStateChange.mock.calls[0][0]
+  await act(async () => callback('TOKEN_REFRESHED', { ...session }))
+  expect(screen.getByRole('alert')).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy()
+})

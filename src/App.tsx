@@ -73,7 +73,7 @@ export default function App() {
       if (event === 'PASSWORD_RECOVERY') setRecovering(true)
       if (event === 'USER_UPDATED' || event === 'SIGNED_IN') setProfileRevision(value => value + 1)
       if (event === 'SIGNED_OUT') setRecovering(false)
-      setAccountError('')
+      if (event !== 'TOKEN_REFRESHED') setAccountError('')
       setSession(newSession)
       setLoading(false)
     }, () => {

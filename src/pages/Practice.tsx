@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n'
 import { useEffect, useRef, useState } from 'react'
 import {
   fetchTopics, startSession, fetchSessionQuestions, submitResponse, completeSession,
@@ -12,6 +13,7 @@ type View =
   | { stage: 'complete'; summary: SessionSummary }
 
 export default function Practice({ onBack }: { onBack: () => void }) {
+  const { t } = useI18n()
   const [topics, setTopics] = useState<PracticeTopic[] | null>(null)
   const [recommendations, setRecommendations] = useState<PracticeRecommendation[]>([])
   const [error, setError] = useState('')
@@ -81,8 +83,8 @@ export default function Practice({ onBack }: { onBack: () => void }) {
     return (
       <div className="dash-main">
         <div className="section-heading">
-          <h1>Practice</h1>
-          <button className="btn btn-secondary" onClick={onBack}>Back to dashboard</button>
+          <h1>{t('practice')}</h1>
+          <button className="btn btn-secondary" onClick={onBack}>{t('back')}</button>
         </div>
         {error && <div className="banner banner-error">{error}</div>}
 
@@ -181,7 +183,7 @@ export default function Practice({ onBack }: { onBack: () => void }) {
         <div><span className="stat-value">{view.summary.correct}/{view.summary.answered}</span><span className="stat-label">Correct</span></div>
         <div><span className="stat-value">{view.summary.topic_mastery[0]?.mastery_level ?? '—'}</span><span className="stat-label">Mastery</span></div>
       </div>
-      <button className="btn btn-primary" onClick={onBack}>Back to dashboard</button>
+      <button className="btn btn-primary" onClick={onBack}>{t('back')}</button>
     </div>
   )
 }

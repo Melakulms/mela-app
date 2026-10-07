@@ -117,6 +117,7 @@ export type TranslationKey =
   | 'generating'
   | 'generateParentLink'
   | 'parentLinkCode'
+  | 'back'
 
 const EN: Record<TranslationKey, string> = {
   loadingMela: 'Loading MELA…',
@@ -219,6 +220,7 @@ const EN: Record<TranslationKey, string> = {
   generating: 'Generating…',
   generateParentLink: 'Generate parent link code',
   parentLinkCode: 'Parent link code',
+  back: 'Back',
 }
 
 const TRANSLATIONS: Record<LanguageCode, Record<TranslationKey, string>> = {
@@ -247,7 +249,7 @@ const TRANSLATIONS: Record<LanguageCode, Record<TranslationKey, string>> = {
     futureMap: 'የወደፊት መንገዴ', futureMapBlurb: 'ትምህርትን ከወደፊት መንገዶች ጋር ያገናኙ', melaNext: 'Mela Next', melaNextBlurb: 'ቀጣዩን የሽግግር ግብ ያዘጋጁ እና ይከተሉ',
     melaWallet: 'MELA ቦርሳ', melaWalletBlurb: 'ገቢ፣ መዝገብ እና የክፍያ ሁኔታ', verifiedAssessments: 'የተረጋገጡ ግምገማዎች', verifiedAssessmentsBlurb: 'ለሙያ ዝግጁነት የክህሎት ማረጋገጫ',
     earnWork: 'አግኝ እና ስራ', earnWorkBlurb: 'ነፃ ሙያ እና በኤስክሮ የተጠበቁ ስራዎች', profileHeading: 'የእርስዎ መገለጫ', personalInformation: 'የግል መረጃ', name: 'ስም', email: 'ኢሜይል', role: 'ሚና', coins: 'ኮይኖች', language: 'ቋንቋ',
-    connectParent: 'ወላጅ ወይም አሳዳጊ ያገናኙ', parentLinkHelp: 'ይህን ኮድ ከወላጅዎ ወይም ከአሳዳጊዎ ጋር ብቻ ያጋሩ። ከ30 ደቂቃ በኋላ ይቃጠላል። አዲስ ኮድ ማመንጨት የቀድሞውን ይተካል።', generating: 'በማመንጨት ላይ…', generateParentLink: 'የወላጅ ማገናኛ ኮድ ፍጠር', parentLinkCode: 'የወላጅ ማገናኛ ኮድ',
+    connectParent: 'ወላጅ ወይም አሳዳጊ ያገናኙ', parentLinkHelp: 'ይህን ኮድ ከወላጅዎ ወይም ከአሳዳጊዎ ጋር ብቻ ያጋሩ። ከ30 ደቂቃ በኋላ ይቃጠላል። አዲስ ኮድ ማመንጨት የቀድሞውን ይተካል።', generating: 'በማመንጨት ላይ…', generateParentLink: 'የወላጅ ማገናኛ ኮድ ፍጠር', parentLinkCode: 'የወላጅ ማገናኛ ኮድ', back: 'ተመለስ',
   },
   om: {
     ...EN,
@@ -273,7 +275,7 @@ const TRANSLATIONS: Record<LanguageCode, Record<TranslationKey, string>> = {
     futureMap: 'Kaartaa Fuulduraa Koo', futureMapBlurb: 'Barnoota daandii fuulduraa waliin walqabsiisi', melaNext: 'Mela Next', melaNextBlurb: 'Galma ceʼumsaa itti aanu kaaʼii hordofi',
     melaWallet: 'Mela Wallet', melaWalletBlurb: 'Galii, galmee fi haala kaffaltii', verifiedAssessments: 'Madaallii Mirkanaaʼe', verifiedAssessmentsBlurb: 'Qophii hojii irratti dandeettii mirkaneessi',
     earnWork: 'Argadhu fi Hojjedhu', earnWorkBlurb: 'Hojii freelance fi escrow', profileHeading: 'Profaayila kee', personalInformation: 'Odeeffannoo dhuunfaa', name: 'Maqaa', email: 'Imeelii', role: 'Gahee', coins: 'Kooyinii', language: 'Afaan',
-    connectParent: 'Maatii yookaan eegduu walqabsiisi', parentLinkHelp: 'Koodii kana maatii yookaan eegduu kee qofaaf qoodi. Daqiiqaa 30 booda ni dhuma. Koodii haaraa uumuun kan duraa bakka buusa.', generating: 'Uumamaa jira…', generateParentLink: 'Koodii walqabsiisaa maatii uumi', parentLinkCode: 'Koodii walqabsiisaa maatii',
+    connectParent: 'Maatii yookaan eegduu walqabsiisi', parentLinkHelp: 'Koodii kana maatii yookaan eegduu kee qofaaf qoodi. Daqiiqaa 30 booda ni dhuma. Koodii haaraa uumuun kan duraa bakka buusa.', generating: 'Uumamaa jira…', generateParentLink: 'Koodii walqabsiisaa maatii uumi', parentLinkCode: 'Koodii walqabsiisaa maatii', back: 'Duubatti',
   },
   ti: {
     ...EN,
@@ -299,7 +301,7 @@ const TRANSLATIONS: Record<LanguageCode, Record<TranslationKey, string>> = {
     futureMap: 'ካርታ መጻኢየይ', futureMapBlurb: 'ትምህርቲ ምስ መንገዲ መጻኢ ኣተኣሳስር', melaNext: 'Mela Next', melaNextBlurb: 'ቀጻሊ ዕላማ ምስግጋር ኣቐምጥ እና ተኸተል',
     melaWallet: 'Mela Wallet', melaWalletBlurb: 'እቶት፣ መዝገብን ኩነታት ክፍሊትን', verifiedAssessments: 'ዝተረጋገጹ ግምገማታት', verifiedAssessmentsBlurb: 'ንድሉውነት ሞያ ክእለት ኣረጋግጽ',
     earnWork: 'ኣርክብ እና ስራሕ', earnWorkBlurb: 'ፍሪላንስን ኤስክሮ ስራሕን', profileHeading: 'ፕሮፋይልካ', personalInformation: 'ውልቃዊ ሓበሬታ', name: 'ስም', email: 'ኢሜይል', role: 'ተራ', coins: 'ኮይን', language: 'ቋንቋ',
-    connectParent: 'ወላዲ ወይ ኣላዪ ኣራኽብ', parentLinkHelp: 'እዚ ኮድ ምስ ወላዲኻ ወይ ኣላዪኻ ጥራይ ኣካፍል። ድሕሪ 30 ደቒቕ ይውዳእ። ሓድሽ ኮድ ምፍጣር ነቲ ቀዳማይ ይትክኦ።', generating: 'ይፍጠር ኣሎ…', generateParentLink: 'ኮድ መራኸቢ ወላዲ ፍጠር', parentLinkCode: 'ኮድ መራኸቢ ወላዲ',
+    connectParent: 'ወላዲ ወይ ኣላዪ ኣራኽብ', parentLinkHelp: 'እዚ ኮድ ምስ ወላዲኻ ወይ ኣላዪኻ ጥራይ ኣካፍል። ድሕሪ 30 ደቒቕ ይውዳእ። ሓድሽ ኮድ ምፍጣር ነቲ ቀዳማይ ይትክኦ።', generating: 'ይፍጠር ኣሎ…', generateParentLink: 'ኮድ መራኸቢ ወላዲ ፍጠር', parentLinkCode: 'ኮድ መራኸቢ ወላዲ', back: 'ተመለስ',
   },
   so: {
     ...EN,
@@ -325,7 +327,7 @@ const TRANSLATIONS: Record<LanguageCode, Record<TranslationKey, string>> = {
     futureMap: 'Khariidadda Mustaqbalkayga', futureMapBlurb: 'Ku xiro waxbarashada waddooyinka mustaqbalka', melaNext: 'Mela Next', melaNextBlurb: 'Deji oo raac yoolkaaga kala-guurka xiga',
     melaWallet: 'Mela Wallet', melaWalletBlurb: 'Dakhli, diiwaan iyo xaaladda bixinta', verifiedAssessments: 'Qiimeyn La Xaqiijiyay', verifiedAssessmentsBlurb: 'Xaqiiji xirfadaha diyaar-garowga shaqada',
     earnWork: 'Kasbo & Shaqee', earnWorkBlurb: 'Hawlo freelance iyo escrow', profileHeading: 'Boggaaga', personalInformation: 'Macluumaad shaqsiyeed', name: 'Magac', email: 'Iimayl', role: 'Door', coins: 'Qadaadiic', language: 'Luqad',
-    connectParent: 'Ku xiro waalid ama masuul', parentLinkHelp: 'Koodhkan la wadaag waalidkaaga ama masuulkaaga oo keliya. Wuxuu dhacayaa 30 daqiiqo kadib. Samaynta koodh cusub waxay beddeshaa kii hore.', generating: 'Waa la samaynayaa…', generateParentLink: 'Samee koodhka isku xirka waalidka', parentLinkCode: 'Koodhka isku xirka waalidka',
+    connectParent: 'Ku xiro waalid ama masuul', parentLinkHelp: 'Koodhkan la wadaag waalidkaaga ama masuulkaaga oo keliya. Wuxuu dhacayaa 30 daqiiqo kadib. Samaynta koodh cusub waxay beddeshaa kii hore.', generating: 'Waa la samaynayaa…', generateParentLink: 'Samee koodhka isku xirka waalidka', parentLinkCode: 'Koodhka isku xirka waalidka', back: 'Dib u noqo',
   },
 }
 

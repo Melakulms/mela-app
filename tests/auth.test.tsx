@@ -103,3 +103,43 @@ describe('Authentication failures', () => {
     await waitFor(() => expect(mocks.fetchOwnProfile).toHaveBeenCalledTimes(2))
   })
 })
+
+
+describe('App session ordering', () => {
+  it('keeps password recovery open when an older empty snapshot arrives', async () => {
+    let restore!: (value: unknown) => void
+    mocks.getSession.mockReturnValue(new Promise(resolve => { restore = resolve }))
+    mocks.fetchOwnProfile.mockResolvedValue(null)
+    render(<App />)
+    const callback = mocks.onAuthStateChange.mock.calls[0][0]
+    await act(async () => callback('PASSWORD_RECOVERY', { user: { id: 'recovery-user' } }))
+    expect(screen.getByLabelText('New password')).toBeTruthy()
+    await act(async () => restore({ data: { session: null }, error: null }))
+    expect(screen.getByLabelText('New password')).toBeTruthy()
+    expect(screen.queryByText(/invalid or expired/)).toBeNull()
+  })
+
+  it('does not reload the signed-out account from a delayed snapshot', async () => {
+    let restore!: (value: unknown) => void
+    mocks.getSession.mockReturnValue(new Promise(resolve => { restore = resolve }))
+    render(<App />)
+    const callback = mocks.onAuthStateChange.mock.calls[0][0]
+    await act(async () => callback('SIGNED_OUT', null))
+    await act(async () => restore({ data: { session: { user: { id: 'old-account' } } }, error: null }))
+    expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeTruthy()
+    expect(mocks.fetchOwnProfile).not.toHaveBeenCalled()
+  })
+})
+
+
+it('preserves a retryable profile error during token refresh', async () => {
+  const session = { user: { id: 'missing-profile' } }
+  mocks.getSession.mockResolvedValue({ data: { session }, error: null })
+  mocks.fetchOwnProfile.mockResolvedValue(null)
+  render(<App />)
+  await screen.findByRole('alert')
+  const callback = mocks.onAuthStateChange.mock.calls[0][0]
+  await act(async () => callback('TOKEN_REFRESHED', { ...session }))
+  expect(screen.getByRole('alert')).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy()
+})

@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { Wifi, WifiOff, LogOut, LayoutDashboard, BookOpen, Swords, Globe, UserRound, GraduationCap } from 'lucide-react'
 import { supabase } from './lib/supabase'
+import { observeSession } from './lib/session-observer'
 import { fetchOwnProfile, logoutUser, updatePreferredLanguage, type MelaProfile } from './lib/auth'
 import { fetchEnabledLanguages, type PlatformLanguage } from './lib/languages'
 import { useI18n, type TranslationKey } from './i18n'
@@ -66,26 +67,19 @@ export default function App() {
   const [editingEmployerProfile, setEditingEmployerProfile] = useState(false)
 
   useEffect(() => {
-    let active = true
     setLoading(true)
     setAccountError('')
-    const { data: sub } = supabase.auth.onAuthStateChange((event, newSession) => {
-      if (!active) return
+    return observeSession(supabase.auth, (newSession, event) => {
       if (event === 'PASSWORD_RECOVERY') setRecovering(true)
       if (event === 'USER_UPDATED' || event === 'SIGNED_IN') setProfileRevision(value => value + 1)
       if (event === 'SIGNED_OUT') setRecovering(false)
+      if (event !== 'TOKEN_REFRESHED') setAccountError('')
       setSession(newSession)
       setLoading(false)
-    })
-    supabase.auth.getSession().then(({ data, error }) => {
-      if (!active) return
-      if (error) setAccountError(t('sessionRestoreError'))
-      setSession(data.session)
+    }, () => {
+      setAccountError(t('sessionRestoreError'))
       setLoading(false)
-    }).catch(() => {
-      if (active) { setAccountError(t('connectionError')); setLoading(false) }
     })
-    return () => { active = false; sub.subscription.unsubscribe() }
   }, [sessionRevision, t])
 
   useEffect(() => { setEditingEmployerProfile(false) }, [session?.user.id])
@@ -128,6 +122,7 @@ export default function App() {
       try {
         const nextProfile = await fetchOwnProfile()
         if (!nextProfile || nextProfile.id !== session.user.id) throw new Error(t('profileLoadError'))
+        if (!active) return
         setLanguage(nextProfile.preferred_language)
         let registration = null
         if (nextProfile.role === 'company' || nextProfile.role === 'employer') {

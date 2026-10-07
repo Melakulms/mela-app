@@ -176,7 +176,7 @@ const EN: Record<TranslationKey, string> = {
   noBadgesYet: 'No badges earned yet — they come from verified skills, courses, and mentorship.',
   careerPassport: 'Career Passport',
   careerPassportBlurb: 'Verified skills, badges & portable identity',
-  safetyPrivacy: 'Safety & Privacy',
+  safetyPrivacy: 'Safety & privacy',
   safetyPrivacyBlurb: 'Report concerns and manage guardian protection',
   opportunityHub: 'Opportunity Hub',
   opportunityHubBlurb: 'Verified jobs, internships & gigs',

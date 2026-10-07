@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n'
 import { useEffect, useState } from 'react'
 import {
   fetchMySafetyCenter,
@@ -21,6 +22,7 @@ const REPORT_REASONS = [
 ] as const
 
 export default function SafetyCenter({ onBack }: { onBack: () => void }) {
+  const { t } = useI18n()
   const [profile, setProfile] = useState<SafetyProfile | null>(null)
   const [guardians, setGuardians] = useState<GuardianRelationship[]>([])
   const [reports, setReports] = useState<SafetyReport[]>([])
@@ -84,8 +86,8 @@ export default function SafetyCenter({ onBack }: { onBack: () => void }) {
   return (
     <div className="dash-main">
       <div className="section-heading">
-        <div><h1>Safety & privacy</h1><p>Report concerns, review your protection status, and manage guardian consent.</p></div>
-        <button className="btn btn-secondary" onClick={onBack} disabled={busy}>Back</button>
+        <div><h1>{t('safetyPrivacy')}</h1><p>Report concerns, review your protection status, and manage guardian consent.</p></div>
+        <button className="btn btn-secondary" onClick={onBack} disabled={busy}>{t('back')}</button>
       </div>
 
       <div className="banner banner-info" role="note">

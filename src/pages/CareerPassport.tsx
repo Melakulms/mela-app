@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { fetchMyAchievements, fetchMyCourseCertificates, fetchMyVerifiedSkills, type CourseCertificate, type PassportAchievement, type VerifiedSkill } from '../lib/passport'
 import { fetchDashboard } from '../lib/dashboard'
+import { useI18n } from '../i18n'
 
 function verificationLink(code: string) {
   const url = new URL(window.location.href)
@@ -11,6 +12,7 @@ function verificationLink(code: string) {
 }
 
 export default function CareerPassport({ onBack }: { onBack: () => void }) {
+  const { t } = useI18n()
   const [achievements, setAchievements] = useState<PassportAchievement[] | null>(null)
   const [skills, setSkills] = useState<VerifiedSkill[] | null>(null)
   const [certificates, setCertificates] = useState<CourseCertificate[] | null>(null)
@@ -41,8 +43,8 @@ export default function CareerPassport({ onBack }: { onBack: () => void }) {
   return (
     <div className="dash-main">
       <div className="section-heading">
-        <h1>Career Passport</h1>
-        <button className="btn btn-secondary" onClick={onBack}>Back</button>
+        <h1>{t('careerPassport')}</h1>
+        <button className="btn btn-secondary" onClick={onBack}>{t('back')}</button>
       </div>
       {error && <div className="banner banner-error" role="alert">{error}<button className="btn btn-secondary" onClick={() => setRevision((value) => value + 1)}>Retry</button></div>}
 

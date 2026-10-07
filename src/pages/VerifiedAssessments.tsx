@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useI18n } from '../i18n'
 
 type Assessment = {
   id: string
@@ -80,6 +81,7 @@ async function sendProctorEvent(attemptId: string, eventType: string, details: R
 }
 
 export default function VerifiedAssessments({ onBack }: { onBack: () => void }) {
+  const { t } = useI18n()
   const [assessments, setAssessments] = useState<Assessment[] | null>(null)
   const [attempts, setAttempts] = useState<Attempt[]>([])
   const [selected, setSelected] = useState<Assessment | null>(null)
@@ -125,7 +127,7 @@ export default function VerifiedAssessments({ onBack }: { onBack: () => void }) 
   }
 
   return <div className="dash-main">
-    <div className="section-heading"><h1>Verified Assessments</h1><button className="btn btn-secondary" onClick={onBack}>Back</button></div>
+    <div className="section-heading"><h1>{t('verifiedAssessments')}</h1><button className="btn btn-secondary" onClick={onBack}>{t('back')}</button></div>
     <p className="muted">Verified assessments use server-side scoring and integrity controls. Proctored results become verified Career Passport evidence only after integrity review clears the attempt.</p>
     {error && <div className="banner banner-error" role="alert">{error}<button className="btn btn-secondary" onClick={() => setRevision(value => value + 1)}>Retry</button></div>}
     {!assessments && !error && <div className="centered-loading" role="status">Loading verified assessments…</div>}
@@ -170,6 +172,7 @@ function AssessmentSession({ assessment, priorAttempts, onBack, onFinished }: {
   onBack: () => void
   onFinished: () => void
 }) {
+  const { t } = useI18n()
   const [attempt, setAttempt] = useState<Attempt | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
   const [answers, setAnswers] = useState<Record<string, unknown>>({})
@@ -350,7 +353,7 @@ function AssessmentSession({ assessment, priorAttempts, onBack, onFinished }: {
 
   if (!attempt) {
     return <div className="dash-main">
-      <div className="section-heading"><h1>{assessment.title}</h1><button className="btn btn-secondary" onClick={onBack}>Back</button></div>
+      <div className="section-heading"><h1>{assessment.title}</h1><button className="btn btn-secondary" onClick={onBack}>{t('back')}</button></div>
       <p className="muted">{assessment.instructions ?? assessment.description}</p>
       <div className="stat-strip">
         <div><span className="stat-value">{assessment.question_count}</span><span className="stat-label">Questions</span></div>

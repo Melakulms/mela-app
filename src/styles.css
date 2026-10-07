@@ -129,18 +129,25 @@ button, input, select, textarea { font-family: inherit; font-size: 1rem; }
 .module-card p { color: rgba(255,255,255,0.85); font-size: 0.72rem; margin: 0; max-width: none; }
 .module-card .soon { font-size: 0.65rem; color: #fff; opacity: 0.9; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; margin-top: 0.4rem; display: block; }
 
-.mc-career_passport { background: linear-gradient(135deg, #14a876, #0c7a54); }
-.mc-opportunities { background: linear-gradient(135deg, #f0a020, #c4720f); }
-.mc-academy { background: linear-gradient(135deg, #3d6fe0, #2a4fb0); }
-.mc-challenges { background: linear-gradient(135deg, #9b5ce0, #6f34c9); }
-.mc-coach { background: linear-gradient(135deg, #f0508f, #c22e69); }
-.mc-employer { background: linear-gradient(135deg, #64748b, #475267); }
-.mc-practice { background: linear-gradient(135deg, #4a7ce8, #2f52ba); }
-.mc-arena { background: linear-gradient(135deg, #ef4444, #b8221f); }
-.mc-materials { background: linear-gradient(135deg, #8b5ce8, #5f34c2); }
-.mc-scholarships { background: linear-gradient(135deg, #ef8b1f, #c96110); }
-.mc-mentorship { background: linear-gradient(135deg, #22b07d, #0e8a5e); }
-.mc-earn_work { background: linear-gradient(135deg, #f0c020, #d99a10); }
+.mc-career_passport { --module-start: #0f8a63; --module-end: #075b43; --module-accent: #8ff0cb; }
+.mc-safety { --module-start: #0e7490; --module-end: #155e75; --module-accent: #a5f3fc; }
+.mc-opportunities { --module-start: #b86b10; --module-end: #8a4d08; --module-accent: #fde68a; }
+.mc-academy { --module-start: #315ec7; --module-end: #244392; --module-accent: #bfdbfe; }
+.mc-challenges { --module-start: #7f49c9; --module-end: #5d2e9b; --module-accent: #e9d5ff; }
+.mc-coach { --module-start: #c43c78; --module-end: #922651; --module-accent: #fbcfe8; }
+.mc-employer { --module-start: #64748b; --module-end: #475267; --module-accent: #e2e8f0; }
+.mc-practice { --module-start: #3968cc; --module-end: #263f91; --module-accent: #dbeafe; }
+.mc-question-bank { --module-start: #0f766e; --module-end: #115e59; --module-accent: #ccfbf1; }
+.mc-arena { --module-start: #c23b3b; --module-end: #8d2424; --module-accent: #fecaca; }
+.mc-materials { --module-start: #6d4bc7; --module-end: #4c2f94; --module-accent: #ddd6fe; }
+.mc-scholarships { --module-start: #c66b13; --module-end: #934609; --module-accent: #ffedd5; }
+.mc-mentorship { --module-start: #16875f; --module-end: #0f6146; --module-accent: #d1fae5; }
+.mc-mastery { --module-start: #55733a; --module-end: #354a25; --module-accent: #dcfce7; }
+.mc-graph { --module-start: #2563a8; --module-end: #1e3f73; --module-accent: #dbeafe; }
+.mc-next { --module-start: #7c3f8f; --module-end: #542763; --module-accent: #f3e8ff; }
+.mc-wallet { --module-start: #8b6a16; --module-end: #5f470e; --module-accent: #fef3c7; }
+.mc-assessments { --module-start: #a64747; --module-end: #743131; --module-accent: #fee2e2; }
+.mc-earn_work { --module-start: #a77912; --module-end: #765207; --module-accent: #fef3c7; }
 
 .list-panel { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); margin-bottom: 1.5rem; }
 .list-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.9rem 1.1rem; border-bottom: 1px solid var(--line); }
@@ -221,12 +228,29 @@ input, select, textarea { min-width: 0; max-width: 100%; }
 .dashboard-hero p { margin: 0; font-size: .88rem; }
 .dashboard-hero .btn { flex-shrink: 0; }
 .module-search { max-width: 480px; }
-.dashboard-main .module-card { background: var(--surface); border: 1px solid var(--line); min-height: 166px; padding: 1.2rem; transition: border-color .15s, transform .15s; }
-.dashboard-main .module-card:hover:not(:disabled) { border-color: var(--gold); transform: translateY(-2px); }
-.dashboard-main .module-card .module-icon { background: var(--gold-soft); color: var(--gold); width: 40px; height: 40px; margin-bottom: 1rem; }
-.dashboard-main .module-card h3 { font: 700 .94rem 'Public Sans', sans-serif; }
-.dashboard-main .module-card p { color: var(--muted); font-size: .78rem; line-height: 1.6; margin-top: .4rem; }
-.dashboard-main .module-card:disabled { opacity: .65; }
+.dashboard-main .module-card {
+  background: linear-gradient(135deg, var(--module-start, #273149), var(--module-end, #172033));
+  border: 1px solid #ffffff33;
+  min-height: 166px;
+  padding: 1.2rem;
+  box-shadow: inset 0 1px 0 #ffffff14, 0 10px 24px #0000001f;
+  transition: border-color .15s, transform .15s, box-shadow .15s;
+}
+.dashboard-main .module-card:hover:not(:disabled) {
+  border-color: #ffffff80;
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 0 #ffffff1f, 0 14px 30px #00000033;
+}
+.dashboard-main .module-card .module-icon {
+  background: #ffffff24;
+  color: var(--module-accent, #ffffff);
+  width: 40px;
+  height: 40px;
+  margin-bottom: 1rem;
+}
+.dashboard-main .module-card h3 { color: #fff; font: 700 .94rem 'Public Sans', sans-serif; }
+.dashboard-main .module-card p { color: #ffffffe0; font-size: .78rem; line-height: 1.6; margin-top: .4rem; }
+.dashboard-main .module-card:disabled { opacity: .58; }
 .bottom-nav button { min-width: 0; flex: 1; border-radius: 8px; padding: .35rem .15rem; }
 .bottom-nav button.active { background: var(--gold-soft); }
 .question-card { padding: 1.2rem; }

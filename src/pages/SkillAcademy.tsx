@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import CourseReader from '../components/CourseReader'
 import { fetchCourses, fetchMyEnrollments, enrollInCourse, type Course, type Enrollment } from '../lib/academy'
+import { useI18n } from '../i18n'
 
 export default function SkillAcademy({ onBack }: { onBack: () => void }) {
+  const { t } = useI18n()
   const [selected, setSelected] = useState<Course | null>(null)
   const [revision, setRevision] = useState(0)
   const lock = useRef(false)
@@ -45,8 +47,8 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
   return (
     <div className="dash-main">
       <div className="section-heading">
-        <h1>Skill Academy</h1>
-        <button className="btn btn-secondary" onClick={onBack}>Back</button>
+        <h1>{t('skillAcademy')}</h1>
+        <button className="btn btn-secondary" onClick={onBack}>{t('back')}</button>
       </div>
       {error && <div className="banner banner-error" role="alert">{error}<button className="btn btn-secondary" onClick={() => setRevision(value => value + 1)}>Retry courses</button></div>}
       {!courses && !error && <p className="muted">Loading courses…</p>}

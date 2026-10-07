@@ -11,8 +11,10 @@ import {
   type MentorshipSession,
   type MyMentorshipRequest,
 } from '../lib/mentorship'
+import { useI18n } from '../i18n'
 
 export default function Mentorship({ onBack }: { onBack: () => void }) {
+  const { t } = useI18n()
   const [mentors, setMentors] = useState<Mentor[] | null>(null)
   const [requests, setRequests] = useState<MyMentorshipRequest[]>([])
   const [sessions, setSessions] = useState<MentorshipSession[]>([])
@@ -99,8 +101,8 @@ export default function Mentorship({ onBack }: { onBack: () => void }) {
   return (
     <div className="dash-main">
       <div className="section-heading">
-        <h1>Mentorship</h1>
-        <button className="btn btn-secondary" onClick={onBack} disabled={!!busy}>Back</button>
+        <h1>{t('mentorship')}</h1>
+        <button className="btn btn-secondary" onClick={onBack} disabled={!!busy}>{t('back')}</button>
       </div>
       {error && <div className="banner banner-error" role="alert">{error}</div>}
       {loading && <p className="muted" role="status">Loading mentorship…</p>}

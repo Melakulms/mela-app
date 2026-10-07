@@ -1,8 +1,10 @@
 import { safeExternalUrl } from '../lib/external-url'
 import { useEffect, useRef, useState } from 'react'
 import { fetchOpenOpportunities, fetchMyApplications, applyToOpportunity, type Opportunity } from '../lib/opportunities'
+import { useI18n } from '../i18n'
 
 export default function OpportunityHub({ onBack }: { onBack: () => void }) {
+  const { t } = useI18n()
   const lock = useRef(false)
   const [opportunities, setOpportunities] = useState<Opportunity[] | null>(null)
   const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set())
@@ -40,8 +42,8 @@ export default function OpportunityHub({ onBack }: { onBack: () => void }) {
   return (
     <div className="dash-main">
       <div className="section-heading">
-        <h1>Opportunity Hub</h1>
-        <button className="btn btn-secondary" onClick={onBack}>Back</button>
+        <h1>{t('opportunityHub')}</h1>
+        <button className="btn btn-secondary" onClick={onBack}>{t('back')}</button>
       </div>
       {error && <div className="banner banner-error" role="alert">{error}<button className="btn btn-secondary" onClick={load}>Retry opportunities</button></div>}
       {!opportunities && !error && <p className="muted">Loading opportunities…</p>}

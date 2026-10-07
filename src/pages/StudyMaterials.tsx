@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { fetchLearningLibrary, fetchLearningMaterial, type MaterialContent, type LearningProgram } from '../lib/materials'
+import { useI18n } from '../i18n'
 
 export default function StudyMaterials({ stageKey, gradeLevel, onBack }: { stageKey: string | null; gradeLevel: number | null; onBack: () => void }) {
+  const { t } = useI18n()
   const [programs, setPrograms] = useState<LearningProgram[] | null>(null)
   const [error, setError] = useState('')
   const [material, setMaterial] = useState<MaterialContent | null>(null)
@@ -37,8 +39,8 @@ export default function StudyMaterials({ stageKey, gradeLevel, onBack }: { stage
   return (
     <div className="dash-main">
       <div className="section-heading">
-        <h1>Study Materials</h1>
-        <button className="btn btn-secondary" onClick={onBack}>Back</button>
+        <h1>{t('studyMaterials')}</h1>
+        <button className="btn btn-secondary" onClick={onBack}>{t('back')}</button>
       </div>
       {error && <div role="alert" className="banner banner-error">{error}</div>}
       {!programs && !error && <p className="muted">Loading…</p>}

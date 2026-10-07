@@ -42,9 +42,13 @@ complete." Known shallow spots, honestly:
 - **Sponsored Challenges, EthioScholar Connect, Earn & Work**: shown on the
   dashboard as visual tiles (matching the reference design) but have no dedicated
   screens yet — tapping them does nothing.
-- Only English is currently translated in the UI text itself; the language
-  switcher updates `profiles.preferred_language` for real, but the app's own
-  strings aren't localized yet.
+- The application shell, learner dashboard/module catalog, bottom navigation and
+  profile controls have five-language UI coverage (English, Amharic, Afaan Oromo,
+  Tigrinya and Somali). Many deeper feature screens and educational records still
+  contain English source text. Do not claim full multilingual curriculum coverage:
+  translated learning/assessment tables exist in the backend, but the current
+  learner course/practice readers do not yet consume them and human language/content
+  certification is still required.
 
 ## Working alongside another contributor
 Another AI tool has been making real, independent changes to this same repo

@@ -167,12 +167,12 @@ export default function VerifiedAssessments({ onBack }: { onBack: () => void }) 
 }
 
 function AssessmentSession({ assessment, priorAttempts, onBack, onFinished }: {
-  const { t } = useI18n()
   assessment: Assessment
   priorAttempts: Attempt[]
   onBack: () => void
   onFinished: () => void
 }) {
+  const { t } = useI18n()
   const [attempt, setAttempt] = useState<Attempt | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
   const [answers, setAnswers] = useState<Record<string, unknown>>({})

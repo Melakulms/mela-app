@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { askCareerCoach } from '../lib/coach'
+import { useI18n } from '../i18n'
 
 interface ChatTurn {
   role: 'user' | 'coach'
@@ -7,6 +8,7 @@ interface ChatTurn {
 }
 
 export default function AiCareerCoach({ onBack }: { onBack: () => void }) {
+  const { t } = useI18n()
   const sending = useRef(false)
   const [turns, setTurns] = useState<ChatTurn[]>([])
   const [input, setInput] = useState('')
@@ -41,8 +43,8 @@ export default function AiCareerCoach({ onBack }: { onBack: () => void }) {
   return (
     <div className="dash-main">
       <div className="section-heading">
-        <h1>AI Career Coach</h1>
-        <button className="btn btn-secondary" onClick={onBack}>Back</button>
+        <h1>{t('aiCareerCoach')}</h1>
+        <button className="btn btn-secondary" onClick={onBack}>{t('back')}</button>
       </div>
       {error && <div className="banner banner-error" role="alert">{error}</div>}
 

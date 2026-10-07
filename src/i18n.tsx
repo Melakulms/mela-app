@@ -172,7 +172,7 @@ const EN: Record<TranslationKey, string> = {
   notEnabledYet: 'Not enabled yet',
   comingSoon: 'Coming soon',
   yourBadges: 'Your Badges',
-  badgesLoadError: 'Your badges could not load.',
+  badgesLoadError: 'Your badges couldn’t load.',
   noBadgesYet: 'No badges earned yet — they come from verified skills, courses, and mentorship.',
   careerPassport: 'Career Passport',
   careerPassportBlurb: 'Verified skills, badges & portable identity',

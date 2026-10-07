@@ -335,7 +335,11 @@ type I18nContextValue = {
   t: (key: TranslationKey) => string
 }
 
-const I18nContext = createContext<I18nContextValue>({ language: 'en', setLanguage: () => {}, t: (key) => EN[key] })
+export function translate(language: LanguageCode, key: TranslationKey): string {
+  return TRANSLATIONS[language][key] ?? EN[key]
+}
+
+const I18nContext = createContext<I18nContextValue>({ language: 'en', setLanguage: () => {}, t: (key) => translate('en', key) })
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageCode] = useState<LanguageCode>(() => normalizeLanguageCode(localStorage.getItem('mela_language')))
@@ -348,7 +352,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const value = useMemo<I18nContextValue>(() => ({
     language,
     setLanguage,
-    t: (key) => TRANSLATIONS[language][key] ?? EN[key],
+    t: (key) => translate(language, key),
   }), [language, setLanguage])
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
 }

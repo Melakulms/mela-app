@@ -2,10 +2,12 @@ import { safeExternalUrl } from '../lib/external-url'
 import { useEffect, useMemo, useState } from 'react'
 import { checkScholarshipEligibility, ensureScholarshipTasks, fetchOpenScholarships, fetchSavedScholarshipIds, fetchScholarshipApplications, fetchScholarshipTasks, setScholarshipTaskCompleted, toggleSavedScholarship, type Scholarship, type ScholarshipApplication, type ScholarshipTask } from '../lib/scholarships'
 import { applyToOpportunity } from '../lib/opportunities'
+import { useI18n } from '../i18n'
 
 const labels:Record<string,string>={submitted:'Submitted',under_review:'Under review',shortlisted:'Shortlisted',accepted:'Accepted',rejected:'Rejected',withdrawn:'Withdrawn'}
 
 export default function EthioScholarConnect({onBack}:{onBack:()=>void}) {
+  const { t } = useI18n()
  const [items,setItems]=useState<Scholarship[]>([]); const [saved,setSaved]=useState<Set<string>>(new Set()); const [apps,setApps]=useState<ScholarshipApplication[]>([]); const [tasks,setTasks]=useState<ScholarshipTask[]>([]); const [tab,setTab]=useState('discover'); const [search,setSearch]=useState(''); const [country,setCountry]=useState(''); const [selected,setSelected]=useState<Scholarship|null>(null); const [eligibility,setEligibility]=useState<any>(null); const [error,setError]=useState(''); const [busy,setBusy]=useState<string|null>(null)
  const load=async()=>{setError('');try{const [a,b,c,d]=await Promise.all([fetchOpenScholarships(),fetchSavedScholarshipIds(),fetchScholarshipApplications(),fetchScholarshipTasks()]);setItems(a);setSaved(b);setApps(c);setTasks(d)}catch(e:any){setError(e.message||'Could not load scholarship center.')}}
  useEffect(()=>{load()},[])
@@ -14,7 +16,7 @@ export default function EthioScholarConnect({onBack}:{onBack:()=>void}) {
  const save=async(s:Scholarship)=>{if(busy)return;setBusy(s.id);try{const was=saved.has(s.id);await toggleSavedScholarship(s.id,was);setSaved(old=>{const n=new Set(old);was?n.delete(s.id):n.add(s.id);return n})}catch(e:any){setError(e.message||'Could not save scholarship.')}finally{setBusy(null)}}
  const start=async(s:Scholarship)=>{if(busy)return;setBusy(s.id);setError('');try{if(s.application_method==='external'){await ensureScholarshipTasks(s)}else{await applyToOpportunity(s.id,'');const a=(await fetchScholarshipApplications()).find(x=>x.opportunity_id===s.id);await ensureScholarshipTasks(s,a?.id)}await load()}catch(e:any){setError(e.message||'Could not start application.')}finally{setBusy(null)}}
  const progress=(id:string)=>{const t=tasks.filter(x=>x.opportunity_id===id);return t.length?Math.round(t.filter(x=>x.completed).length/t.length*100):0}
- return <div className='dash-main'><div className='section-heading'><div><h1>Scholarship Center</h1><p className='muted'>Verified opportunities, eligibility information, requirements, preparation and application progress.</p></div><button className='btn btn-secondary' onClick={onBack}>Back</button></div>
+ return <div className='dash-main'><div className='section-heading'><div><h1>{t('scholarships')}</h1><p className='muted'>Verified opportunities, eligibility information, requirements, preparation and application progress.</p></div><button className='btn btn-secondary' onClick={onBack}>{t('back')}</button></div>
  {error&&<div className='banner banner-error' role='alert'>{error}<button className='btn btn-secondary' onClick={load}>Retry scholarships</button></div>}
  <div className='list-panel'><div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:16}}><button className={tab==='discover'?'btn btn-primary':'btn btn-secondary'} onClick={()=>setTab('discover')}>Discover</button><button className={tab==='saved'?'btn btn-primary':'btn btn-secondary'} onClick={()=>setTab('saved')}>Saved ({saved.size})</button><button className={tab==='applications'?'btn btn-primary':'btn btn-secondary'} onClick={()=>setTab('applications')}>My Applications ({apps.length})</button></div>
  {tab!=='applications'&&<div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:16}}><input aria-label='Search scholarships' placeholder='Search scholarships' value={search} onChange={e=>setSearch(e.target.value)}/><select aria-label='Study country' value={country} onChange={e=>setCountry(e.target.value)}><option value=''>All countries</option>{countries.map(c=><option key={c}>{c}</option>)}</select></div>}

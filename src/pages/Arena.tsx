@@ -169,6 +169,7 @@ export default function Arena({ onBack }: { onBack: () => void }) {
 }
 
 export function LiveMatch({ matchId, onLeave, onBack }: { matchId: string; onLeave: () => void; onBack: () => void }) {
+  const { t } = useI18n()
   const [state, setState] = useState<MatchState | null>(null)
   const [round, setRound] = useState<RoundDetail | null>(null)
   const [scoreboard, setScoreboard] = useState<ScoreboardRow[]>([])

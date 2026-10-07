@@ -230,14 +230,14 @@ input, select, textarea { min-width: 0; max-width: 100%; }
 .module-search { max-width: 480px; }
 .dashboard-main .module-card {
   background: linear-gradient(135deg, var(--module-start, #273149), var(--module-end, #172033));
-  border: 1px solid color-mix(in srgb, var(--module-accent, #ffffff) 28%, transparent);
+  border: 1px solid #ffffff33;
   min-height: 166px;
   padding: 1.2rem;
   box-shadow: inset 0 1px 0 #ffffff14, 0 10px 24px #0000001f;
   transition: border-color .15s, transform .15s, box-shadow .15s;
 }
 .dashboard-main .module-card:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--module-accent, #ffffff) 68%, transparent);
+  border-color: #ffffff80;
   transform: translateY(-2px);
   box-shadow: inset 0 1px 0 #ffffff1f, 0 14px 30px #00000033;
 }

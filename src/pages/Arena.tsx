@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import {
@@ -17,6 +18,7 @@ const MODES: { value: ArenaMode; label: string; blurb: string }[] = [
 type QueueState = 'idle' | 'searching' | 'matched'
 
 export default function Arena({ onBack }: { onBack: () => void }) {
+  const { t } = useI18n()
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[] | null>(null)
   const [error, setError] = useState('')
   const [queueState, setQueueState] = useState<QueueState>('idle')
@@ -108,8 +110,8 @@ export default function Arena({ onBack }: { onBack: () => void }) {
   return (
     <div className="dash-main">
       <div className="section-heading">
-        <h1>Arena</h1>
-        <button className="btn btn-secondary" onClick={onBack}>Back</button>
+        <h1>{t('arena')}</h1>
+        <button className="btn btn-secondary" onClick={onBack}>{t('back')}</button>
       </div>
       {error && <div className="banner banner-error">{error}</div>}
 
@@ -215,11 +217,11 @@ export function LiveMatch({ matchId, onLeave, onBack }: { matchId: string; onLea
   if (!state) return <div className="dash-main">
     <h1>Arena match</h1>
     {error ? <><div className="banner banner-error" role="alert">{error}</div><button className="btn btn-primary" onClick={() => void load()}>Retry</button></> : <p role="status">Loading match…</p>}
-    <button className="btn btn-secondary" onClick={onBack}>Back to dashboard</button>
+    <button className="btn btn-secondary" onClick={onBack}>{t('back')}</button>
   </div>
 
   return <div className="dash-main">
-    <div className="section-heading"><h1>{state.title}</h1><button className="btn btn-secondary" onClick={onBack}>Back to dashboard</button></div>
+    <div className="section-heading"><h1>{state.title}</h1><button className="btn btn-secondary" onClick={onBack}>{t('back')}</button></div>
     {error && <div className="banner banner-error" role="alert">{error}</div>}
     <p className="muted">{state.participant_count} players · status: {state.status}</p>
     {['open', 'ready'].includes(state.status) ? <div className="banner banner-info">

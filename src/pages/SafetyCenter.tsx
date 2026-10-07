@@ -1,6 +1,6 @@
+import { useI18n } from '../i18n'
 import { useEffect, useState } from 'react'
 import {
-import { useI18n } from '../i18n'
   fetchMySafetyCenter,
   refreshSchoolSafetyStatus,
   requestGuardianConsent,

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useI18n } from '../i18n'
 
 type Program = {
   program_key: string
@@ -18,6 +19,7 @@ type Question = {
 }
 
 export default function QuestionBank({ onBack }: { onBack: () => void }) {
+  const { t } = useI18n()
   const [programs, setPrograms] = useState<Program[]>([])
   const [grade, setGrade] = useState<number | null>(null)
   const [program, setProgram] = useState('')
@@ -93,7 +95,7 @@ export default function QuestionBank({ onBack }: { onBack: () => void }) {
   if (result) {
     return (
       <div className="dash-main">
-        <div className="section-heading"><h1>Question Bank Result</h1><button className="btn btn-secondary" onClick={onBack}>Back</button></div>
+        <div className="section-heading"><h1>Question Bank Result</h1><button className="btn btn-secondary" onClick={onBack}>{t('back')}</button></div>
         <div className="stat-strip">
           <div><span className="stat-value">{result.score_percent ?? result.score ?? '—'}</span><span className="stat-label">Score</span></div>
           <div><span className="stat-value">{result.correct ?? '—'}</span><span className="stat-label">Correct</span></div>
@@ -105,7 +107,7 @@ export default function QuestionBank({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="dash-main">
-      <div className="section-heading"><h1>Curriculum Question Bank</h1><button className="btn btn-secondary" onClick={onBack}>Back</button></div>
+      <div className="section-heading"><h1>{t('questionBank')}</h1><button className="btn btn-secondary" onClick={onBack}>{t('back')}</button></div>
       <p className="muted">Practice at your own pace with questions matched to your {grade ? `Grade ${grade}` : "education"} curriculum.</p>
       {error && <div className="banner banner-error" role="alert">{error}</div>}
 

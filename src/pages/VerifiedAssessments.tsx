@@ -167,6 +167,7 @@ export default function VerifiedAssessments({ onBack }: { onBack: () => void }) 
 }
 
 function AssessmentSession({ assessment, priorAttempts, onBack, onFinished }: {
+  const { t } = useI18n()
   assessment: Assessment
   priorAttempts: Attempt[]
   onBack: () => void

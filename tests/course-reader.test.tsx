@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import CourseReader from '../src/components/CourseReader'
 const api=vi.hoisted(()=>({fetchCourseLessons:vi.fn(),fetchCompletedLessons:vi.fn(),completeCourseLesson:vi.fn()}))
 vi.mock('../src/lib/academy',()=>api)
-const course={id:'course',title:'Career basics',description:null,category:null,level:null,duration_minutes:null,price_cents:0}
+const course={id:'course',title:'Career basics',description:null,category:null,level:null,duration_minutes:null,price_cents:0,lesson_count:2,preview_lesson_count:1,content_available:true}
 beforeEach(()=>{vi.resetAllMocks();api.fetchCourseLessons.mockResolvedValue([{id:'lesson',title:'First lesson',module_title:'Introduction',content_text:'<script>not executable</script>'}]);api.fetchCompletedLessons.mockResolvedValue([])})
 afterEach(cleanup)
 it('reads lessons safely and only shows completion after persistence succeeds',async()=>{
@@ -26,4 +26,26 @@ it('restores completed lessons and recovers from a loading failure',async()=>{
  const button=await screen.findByRole('button',{name:'Lesson completed'})
  expect((button as HTMLButtonElement).disabled).toBe(true)
  expect(api.completeCourseLesson).not.toHaveBeenCalled()
+})
+
+it('renders lesson structure safely and prevents preview completion',async()=>{
+ api.fetchCourseLessons.mockResolvedValue([{id:'one',title:'Preview',module_title:'Intro',content_text:'# Learning goal\n\n- First step\n- Second step\n\n<script>not executable</script>'}])
+ render(<CourseReader course={course} preview onBack={()=>{}} />)
+ await screen.findByRole('heading',{name:'Learning goal'})
+ expect(screen.getAllByRole('listitem')).toHaveLength(2)
+ expect(screen.getByText('<script>not executable</script>')).toBeTruthy()
+ expect(screen.queryByRole('button',{name:'Mark lesson complete'})).toBeNull()
+ expect(api.fetchCompletedLessons).not.toHaveBeenCalled()
+ expect(api.completeCourseLesson).not.toHaveBeenCalled()
+})
+it('resumes the next unfinished lesson and supports previous/next navigation',async()=>{
+ api.fetchCourseLessons.mockResolvedValue([{id:'one',title:'First',module_title:'Intro',content_text:'One'},{id:'two',title:'Second',module_title:'Intro',content_text:'Two'}])
+ api.fetchCompletedLessons.mockResolvedValue(['one'])
+ render(<CourseReader course={course} onBack={()=>{}} />)
+ await screen.findByRole('heading',{name:'Second'})
+ expect((screen.getByRole('button',{name:'Next lesson'}) as HTMLButtonElement).disabled).toBe(true)
+ fireEvent.click(screen.getByRole('button',{name:'Previous lesson'}))
+ expect(screen.getByRole('heading',{name:'First'})).toBeTruthy()
+ fireEvent.click(screen.getByRole('button',{name:'Next lesson'}))
+ expect(screen.getByRole('heading',{name:'Second'})).toBeTruthy()
 })

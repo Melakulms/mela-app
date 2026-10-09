@@ -12,6 +12,9 @@ export interface Course {
   audience?: string | null
   career_track?: string | null
   price_cents: number | null
+  lesson_count: number
+  preview_lesson_count: number
+  content_available: boolean
 }
 
 export interface Enrollment {
@@ -21,13 +24,9 @@ export interface Enrollment {
 }
 
 export async function fetchCourses(): Promise<Course[]> {
-  const { data, error } = await supabase
-    .from('courses')
-    .select('id, title, description, category, level, duration_minutes, price_cents, prerequisites, learning_outcomes, audience, career_track')
-    .eq('is_published', true)
-    .order('featured_rank', { ascending: true, nullsFirst: false })
+  const { data, error } = await supabase.rpc('get_mela_academy_catalog')
   if (error) throw error
-  return data as Course[]
+  return (data ?? []) as Course[]
 }
 
 export async function fetchMyEnrollments(): Promise<Enrollment[]> {
@@ -43,14 +42,7 @@ export async function fetchMyEnrollments(): Promise<Enrollment[]> {
 }
 
 export async function enrollInCourse(courseId: string): Promise<void> {
-  const { data: auth, error: authError } = await supabase.auth.getUser()
-  if (authError) throw authError
-  if (!auth.user) throw new Error('You need to be logged in to enroll.')
-  const { error } = await supabase.from('course_enrollments').insert({
-    user_id: auth.user.id,
-    course_id: courseId,
-    progress_pct: 0,
-  })
+  const { error } = await supabase.rpc('enroll_mela_course', { p_course_id: courseId })
   if (error) throw error
 }
 

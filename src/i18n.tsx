@@ -1,3 +1,4 @@
+import { AUTH_MESSAGES, authMessage, type AuthTranslationKey } from './auth-i18n'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 
 export const SUPPORTED_LANGUAGE_CODES = ['en', 'am', 'om', 'ti', 'so'] as const
@@ -16,7 +17,7 @@ export function normalizeLanguageCode(value: string | null | undefined): Languag
   return LANGUAGE_NAME_TO_CODE[normalized] ?? 'en'
 }
 
-export type TranslationKey =
+export type TranslationKey = AuthTranslationKey
   | 'credentialVerification' | 'credentialVerificationHelp' | 'credentialVerifying' | 'credentialMissing'
   | 'credential' | 'course' | 'learner' | 'issued' | 'code' | 'status' | 'valid' | 'revoked' | 'goToMela'
 
@@ -122,7 +123,7 @@ export type TranslationKey =
   | 'parentLinkCode'
   | 'back'
 
-const EN: Record<TranslationKey, string> = {
+const EN: Record<Exclude<TranslationKey, AuthTranslationKey>, string> = {
   credentialVerification: "Credential verification",
   credentialVerificationHelp: "Independent verification of a MELA course credential.",
   credentialVerifying: "Verifying credential…",
@@ -240,7 +241,7 @@ const EN: Record<TranslationKey, string> = {
   back: 'Back',
 }
 
-const TRANSLATIONS: Record<LanguageCode, Record<TranslationKey, string>> = {
+const TRANSLATIONS: Record<LanguageCode, Record<Exclude<TranslationKey, AuthTranslationKey>, string>> = {
   en: EN,
   am: {
     ...EN,
@@ -411,7 +412,8 @@ type I18nContextValue = {
 }
 
 export function translate(language: LanguageCode, key: TranslationKey): string {
-  return TRANSLATIONS[language][key] ?? EN[key]
+  if (key in AUTH_MESSAGES) return authMessage(key as AuthTranslationKey, language)
+  return TRANSLATIONS[language][key as keyof typeof EN] ?? EN[key as keyof typeof EN]
 }
 
 const I18nContext = createContext<I18nContextValue>({ language: 'en', setLanguage: () => {}, t: (key) => translate('en', key) })

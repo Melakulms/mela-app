@@ -6,6 +6,7 @@ import { useI18n } from '../i18n'
 export default function SkillAcademy({ onBack }: { onBack: () => void }) {
   const { t } = useI18n()
   const [query, setQuery] = useState(''), [category, setCategory] = useState(''), [scope, setScope] = useState('all')
+  const [preview, setPreview] = useState(false)
   const [selected, setSelected] = useState<Course | null>(null)
   const [revision, setRevision] = useState(0)
   const lock = useRef(false)
@@ -35,6 +36,7 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
     try {
       await enrollInCourse(courseId)
       setEnrollments((prev) => new Map(prev).set(courseId, { course_id: courseId, progress_pct: 0, completed_at: null }))
+      setPreview(false)
       setSelected(courses?.find(course => course.id === courseId) ?? null)
     } catch (e: any) {
       setError(e.message ?? 'Could not enroll in that course.')
@@ -44,9 +46,9 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
     }
   }
 
-  const visibleCourses = (courses ?? []).filter(course => (!category || course.category === category) && (scope === 'all' || (scope === 'enrolled' && enrollments.has(course.id)) || (scope === 'completed' && !!enrollments.get(course.id)?.completed_at)) && `${course.title} ${course.description ?? ''} ${course.category ?? ''}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
+  const visibleCourses = (courses ?? []).filter(course => (!category || course.category === category) && (scope === 'all' || (scope === 'enrolled' && enrollments.has(course.id)) || (scope === 'completed' && !!enrollments.get(course.id)?.completed_at) || (scope === 'available' && course.content_available && course.price_cents === 0) || (scope === 'preparing' && !course.content_available)) && `${course.title} ${course.description ?? ''} ${course.category ?? ''}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
 
-  if (selected) return <CourseReader course={selected} onBack={() => { setSelected(null); setRevision(value => value + 1) }} />
+  if (selected) return <CourseReader course={selected} preview={preview} onBack={() => { setSelected(null); setRevision(value => value + 1) }} />
 
   return (
     <div className="dash-main">
@@ -60,10 +62,11 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
       {courses && courses.length > 0 && <>
         <div className="field"><label htmlFor="course-search">Search courses</label><input id="course-search" type="search" value={query} onChange={e => setQuery(e.target.value)} /></div>
         <div className="field"><label htmlFor="course-category">Category</label><select id="course-category" value={category} onChange={e => setCategory(e.target.value)}><option value="">All categories</option>{Array.from(new Set(courses.map(course => course.category).filter((value): value is string => !!value))).map(value => <option key={value} value={value}>{value}</option>)}</select></div>
-        <div className="field"><label htmlFor="course-scope">Show courses</label><select id="course-scope" value={scope} onChange={e => setScope(e.target.value)}><option value="all">All courses</option><option value="enrolled">My courses</option><option value="completed">Completed courses</option></select></div>
+        <div className="field"><label htmlFor="course-scope">Show courses</label><select id="course-scope" value={scope} onChange={e => setScope(e.target.value)}><option value="all">All courses</option><option value="available">Available free courses</option><option value="preparing">Courses in preparation</option><option value="enrolled">My courses</option><option value="completed">Completed courses</option></select></div>
         <p role="status">Showing {visibleCourses.length} of {courses.length} courses</p>
         {!visibleCourses.length && <p className="empty-panel">No courses match these filters.</p>}
       </>}
+      {courses && <p className="muted">{courses.filter(c => c.content_available && c.price_cents === 0).length} free courses have lessons available. Paid enrollment remains deferred.</p>}
       {visibleCourses.length > 0 && (
         <div className="module-grid">
           {visibleCourses.map((c) => {
@@ -75,9 +78,11 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
                 <h3 style={{ color: 'var(--ink)' }}>{c.title}</h3>
                 <p style={{ color: 'var(--muted)' }}>{c.description ?? c.category}</p><p>{c.category ?? 'General'}{c.level ? ` · ${c.level}` : ''}{c.duration_minutes ? ` · ${c.duration_minutes} minutes` : ''}</p>
                 <details><summary>Course overview</summary>{c.audience && <p>Audience: {c.audience}</p>}{c.career_track && <p>Career track: {c.career_track}</p>}{c.prerequisites && <p>Prerequisites: {c.prerequisites}</p>}{Array.isArray(c.learning_outcomes) && <><h4>Learning outcomes</h4><ul>{c.learning_outcomes.filter((item): item is string => typeof item === 'string').map((item, index) => <li key={index}>{item}</li>)}</ul></>}</details>
-                {enrollment && <div className="list-row-meta">{enrollment.completed_at ? '100% complete · credential earned' : `${progress}% complete`}</div>}
-                {enrollment ? (
-                  <button className="btn btn-primary" onClick={() => setSelected(c)}>{enrollment.completed_at ? 'Review course' : 'Continue learning'}</button>
+                {enrollment && <div className="list-row-meta">{enrollment.completed_at ? '100% of lessons completed' : `${progress}% complete`}</div>}
+                <p>{c.content_available ? `${c.lesson_count} lessons available` : 'Lessons in preparation'}</p>
+                {!!c.preview_lesson_count && !enrollment && <button className="btn btn-secondary" onClick={() => { setPreview(true); setSelected(c) }}>Preview lessons</button>}
+                {!c.content_available ? <span className="pill">Enrollment opens when lessons are available</span> : enrollment ? (
+                  <button className="btn btn-primary" onClick={() => { setPreview(false); setSelected(c) }}>{enrollment.completed_at ? 'Review course' : 'Continue learning'}</button>
                 ) : isFree ? (
                   <button className="btn btn-primary" onClick={() => enroll(c.id)} disabled={busy !== null}>
                     {busy === c.id ? 'Enrolling…' : 'Enroll free'}

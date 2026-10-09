@@ -39,3 +39,25 @@ This is a code and targeted regression review, not certification of every produc
 ## Launch blockers still open
 
 Authenticated browser login/MFA, signup/reset email delivery, leaked-password protection configuration, the remaining privileged-function review, real payment sandbox transactions and complete dispute settlement remain open. Paid work/payments/payouts must stay disabled. Public availability, passing builds and the tests above do not establish that every section is ready for real users.
+
+## 2026-10-09: hidden functions and section detail repair
+
+This pass addresses screens that omitted available backend data or stopped before a next action.
+
+| Section | Repair |
+|---|---|
+| Mastery Map | Full competency list, domain/level/search filters, evidence counts, domain breakdown, navigation to practice and assessments |
+| Future Map | Full pathway list with filters, connections and rationale, actionable internal destinations |
+| Mela Next | Step descriptions and due dates, linked destinations, persisted self-reported step status, career-path selection, explicit active-plan replacement confirmation |
+| Skill Academy | Search/category/enrollment/completion filters, level/duration, free enrollment immediately opens lessons |
+| Opportunity Hub | Full description/requirements/instructions, remote/type/search filters, MELA application composer, draft-preserving retry, both application methods, own application history including closed opportunities |
+| Mentorship | Mentor biographies, organization and years of experience, mentor search |
+| Career Passport | Direct credential viewing alongside verification-link copying |
+| Practice | All returned recommendations, rather than silently truncating to three |
+| Assessments and challenge activity | All returned history rows, rather than silently truncating to twenty/ten |
+
+Plan-step updates use existing owner RLS and require a returned row before displaying success. Self-reported plan completion does not create verified learning evidence or award credentials. Unknown/external route keys and deferred financial routes are not linked.
+
+Verification covers component interactions, filtering, enrollment-to-reader transitions, application retry, route validation and plan-step save/refusal. Real signed-in production journeys and signed-in browser step-save journeys remain unverified; content publication/review is a separate remaining requirement. Payments remain deferred.
+
+Live rollback regression: plan owner saved and read completed step progress; an unrelated authenticated identity could neither read nor update the same step. All fixtures rolled back. Live course inventory: 53 published courses, only 2 with lesson rows (22 lessons total); 51 still need lesson content. This is a content completion blocker, not solved by exposing UI controls.

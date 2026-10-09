@@ -5,6 +5,7 @@ import { useI18n } from '../i18n'
 
 export default function SkillAcademy({ onBack }: { onBack: () => void }) {
   const { t } = useI18n()
+  const [query, setQuery] = useState(''), [category, setCategory] = useState(''), [scope, setScope] = useState('all')
   const [selected, setSelected] = useState<Course | null>(null)
   const [revision, setRevision] = useState(0)
   const lock = useRef(false)
@@ -34,6 +35,7 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
     try {
       await enrollInCourse(courseId)
       setEnrollments((prev) => new Map(prev).set(courseId, { course_id: courseId, progress_pct: 0, completed_at: null }))
+      setSelected(courses?.find(course => course.id === courseId) ?? null)
     } catch (e: any) {
       setError(e.message ?? 'Could not enroll in that course.')
     } finally {
@@ -41,6 +43,8 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
       setBusy(null)
     }
   }
+
+  const visibleCourses = (courses ?? []).filter(course => (!category || course.category === category) && (scope === 'all' || (scope === 'enrolled' && enrollments.has(course.id)) || (scope === 'completed' && !!enrollments.get(course.id)?.completed_at)) && `${course.title} ${course.description ?? ''} ${course.category ?? ''}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
 
   if (selected) return <CourseReader course={selected} onBack={() => { setSelected(null); setRevision(value => value + 1) }} />
 
@@ -53,16 +57,24 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
       {error && <div className="banner banner-error" role="alert">{error}<button className="btn btn-secondary" onClick={() => setRevision(value => value + 1)}>Retry courses</button></div>}
       {!courses && !error && <p className="muted">Loading courses…</p>}
       {courses && courses.length === 0 && <div className="empty-panel">No courses published yet.</div>}
-      {courses && courses.length > 0 && (
+      {courses && courses.length > 0 && <>
+        <div className="field"><label htmlFor="course-search">Search courses</label><input id="course-search" type="search" value={query} onChange={e => setQuery(e.target.value)} /></div>
+        <div className="field"><label htmlFor="course-category">Category</label><select id="course-category" value={category} onChange={e => setCategory(e.target.value)}><option value="">All categories</option>{Array.from(new Set(courses.map(course => course.category).filter((value): value is string => !!value))).map(value => <option key={value} value={value}>{value}</option>)}</select></div>
+        <div className="field"><label htmlFor="course-scope">Show courses</label><select id="course-scope" value={scope} onChange={e => setScope(e.target.value)}><option value="all">All courses</option><option value="enrolled">My courses</option><option value="completed">Completed courses</option></select></div>
+        <p role="status">Showing {visibleCourses.length} of {courses.length} courses</p>
+        {!visibleCourses.length && <p className="empty-panel">No courses match these filters.</p>}
+      </>}
+      {visibleCourses.length > 0 && (
         <div className="module-grid">
-          {courses.map((c) => {
+          {visibleCourses.map((c) => {
             const enrollment = enrollments.get(c.id)
             const isFree = (c.price_cents ?? 0) === 0
             const progress = Math.max(0, Math.min(100, enrollment?.progress_pct ?? 0))
             return (
               <div className="module-card" key={c.id} style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}>
                 <h3 style={{ color: 'var(--ink)' }}>{c.title}</h3>
-                <p style={{ color: 'var(--muted)' }}>{c.description ?? c.category}</p>
+                <p style={{ color: 'var(--muted)' }}>{c.description ?? c.category}</p><p>{c.category ?? 'General'}{c.level ? ` · ${c.level}` : ''}{c.duration_minutes ? ` · ${c.duration_minutes} minutes` : ''}</p>
+                <details><summary>Course overview</summary>{c.audience && <p>Audience: {c.audience}</p>}{c.career_track && <p>Career track: {c.career_track}</p>}{c.prerequisites && <p>Prerequisites: {c.prerequisites}</p>}{Array.isArray(c.learning_outcomes) && <><h4>Learning outcomes</h4><ul>{c.learning_outcomes.filter((item): item is string => typeof item === 'string').map((item, index) => <li key={index}>{item}</li>)}</ul></>}</details>
                 {enrollment && <div className="list-row-meta">{enrollment.completed_at ? '100% complete · credential earned' : `${progress}% complete`}</div>}
                 {enrollment ? (
                   <button className="btn btn-primary" onClick={() => setSelected(c)}>{enrollment.completed_at ? 'Review course' : 'Continue learning'}</button>

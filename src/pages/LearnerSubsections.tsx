@@ -84,7 +84,7 @@ export default function LearnerSubsections({ view, onBack }: { view: View; onBac
           </div>
         })}</div>}
       {mine.length > 0 && <><div className="section-heading"><h2>{view === 'assessments' ? 'My results' : view === 'challenges' ? 'My challenge activity' : 'My proposals'}</h2></div>
-        <div className="list-panel">{mine.slice(0, 10).map((x, i) => <div className="list-row" key={x.id ?? i}>
+        <div className="list-panel">{mine.map((x, i) => <div className="list-row" key={x.id ?? i}>
           <span className="list-row-title">{x.title ?? x.level ?? x.proposal_text?.slice(0, 60) ?? 'Activity'}</span>
           <span className="pill">{x.status ?? x.score ?? ''}</span>
         </div>)}</div></>}

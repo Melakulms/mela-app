@@ -248,9 +248,9 @@ export default function App() {
           {studentView === 'arena' && <Arena onBack={() => setStudentView('dashboard')} />}
           {studentView === 'profile' && <Profile profile={profile} onProfileUpdated={reloadProfile} />}
           {studentView === 'scholarships' && <EthioScholarConnect onBack={() => setStudentView('dashboard')} />}
-          {studentView === 'mastery' && <LearnerTools view="mastery" onBack={() => setStudentView('dashboard')} />}
-          {studentView === 'opportunity-graph' && <LearnerTools view="graph" onBack={() => setStudentView('dashboard')} />}
-          {studentView === 'mela-next' && <LearnerTools view="next" onBack={() => setStudentView('dashboard')} />}
+          {studentView === 'mastery' && <LearnerTools view="mastery" onNavigate={setStudentView} onBack={() => setStudentView('dashboard')} />}
+          {studentView === 'opportunity-graph' && <LearnerTools view="graph" onNavigate={setStudentView} onBack={() => setStudentView('dashboard')} />}
+          {studentView === 'mela-next' && <LearnerTools view="next" onNavigate={setStudentView} onBack={() => setStudentView('dashboard')} />}
           {studentView === 'wallet' && <LearnerTools view="wallet" onBack={() => setStudentView('dashboard')} />}
           {studentView === 'challenges' && <LearnerSubsections view="challenges" onBack={() => setStudentView('dashboard')} />}
           {studentView === 'assessments' && <VerifiedAssessments onBack={() => setStudentView('dashboard')} />}

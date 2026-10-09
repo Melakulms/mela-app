@@ -15,6 +15,7 @@ import { useI18n } from '../i18n'
 
 export default function Mentorship({ onBack }: { onBack: () => void }) {
   const { t } = useI18n()
+  const [query, setQuery] = useState('')
   const [mentors, setMentors] = useState<Mentor[] | null>(null)
   const [requests, setRequests] = useState<MyMentorshipRequest[]>([])
   const [sessions, setSessions] = useState<MentorshipSession[]>([])
@@ -173,13 +174,19 @@ export default function Mentorship({ onBack }: { onBack: () => void }) {
 
       {!loading && <div className="section-heading"><h2>Verified mentors</h2></div>}
       {!loading && mentors && mentors.length === 0 && <div className="empty-panel">No verified mentors are available yet.</div>}
+      {!loading && mentors && mentors.length > 0 && <div className="field"><label htmlFor="mentor-search">Find a mentor</label><input id="mentor-search" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search names, experience or topics" /></div>}
+      {!loading && mentors && mentors.length > 0 && !mentors.some(m => `${m.full_name} ${m.headline ?? ''} ${m.bio ?? ''} ${m.organization ?? ''}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())) && <p className="empty-panel">No mentors match your search.</p>}
       {!loading && mentors && mentors.length > 0 && <div className="module-grid">
-        {mentors.map((m) => {
+        {mentors.filter(m => `${m.full_name} ${m.headline ?? ''} ${m.bio ?? ''} ${m.organization ?? ''}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())).map((m) => {
           const topicId = `mentor-topic-${m.user_id}`
           const messageId = `mentor-message-${m.user_id}`
           return <div className="module-card" key={m.user_id} style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}>
             <h3 style={{ color: 'var(--ink)' }}>{m.full_name}</h3>
             <p style={{ color: 'var(--muted)' }}>{m.headline ?? m.organization ?? 'MELA mentor'}</p>
+            {m.bio && <p>{m.bio}</p>}
+            {m.organization && <p>{m.organization}</p>}
+            {m.years_experience != null && <p>{m.years_experience} years of experience</p>
+            }
             {m.rating_count > 0 && <p className="muted">{m.rating_average.toFixed(2)}/5 · {m.rating_count} {m.rating_count === 1 ? 'rating' : 'ratings'}</p>}
             {alreadyRequested(m.user_id) ? <span className="pill">Requested</span> : openMentor === m.user_id ? <div>
               <div className="field">

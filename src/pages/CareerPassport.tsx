@@ -64,6 +64,7 @@ export default function CareerPassport({ onBack }: { onBack: () => void }) {
             <div className="list-row-meta">{certificate.credential_type} · issued {new Date(certificate.issued_at).toLocaleDateString()}</div>
             <div className="list-row-meta"><code>{certificate.certificate_code}</code></div>
           </div>
+          <a className="btn btn-secondary" href={verificationLink(certificate.certificate_code)} target="_blank" rel="noopener noreferrer">View credential</a>
           {certificate.revoked_at ? <span className="pill">Revoked</span> : <button className="btn btn-secondary" onClick={() => copyVerification(certificate)}>{copied === certificate.id ? 'Link copied' : 'Copy verification link'}</button>}
         </div>)}
       </div>}

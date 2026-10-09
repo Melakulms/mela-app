@@ -92,7 +92,7 @@ export default function Practice({ onBack }: { onBack: () => void }) {
           <>
             <div className="section-heading"><h2>Recommended for you</h2></div>
             <div className="list-panel">
-              {recommendations.slice(0, 3).map((r) => (
+              {recommendations.map((r) => (
                 <div className="list-row" key={r.topic_id}>
                   <div>
                     <div className="list-row-title">{r.topic}</div>

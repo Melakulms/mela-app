@@ -7,6 +7,10 @@ export interface Course {
   category: string | null
   level: string | null
   duration_minutes: number | null
+  prerequisites?: string | null
+  learning_outcomes?: unknown
+  audience?: string | null
+  career_track?: string | null
   price_cents: number | null
 }
 
@@ -19,7 +23,7 @@ export interface Enrollment {
 export async function fetchCourses(): Promise<Course[]> {
   const { data, error } = await supabase
     .from('courses')
-    .select('id, title, description, category, level, duration_minutes, price_cents')
+    .select('id, title, description, category, level, duration_minutes, price_cents, prerequisites, learning_outcomes, audience, career_track')
     .eq('is_published', true)
     .order('featured_rank', { ascending: true, nullsFirst: false })
   if (error) throw error
@@ -27,7 +31,8 @@ export async function fetchCourses(): Promise<Course[]> {
 }
 
 export async function fetchMyEnrollments(): Promise<Enrollment[]> {
-  const { data: auth } = await supabase.auth.getUser()
+  const { data: auth, error: authError } = await supabase.auth.getUser()
+  if (authError) throw authError
   if (!auth.user) return []
   const { data, error } = await supabase
     .from('course_enrollments')
@@ -38,7 +43,8 @@ export async function fetchMyEnrollments(): Promise<Enrollment[]> {
 }
 
 export async function enrollInCourse(courseId: string): Promise<void> {
-  const { data: auth } = await supabase.auth.getUser()
+  const { data: auth, error: authError } = await supabase.auth.getUser()
+  if (authError) throw authError
   if (!auth.user) throw new Error('You need to be logged in to enroll.')
   const { error } = await supabase.from('course_enrollments').insert({
     user_id: auth.user.id,

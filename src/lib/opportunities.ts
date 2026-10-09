@@ -8,6 +8,13 @@ export interface Opportunity {
   location: string | null
   is_remote: boolean | null
   deadline: string | null
+  description?: string | null
+  requirements?: string[] | null
+  skills_required?: string[] | null
+  application_instructions?: string | null
+  experience_level?: string | null
+  education_level?: string | null
+  employment_type_label?: string | null
   summary: string | null
   stipend_or_reward: string | null
   application_method: string | null
@@ -24,7 +31,7 @@ export interface MyApplication {
 export async function fetchOpenOpportunities(): Promise<Opportunity[]> {
   const { data, error } = await supabase
     .from('opportunities')
-    .select('id, title, organization_name, opportunity_type, location, is_remote, deadline, summary, stipend_or_reward, application_method, external_url')
+    .select('id, title, organization_name, opportunity_type, location, is_remote, deadline, summary, description, requirements, skills_required, application_instructions, experience_level, education_level, employment_type_label, stipend_or_reward, application_method, external_url')
     .eq('status', 'open')
     .eq('moderation_status', 'approved')
     .eq('verified_active', true)
@@ -35,7 +42,8 @@ export async function fetchOpenOpportunities(): Promise<Opportunity[]> {
 }
 
 export async function fetchMyApplications(): Promise<MyApplication[]> {
-  const { data: auth } = await supabase.auth.getUser()
+  const { data: auth, error: authError } = await supabase.auth.getUser()
+  if (authError) throw authError
   if (!auth.user) return []
   const { data, error } = await supabase
     .from('applications')
@@ -46,7 +54,8 @@ export async function fetchMyApplications(): Promise<MyApplication[]> {
 }
 
 export async function applyToOpportunity(opportunityId: string, coverNote: string): Promise<void> {
-  const { data: auth } = await supabase.auth.getUser()
+  const { data: auth, error: authError } = await supabase.auth.getUser()
+  if (authError) throw authError
   if (!auth.user) throw new Error('You need to be logged in to apply.')
   const { data: opportunity, error: opportunityError } = await supabase
     .from('opportunities')

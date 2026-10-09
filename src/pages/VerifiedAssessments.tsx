@@ -154,7 +154,7 @@ export default function VerifiedAssessments({ onBack }: { onBack: () => void }) 
     {attempts.length > 0 && <>
       <div className="section-heading"><h2>My assessment history</h2></div>
       <div className="list-panel">
-        {attempts.slice(0, 20).map(attempt => {
+        {attempts.map(attempt => {
           const title = assessments?.find(item => item.id === attempt.assessment_id)?.title ?? 'Assessment'
           return <div className="list-row" key={attempt.id}>
             <div><div className="list-row-title">{title}</div><div className="list-row-meta">Attempt {attempt.attempt_no} · {new Date(attempt.started_at).toLocaleString()}</div></div>

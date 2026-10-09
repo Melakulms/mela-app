@@ -292,3 +292,28 @@ input, select, textarea { min-width: 0; max-width: 100%; }
   .bottom-nav button { font-size: .6rem; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+
+/* Section content cards must not inherit white dashboard tile text. */
+.dash-main:not(.dashboard-main) .module-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  gap: .75rem;
+  cursor: default;
+}
+.dash-main:not(.dashboard-main) .module-card h3 { color: var(--ink); }
+.dash-main:not(.dashboard-main) .module-card p {
+  color: var(--muted);
+  font-size: .9rem;
+  line-height: 1.6;
+}
+.dash-main:not(.dashboard-main) .module-card summary {
+  cursor: pointer;
+  font-weight: 600;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+@media (max-width: 600px) {
+  .dash-main:not(.dashboard-main) .module-grid { grid-template-columns: 1fr; }
+}

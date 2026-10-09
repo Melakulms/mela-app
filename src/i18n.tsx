@@ -17,6 +17,9 @@ export function normalizeLanguageCode(value: string | null | undefined): Languag
 }
 
 export type TranslationKey =
+  | 'credentialVerification' | 'credentialVerificationHelp' | 'credentialVerifying' | 'credentialMissing'
+  | 'credential' | 'course' | 'learner' | 'issued' | 'code' | 'status' | 'valid' | 'revoked' | 'goToMela'
+
   | 'loadingMela'
   | 'loading'
   | 'settingUpAccount'
@@ -120,6 +123,20 @@ export type TranslationKey =
   | 'back'
 
 const EN: Record<TranslationKey, string> = {
+  credentialVerification: "Credential verification",
+  credentialVerificationHelp: "Independent verification of a MELA course credential.",
+  credentialVerifying: "Verifying credential…",
+  credentialMissing: "No MELA credential matches this verification code.",
+  credential: "Credential",
+  course: "Course",
+  learner: "Learner",
+  issued: "Issued",
+  code: "Code",
+  status: "Status",
+  valid: "Valid",
+  revoked: "Revoked",
+  goToMela: "Go to MELA",
+
   loadingMela: 'Loading MELA…',
   loading: 'Loading…',
   settingUpAccount: 'Setting up your account…',
@@ -227,6 +244,20 @@ const TRANSLATIONS: Record<LanguageCode, Record<TranslationKey, string>> = {
   en: EN,
   am: {
     ...EN,
+  credentialVerification: "የማረጋገጫ ማረጋገጥ",
+  credentialVerificationHelp: "የMELA ኮርስ ማረጋገጫን በገለልተኛ መንገድ ያረጋግጡ።",
+  credentialVerifying: "ማረጋገጫው በማረጋገጥ ላይ…",
+  credentialMissing: "ከዚህ ኮድ ጋር የሚዛመድ የMELA ማረጋገጫ የለም።",
+  credential: "ማረጋገጫ",
+  course: "ኮርስ",
+  learner: "ተማሪ",
+  issued: "የተሰጠበት",
+  code: "ኮድ",
+  status: "ሁኔታ",
+  valid: "ትክክለኛ",
+  revoked: "ተሰርዟል",
+  goToMela: "ወደ MELA ሂድ",
+
     loadingMela: 'MELA በመጫን ላይ…', loading: 'በመጫን ላይ…', settingUpAccount: 'መለያዎን በማዘጋጀት ላይ…',
     sessionRestoreError: 'ክፍለ ጊዜዎን መመለስ አልተቻለም። እንደገና ይሞክሩ።', connectionError: 'መገናኘት አልተቻለም። እንደገና ይሞክሩ።',
     profileLoadError: 'መገለጫዎን መጫን አልተቻለም። እንደገና ይሞክሩ ወይም ይግቡ።', unableToLoadAccount: 'መለያዎን መጫን አልተቻለም', retry: 'እንደገና ሞክር', logout: 'ውጣ',
@@ -253,6 +284,20 @@ const TRANSLATIONS: Record<LanguageCode, Record<TranslationKey, string>> = {
   },
   om: {
     ...EN,
+  credentialVerification: "Mirkaneessa ragaa",
+  credentialVerificationHelp: "Ragaa koorsii MELA of dandaʼee mirkaneessi.",
+  credentialVerifying: "Ragaa mirkaneessaa jira…",
+  credentialMissing: "Ragaan MELA koodii kanaan wal simu hin jiru.",
+  credential: "Ragaa",
+  course: "Koorsii",
+  learner: "Barataa",
+  issued: "Kan kenname",
+  code: "Koodii",
+  status: "Haala",
+  valid: "Sirrii",
+  revoked: "Haqameera",
+  goToMela: "Gara MELA deemi",
+
     loadingMela: 'MELA fe’amaa jira…', loading: 'Fe’amaa jira…', settingUpAccount: 'Herrega kee qopheessaa jirra…',
     sessionRestoreError: 'Yeroo seensaa kee deebisuu hin dandeenye. Irra deebi’ii yaali.', connectionError: 'Wal qunnamuu hin dandeenye. Irra deebi’ii yaali.',
     profileLoadError: 'Profaayila kee fe’uu hin dandeenye. Irra deebi’ii yaali yookaan seeni.', unableToLoadAccount: 'Herrega kee fe’uu hin dandeenye', retry: 'Irra deebi’ii yaali', logout: 'Ba’i',
@@ -279,6 +324,20 @@ const TRANSLATIONS: Record<LanguageCode, Record<TranslationKey, string>> = {
   },
   ti: {
     ...EN,
+  credentialVerification: "ምርግጋጽ መረጋገጺ",
+  credentialVerificationHelp: "መረጋገጺ ኮርስ MELA ብናጻ የረጋግጹ።",
+  credentialVerifying: "መረጋገጺ ይረጋገጽ ኣሎ…",
+  credentialMissing: "ምስዚ ኮድ ዝሰማማዕ መረጋገጺ MELA የለን።",
+  credential: "መረጋገጺ",
+  course: "ኮርስ",
+  learner: "ተማሃራይ",
+  issued: "ዝተዋህበሉ",
+  code: "ኮድ",
+  status: "ኩነታት",
+  valid: "ቅኑዕ",
+  revoked: "ተሰሪዙ",
+  goToMela: "ናብ MELA ኪድ",
+
     loadingMela: 'MELA ይጽዕን ኣሎ…', loading: 'ይጽዕን ኣሎ…', settingUpAccount: 'መለያኻ ነዳሉ ኣለና…',
     sessionRestoreError: 'ክፍለ ግዜኻ ክንመልስ ኣይከኣልናን። እንደገና ፈትን።', connectionError: 'ክንራኸብ ኣይከኣልናን። እንደገና ፈትን።',
     profileLoadError: 'ፕሮፋይልካ ክጽዕን ኣይከኣለን። እንደገና ፈትን ወይ እቶ።', unableToLoadAccount: 'መለያኻ ክጽዕን ኣይከኣለን', retry: 'እንደገና ፈትን', logout: 'ውጻእ',
@@ -305,6 +364,20 @@ const TRANSLATIONS: Record<LanguageCode, Record<TranslationKey, string>> = {
   },
   so: {
     ...EN,
+  credentialVerification: "Xaqiijinta shahaadada",
+  credentialVerificationHelp: "Xaqiijin madax bannaan oo shahaadada koorsada MELA ah.",
+  credentialVerifying: "Shahaadada waa la xaqiijinayaa…",
+  credentialMissing: "Ma jirto shahaado MELA oo ku habboon koodhkan.",
+  credential: "Shahaado",
+  course: "Koorsada",
+  learner: "Ardayga",
+  issued: "La bixiyay",
+  code: "Koodhka",
+  status: "Xaaladda",
+  valid: "Sax ah",
+  revoked: "La laalay",
+  goToMela: "Tag MELA",
+
     loadingMela: 'MELA waa la soo dejinayaa…', loading: 'Waa la soo dejinayaa…', settingUpAccount: 'Akoonkaaga waa la diyaarinayaa…',
     sessionRestoreError: 'Fadhigaaga lama soo celin karin. Isku day mar kale.', connectionError: 'Lama xiriiri karin. Isku day mar kale.',
     profileLoadError: 'Boggaaga lama soo dejin karin. Isku day mar kale ama dib u gal.', unableToLoadAccount: 'Akoonkaaga lama soo dejin karin', retry: 'Isku day mar kale', logout: 'Ka bax',
@@ -343,12 +416,16 @@ export function translate(language: LanguageCode, key: TranslationKey): string {
 
 const I18nContext = createContext<I18nContextValue>({ language: 'en', setLanguage: () => {}, t: (key) => translate('en', key) })
 
+function readSavedLanguage(): LanguageCode {
+  try { return normalizeLanguageCode(localStorage.getItem('mela_language')) } catch { return 'en' }
+}
+
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageCode] = useState<LanguageCode>(() => normalizeLanguageCode(localStorage.getItem('mela_language')))
+  const [language, setLanguageCode] = useState<LanguageCode>(() => readSavedLanguage())
   const setLanguage = useCallback((value: string) => {
     const next = normalizeLanguageCode(value)
     setLanguageCode(next)
-    localStorage.setItem('mela_language', next)
+    try { localStorage.setItem('mela_language', next) } catch { /* Keep the selected language for this session when storage is unavailable. */ }
   }, [])
   useEffect(() => { document.documentElement.lang = language }, [language])
   const value = useMemo<I18nContextValue>(() => ({

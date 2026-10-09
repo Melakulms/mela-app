@@ -12,7 +12,7 @@ type View =
   | { stage: 'in_session'; sessionId: string; questions: PracticeQuestion[]; index: number; questionStartedAt: number; result: SubmitResult | null; selected: string | null }
   | { stage: 'complete'; summary: SessionSummary }
 
-export default function Practice({ onBack }: { onBack: () => void }) {
+export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () => void; onOpenQuestionBank?: () => void }) {
   const { t } = useI18n()
   const [topics, setTopics] = useState<PracticeTopic[] | null>(null)
   const [recommendations, setRecommendations] = useState<PracticeRecommendation[]>([])
@@ -86,13 +86,14 @@ export default function Practice({ onBack }: { onBack: () => void }) {
           <h1>{t('practice')}</h1>
           <button className="btn btn-secondary" onClick={onBack}>{t('back')}</button>
         </div>
+        {onOpenQuestionBank && <div className="list-panel question-card"><p>School learners: practice by grade, subject, chapter, and topic in the curriculum Question Bank.</p><button className="btn btn-primary" onClick={onOpenQuestionBank}>Open curriculum Question Bank</button></div>}
         {error && <div className="banner banner-error">{error}</div>}
 
-        {recommendations.length > 0 && (
+        {recommendations.filter(r => topics?.some(t => t.id === r.topic_id)).length > 0 && (
           <>
             <div className="section-heading"><h2>Recommended for you</h2></div>
             <div className="list-panel">
-              {recommendations.map((r) => (
+              {recommendations.filter(r => topics?.some(t => t.id === r.topic_id)).map((r) => (
                 <div className="list-row" key={r.topic_id}>
                   <div>
                     <div className="list-row-title">{r.topic}</div>
@@ -107,14 +108,14 @@ export default function Practice({ onBack }: { onBack: () => void }) {
 
         <div className="section-heading"><h2>All topics</h2></div>
         {!topics && !error && <p className="muted">Loading topics…</p>}
-        {topics && topics.length === 0 && <div className="empty-panel">No practice topics are published yet.</div>}
+        {topics && topics.length === 0 && <div className="empty-panel">No additional practice topics are available for your education level. School curriculum practice is available in the Question Bank.</div>}
         {topics && topics.length > 0 && (
           <div className="list-panel">
             {topics.map((t) => (
               <div className="list-row" key={t.id}>
                 <div>
                   <div className="list-row-title">{t.topic}</div>
-                  <div className="list-row-meta">{t.subject}{t.grade_level ? ` · Grade ${t.grade_level}` : ''}</div>
+                  <div className="list-row-meta">{t.subject}{t.grade_level === 'career' ? ' · Career skills' : t.grade_level ? ` · Grade ${t.grade_level}` : ''}</div>
                 </div>
                 <button className="btn btn-primary" onClick={() => beginTopic(t.id)}>Start</button>
               </div>

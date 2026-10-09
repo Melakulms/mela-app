@@ -4,7 +4,7 @@ export interface PracticeTopic {
   id: string
   subject: string
   topic: string
-  grade_level: number | null
+  grade_level: string | null
   description: string | null
 }
 
@@ -34,20 +34,24 @@ export interface SessionSummary {
 }
 
 export async function fetchTopics(): Promise<PracticeTopic[]> {
-  const { data: auth } = await supabase.auth.getUser()
+  const { data: auth, error: authError } = await supabase.auth.getUser()
+  if (authError) throw authError
   if (!auth.user) throw new Error('You need to be signed in to practice.')
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('grade_level')
+    .select('grade_level,education_stage_key')
     .eq('id', auth.user.id)
     .single()
   if (profileError) throw profileError
   const grade = profile?.grade_level == null ? null : Number(profile.grade_level)
+  const school = String(profile?.education_stage_key).startsWith('school_')
+  if (school && (!Number.isInteger(grade) || grade == null || grade < 1 || grade > 12)) throw new Error('Complete your school grade in Profile.')
+  if (!school && !['college_tvet', 'university'].includes(profile?.education_stage_key)) throw new Error('Complete your education profile to practice.')
   let query = supabase
     .from('practice_topics')
     .select('id, subject, topic, grade_level, description')
     .eq('is_published', true)
-  if (grade != null) query = query.or('grade_level.eq.' + grade + ',grade_level.is.null')
+  query = query.eq('grade_level', school ? String(grade) : 'career')
   const { data, error } = await query.order('subject').order('topic')
   if (error) throw error
   return data as PracticeTopic[]

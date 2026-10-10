@@ -317,3 +317,10 @@ input, select, textarea { min-width: 0; max-width: 100%; }
 @media (max-width: 600px) {
   .dash-main:not(.dashboard-main) .module-grid { grid-template-columns: 1fr; }
 }
+/* Installation remains available before sign-in and on small phone screens. */
+.install-app { padding: .65rem 1rem; background: #141b28; color: #fff; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+.install-app summary { cursor: pointer; font-size: .9rem; padding: .35rem 0; }
+.install-app p { max-width: 65ch; font-size: .9rem; line-height: 1.6; }
+.install-app button { background: #f0b429; color: #0a0d14; border: 0; border-radius: .6rem; padding: .65rem 1rem; font-weight: 700; cursor: pointer; }
+.install-app button:disabled { opacity: .6; cursor: wait; }
+.install-app summary:focus-visible, .install-app button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }

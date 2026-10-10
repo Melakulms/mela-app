@@ -1,5 +1,7 @@
+import { COACH_MESSAGES } from './coach-i18n'
 // Product interface translations; native-language acceptance remains a separate review.
 export const AUTH_MESSAGES = {
+  ...COACH_MESSAGES,
   authWelcome: ['Welcome back','እንኳን ደህና መጡ','Baga nagaan dhuftan','እንቋዕ ብደሓን መጻእኩም','Soo dhowow'],
   authLoginHelp: ['Log in with your email or MELA beta username.','በኢሜይልዎ ወይም በMELA ቤታ የተጠቃሚ ስምዎ ይግቡ።','Imeelii ykn maqaa fayyadamaa MELA beta tiin seenaa.','ብኢሜይልኩም ወይ ብስም ተጠቃሚ MELA ቤታ እተዉ።','Ku gal iimaylkaaga ama magacaaga MELA beta.'],
   authIdentifier: ['Email or beta username','ኢሜይል ወይም የቤታ ተጠቃሚ ስም','Imeelii ykn maqaa fayyadamaa beta','ኢሜይል ወይ ስም ተጠቃሚ ቤታ','Iimayl ama magaca beta'],

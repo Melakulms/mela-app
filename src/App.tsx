@@ -1,3 +1,4 @@
+import { clearCoachHistories } from './lib/coach-history'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { Wifi, WifiOff, LogOut, LayoutDashboard, BookOpen, Swords, Globe, UserRound, GraduationCap } from 'lucide-react'
@@ -72,7 +73,7 @@ export default function App() {
     return observeSession(supabase.auth, (newSession, event) => {
       if (event === 'PASSWORD_RECOVERY') setRecovering(true)
       if (event === 'USER_UPDATED' || event === 'SIGNED_IN') setProfileRevision(value => value + 1)
-      if (event === 'SIGNED_OUT') setRecovering(false)
+      if (event === 'SIGNED_OUT') {setRecovering(false);clearCoachHistories()}
       if (event !== 'TOKEN_REFRESHED') setAccountError('')
       setSession(newSession)
       setLoading(false)
@@ -244,7 +245,7 @@ export default function App() {
           {studentView === 'academy' && <SkillAcademy onBack={() => setStudentView('dashboard')} />}
           {studentView === 'mentorship' && <Mentorship onBack={() => setStudentView('dashboard')} />}
           {studentView === 'passport' && <CareerPassport onBack={() => setStudentView('dashboard')} />}
-          {studentView === 'coach' && <AiCareerCoach onBack={() => setStudentView('dashboard')} />}
+          {studentView === 'coach' && <AiCareerCoach key={profile.id} userId={profile.id} onBack={() => setStudentView('dashboard')} />}
           {studentView === 'arena' && <Arena onBack={() => setStudentView('dashboard')} />}
           {studentView === 'profile' && <Profile profile={profile} onProfileUpdated={reloadProfile} />}
           {studentView === 'scholarships' && <EthioScholarConnect onBack={() => setStudentView('dashboard')} />}

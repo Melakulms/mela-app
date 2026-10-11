@@ -11,6 +11,29 @@ export default function DeviceSettings() {
   const {language, setLanguage} = useI18n()
   const [preferences, setPreferences] = useState(read)
   const [notice, setNotice] = useState('')
+  const [checkingUpdate, setCheckingUpdate] = useState(false)
+  const [updateNotice, setUpdateNotice] = useState('')
+
+  async function refreshInstalledApp() {
+    if (checkingUpdate) return
+    if (!navigator.onLine) {
+      setUpdateNotice('Connect to the internet before updating MELA. Your saved data was not changed.')
+      return
+    }
+    setCheckingUpdate(true); setUpdateNotice('Checking the published app…')
+    try {
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration(new URL('.', document.baseURI).pathname)
+        if (registration) await registration.update()
+      }
+      // The shell is network-first and versioned JS files have distinct names.
+      // A deliberate refresh will fetch the latest deployed release without deleting account data.
+      window.location.reload()
+    } catch {
+      setUpdateNotice('Could not check for the latest version. Your current app is unchanged. Try again while online.')
+      setCheckingUpdate(false)
+    }
+  }
   useEffect(() => {
     document.documentElement.classList.toggle('mela-large-text', preferences.largeText)
     document.documentElement.classList.toggle('mela-reduced-motion', preferences.reducedMotion)
@@ -32,6 +55,13 @@ export default function DeviceSettings() {
       <label><input type="checkbox" checked={preferences.reducedMotion} onChange={e => save({...preferences, reducedMotion: e.target.checked})} /> Reduce animation</label>
       <button className="btn btn-secondary" onClick={() => save({largeText:false,reducedMotion:false})}>Reset display settings</button>
       {notice && <p role="status">{notice}</p>}
+      <h2>Installed app updates</h2>
+      <p>MELA is an installable website, not an APK. New features appear in this installed app after they are published. Save any work before refreshing.</p>
+      <button type="button" className="btn btn-primary" onClick={() => void refreshInstalledApp()} disabled={checkingUpdate}>
+        {checkingUpdate ? 'Checking published version…' : 'Check and refresh installed MELA'}
+      </button>
+      {updateNotice && <p role="status">{updateNotice}</p>}
+      <p className="field-hint">Refreshing does not install unreleased development features. Your account and saved review decisions remain on the server.</p>
       <h2>Lessons and downloads</h2>
       <p>The AI Year One handbook contains 52 weekly draft lessons. It needs teacher approval and does not award completion or certificates.</p>
       <a className="btn btn-primary" href={`${import.meta.env.BASE_URL}ai-year-one.html`}>Read AI Year One</a>{' '}

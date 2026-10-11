@@ -44,7 +44,7 @@ export default function StudentOnboarding({ onComplete, initialGrade = 9, editMo
         const stageSubjects = (data ?? []) as Subject[]
         const gradePrograms = await fetchGradePrograms(grade, track === 'common' ? 'natural_sciences' : track).catch(() => [])
         if (!active) return
-        const title = (value: string) => value.toLocaleLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+        const title = (value: string) => value.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim()
         const gradeTitles = new Set(gradePrograms.map(program => title(program.subject_title)))
         const exact = stageSubjects.filter(subject => gradeTitles.has(title(subject.subject_title)))
         // Keep the verified stage catalog if a partially published grade catalog lacks mappings.
@@ -57,9 +57,10 @@ export default function StudentOnboarding({ onComplete, initialGrade = 9, editMo
         const { data: auth } = await supabase.auth.getUser()
         if (!auth.user) throw new Error('Your session has expired.')
         const { data: existing, error: studentError } = await supabase.from('student_profiles')
-          .select('subjects').eq('user_id', auth.user.id).maybeSingle()
+          .select('subjects,school_name').eq('user_id', auth.user.id).maybeSingle()
         if (studentError) throw studentError
         if (!active) return
+        setSchool(existing?.school_name ?? '')
         const saved = Array.isArray(existing?.subjects) ? existing.subjects : []
         setSelected(rows.filter(s => saved.includes(s.subject_key)).map(s => s.subject_key))
       }).catch(cause => { if (active) setError(cause instanceof Error ? cause.message : 'Could not load subjects.') })

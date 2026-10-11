@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useI18n } from '../i18n'
+import { fetchLearnerDiscoveryProfile } from '../lib/learner-discovery'
 
 type Program = {
   program_key: string
@@ -24,6 +25,8 @@ export default function QuestionBank({ onBack }: { onBack: () => void }) {
   const [grade, setGrade] = useState<number | null>(null)
   const [program, setProgram] = useState('')
   const [track, setTrack] = useState('common')
+  const [preferredPrograms, setPreferredPrograms] = useState<string[]>([])
+  const [allSubjects, setAllSubjects] = useState(false)
   const [chapters, setChapters] = useState<{ chapter_id: string; chapter_title: string; mastery_count: number; topics: { topic_id: string; topic_title: string; mastery_count: number }[] }[]>([])
   const [chapter, setChapter] = useState('')
   const [topic, setTopic] = useState('')
@@ -32,7 +35,11 @@ export default function QuestionBank({ onBack }: { onBack: () => void }) {
   const [detailError, setDetailError] = useState('')
   const [inventory, setInventory] = useState<{ mastery_count: number; review_required_count: number } | null>(null)
   const requestLock = useRef(false)
-  const visiblePrograms = programs.filter(p => p.track_key === track)
+  const gradePrograms = programs.filter(p => p.track_key === track || p.track_key === 'common')
+  const hasPreferred = preferredPrograms.some(key => gradePrograms.some(program => program.program_key === key))
+  const visiblePrograms = hasPreferred && !allSubjects
+    ? gradePrograms.filter(p => preferredPrograms.includes(p.program_key))
+    : gradePrograms
 
   const [questions, setQuestions] = useState<Question[]>([])
   const [answers, setAnswers] = useState<Record<string, string>>({})
@@ -65,7 +72,14 @@ export default function QuestionBank({ onBack }: { onBack: () => void }) {
         if (error) throw error
         if (!active) return
         const rows = (data ?? []) as Program[]
-        setGrade(profile.grade_level); setPrograms(rows); setTrack(rows[0]?.track_key ?? 'common'); setProgram(rows[0]?.program_key ?? '')
+        const choices = await fetchLearnerDiscoveryProfile().then(value => value.preferred_program_keys).catch(() => [] as string[])
+        if (!active) return
+        const available = rows.filter(row => choices.includes(row.program_key))
+        const preferredTrack = available.find(row => row.track_key !== 'common')?.track_key
+        const initialTrack = preferredTrack ?? rows.find(row => row.track_key !== 'common')?.track_key ?? 'common'
+        setPreferredPrograms(choices); setAllSubjects(false)
+        setGrade(profile.grade_level); setPrograms(rows); setTrack(initialTrack)
+        setProgram(available[0]?.program_key ?? rows.find(row => row.track_key === initialTrack)?.program_key ?? rows[0]?.program_key ?? '')
       } catch (error) {
         if (active) setError(error instanceof Error ? error.message : 'Could not load your subjects. Please try again.')
       } finally { if (active) setLoading(false) }
@@ -145,9 +159,17 @@ export default function QuestionBank({ onBack }: { onBack: () => void }) {
       {!loading && !error && programs.length === 0 && <div className="empty-panel">No subjects are available for your curriculum yet. Check back soon or update your education details in Profile.</div>}
       {!sessionId ? (
         <>
-          {grade && grade >= 11 && <div className="field"><label htmlFor="track">Academic track</label><select id="track" disabled={busy} value={track} onChange={e => { const next = e.target.value; setTrack(next); setProgram(programs.find(p => p.track_key === next)?.program_key ?? '') }}>{[...new Set(programs.map(p => p.track_key))].map(key => <option key={key} value={key}>{key.replaceAll('_', ' ')}</option>)}</select></div>}
+          {grade && grade >= 11 && <div className="field"><label htmlFor="track">Academic track</label><select id="track" disabled={busy} value={track} onChange={e => { const next = e.target.value; setTrack(next); setProgram(programs.find(p => p.track_key === next && (allSubjects || !hasPreferred || preferredPrograms.includes(p.program_key)))?.program_key ?? programs.find(p => p.track_key === next)?.program_key ?? '') }}>{[...new Set(programs.map(p => p.track_key))].map(key => <option key={key} value={key}>{key.replaceAll('_', ' ')}</option>)}</select></div>}
+          {hasPreferred && <label className="settings-checkbox">
+            <input type="checkbox" checked={allSubjects} onChange={event => {
+              setAllSubjects(event.target.checked)
+              const list = event.target.checked ? gradePrograms : gradePrograms.filter(row => preferredPrograms.includes(row.program_key))
+              setProgram(list[0]?.program_key ?? '')
+            }}/>
+            Show all Grade {grade} subjects, not just my selected subjects
+          </label>}
           <div className="field">
-            <label htmlFor="program">Subject</label>
+            <label htmlFor="program">Grade {grade} subject</label>
             <select disabled={loading || busy || !programs.length} id="program" value={program} onChange={e => setProgram(e.target.value)}>
               {visiblePrograms.map(p => <option key={p.program_key} value={p.program_key}>{p.subject_title}</option>)}
             </select>

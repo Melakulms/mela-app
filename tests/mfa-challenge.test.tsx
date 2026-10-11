@@ -2,9 +2,11 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import MfaChallenge from '../src/components/MfaChallenge'
 
-const listFactors = vi.fn(async () => ({ data: { totp: [{ id: 'verified-factor', status: 'verified' }] }, error: null }))
-const challenge = vi.fn(async () => ({ data: { id: 'challenge-id' }, error: null }))
-const verify = vi.fn(async () => ({ data: {}, error: null }))
+const { listFactors, challenge, verify } = vi.hoisted(() => ({
+  listFactors: vi.fn(async () => ({ data: { totp: [{ id: 'verified-factor', status: 'verified' }] }, error: null })),
+  challenge: vi.fn(async () => ({ data: { id: 'challenge-id' }, error: null })),
+  verify: vi.fn(async () => ({ data: {}, error: null })),
+}))
 
 vi.mock('../src/lib/supabase', () => ({
   supabase: { auth: { mfa: { listFactors, challenge, verify } } },

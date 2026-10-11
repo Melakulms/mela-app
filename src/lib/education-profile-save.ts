@@ -68,19 +68,30 @@ export async function saveMyEducationProfile(input: SaveEducationInput): Promise
     if (!auth.user) throw new Error('Please sign in again before saving your profile.')
     const id = auth.user.id
     const { data: current, error: currentError } = await supabase.from('profiles')
-      .select('full_name,preferred_language,role,education_stage_key,grade_level')
+      .select('full_name,preferred_language,role,education_stage_key,grade_level,education_onboarding_completed,role_selected_at')
       .eq('id', id).maybeSingle()
     if (currentError) throw currentError
     if (!current || current.role !== 'student') throw new Error('An active student profile is required to save education details.')
     if (current.education_stage_key && current.education_stage_key !== input.stageKey) {
       throw new Error('Your established education level can only be changed after verified review by MELA support.')
     }
+    if (!current.role_selected_at) {
+      throw new Error('Your account type is not marked as selected in the live database. A verified administrator must complete account type onboarding.')
+    }
     if (current.grade_level !== null && input.grade !== null && current.grade_level !== input.grade) {
-      throw new Error('Your school grade can only be changed after a verified correction by MELA support.')
+      // A learner whose profile is genuinely complete must not be allowed
+      // to self-change grade. A stranded, incomplete onboarding may correct
+      // the grade inside its pre-existing school stage via the validated RPC.
+      const {data: saved, error: savedError} = await supabase.from('student_profiles')
+        .select('subjects').eq('user_id', id).maybeSingle()
+      if (savedError) throw savedError
+      if (current.education_onboarding_completed && Array.isArray(saved?.subjects) && saved.subjects.length > 0) {
+        throw new Error('Your established grade requires a verified school-year promotion or correction by MELA support.')
+      }
     }
 
     step = 'setting education level'
-    if (!current.education_stage_key) {
+    if (!current.education_stage_key || (input.grade !== null && current.grade_level !== input.grade)) {
       const { error: stageError } = await supabase.rpc('set_my_education_stage_v36', {
         p_stage_key: input.stageKey,
         p_grade_level: input.grade,

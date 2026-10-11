@@ -24,7 +24,9 @@ const Arena = lazy(() => import('./pages/Arena'))
 const Profile = lazy(() => import('./pages/Profile'))
 const EthioScholarConnect = lazy(() => import('./pages/EthioScholarConnect'))
 const RoleDashboard = lazy(() => import('./pages/RoleDashboard'))
-const RoleProfileSetup = lazy(() => import('./pages/RoleProfileSetup'))
+const FamilyProfileSetup = lazy(() => import('./pages/FamilyProfileSetup'))
+const TeacherProfileSetup = lazy(() => import('./pages/TeacherProfileSetup'))
+const EmployerProfileSetup = lazy(() => import('./pages/EmployerProfileSetup'))
 const EmployerApprovalPending = lazy(() => import('./pages/EmployerApprovalPending'))
 const LearnerTools = lazy(() => import('./pages/LearnerTools'))
 const LearnerSubsections = lazy(() => import('./pages/LearnerSubsections'))
@@ -189,8 +191,23 @@ export default function App() {
     return <StudentOnboarding onComplete={reloadProfile} initialGrade={profile.grade_level} initialStage={profile.education_stage_key} />
   }
 
-  if ((profile.role === 'parent' || profile.role === 'teacher' || profile.role === 'company' || profile.role === 'employer') && ((profile.profile_completion ?? 0) < 100 || ((profile.role === 'company' || profile.role === 'employer') && editingEmployerProfile))) {
-    return <RoleProfileSetup role={profile.role === 'employer' ? 'company' : profile.role} fullName={profile.full_name} email={profile.email} onComplete={() => { setEditingEmployerProfile(false); reloadProfile() }} />
+  if (profile.role === 'parent' && (profile.profile_completion ?? 0) < 100) {
+    return <Suspense fallback={<div className="centered-loading">Loading family profile…</div>}>
+      <FamilyProfileSetup fullName={profile.full_name} email={profile.email} onComplete={reloadProfile}/>
+    </Suspense>
+  }
+
+  if (profile.role === 'teacher' && (profile.profile_completion ?? 0) < 100) {
+    return <Suspense fallback={<div className="centered-loading">Loading teacher profile…</div>}>
+      <TeacherProfileSetup fullName={profile.full_name} email={profile.email} onComplete={reloadProfile}/>
+    </Suspense>
+  }
+
+  if ((profile.role === 'company' || profile.role === 'employer') && ((profile.profile_completion ?? 0) < 100 || editingEmployerProfile)) {
+    return <Suspense fallback={<div className="centered-loading">Loading employer profile…</div>}>
+      <EmployerProfileSetup role={profile.role} fullName={profile.full_name} email={profile.email}
+        onComplete={() => { setEditingEmployerProfile(false); reloadProfile() }}/>
+    </Suspense>
   }
 
   if ((profile.role === 'company' || profile.role === 'employer') && employerRegistration && employerRegistration.status.toLowerCase() !== 'approved') {

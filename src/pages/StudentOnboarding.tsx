@@ -8,6 +8,8 @@ import {
 
 const INTERESTS = ['Mathematics', 'Science', 'Reading & languages', 'Technology & AI', 'Arts & design', 'Agriculture & environment', 'Business & entrepreneurship'] as const
 const GOALS = ['Improve my school results', 'Prepare for exams', 'Develop digital skills', 'Explore a career', 'Prepare for scholarships'] as const
+const PREFERRED_AREAS = ['Step-by-step explanations', 'Extra practice questions', 'Exam preparation', 'AI foundations', 'Career and scholarship guidance'] as const
+const SKILLS = ['Reading and writing', 'Problem solving', 'Research', 'Computer skills', 'Communication', 'Creative projects'] as const
 
 type Props = {
   onComplete: () => void
@@ -28,6 +30,8 @@ export default function StudentOnboarding({
   const [school, setSchool] = useState('')
   const [interests, setInterests] = useState<string[]>([])
   const [goals, setGoals] = useState<string[]>([])
+  const [preferredAreas, setPreferredAreas] = useState<string[]>([])
+  const [skills, setSkills] = useState<string[]>([])
   const [loadingCatalog, setLoadingCatalog] = useState(false)
   const [catalogError, setCatalogError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -102,13 +106,15 @@ export default function StudentOnboarding({
           const {data: auth} = await supabase.auth.getUser()
           if (auth.user) {
             const {data, error: readError} = await supabase.from('student_profiles')
-              .select('subjects, school_name, learning_interests, goals').eq('user_id', auth.user.id).maybeSingle()
+              .select('subjects, school_name, learning_interests, goals, preferred_learning_areas, skills').eq('user_id', auth.user.id).maybeSingle()
             if (readError) throw readError
             if (!active) return
             storedSubjects = Array.isArray(data?.subjects) ? data.subjects : []
             setSchool(data?.school_name ?? '')
             setInterests((data?.learning_interests ?? []).filter((value: string) => INTERESTS.includes(value as typeof INTERESTS[number])))
             setGoals((data?.goals ?? []).filter((value: string) => GOALS.includes(value as typeof GOALS[number])))
+            setPreferredAreas((data?.preferred_learning_areas ?? []).filter((value: string) => PREFERRED_AREAS.includes(value as typeof PREFERRED_AREAS[number])))
+            setSkills((data?.skills ?? []).filter((value: string) => SKILLS.includes(value as typeof SKILLS[number])))
           }
         }
         if (!active) return
@@ -151,6 +157,8 @@ export default function StudentOnboarding({
         subjects: selected,
         interests,
         goals,
+        preferredAreas,
+        skills,
       })
       onComplete()
     } catch (cause) {
@@ -258,6 +266,26 @@ export default function StudentOnboarding({
                 aria-pressed={goals.includes(value)} disabled={busy}
                 onClick={() => setGoals(current => current.includes(value) ? current.filter(item => item !== value) : [...current, value])}>
                 {goals.includes(value) ? '✓ ' : ''}{value}
+              </button>)}
+            </div>
+          </div>
+          <div className="field">
+            <label id="learning-areas-label">How I learn best</label>
+            <div className="role-grid" role="group" aria-labelledby="learning-areas-label">
+              {PREFERRED_AREAS.map(value => <button key={value} type="button" className="role-option"
+                aria-pressed={preferredAreas.includes(value)} disabled={busy}
+                onClick={() => setPreferredAreas(current => current.includes(value) ? current.filter(item => item !== value) : [...current,value])}>
+                {preferredAreas.includes(value) ? '✓ ' : ''}{value}
+              </button>)}
+            </div>
+          </div>
+          <div className="field">
+            <label id="learning-skills-label">Skills I want to build</label>
+            <div className="role-grid" role="group" aria-labelledby="learning-skills-label">
+              {SKILLS.map(value => <button key={value} type="button" className="role-option"
+                aria-pressed={skills.includes(value)} disabled={busy}
+                onClick={() => setSkills(current => current.includes(value) ? current.filter(item => item !== value) : [...current,value])}>
+                {skills.includes(value) ? '✓ ' : ''}{value}
               </button>)}
             </div>
           </div>

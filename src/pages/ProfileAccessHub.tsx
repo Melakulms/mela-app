@@ -1,5 +1,6 @@
 import {useState, type ReactNode} from 'react'
 import {BookOpen, ClipboardList, ShieldCheck, ChevronLeft, RefreshCw} from 'lucide-react'
+import {inspectMyProfileSetup} from '../lib/profile-diagnostics'
 import SkillAcademy from './SkillAcademy'
 import SafetyCenter from './SafetyCenter'
 
@@ -36,6 +37,14 @@ export default function ProfileAccessHub({role,stageKey,setup,onRefresh,onSignOu
 }){
   const [section,setSection]=useState<PreviewSection>('setup')
   const [message,setMessage]=useState('')
+  const [diagnostic,setDiagnostic]=useState('')
+  const [diagnosticBusy,setDiagnosticBusy]=useState(false)
+  const checkSetup=async()=>{
+    setDiagnosticBusy(true)
+    try{setDiagnostic(await inspectMyProfileSetup())}
+    catch{setDiagnostic('Could not inspect your account. Please reconnect to the internet and try again.')}
+    finally{setDiagnosticBusy(false)}
+  }
   const details=ROLE_INFO[role]
   const isStudent=role==='student'
   return <div className="profile-access-hub">
@@ -46,9 +55,17 @@ export default function ProfileAccessHub({role,stageKey,setup,onRefresh,onSignOu
     <div className="profile-access-controls" role="navigation" aria-label="Account setup and safe browsing">
       <button type="button" className={section==='setup'?'btn btn-primary':'btn btn-secondary'} onClick={()=>setSection('setup')} aria-current={section==='setup'?'page':undefined}>Complete my profile</button>
       <button type="button" className={section==='features'?'btn btn-primary':'btn btn-secondary'} onClick={()=>setSection('features')} aria-current={section==='features'?'page':undefined}>Explore MELA features</button>
-      <button type="button" className="btn btn-secondary" onClick={()=>{setMessage('Checking your profile with the server…');onRefresh()}}><RefreshCw size={16} aria-hidden="true"/> Check profile</button>
+      <button type="button" className="btn btn-secondary" onClick={()=>void checkSetup()} disabled={diagnosticBusy}><RefreshCw size={16} aria-hidden="true"/> {diagnosticBusy?'Checking…':'Check account setup'}</button>
+      <button type="button" className="btn btn-secondary" onClick={()=>{setMessage('Refreshing your saved profile…');onRefresh()}}>Refresh my access</button>
     </div>
     {message && <p role="status" className="profile-access-status">{message}</p>}
+    {diagnostic && <section className="profile-access-diagnostic" aria-label="Account setup diagnostic">
+      <h2>Account setup check</h2>
+      <p>This is a read-only check of your account settings. It contains no password, login token or personal contact details.</p>
+      <label htmlFor="profile-diagnostic">Your account flags</label>
+      <textarea id="profile-diagnostic" readOnly value={diagnostic} rows={9} onFocus={event=>event.currentTarget.select()}/>
+      <button type="button" className="btn btn-secondary" onClick={()=>void navigator.clipboard?.writeText(diagnostic).catch(()=>{})}>Copy account check</button>
+    </section>}
     {section==='setup' && <>
       <div className="profile-access-intro">
         <strong>Profile saving not working?</strong>

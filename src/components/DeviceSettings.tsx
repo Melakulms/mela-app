@@ -111,10 +111,10 @@ export default function DeviceSettings() {
             <option value="system">Follow device</option><option value="dark">Dark</option><option value="light">Light</option>
           </select>
         </label>
-        <label className="settings-switch"><input type="checkbox" checked={preferences.largeText} onChange={e => changeSettings({largeText:e.target.checked})} /><span><strong>Larger text</strong><small>Increase the app's normal text size</small></span></label>
-        <label className="settings-switch"><input type="checkbox" checked={preferences.highContrast} onChange={e => changeSettings({highContrast:e.target.checked})} /><span><strong>High contrast</strong><small>Stronger borders, labels and focus rings</small></span></label>
-        <label className="settings-switch"><input type="checkbox" checked={preferences.reducedMotion} onChange={e => changeSettings({reducedMotion:e.target.checked})} /><span><strong>Reduce animation</strong><small>Limit animation and movement</small></span></label>
-        <label className="settings-switch"><input type="checkbox" checked={preferences.lowData} onChange={e => changeSettings({lowData:e.target.checked})} /><span><strong>Simpler visual effects</strong><small>Reduce decorative gradients and animation; lessons still need internet access</small></span></label>
+        <label className="settings-switch"><input type="checkbox" aria-label="Larger text" checked={preferences.largeText} onChange={e => changeSettings({largeText:e.target.checked})} /><span><strong>Larger text</strong><small>Increase the app's normal text size</small></span></label>
+        <label className="settings-switch"><input type="checkbox" aria-label="High contrast" checked={preferences.highContrast} onChange={e => changeSettings({highContrast:e.target.checked})} /><span><strong>High contrast</strong><small>Stronger borders, labels and focus rings</small></span></label>
+        <label className="settings-switch"><input type="checkbox" aria-label="Reduce animation" checked={preferences.reducedMotion} onChange={e => changeSettings({reducedMotion:e.target.checked})} /><span><strong>Reduce animation</strong><small>Limit animation and movement</small></span></label>
+        <label className="settings-switch"><input type="checkbox" aria-label="Simpler visual effects" checked={preferences.lowData} onChange={e => changeSettings({lowData:e.target.checked})} /><span><strong>Simpler visual effects</strong><small>Reduce decorative gradients and animation; lessons still need internet access</small></span></label>
       </section>
 
       <section id="settings-learning" className="settings-group" aria-labelledby="settings-learning-heading">
@@ -164,7 +164,7 @@ export default function DeviceSettings() {
         {updateNotice && <p role="status">{updateNotice}</p>}
         <details className="settings-release-details">
           <summary>Registration, teacher review & pending platform features</summary>
-          <p>Registration is the first screen for signed-out users, with a valid beta invitation code. Signed-in users open their existing account instead.</p>
+          <p>Registration is the first screen for signed-out users, with a valid beta invitation code. MELA opens your existing account rather than showing registration again when signed in.</p>
           <p><strong>Not published in this release:</strong> account-synced notification settings, per-user learning discovery and scholarship matching, the new full professional 140,000-question review workflow and teacher approvals. Those require the correct production database, tests and human teacher review.</p>
           <p>Verified teachers can currently access Educator content review → Question reviews from the teacher dashboard where their permissions allow. Central Admin is responsible for teacher credential verification.</p>
         </details>

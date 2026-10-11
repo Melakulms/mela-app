@@ -1,5 +1,5 @@
 import {useState, type ReactNode} from 'react'
-import {BookOpen, ClipboardList, ShieldCheck, Briefcase, Users, Trophy, GraduationCap, ChevronLeft, RefreshCw} from 'lucide-react'
+import {BookOpen, ClipboardList, ShieldCheck, ChevronLeft, RefreshCw} from 'lucide-react'
 import SkillAcademy from './SkillAcademy'
 import SafetyCenter from './SafetyCenter'
 

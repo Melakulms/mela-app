@@ -20,7 +20,7 @@ describe('learner offline cache isolation', () => {
   it('only removes outdated learner caches on activation', async () => {
     const w = worker(); let done!: Promise<unknown>
     w.listeners.activate({ waitUntil: (p: Promise<unknown>) => { done = p } }); await done
-    expect(w.caches.delete.mock.calls).toEqual([['mela-shell-v0'], ['mela-shell-v1']])
+    expect(w.caches.delete.mock.calls).toEqual([['mela-shell-v0'], ['mela-shell-v1'], ['mela-shell-v3-ai-review']])
   })
   it('does not intercept another app on the shared origin', () => {
     const w = worker(), respondWith = vi.fn()
@@ -38,7 +38,7 @@ describe('learner offline cache isolation', () => {
     w.fetch.mockRejectedValue(new Error('offline')); w.cache.match.mockResolvedValue(new Response('MELA offline shell'))
     w.listeners.fetch({ request: { method: 'GET', mode: 'navigate', url: 'https://example.test/mela-app/' }, respondWith: (p: Promise<Response>) => { response = p } })
     expect(await (await response).text()).toBe('MELA offline shell')
-    expect(w.caches.open).toHaveBeenCalledWith('mela-shell-v3-ai-review')
+    expect(w.caches.open).toHaveBeenCalledWith('mela-shell-v4-home-and-roles')
   })
 })
 

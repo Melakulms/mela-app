@@ -1,6 +1,7 @@
 import ResourceDirectory from '../components/ResourceDirectory'
 import { safeExternalUrl } from '../lib/external-url'
 import { useEffect, useRef, useState } from 'react'
+import { fetchLearnerDiscoveryProfile, rankOpportunities, type LearnerDiscoveryProfile } from '../lib/learner-discovery'
 import { fetchOpenOpportunities, fetchMyApplications, applyToOpportunity, type Opportunity, type MyApplication } from '../lib/opportunities'
 import { useI18n } from '../i18n'
 
@@ -15,6 +16,7 @@ export default function OpportunityHub({ onBack }: { onBack: () => void }) {
   const [coverNote, setCoverNote] = useState('')
   const [query, setQuery] = useState(''), [type, setType] = useState(''), [scope, setScope] = useState('all')
   const [revision, setRevision] = useState(0)
+  const [personalization, setPersonalization] = useState<LearnerDiscoveryProfile | null>(null)
 
   useEffect(() => {
     let active = true
@@ -24,6 +26,14 @@ export default function OpportunityHub({ onBack }: { onBack: () => void }) {
       .catch((cause) => { if (active) setError(cause.message ?? 'Could not load opportunities.') })
     return () => { active = false }
   }, [revision])
+
+  useEffect(() => {
+    let active = true
+    void fetchLearnerDiscoveryProfile().then(value => { if (active) setPersonalization(value) }).catch(() => {
+      // Discovery remains available even before the optional profile migration.
+    })
+    return () => { active = false }
+  }, [])
 
   const apply = async (id: string) => {
     if (lock.current || applications.some(a => a.opportunity_id === id)) return
@@ -38,6 +48,7 @@ export default function OpportunityHub({ onBack }: { onBack: () => void }) {
   }
 
   const visible = (opportunities ?? []).filter(o => (!type || o.opportunity_type === type) && (scope !== 'remote' || o.is_remote) && `${o.title} ${o.organization_name ?? ''} ${o.location ?? ''} ${o.summary ?? ''}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
+  const rankedVisible = personalization ? rankOpportunities(visible, personalization) : visible.map(item => ({ item, score: 0, reason: '' }))
   const selectedOpportunity = opportunities?.find(o => o.id === selected)
   return <div className="dash-main"><ResourceDirectory />
     <div className="section-heading"><h1>{t('opportunityHub')}</h1><button className="btn btn-secondary" disabled={applying !== null} onClick={onBack}>{t('back')}</button></div>
@@ -53,16 +64,17 @@ export default function OpportunityHub({ onBack }: { onBack: () => void }) {
       </form>
     </section>}
     {opportunities && <>
+      {personalization?.enable_suggestions && rankedVisible.some(entry => entry.score > 0) && <p className="banner banner-info">Opportunities matching your interests appear first. This is not an eligibility or hiring decision.</p>}
       <div className="field"><label htmlFor="opportunity-search">Search opportunities</label><input id="opportunity-search" type="search" disabled={selected !== null} value={query} onChange={e => setQuery(e.target.value)} /></div>
       <div className="field"><label htmlFor="opportunity-type">Opportunity type</label><select id="opportunity-type" value={type} onChange={e => setType(e.target.value)}><option value="">All types</option>{Array.from(new Set(opportunities.map(o => o.opportunity_type).filter((value): value is string => !!value))).map(value => <option key={value} value={value}>{value}</option>)}</select></div>
       <div className="field"><label htmlFor="opportunity-scope">Location preference</label><select id="opportunity-scope" value={scope} onChange={e => setScope(e.target.value)}><option value="all">All locations</option><option value="remote">Remote only</option></select></div>
-      {!visible.length && <div className="empty-panel">{opportunities.length ? 'No opportunities match these filters.' : 'No open opportunities right now — check back soon.'}</div>}
-      <div className="list-panel">{visible.map(o => {
+      {!rankedVisible.length && <div className="empty-panel">{opportunities.length ? 'No opportunities match these filters.' : 'No open opportunities right now — check back soon.'}</div>}
+      <div className="list-panel">{rankedVisible.map(({item:o,score,reason}) => {
         const application = applications.find(a => a.opportunity_id === o.id)
         const official = safeExternalUrl(o.external_url)
         const expired = !!o.deadline && o.deadline.slice(0, 10) < new Date().toISOString().slice(0, 10)
         return <div className="list-row" key={o.id}><div>
-          <h2 className="list-row-title">{o.title}</h2><p className="list-row-meta">{o.organization_name}{o.location ? ` · ${o.location}` : ''}{o.is_remote ? ' · Remote' : ''}{o.deadline ? ` · Deadline ${o.deadline}` : ''}</p>
+          <h2 className="list-row-title">{o.title}</h2>{score>0 && <p className="settings-note"><strong>Suggested:</strong> {reason}. Check all requirements before applying.</p>}<p className="list-row-meta">{o.organization_name}{o.location ? ` · ${o.location}` : ''}{o.is_remote ? ' · Remote' : ''}{o.deadline ? ` · Deadline ${o.deadline}` : ''}</p>
           <p>{o.summary}</p>
           <details><summary>Full opportunity details</summary><p style={{ whiteSpace: 'pre-wrap' }}>{o.description ?? o.summary ?? 'No further description has been published.'}</p>{o.employment_type_label && <p>{o.employment_type_label}</p>}{o.education_level && <p>Education: {o.education_level}</p>}{o.experience_level && <p>Experience: {o.experience_level}</p>}{!!o.requirements?.length && <><h3>Requirements</h3><ul>{o.requirements.map((item, index) => <li key={index}>{item}</li>)}</ul></>}{!!o.skills_required?.length && <p>Skills: {o.skills_required.join(', ')}</p>}{o.application_instructions && <><h3>Application instructions</h3><p>{o.application_instructions}</p></>}</details>
           {o.opportunity_type && <p>Type: {o.opportunity_type}</p>}{o.stipend_or_reward && <p>Reward: {o.stipend_or_reward}</p>}

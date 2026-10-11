@@ -33,11 +33,14 @@ export default function LearnerDiscoveryEditor({ profile, onSaved }: { profile: 
     fetchLearnerDiscoveryProfile().then(value => {
       if (!active) return
       setPreferences(value); setInterests(join(value.interest_fields)); setCountries(join(value.preferred_study_countries))
+      if (grade !== null && grade >= 11 && value.preferred_program_keys.some(key => key.includes('social_sciences'))) {
+        setTrack('social_sciences')
+      }
     }).catch(cause => {
       if (active) setError(cause instanceof Error ? cause.message : 'Could not load preferences. The database update may still be pending.')
     }).finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [profile.id])
+  }, [profile.id, grade])
 
   useEffect(() => {
     let active = true

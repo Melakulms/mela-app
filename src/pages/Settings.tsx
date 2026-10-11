@@ -4,6 +4,7 @@ import type { MelaProfile } from '../lib/auth'
 import { requestPasswordReset, updatePreferredLanguage } from '../lib/auth'
 import { fetchEnabledLanguages, type PlatformLanguage } from '../lib/languages'
 import { supabase } from '../lib/supabase'
+import AccountMfa from '../components/AccountMfa'
 import {
   DEFAULT_USER_SETTINGS,
   fetchUserSettings,
@@ -134,7 +135,8 @@ export default function SettingsPage({ profile, onProfileUpdated, onBack, onSafe
           </div>
         )}
       </div>
-      <p className="settings-note">Signing out globally revokes refresh tokens. Already issued access tokens may remain valid until their expiry. Multi-factor enrollment and account deletion need separate verified flows.</p>
+      <AccountMfa />
+      <p className="settings-note">Signing out globally revokes refresh tokens. Already issued access tokens may remain valid until their expiry. Account deletion requires a separate verified flow.</p>
     </section>
 
     <section className="settings-panel">

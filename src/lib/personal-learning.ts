@@ -64,9 +64,10 @@ export function profilePreparationChecklist(
   grade: number | null,
   preferences: LearnerDiscoveryProfile,
 ): { label: string; complete: boolean }[] {
+  const school = !!stage?.startsWith('school_')
   return [
-    { label: 'Education level', complete: !!stage && (!stage.startsWith('school_') || (grade !== null && grade >= 1 && grade <= 12)) },
-    { label: 'Grade-specific subject selection', complete: !stage?.startsWith('school_') || preferences.preferred_program_keys.length > 0 },
+    { label: 'Education level', complete: !!stage && (!school || (grade !== null && grade >= 1 && grade <= 12)) },
+    ...(school ? [{ label: 'Grade-specific subject selection', complete: preferences.preferred_program_keys.length > 0 }] : []),
     { label: 'Areas of interest', complete: preferences.interest_fields.length > 0 },
     { label: 'Learning or career goal', complete: !!preferences.learning_goal.trim() },
     { label: 'Study level preference', complete: preferences.target_degree_level !== 'any' },

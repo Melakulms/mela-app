@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchGradePrograms } from '../lib/learner-discovery'
 
 type Subject = {
   subject_key: string
@@ -15,6 +16,8 @@ export default function StudentOnboarding({ onComplete, initialGrade = 9, editMo
   const [school, setSchool] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [subjectSource, setSubjectSource] = useState('Loading your subjects…')
+  const [catalogLoading, setCatalogLoading] = useState(false)
 
   const stageKey = useMemo(() => {
     if (grade <= 6) return 'school_1_6'
@@ -26,6 +29,7 @@ export default function StudentOnboarding({ onComplete, initialGrade = 9, editMo
   useEffect(() => {
     let active = true
     setError('')
+    setCatalogLoading(true)
     if (grade < 11) setTrack('common')
     else if (track === 'common') setTrack('natural_sciences')
     supabase
@@ -33,28 +37,38 @@ export default function StudentOnboarding({ onComplete, initialGrade = 9, editMo
       .select('subject_key, subject_title, optional')
       .eq('active', true)
       .eq('stage_key', stageKey)
-      .eq('track_key', grade >= 11 ? track : 'common')
+      .eq('track_key', grade >= 11 ? (track === 'common' ? 'natural_sciences' : track) : 'common')
       .order('display_order')
-      .then(({ data, error }) => {
+      .then(async ({ data, error }) => {
+        if (error) throw error
+        const stageSubjects = (data ?? []) as Subject[]
+        const gradePrograms = await fetchGradePrograms(grade, track === 'common' ? 'natural_sciences' : track).catch(() => [])
         if (!active) return
-        if (error) { setError(error.message); return }
-        const rows = (data ?? []) as Subject[]
+        const title = (value: string) => value.toLocaleLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+        const gradeTitles = new Set(gradePrograms.map(program => title(program.subject_title)))
+        const exact = stageSubjects.filter(subject => gradeTitles.has(title(subject.subject_title)))
+        // Keep the verified stage catalog if a partially published grade catalog lacks mappings.
+        const rows = exact.length ? exact : stageSubjects
+        setSubjectSource(exact.length
+          ? `Grade ${grade} curriculum subjects`
+          : 'School-stage core subjects (grade-specific catalogue is incomplete)')
         setSubjects(rows)
         if (!editMode) { setSelected(rows.filter(s => !s.optional).map(s => s.subject_key)); return }
-        void supabase.auth.getUser().then(async ({ data: auth }) => {
-          if (!auth.user) throw new Error('Your session has expired.')
-          const { data: existing, error: studentError } = await supabase.from('student_profiles')
-            .select('subjects').eq('user_id', auth.user.id).maybeSingle()
-          if (studentError) throw studentError
-          if (!active) return
-          const saved = Array.isArray(existing?.subjects) ? existing.subjects : []
-          setSelected(rows.filter(s => saved.includes(s.subject_key)).map(s => s.subject_key))
-        }).catch(cause => { if (active) setError(cause instanceof Error ? cause.message : 'Could not load subjects.') })
-      })
+        const { data: auth } = await supabase.auth.getUser()
+        if (!auth.user) throw new Error('Your session has expired.')
+        const { data: existing, error: studentError } = await supabase.from('student_profiles')
+          .select('subjects').eq('user_id', auth.user.id).maybeSingle()
+        if (studentError) throw studentError
+        if (!active) return
+        const saved = Array.isArray(existing?.subjects) ? existing.subjects : []
+        setSelected(rows.filter(s => saved.includes(s.subject_key)).map(s => s.subject_key))
+      }).catch(cause => { if (active) setError(cause instanceof Error ? cause.message : 'Could not load subjects.') })
+        .finally(() => { if (active) setCatalogLoading(false) })
     return () => { active = false }
   }, [stageKey, track, grade, editMode])
 
   const save = async () => {
+    if (catalogLoading) return
     if (selected.length === 0) {
       setError('Select at least one subject from your school curriculum.')
       return
@@ -126,7 +140,7 @@ export default function StudentOnboarding({ onComplete, initialGrade = 9, editMo
         </div>
 
         <div className="field">
-          <label>Subjects</label>
+          <label>Subjects · {subjectSource}</label>
           <div className="role-grid">
             {subjects.map(s => (
               <button
@@ -137,7 +151,7 @@ export default function StudentOnboarding({ onComplete, initialGrade = 9, editMo
                 onClick={() => setSelected(current => current.includes(s.subject_key)
                   ? current.filter(x => x !== s.subject_key)
                   : [...current, s.subject_key])}
-                disabled={busy}
+                disabled={busy || catalogLoading}
               >
                 {s.subject_title}{s.optional ? ' (optional)' : ''}
               </button>
@@ -145,7 +159,7 @@ export default function StudentOnboarding({ onComplete, initialGrade = 9, editMo
           </div>
         </div>
 
-        <button className="btn btn-primary btn-block" onClick={save} disabled={busy}>
+        <button className="btn btn-primary btn-block" onClick={save} disabled={busy || catalogLoading || subjects.length === 0}>
           {busy ? 'Saving…' : editMode ? 'Save grade and core subjects' : 'Continue to MELA'}
         </button>
       </div>

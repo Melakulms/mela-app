@@ -88,6 +88,14 @@ export default function App() {
 
   useEffect(() => { setEditingEmployerProfile(false) }, [session?.user.id])
 
+  // Settings lives outside App. Returning home must also reset student section
+  // navigation, rather than merely hiding the global settings disclosure.
+  useEffect(() => {
+    const onHome = () => setStudentView('dashboard')
+    window.addEventListener('mela:go-home', onHome)
+    return () => window.removeEventListener('mela:go-home', onHome)
+  }, [setStudentView])
+
   useEffect(() => {
     const update = () => setOnline(navigator.onLine)
     window.addEventListener('online', update)

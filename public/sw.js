@@ -1,4 +1,4 @@
-const CACHE = 'mela-shell-v2'
+const CACHE = 'mela-shell-v3-ai-review'
 const scopeUrl = new URL(self.registration.scope)
 const shellUrl = scopeUrl.pathname
 

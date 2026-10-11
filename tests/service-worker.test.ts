@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest'
 function worker() {
   const listeners: Record<string, (event: any) => void> = {}
   const cache = { put: vi.fn(), match: vi.fn(), add: vi.fn() }
-  const caches = { open: vi.fn(async () => cache), keys: vi.fn(async () => ['mela-shell-v0', 'mela-shell-v1', 'mela-shell-v2', 'other-app-cache']), delete: vi.fn() }
+  const caches = { open: vi.fn(async () => cache), keys: vi.fn(async () => ['mela-shell-v0', 'mela-shell-v1', 'mela-shell-v3-ai-review', 'other-app-cache']), delete: vi.fn() }
   const fetch = vi.fn()
   runInNewContext(readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8'), {
     URL, Response, caches, fetch,
@@ -38,7 +38,7 @@ describe('learner offline cache isolation', () => {
     w.fetch.mockRejectedValue(new Error('offline')); w.cache.match.mockResolvedValue(new Response('MELA offline shell'))
     w.listeners.fetch({ request: { method: 'GET', mode: 'navigate', url: 'https://example.test/mela-app/' }, respondWith: (p: Promise<Response>) => { response = p } })
     expect(await (await response).text()).toBe('MELA offline shell')
-    expect(w.caches.open).toHaveBeenCalledWith('mela-shell-v2')
+    expect(w.caches.open).toHaveBeenCalledWith('mela-shell-v3-ai-review')
   })
 })
 

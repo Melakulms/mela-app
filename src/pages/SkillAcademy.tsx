@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import CourseReader from '../components/CourseReader'
 import { fetchCourses, fetchMyEnrollments, enrollInCourse, type Course, type Enrollment } from '../lib/academy'
 import { useI18n } from '../i18n'
+const PreparedCourseReader = lazy(() => import('../components/PreparedCourseReader'))
 const DraftCourseReader = lazy(() => import('../components/DraftCourseReader'))
 
 export default function SkillAcademy({ onBack, previewOnly = false }: { onBack: () => void; previewOnly?: boolean }) {
@@ -9,6 +10,7 @@ export default function SkillAcademy({ onBack, previewOnly = false }: { onBack: 
   const [query, setQuery] = useState(''), [category, setCategory] = useState(''), [scope, setScope] = useState('all')
   const [preview, setPreview] = useState(false)
   const [draftOpen, setDraftOpen] = useState(false)
+  const [preparedCourse, setPreparedCourse] = useState<Course | null>(null)
   const [selected, setSelected] = useState<Course | null>(null)
   const [revision, setRevision] = useState(0)
   const lock = useRef(false)
@@ -50,6 +52,7 @@ export default function SkillAcademy({ onBack, previewOnly = false }: { onBack: 
 
   const visibleCourses = (courses ?? []).filter(course => (!category || course.category === category) && (scope === 'all' || (scope === 'enrolled' && enrollments.has(course.id)) || (scope === 'completed' && !!enrollments.get(course.id)?.completed_at) || (scope === 'available' && course.content_available && course.price_cents === 0) || (scope === 'preparing' && !course.content_available)) && `${course.title} ${course.description ?? ''} ${course.category ?? ''}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
 
+  if (preparedCourse) return <Suspense fallback={<p role="status">Loading course reader…</p>}><PreparedCourseReader course={preparedCourse} onBack={() => setPreparedCourse(null)} /></Suspense>
   if (draftOpen) return <Suspense fallback={<p role="status">Loading lesson text…</p>}><DraftCourseReader onBack={() => setDraftOpen(false)} /></Suspense>
   if (selected) return <CourseReader course={selected} preview={preview} onBack={() => { setSelected(null); setRevision(value => value + 1) }} />
 
@@ -91,6 +94,8 @@ export default function SkillAcademy({ onBack, previewOnly = false }: { onBack: 
                 <p style={{ color: 'var(--muted)' }}>{c.description ?? c.category}</p><p>{c.category ?? 'General'}{c.level ? ` · ${c.level}` : ''}{c.duration_minutes ? ` · ${c.duration_minutes} minutes` : ''}</p>
                 <details><summary>Course overview</summary>{c.audience && <p>Audience: {c.audience}</p>}{c.career_track && <p>Career track: {c.career_track}</p>}{c.prerequisites && <p>Prerequisites: {c.prerequisites}</p>}{Array.isArray(c.learning_outcomes) && <><h4>Learning outcomes</h4><ul>{c.learning_outcomes.filter((item): item is string => typeof item === 'string').map((item, index) => <li key={index}>{item}</li>)}</ul></>}</details>
                 {enrollment && <div className="list-row-meta">{enrollment.completed_at ? '100% of lessons completed' : `${progress}% complete`}</div>}
+                <p>{(c.prepared_lesson_count ?? 0) > 0 && <button className="btn btn-primary" onClick={() => setPreparedCourse(c)}>Read {c.prepared_lesson_count} prepared lessons</button>}</p>
+                {(c.prepared_lesson_count ?? 0) > 0 && <p className="muted">English teaching draft · Human review pending · No payment required to read</p>}
                 <p>{c.content_available ? `${c.lesson_count} lessons available` : 'Lessons in preparation'}</p>
                 {!previewOnly && !!c.preview_lesson_count && !enrollment && <button className="btn btn-secondary" onClick={() => { setPreview(true); setSelected(c) }}>Preview lessons</button>}
                 {previewOnly ? <span className="pill">Read-only preview · Complete your education profile to enroll</span> : !c.content_available ? <span className="pill">Enrollment opens when lessons are available</span> : enrollment ? (

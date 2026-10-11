@@ -142,6 +142,12 @@ export default function EducatorContentReview() {
   const [chapterDecision, setChapterDecision] = useState<ChapterDecision | ''>('')
   const [chapterNote, setChapterNote] = useState('')
 
+  const [gradeFilter, setGradeFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [pageCursor, setPageCursor] = useState(0)
+  const [pageHistory, setPageHistory] = useState<number[]>([])
+  const [nextCursor, setNextCursor] = useState<number | null>(null)
+  const [queueTotals, setQueueTotals] = useState({slices:0,questions:0})
   const [programFilter, setProgramFilter] = useState('')
   const [programOptions, setProgramOptions] = useState<{program_key: string; subject_title: string; grade_level: number | null}[]>([])
   const [programError, setProgramError] = useState('')
@@ -205,17 +211,19 @@ export default function EducatorContentReview() {
           setChapterItems(Array.isArray(payload.items) ? payload.items : [])
           setChapterSummary(payload.summary ?? {})
         } else {
-          const { data, error } = await supabase.rpc('get_question_review_queue_v18', { p_program_key: programFilter || null, p_limit: 100 })
+          const { data, error } = await supabase.rpc('get_question_review_queue_v19', { p_program_key: programFilter || null, p_grade: gradeFilter ? Number(gradeFilter) : null, p_status: statusFilter || null, p_after: pageCursor, p_limit: 50 })
           if (error) throw error
           if (!active) return
-          setQuestionSlices(Array.isArray(data) ? data as QuestionSlice[] : [])
+          setQuestionSlices(Array.isArray(data?.items) ? data.items as QuestionSlice[] : [])
+          setNextCursor(data?.next_after ?? null)
+          setQueueTotals({slices:data?.total_slices ?? 0,questions:data?.total_questions ?? 0})
         }
       } catch (cause) { if (active) setError(errorMessage(cause)) }
       finally { if (active) setBusy(false) }
     }
     void load()
     return () => { active = false }
-  }, [eligible, mode, chapterStatus, programFilter, revision])
+  }, [eligible, mode, chapterStatus, programFilter, gradeFilter, statusFilter, pageCursor, revision])
 
   const openChapter = async (item: ChapterQueueItem) => {
     if (busy || actionPending.current) return
@@ -329,7 +337,7 @@ export default function EducatorContentReview() {
     <div className="section-heading"><h2>Educator content review</h2></div>
     <div className="empty-panel">
       <strong>Reviewer access is not active for this account.</strong>
-      <p className="muted">MELA only accepts launch-review decisions from active teachers linked to a verified school, college/TVET, university, or training partner with matching subject access.</p>
+      <p className="muted">MELA accepts teacher review decisions only after an administrator verifies the teacher profile and authorises the relevant subjects. Register as a teacher and save your qualifications, institution, subjects and grades first.</p>
       <p>Ask an authorized administrator to open Central Admin → Moderation → Teacher reviewer verification and inspect your qualification, institution, subjects and grade levels. After approval, recheck access below. An administrator account alone does not represent a verified subject teacher.</p>
       <button className="btn btn-secondary" onClick={() => setAccessRevision(value => value + 1)}>Recheck teacher review access</button>
     </div>
@@ -380,9 +388,14 @@ export default function EducatorContentReview() {
     </div>}
 
     {mode === 'questions' && !questionDetail && <>
-      <label>Review subject / program<select value={programFilter} disabled={busy} onChange={e => setProgramFilter(e.target.value)}><option value="">All eligible subjects (first 100 slices)</option>{programOptions.map(p => <option key={p.program_key} value={p.program_key}>Grade {p.grade_level ?? '—'} · {p.subject_title} · {p.program_key}</option>)}</select></label>
+      <label>Review subject / program<select value={programFilter} disabled={busy} onChange={e => {setProgramFilter(e.target.value);setPageCursor(0);setPageHistory([])}}><option value="">All eligible subjects</option>{programOptions.filter(p=>!gradeFilter||p.grade_level===Number(gradeFilter)).map(p => <option key={p.program_key} value={p.program_key}>Grade {p.grade_level ?? '—'} · {p.subject_title} · {p.program_key}</option>)}</select></label>
       {programError && <p role="alert">Subject list unavailable: {programError}</p>}
-      {questionSlices.length >= 100 && <p role="alert">This response reached the 100-slice server limit. Select a specific subject to reach later subjects. Full within-subject pagination still requires a backend update; this is not the complete inventory.</p>}
+      <div className="toolbar">
+        <label>Grade filter<select value={gradeFilter} disabled={busy} onChange={e=>{setGradeFilter(e.target.value);setProgramFilter('');setPageCursor(0);setPageHistory([])}}><option value="">All eligible grades</option>{Array.from({length:12},(_,i)=>i+1).map(n=><option key={n} value={n}>Grade {n}</option>)}</select></label>
+        <label>Review status<select value={statusFilter} disabled={busy} onChange={e=>{setStatusFilter(e.target.value);setPageCursor(0);setPageHistory([])}}><option value="">All statuses</option>{['pending','assigned','in_review','changes_required','approved'].map(v=><option key={v} value={v}>{v.replaceAll('_',' ')}</option>)}</select></label>
+      </div>
+      <p role="status">{queueTotals.questions.toLocaleString()} questions in {queueTotals.slices.toLocaleString()} eligible review batches. Page {pageHistory.length+1} · {questionSlices.length} batches shown.</p>
+      <div className="toolbar"><button className="btn btn-secondary" disabled={busy||!pageHistory.length} onClick={()=>{setPageCursor(pageHistory[pageHistory.length-1]);setPageHistory(h=>h.slice(0,-1))}}>Previous batches</button><button className="btn btn-secondary" disabled={busy||nextCursor===null} onClick={()=>{if(nextCursor!==null){setPageHistory(h=>[...h,pageCursor]);setPageCursor(nextCursor)}}}>Next batches</button></div>
       <p className="muted">Review slices are subject-scoped. Only slices matching your verified educator subject areas are shown.</p>
       {busy ? <p className="muted">Loading question review slices…</p> : questionSlices.length === 0 ? <div className="empty-panel">No eligible question-review slices are available for this educator profile.</div> : <div className="list-panel">{questionSlices.map(slice => <div className="list-row" key={slice.slice_id}><div><strong className="list-row-title">Grade {slice.grade_level ?? '—'} · {slice.subject_title ?? slice.program_key}</strong><div className="muted">Slice {slice.slice_number} · {slice.question_count} questions · {slice.status.replaceAll('_',' ')}</div></div><button className="btn btn-secondary" onClick={() => void openQuestionSlice(slice)} disabled={busy}>Open slice</button></div>)}</div>}
     </>}

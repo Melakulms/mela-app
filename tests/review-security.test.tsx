@@ -9,7 +9,7 @@ beforeEach(() => {
  mocks.from.mockReturnValue(query)
  mocks.rpc.mockImplementation(async (name: string) => ({error:null,data:
   name === 'can_review_questions_v18' ? true :
-  name === 'get_question_review_queue_v18' ? [{slice_id:1,program_key:'math',slice_number:1,question_count:1,status:'pending'}] :
+  name === 'get_question_review_queue_v19' ? {items:[{slice_id:1,program_key:'math',slice_number:1,question_count:1,status:'pending'}],total_slices:101,total_questions:10100,next_after:50} :
   name === 'get_question_review_slice_v18' ? {slice_id:1,program_key:'math',slice_number:1,status:'pending',questions:[{id:'q1',question_number:1,question_type:'short',prompt:'Two plus two?',correct_response:'4',rationale:'Add two pairs.'}]} : {items:[],summary:{}}}))
 })
 afterEach(cleanup)
@@ -39,5 +39,15 @@ it('filters the review queue by program instead of silently staying on the first
  render(<EducatorContentReview />);fireEvent.click(await screen.findByRole('tab',{name:'Question reviews'}))
  await screen.findByRole('button',{name:'Open slice'})
  fireEvent.change(screen.getByLabelText('Review subject / program'),{target:{value:'math'}})
- await waitFor(()=>expect(mocks.rpc).toHaveBeenCalledWith('get_question_review_queue_v18',{p_program_key:'math',p_limit:100}))
+ await waitFor(()=>expect(mocks.rpc).toHaveBeenCalledWith('get_question_review_queue_v19',{p_program_key:'math',p_grade:null,p_status:null,p_after:0,p_limit:50}))
+})
+
+it('loads later review batches and resets the cursor when grade changes',async()=>{
+ render(<EducatorContentReview />);fireEvent.click(await screen.findByRole('tab',{name:'Question reviews'}))
+ await screen.findByRole('button',{name:'Open slice'})
+ fireEvent.click(screen.getByRole('button',{name:'Next batches'}))
+ await waitFor(()=>expect(mocks.rpc).toHaveBeenCalledWith('get_question_review_queue_v19',{p_program_key:null,p_grade:null,p_status:null,p_after:50,p_limit:50}))
+ await screen.findByRole('button',{name:'Open slice'})
+ fireEvent.change(screen.getByLabelText('Grade filter'),{target:{value:'4'}})
+ await waitFor(()=>expect(mocks.rpc).toHaveBeenCalledWith('get_question_review_queue_v19',{p_program_key:null,p_grade:4,p_status:null,p_after:0,p_limit:50}))
 })

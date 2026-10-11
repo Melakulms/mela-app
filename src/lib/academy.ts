@@ -2,6 +2,8 @@ import { supabase } from './supabase'
 
 export interface Course {
   id: string
+  slug?: string
+  prepared_lesson_count?: number
   title: string
   description: string | null
   category: string | null

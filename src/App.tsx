@@ -186,7 +186,7 @@ export default function App() {
   const isStudent = profile.role === 'student'
 
   if (isStudent && !profile.education_onboarding_completed) {
-    return <StudentOnboarding onComplete={reloadProfile} />
+    return <StudentOnboarding onComplete={reloadProfile} initialGrade={profile.grade_level} initialStage={profile.education_stage_key} />
   }
 
   if ((profile.role === 'parent' || profile.role === 'teacher' || profile.role === 'company' || profile.role === 'employer') && ((profile.profile_completion ?? 0) < 100 || ((profile.role === 'company' || profile.role === 'employer') && editingEmployerProfile))) {

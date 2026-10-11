@@ -1,4 +1,4 @@
-const CACHE = 'mela-shell-v1'
+const CACHE = 'mela-shell-v2'
 const scopeUrl = new URL(self.registration.scope)
 const shellUrl = scopeUrl.pathname
 
@@ -18,12 +18,12 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     event.respondWith(fetch(request).then((response) => {
-      if (response.ok && response.headers.get('content-type')?.includes('text/html')) {
+      if ((url.pathname === shellUrl || url.pathname === `${shellUrl}index.html`) && response.ok && response.headers.get('content-type')?.includes('text/html')) {
         const copy = response.clone()
         event.waitUntil(caches.open(CACHE).then((cache) => cache.put(shellUrl, copy)).catch(() => {}))
       }
       return response
-    }).catch(() => caches.open(CACHE).then((cache) => cache.match(shellUrl)).then((cached) => cached || Response.error())))
+    }).catch(() => (url.pathname === shellUrl || url.pathname === `${shellUrl}index.html`) ? caches.open(CACHE).then((cache) => cache.match(shellUrl)).then((cached) => cached || Response.error()) : Response.error()))
     return
   }
 

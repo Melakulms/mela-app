@@ -56,6 +56,12 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
         <h1>{t('skillAcademy')}</h1>
         <button className="btn btn-secondary" onClick={onBack}>{t('back')}</button>
       </div>
+      <section className="list-panel" aria-label="AI Year One lessons">
+        <h2>AI Education — Year One</h2>
+        <p>52 weekly lessons with worked examples, practical activities and questions. English draft for secondary-age and adult learners; teacher approval and translations are pending.</p>
+        <p>This shared foundation is readable now. It does not award certificates, record course completion or replace the 53 specialist courses.</p>
+        <a className="btn btn-primary" href={`${import.meta.env.BASE_URL}ai-year-one.html`}>Open AI Year One — draft preview</a>
+      </section>
       {error && <div className="banner banner-error" role="alert">{error}<button className="btn btn-secondary" onClick={() => setRevision(value => value + 1)}>Retry courses</button></div>}
       {!courses && !error && <p className="muted">Loading courses…</p>}
       {courses && courses.length === 0 && <div className="empty-panel">No courses published yet.</div>}

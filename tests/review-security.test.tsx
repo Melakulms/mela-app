@@ -62,7 +62,7 @@ it('pages qualified teacher review slices and claims before opening grading evid
    name === 'get_question_review_slice_v18' ? {
      slice_id:21,program_key:'math',slice_number:21,status:'assigned',
      questions:[{id:'q21',question_number:21,question_type:'short',prompt:'Four plus four?',correct_response:'8'}],
-   } : {items:[],summary:{}}))
+   } : {items:[],summary:{}}}))
  render(<EducatorContentReview />)
  fireEvent.click(await screen.findByRole('tab',{name:'Question reviews'}))
  expect((await screen.findByText('7,100')).textContent).toBe('7,100')

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { fetchDashboard, type MelaDashboard } from '../lib/dashboard'
 import { fetchMyBadges, type EarnedBadge } from '../lib/badges'
+import { readDevicePreferences } from '../lib/device-preferences'
 
 type DashboardModule = {
   key: string
@@ -49,6 +50,13 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
   const [revision, setRevision] = useState(0)
   const [query, setQuery] = useState('')
   const [badgeError, setBadgeError] = useState(false)
+  const [dailyStudyMinutes, setDailyStudyMinutes] = useState(() => readDevicePreferences().dailyStudyMinutes)
+
+  useEffect(() => {
+    const changed = () => setDailyStudyMinutes(readDevicePreferences().dailyStudyMinutes)
+    window.addEventListener('mela:device-preferences-changed', changed)
+    return () => window.removeEventListener('mela:device-preferences-changed', changed)
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -71,6 +79,12 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
         <div><span className="eyebrow">{t('learningSpace')}</span><h1>{t('hello')}, {profile.full_name?.split(' ')[0] ?? t('there')} <span className="greeting-dot">.</span></h1><p>{t('dailyProgress')}</p></div>
       </div>
 
+      <section className="settings-group" aria-label="My study target">
+        <h2>My daily study target</h2>
+        <p><strong>{dailyStudyMinutes} minutes</strong> of study per day. Change it in MELA Settings on this device.</p>
+        <p className="settings-hint">This is a personal goal, not a timer, a recorded lesson completion or a teacher-approved result.</p>
+        <button type="button" className="btn btn-secondary" onClick={() => window.dispatchEvent(new Event('mela:open-settings'))}>Edit study target</button>
+      </section>
       <div className="stat-strip">
         <div><span className="stat-value">{passport.profile_score}</span><span className="stat-label">{t('score')}</span></div>
         <div><span className="stat-value">{passport.badge_count}</span><span className="stat-label">{t('badges')}</span></div>

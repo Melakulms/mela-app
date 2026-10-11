@@ -10,6 +10,8 @@ it('applies and persists accessibility preferences and resets them without clear
   expect(document.documentElement.classList.contains('mela-large-text')).toBe(true)
   expect(JSON.parse(localStorage.getItem('mela_device_preferences_v1')!).largeText).toBe(true)
   fireEvent.click(screen.getByRole('button',{name:'Reset display settings'}))
+  expect(document.documentElement.classList.contains('mela-large-text')).toBe(true)
+  fireEvent.click(screen.getByRole('button',{name:'Confirm reset display settings'}))
   expect(document.documentElement.classList.contains('mela-large-text')).toBe(false)
   expect(localStorage.getItem('unrelated-session')).toBe('keep')
 })
@@ -48,4 +50,39 @@ it('labels only deployed features as published and explains why registration doe
   expect(screen.getByText(/Not published in this release/)).toBeTruthy()
   expect(screen.getByText(/MELA opens your existing account rather than showing registration again/)).toBeTruthy()
   expect(screen.getByRole('button',{name:'Check and refresh installed MELA'})).toBeTruthy()
+})
+
+it('applies real theme, high contrast and simpler visuals and persists them on this device', () => {
+  const { unmount } = render(<DeviceSettings />)
+  fireEvent.change(screen.getByLabelText('Color theme'), { target: {value:'light'} })
+  fireEvent.click(screen.getByLabelText('High contrast'))
+  fireEvent.click(screen.getByLabelText('Simpler visual effects'))
+  expect(document.documentElement.dataset.melaTheme).toBe('light')
+  expect(document.documentElement.classList.contains('mela-high-contrast')).toBe(true)
+  expect(document.documentElement.classList.contains('mela-low-data')).toBe(true)
+  expect(JSON.parse(localStorage.getItem('mela_device_preferences_v1')!).theme).toBe('light')
+  unmount()
+  render(<DeviceSettings />)
+  expect((screen.getByLabelText('Color theme') as HTMLSelectElement).value).toBe('light')
+  expect((screen.getByLabelText('High contrast') as HTMLInputElement).checked).toBe(true)
+})
+
+it('keeps a user-set learning target and retains other saved account data when resetting display', () => {
+  localStorage.setItem('unrelated-session','keep')
+  render(<DeviceSettings />)
+  fireEvent.change(screen.getByLabelText('Daily study target (minutes on this device)'), {target:{value:'45'}})
+  expect(JSON.parse(localStorage.getItem('mela_device_preferences_v1')!).dailyStudyMinutes).toBe(45)
+  fireEvent.click(screen.getByRole('button',{name:'Reset display settings'}))
+  expect(JSON.parse(localStorage.getItem('mela_device_preferences_v1')!).dailyStudyMinutes).toBe(45)
+  fireEvent.click(screen.getByRole('button',{name:'Cancel reset'}))
+  expect(localStorage.getItem('unrelated-session')).toBe('keep')
+})
+
+it('has a Settings center with substantive working sections and no fake notification toggles', () => {
+  render(<DeviceSettings />)
+  for (const name of ['Language','Appearance & accessibility','Learning preferences','Account, security & privacy','AI lessons & downloads','Installed app updates']) {
+    expect(screen.getByRole('heading',{name})).toBeTruthy()
+  }
+  expect(screen.getByText(/Email, SMS and push reminders are not yet connected/)).toBeTruthy()
+  expect(screen.queryByRole('checkbox',{name:/Enable push notifications/})).toBeNull()
 })

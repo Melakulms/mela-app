@@ -1,39 +1,33 @@
 import { useEffect, useState } from 'react'
 import { useI18n } from '../i18n'
+import {
+  DEFAULT_DEVICE_PREFERENCES, readDevicePreferences, saveDevicePreferences,
+  type DevicePreferences, type ThemeMode,
+} from '../lib/device-preferences'
 
-type Preferences = { largeText: boolean; reducedMotion: boolean }
-const key = 'mela_device_preferences_v1'
-function read(): Preferences {
-  try { const value = JSON.parse(localStorage.getItem(key) || '{}'); return {largeText: value.largeText === true, reducedMotion: value.reducedMotion === true} }
-  catch { return {largeText: false, reducedMotion: false} }
-}
+const LANGUAGES = [
+  { code: 'en', name: 'English' },
+  { code: 'am', name: 'አማርኛ' },
+  { code: 'om', name: 'Afaan Oromoo' },
+  { code: 'ti', name: 'ትግርኛ' },
+  { code: 'so', name: 'Soomaali' },
+]
+
 export default function DeviceSettings() {
-  const {language, setLanguage} = useI18n()
-  const [preferences, setPreferences] = useState(read)
+  const { language, setLanguage } = useI18n()
+  const [preferences, setPreferences] = useState<DevicePreferences>(readDevicePreferences)
   const [notice, setNotice] = useState('')
   const [checkingUpdate, setCheckingUpdate] = useState(false)
   const [updateNotice, setUpdateNotice] = useState('')
+  const [showResetConfirmation, setShowResetConfirmation] = useState(false)
 
-  async function refreshInstalledApp() {
-    if (checkingUpdate) return
-    if (!navigator.onLine) {
-      setUpdateNotice('Connect to the internet before updating MELA. Your saved data was not changed.')
-      return
-    }
-    setCheckingUpdate(true); setUpdateNotice('Checking the published app…')
-    try {
-      if ('serviceWorker' in navigator) {
-        const registration = await navigator.serviceWorker.getRegistration(new URL('.', document.baseURI).pathname)
-        if (registration) await registration.update()
-      }
-      // The shell is network-first and versioned JS files have distinct names.
-      // A deliberate refresh will fetch the latest deployed release without deleting account data.
-      window.location.reload()
-    } catch {
-      setUpdateNotice('Could not check for the latest version. Your current app is unchanged. Try again while online.')
-      setCheckingUpdate(false)
-    }
-  }
+  useEffect(() => {
+    // Restore accessibility and theme each time the installed PWA opens.
+    saveDevicePreferences(preferences)
+    // Only at mount: never reset a changed choice.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   useEffect(() => {
     const showSettings = () => {
       const panel = document.getElementById('mela-settings') as HTMLDetailsElement | null
@@ -47,50 +41,134 @@ export default function DeviceSettings() {
     return () => window.removeEventListener('mela:open-settings', showSettings)
   }, [])
 
-  useEffect(() => {
-    document.documentElement.classList.toggle('mela-large-text', preferences.largeText)
-    document.documentElement.classList.toggle('mela-reduced-motion', preferences.reducedMotion)
-  }, [preferences])
-  function save(next: Preferences) {
-    setPreferences(next)
-    try { localStorage.setItem(key, JSON.stringify(next)); setNotice('Display settings saved on this device.') }
-    catch { setNotice('Applied for this session. This browser could not save the settings.') }
+  function changeSettings(patch: Partial<DevicePreferences>) {
+    const updated = { ...preferences, ...patch }
+    setPreferences(updated)
+    setShowResetConfirmation(false)
+    setNotice(saveDevicePreferences(updated)
+      ? 'Settings saved on this device and applied.'
+      : 'Settings applied for this session; your browser could not save them.')
   }
+
+  function resetSettings() {
+    setShowResetConfirmation(false)
+    const defaults = { ...DEFAULT_DEVICE_PREFERENCES }
+    setPreferences(defaults)
+    setNotice(saveDevicePreferences(defaults)
+      ? 'Device preferences reset. Your account and learning records were not touched.'
+      : 'Display reset for this session. Your account and learning records were not touched.')
+  }
+
+  async function refreshInstalledApp() {
+    if (checkingUpdate) return
+    if (!navigator.onLine) {
+      setUpdateNotice('Connect to the internet before updating MELA. Your saved data was not changed.')
+      return
+    }
+    setCheckingUpdate(true)
+    setUpdateNotice('Checking the published app…')
+    try {
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration(new URL('.', document.baseURI).pathname)
+        if (registration) await registration.update()
+      }
+      window.location.reload()
+    } catch {
+      setUpdateNotice('Could not check for the latest version. Your current app is unchanged. Try again while online.')
+      setCheckingUpdate(false)
+    }
+  }
+
   return <details className="device-settings" id="mela-settings">
     <summary tabIndex={0}>Settings & downloads — app version</summary>
-    <div className="list-panel">
-      <section aria-label="Published MELA release">
-        <h2>MELA published version</h2>
-        <p><strong>2026-10-11 · Settings and update navigation</strong></p>
-        <p>This release includes the beta-registration entry screen, installed-app refresh, display accessibility settings, and the AI Year One draft reader. Registration requires a valid invitation code.</p>
-        <p><strong>Not published in this release:</strong> the new per-account Settings page, grade-specific learner discovery, personalized scholarships, and the full professional 140,000-question review upgrades. Those still require a secure database release and teacher testing.</p>
-        <p>If you are already signed in, MELA opens your existing account rather than showing registration again. To test registration, sign out first; signing out does not delete your account.</p>
+    <div className="settings-center">
+      <div className="settings-center-heading">
+        <div><span className="settings-kicker">MELA PERSONALIZATION</span><h1>Settings</h1><p>Make MELA comfortable to read and use. Changes below work immediately on this phone.</p></div>
+        <button className="btn btn-secondary" type="button" onClick={() => { const panel = document.getElementById('mela-settings') as HTMLDetailsElement | null; if (panel) panel.open = false }}>Close settings</button>
+      </div>
+      {notice && <div className="banner banner-info" role="status">{notice}</div>}
+
+      <nav className="settings-jump" aria-label="Settings sections">
+        <a href="#settings-language">Language</a><a href="#settings-appearance">Appearance</a>
+        <a href="#settings-learning">Learning</a><a href="#settings-security">Security</a>
+        <a href="#settings-downloads">Downloads</a><a href="#settings-updates">Updates</a>
+      </nav>
+
+      <section id="settings-language" className="settings-group" aria-labelledby="settings-language-heading">
+        <h2 id="settings-language-heading">Language</h2>
+        <label className="settings-control">Interface language
+          <select value={language} onChange={e => {setLanguage(e.target.value);setNotice('Interface language changed on this device. Some content has not yet been translated.') }}>
+            {LANGUAGES.map(option => <option key={option.code} value={option.code}>{option.name}</option>)}
+          </select>
+        </label>
+        <p className="settings-hint">Your selection is saved on this phone. The signed-in account's preferred language is managed separately in your profile; some course and question content still appears in English.</p>
       </section>
-      <h2>Display and language</h2>
-      <p>These preferences apply on this device. Your signed-in profile has its own saved account language.</p>
-      <label>Interface language <select value={language} onChange={e => setLanguage(e.target.value)}>
-        <option value="en">English</option><option value="am">አማርኛ</option><option value="om">Afaan Oromoo</option><option value="ti">ትግርኛ</option><option value="so">Soomaali</option>
-      </select></label>
-      <label><input type="checkbox" checked={preferences.largeText} onChange={e => save({...preferences, largeText: e.target.checked})} /> Larger text</label>
-      <label><input type="checkbox" checked={preferences.reducedMotion} onChange={e => save({...preferences, reducedMotion: e.target.checked})} /> Reduce animation</label>
-      <button className="btn btn-secondary" onClick={() => save({largeText:false,reducedMotion:false})}>Reset display settings</button>
-      {notice && <p role="status">{notice}</p>}
-      <h2>Installed app updates</h2>
-      <p>MELA is an installable website, not an APK. New features appear in this installed app after they are published. Save any work before refreshing.</p>
-      <button type="button" className="btn btn-primary" onClick={() => void refreshInstalledApp()} disabled={checkingUpdate}>
-        {checkingUpdate ? 'Checking published version…' : 'Check and refresh installed MELA'}
-      </button>
-      {updateNotice && <p role="status">{updateNotice}</p>}
-      <p className="field-hint">Refreshing does not install unreleased development features. Your account and saved review decisions remain on the server.</p>
-      <h2>Lessons and downloads</h2>
-      <p>The AI Year One handbook contains 52 weekly draft lessons. It needs teacher approval and does not award completion or certificates.</p>
-      <a className="btn btn-primary" href={`${import.meta.env.BASE_URL}ai-year-one.html`}>Read AI Year One</a>{' '}
-      <a className="btn btn-secondary" href={`${import.meta.env.BASE_URL}ai-year-one.html`} download="MELA-AI-Year-One.html">Download lesson handbook</a>
-      <h2>Account and security</h2>
-      <p>Use Profile for account information. Password recovery is available from Log in → Forgot password. Roles, teacher verification and subject permissions require an authorized administrator; they cannot be changed here.</p>
-      <h2>Teacher question review</h2>
-      <p>Sign in with a teacher account and open Educator content review → Question reviews. An administrator must first check the teacher’s qualifications, institution, subjects and grades in Central Admin → Moderation → Teacher reviewer verification.</p>
-      <p>Notifications, payments and privacy permissions are not controlled by these display settings.</p>
+
+      <section id="settings-appearance" className="settings-group" aria-labelledby="settings-appearance-heading">
+        <h2 id="settings-appearance-heading">Appearance & accessibility</h2>
+        <label className="settings-control">Color theme
+          <select aria-label="Color theme" value={preferences.theme} onChange={e => changeSettings({theme:e.target.value as ThemeMode})}>
+            <option value="system">Follow device</option><option value="dark">Dark</option><option value="light">Light</option>
+          </select>
+        </label>
+        <label className="settings-switch"><input type="checkbox" aria-label="Larger text" checked={preferences.largeText} onChange={e => changeSettings({largeText:e.target.checked})} /><span><strong>Larger text</strong><small>Increase the app's normal text size</small></span></label>
+        <label className="settings-switch"><input type="checkbox" aria-label="High contrast" checked={preferences.highContrast} onChange={e => changeSettings({highContrast:e.target.checked})} /><span><strong>High contrast</strong><small>Stronger borders, labels and focus rings</small></span></label>
+        <label className="settings-switch"><input type="checkbox" aria-label="Reduce animation" checked={preferences.reducedMotion} onChange={e => changeSettings({reducedMotion:e.target.checked})} /><span><strong>Reduce animation</strong><small>Limit animation and movement</small></span></label>
+        <label className="settings-switch"><input type="checkbox" aria-label="Simpler visual effects" checked={preferences.lowData} onChange={e => changeSettings({lowData:e.target.checked})} /><span><strong>Simpler visual effects</strong><small>Reduce decorative gradients and animation; lessons still need internet access</small></span></label>
+      </section>
+
+      <section id="settings-learning" className="settings-group" aria-labelledby="settings-learning-heading">
+        <h2 id="settings-learning-heading">Learning preferences</h2>
+        <label className="settings-control">Daily study target (minutes on this device)
+          <select value={preferences.dailyStudyMinutes} onChange={e => changeSettings({dailyStudyMinutes:Number(e.target.value)})}>
+            {[5,10,15,20,30,45,60,90,120].map(minutes => <option value={minutes} key={minutes}>{minutes} minutes</option>)}
+            {![5,10,15,20,30,45,60,90,120].includes(preferences.dailyStudyMinutes) && <option value={preferences.dailyStudyMinutes}>{preferences.dailyStudyMinutes} minutes</option>}
+          </select>
+        </label>
+        <p className="settings-hint">Your goal is shown on the student dashboard. It is not a timer, automatic reminder, proof of study or teacher-certified progress.</p>
+        <h3>Notifications</h3>
+        <p className="settings-hint">Email, SMS and push reminders are not yet connected to user preferences. They cannot be enabled or disabled from this device-settings screen. Essential account messages follow the existing account process.</p>
+      </section>
+
+      <section id="settings-security" className="settings-group" aria-labelledby="settings-security-heading">
+        <h2 id="settings-security-heading">Account, security & privacy</h2>
+        <p>Open <strong>Profile</strong> in the student's bottom navigation to edit account information. Use the <strong>Log out</strong> icon in the signed-in header to safely leave your account.</p>
+        <p>For beta accounts, choose <strong>Forgot password</strong> on the login screen and use the saved recovery code. Don't share your password or recovery code.</p>
+        <p>Teacher qualification approval, parent access, account deletion and personal-data exports require verified server-side processes. Changing these device controls cannot grant access or bypass them.</p>
+        <div className="settings-confirm-area">
+          {showResetConfirmation ? <>
+            <p>Reset only the device's appearance and study-target preferences? This will not remove your account, sign you out or delete learning data.</p>
+            <button type="button" className="btn btn-secondary" onClick={() => setShowResetConfirmation(false)}>Cancel reset</button>{' '}
+            <button type="button" className="btn btn-primary" onClick={resetSettings}>Confirm reset display settings</button>
+          </> : <button type="button" className="btn btn-secondary" onClick={() => setShowResetConfirmation(true)}>Reset display settings</button>}
+        </div>
+      </section>
+
+      <section id="settings-downloads" className="settings-group" aria-labelledby="settings-downloads-heading">
+        <h2 id="settings-downloads-heading">AI lessons & downloads</h2>
+        <p>The AI Year One handbook contains 52 weekly draft lessons. It still needs professional teacher review and does not award certificates or recorded completion.</p>
+        <div className="settings-buttons">
+          <a className="btn btn-primary" href={`${import.meta.env.BASE_URL}ai-year-one.html`}>Read AI Year One</a>
+          <a className="btn btn-secondary" href={`${import.meta.env.BASE_URL}ai-year-one.html`} download="MELA-AI-Year-One.html">Download lesson handbook</a>
+        </div>
+        <p className="settings-hint">MELA is an installable website (PWA), not an APK. On Android Chrome, use the browser menu → Install app or Add to Home screen.</p>
+      </section>
+
+      <section id="settings-updates" className="settings-group" aria-labelledby="settings-updates-heading">
+        <h2 id="settings-updates-heading">Installed app updates</h2>
+        <p><strong>MELA published version</strong> · 2026-10-11 · Settings and update navigation</p>
+        <p>Save unfinished answers before refreshing. Reloading checks the currently published website; it does not install unreleased development features.</p>
+        <button type="button" className="btn btn-primary" onClick={() => void refreshInstalledApp()} disabled={checkingUpdate}>
+          {checkingUpdate ? 'Checking published version…' : 'Check and refresh installed MELA'}
+        </button>
+        {updateNotice && <p role="status">{updateNotice}</p>}
+        <details className="settings-release-details">
+          <summary>Registration, teacher review & pending platform features</summary>
+          <p>Registration is the first screen for signed-out users, with a valid beta invitation code. MELA opens your existing account rather than showing registration again when signed in.</p>
+          <p><strong>Not published in this release:</strong> account-synced notification settings, per-user learning discovery and scholarship matching, the new full professional 140,000-question review workflow and teacher approvals. Those require the correct production database, tests and human teacher review.</p>
+          <p>Verified teachers can currently access Educator content review → Question reviews from the teacher dashboard where their permissions allow. Central Admin is responsible for teacher credential verification.</p>
+        </details>
+      </section>
     </div>
   </details>
 }

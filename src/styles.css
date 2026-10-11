@@ -344,3 +344,64 @@ html.mela-reduced-motion *, html.mela-reduced-motion *::before, html.mela-reduce
   .app-topbar .lang-select { max-width: 110px; font-size: .75rem; }
   .app-settings-button { padding: .35rem .5rem; }
 }
+
+/* Functional settings center for the installed MELA app. */
+.device-settings { scroll-margin-top: 1rem; }
+.device-settings > summary { list-style-position: inside; min-height: 44px; }
+.settings-center { width: min(100%, 920px); margin: auto; padding: .5rem 0 1.25rem; }
+.settings-center-heading { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: .9rem; margin: .6rem 0 1.2rem; }
+.settings-center-heading h1 { margin-bottom: .5rem; }
+.settings-kicker { font-size: .75rem; letter-spacing: .12em; color: var(--gold); font-weight: 800; }
+.settings-jump { display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: 1.3rem; }
+.settings-jump a { display: inline-flex; align-items: center; border: 1px solid var(--line); background: var(--surface-2); border-radius: 99px; color: var(--ink); padding: .55rem .8rem; text-decoration: none; font-size: .85rem; font-weight: 700; min-height: 40px; }
+.settings-jump a:hover, .settings-jump a:focus-visible { border-color: var(--gold); }
+.settings-group { scroll-margin-top: 1rem; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(1rem,3vw,1.4rem); margin-bottom: .8rem; }
+.settings-group h2 { margin-bottom: .9rem; }
+.settings-group h3 { margin: 1.2rem 0 .5rem; }
+.settings-group p { max-width: 76ch; }
+.settings-control { display: grid !important; gap: .5rem; font-weight: 700; max-width: 430px; margin: .75rem 0 !important; }
+.settings-control select { min-height: 44px; background: var(--surface); color: var(--ink); padding: .55rem .7rem; border: 1px solid var(--line); border-radius: .6rem; width: 100%; }
+.settings-switch { display: flex !important; align-items: flex-start; gap: .85rem; padding: .8rem .15rem; border-bottom: 1px solid var(--line); margin: 0 !important; cursor: pointer; }
+.settings-switch:last-of-type { border-bottom: 0; }
+.settings-switch input[type=checkbox] { width: 1.2rem; height: 1.2rem; flex-shrink: 0; margin: .14rem 0 0; accent-color: var(--gold); }
+.settings-switch strong, .settings-switch small { display: block; }
+.settings-switch small, .settings-hint { color: var(--muted); font-size: .85rem; line-height: 1.6; }
+.settings-buttons { display: flex; gap: .7rem; flex-wrap: wrap; margin: .8rem 0 1rem; }
+.settings-release-details { margin-top: 1.3rem; border-top: 1px solid var(--line); padding-top: .9rem; }
+.settings-release-details summary { cursor: pointer; font-weight: 700; min-height: 44px; }
+.settings-release-details p { margin: .5rem 0; }
+.settings-confirm-area { margin-top: 1rem; }
+@media (max-width: 480px) { .settings-buttons .btn { width: 100%; } .settings-center-heading .btn { font-size: .82rem; } }
+
+/* Color choices operate on the whole app, not just the Settings form. */
+html[data-mela-theme='light'] {
+  --bg: #f3f6fc; --surface: #ffffff; --surface-2: #e9eef8;
+  --line: #becadd; --ink: #182234; --muted: #4b586b; --gold-soft: #fff0c6;
+}
+html[data-mela-theme='light'] body, html[data-mela-theme='light'] .app-shell { background: var(--bg); color: var(--ink); }
+html[data-mela-theme='light'] a:not(.btn) { color: #6b4500; }
+html[data-mela-theme='light'] .settings-jump a { color: var(--ink); }
+html[data-mela-theme='light'] .dashboard-hero { background: linear-gradient(115deg,#e2eaf5,#fff0d5); border-color: var(--line); }
+html[data-mela-theme='light'] .banner-info { color: #5d4007; border-color: #d8b871; }
+html[data-mela-theme='light'] .banner-error { color: #8b1d18; background: #fff0ee; border-color: #d9a5a2; }
+html[data-mela-theme='light'] .pill-stat, html[data-mela-theme='light'] .lang-select { color: var(--ink); }
+html[data-mela-theme='light'] .btn-secondary { color: var(--ink); }
+@media (prefers-color-scheme: light) {
+  html[data-mela-theme='system'] {
+    --bg: #f3f6fc; --surface: #ffffff; --surface-2: #e9eef8;
+    --line: #becadd; --ink: #182234; --muted: #4b586b; --gold-soft: #fff0c6;
+  }
+  html[data-mela-theme='system'] a:not(.btn) { color: #6b4500; }
+  html[data-mela-theme='system'] .dashboard-hero { background: linear-gradient(115deg,#e2eaf5,#fff0d5); border-color: var(--line); }
+  html[data-mela-theme='system'] .banner-info { color: #5d4007; }
+}
+html.mela-high-contrast { --line: #98adcb; --muted: #cfdbf1; }
+html.mela-high-contrast[data-mela-theme='light'] { --line: #4d5d73; --muted: #293d58; }
+@media (prefers-color-scheme: light) {
+  html.mela-high-contrast[data-mela-theme='system'] { --line: #4d5d73; --muted: #293d58; }
+}
+html.mela-high-contrast :focus-visible { outline: 3px solid #ffba19 !important; outline-offset: 3px; }
+html.mela-high-contrast .settings-group, html.mela-high-contrast .module-card { border-width: 2px; }
+html.mela-large-text body { font-size: 1rem; }
+html.mela-low-data .dashboard-hero, html.mela-low-data .dashboard-main .module-card { background-image: none !important; box-shadow: none !important; }
+html.mela-low-data *, html.mela-low-data *::before, html.mela-low-data *::after { transition: none !important; animation: none !important; }

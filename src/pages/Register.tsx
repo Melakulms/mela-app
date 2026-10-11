@@ -1,7 +1,7 @@
 import { useI18n } from '../i18n'
 import AuthLayout from '../components/AuthLayout'
 import { useMemo, useState } from 'react'
-import { registerBetaUser, type BetaRegisterResult } from '../lib/auth'
+import { registerBetaUser, type BetaRegisterResult, type BetaSignupRole } from '../lib/auth'
 
 export default function Register({ onSwitchToLogin }: {
   onSwitchToLogin: () => void
@@ -11,6 +11,7 @@ export default function Register({ onSwitchToLogin }: {
   const [fullName, setFullName] = useState('')
   const [username, setUsername] = useState('')
   const [accessCode, setAccessCode] = useState('')
+  const [role, setRole] = useState<BetaSignupRole | ''>('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -32,6 +33,7 @@ export default function Register({ onSwitchToLogin }: {
     const name = fullName.trim()
     const handle = username.trim().toLowerCase()
 
+    if (!role) { setError('Select your account type before creating your MELA account.'); return }
     if (name.length < 2) { setError(t('authNameRequired')); return }
     if (!/^[a-z0-9][a-z0-9._-]{2,31}$/.test(handle)) {
       setError(t('authUsernameRule'))
@@ -46,7 +48,7 @@ export default function Register({ onSwitchToLogin }: {
 
     setBusy(true)
     try {
-      const result = await registerBetaUser({ username: handle, password, fullName: name, accessCode })
+      const result = await registerBetaUser({ username: handle, password, fullName: name, accessCode, role })
       setCreated(result)
       setPassword('')
       setConfirmPassword('')
@@ -97,6 +99,18 @@ export default function Register({ onSwitchToLogin }: {
           <label htmlFor="username">{t('authUsername')}</label>
           <input id="username" required minLength={3} maxLength={32} autoComplete="username" spellCheck={false} value={username} onChange={(e) => setUsername(e.target.value)} disabled={busy} />
           <span className="field-hint">{t('authUsernameRule')}</span>
+        </div>
+
+        <div className="field">
+          <label htmlFor="registration-role">Account type (required)</label>
+          <select id="registration-role" required value={role} onChange={event => {setRole(event.target.value as BetaSignupRole);setError('')}} disabled={busy}>
+            <option value="" disabled>Select an account type</option>
+            <option value="student">Student / learner</option>
+            <option value="parent">Parent / family or guardian</option>
+            <option value="teacher">Teacher / educator</option>
+            <option value="company">Employer / organization</option>
+          </select>
+          <span className="field-hint">Your administrator must issue an invitation for this same account type. A mismatch is rejected without using your code. Teacher and employer privileges require independent verification.</span>
         </div>
 
         <div className="field">

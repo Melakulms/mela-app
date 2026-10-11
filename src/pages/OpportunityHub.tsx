@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from 'react'
 import { fetchLearnerDiscoveryProfile, rankOpportunities, type LearnerDiscoveryProfile } from '../lib/learner-discovery'
 import { fetchOpenOpportunities, fetchMyApplications, applyToOpportunity, type Opportunity, type MyApplication } from '../lib/opportunities'
 import { useI18n } from '../i18n'
+import { audienceAllowsOpportunityType, type StudentAudience } from '../lib/feature-audience'
 
-export default function OpportunityHub({ onBack }: { onBack: () => void }) {
+export default function OpportunityHub({ onBack, audience = {stage:null,grade:null} }: { onBack: () => void; audience?: StudentAudience }) {
   const { t } = useI18n()
   const lock = useRef(false)
   const [opportunities, setOpportunities] = useState<Opportunity[] | null>(null)
@@ -36,6 +37,10 @@ export default function OpportunityHub({ onBack }: { onBack: () => void }) {
   }, [])
 
   const apply = async (id: string) => {
+    const intended = opportunities?.find(item => item.id === id)
+    if (!intended || !audienceAllowsOpportunityType(intended.opportunity_type, audience)) {
+      setError('This opportunity type is not available for school learners.'); return
+    }
     if (lock.current || applications.some(a => a.opportunity_id === id)) return
     lock.current = true; setApplying(id); setError(''); setNotice('')
     try {
@@ -47,7 +52,7 @@ export default function OpportunityHub({ onBack }: { onBack: () => void }) {
     finally { lock.current = false; setApplying(null) }
   }
 
-  const visible = (opportunities ?? []).filter(o => (!type || o.opportunity_type === type) && (scope !== 'remote' || o.is_remote) && `${o.title} ${o.organization_name ?? ''} ${o.location ?? ''} ${o.summary ?? ''}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
+  const visible = (opportunities ?? []).filter(o => audienceAllowsOpportunityType(o.opportunity_type, audience)).filter(o => (!type || o.opportunity_type === type) && (scope !== 'remote' || o.is_remote) && `${o.title} ${o.organization_name ?? ''} ${o.location ?? ''} ${o.summary ?? ''}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
   const rankedVisible = personalization ? rankOpportunities(visible, personalization) : visible.map(item => ({ item, score: 0, reason: '' }))
   const selectedOpportunity = opportunities?.find(o => o.id === selected)
   return <div className="dash-main"><ResourceDirectory />
@@ -65,8 +70,9 @@ export default function OpportunityHub({ onBack }: { onBack: () => void }) {
     </section>}
     {opportunities && <>
       {personalization?.enable_suggestions && rankedVisible.some(entry => entry.score > 0) && <p className="banner banner-info">Opportunities matching your interests appear first. This is not an eligibility or hiring decision.</p>}
+      {audience.stage?.startsWith('school_') && <p className="settings-note">School learners see education-focused opportunities. Employment, paid gigs and internships are not included. Provider requirements must be checked independently.</p>}
       <div className="field"><label htmlFor="opportunity-search">Search opportunities</label><input id="opportunity-search" type="search" disabled={selected !== null} value={query} onChange={e => setQuery(e.target.value)} /></div>
-      <div className="field"><label htmlFor="opportunity-type">Opportunity type</label><select id="opportunity-type" value={type} onChange={e => setType(e.target.value)}><option value="">All types</option>{Array.from(new Set(opportunities.map(o => o.opportunity_type).filter((value): value is string => !!value))).map(value => <option key={value} value={value}>{value}</option>)}</select></div>
+      <div className="field"><label htmlFor="opportunity-type">Opportunity type</label><select id="opportunity-type" value={type} onChange={e => setType(e.target.value)}><option value="">All types</option>{Array.from(new Set(opportunities.filter(o => audienceAllowsOpportunityType(o.opportunity_type, audience)).map(o => o.opportunity_type).filter((value): value is string => !!value))).map(value => <option key={value} value={value}>{value}</option>)}</select></div>
       <div className="field"><label htmlFor="opportunity-scope">Location preference</label><select id="opportunity-scope" value={scope} onChange={e => setScope(e.target.value)}><option value="all">All locations</option><option value="remote">Remote only</option></select></div>
       {!rankedVisible.length && <div className="empty-panel">{opportunities.length ? 'No opportunities match these filters.' : 'No open opportunities right now — check back soon.'}</div>}
       <div className="list-panel">{rankedVisible.map(({item:o,score,reason}) => {

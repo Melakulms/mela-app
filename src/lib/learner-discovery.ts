@@ -84,14 +84,15 @@ export function rankScholarships<T extends {
   degree_levels: string[]; program_name: string | null; deadline: string | null
 }>(scholarships: T[], preferences: LearnerDiscoveryProfile): { item: T; score: number; reasons: string[] }[] {
   if (!preferences.enable_suggestions) return scholarships.map(item => ({ item, score: 0, reasons: [] }))
-  const interests = preferences.interest_fields.map(x => x.toLowerCase()).filter(Boolean)
+  const normalize = (value: string) => value.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim()
+  const interests = preferences.interest_fields.map(normalize).filter(Boolean)
   const countries = preferences.preferred_study_countries.map(x => x.toLowerCase()).filter(Boolean)
   const targetDegree = preferences.target_degree_level
   return scholarships.map(item => {
     let score = 0
     const reasons: string[] = []
-    const fields = [item.title, item.program_name ?? '', ...(item.fields_of_study ?? [])].join(' ').toLowerCase()
-    if (interests.some(interest => fields.includes(interest))) {
+    const fields = ' ' + normalize([item.title, item.program_name ?? '', ...(item.fields_of_study ?? [])].join(' ')) + ' '
+    if (interests.some(interest => fields.includes(' ' + interest + ' '))) {
       score += 4; reasons.push('Matches a field you selected')
     }
     if (countries.length && item.study_country && countries.includes(item.study_country.toLowerCase())) {
@@ -108,10 +109,11 @@ export function rankOpportunities<T extends { title: string; summary: string | n
   opportunities: T[], preferences: LearnerDiscoveryProfile,
 ): { item: T; score: number; reason: string }[] {
   if (!preferences.enable_suggestions) return opportunities.map(item => ({ item, score: 0, reason: '' }))
-  const interests = preferences.interest_fields.map(x => x.toLowerCase()).filter(Boolean)
+  const normalize = (value: string) => value.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim()
+  const interests = preferences.interest_fields.map(normalize).filter(Boolean)
   return opportunities.map(item => {
-    const words = [item.title, item.summary ?? '', ...(item.skills_required ?? [])].join(' ').toLowerCase()
-    const matches = interests.filter(interest => words.includes(interest))
+    const words = ' ' + normalize([item.title, item.summary ?? '', ...(item.skills_required ?? [])].join(' ')) + ' '
+    const matches = interests.filter(interest => words.includes(' ' + interest + ' '))
     return { item, score: matches.length, reason: matches.length ? 'Matches interests in your profile' : '' }
   }).sort((a,b) => b.score - a.score)
 }

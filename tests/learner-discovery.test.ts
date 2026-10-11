@@ -6,7 +6,7 @@ import {
   rankOpportunities,
   SCHOOL_STAGE_FOR_GRADE,
 } from '../src/lib/learner-discovery'
-import { audienceAllowsStudentModule, audienceAllowsStudentView } from '../src/lib/feature-audience'
+import { audienceAllowsOpportunityType, audienceAllowsStudentModule, audienceAllowsStudentView } from '../src/lib/feature-audience'
 
 const prefs = {
   ...EMPTY_DISCOVERY_PROFILE,
@@ -53,4 +53,17 @@ it('ranks opportunity interests without revealing financial modules', () => {
   expect(audienceAllowsStudentView('earn-work', { stage: 'school_11_12', grade: 12 })).toBe(false)
   expect(audienceAllowsStudentModule('assessments', { stage: 'school_1_6', grade: 5 })).toBe(false)
   expect(audienceAllowsStudentModule('assessments', { stage: 'school_11_12', grade: 11 })).toBe(true)
+  expect(audienceAllowsOpportunityType('jobs', { stage: 'school_9_10', grade: 10 })).toBe(false)
+  expect(audienceAllowsOpportunityType('scholarships', { stage: 'school_9_10', grade: 10 })).toBe(true)
+  expect(audienceAllowsOpportunityType('internships', { stage: 'university', grade: null })).toBe(true)
+})
+
+it('avoids misleading matches for short interest acronyms', () => {
+  const entries = [
+    { title: 'Artificial Intelligence', program_name: null, fields_of_study: [], study_country: null, degree_levels: [], deadline: null },
+    { title: 'Paid scholarship', program_name: null, fields_of_study: [], study_country: null, degree_levels: [], deadline: null },
+  ]
+  const ranked = rankScholarships(entries, { ...EMPTY_DISCOVERY_PROFILE, interest_fields: ['AI'] })
+  expect(ranked[0].item.title).toBe('Artificial Intelligence')
+  expect(ranked.every(entry => entry.score === 0)).toBe(true)
 })

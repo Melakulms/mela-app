@@ -46,7 +46,7 @@ it('opens the published Settings panel from signed-in navigation', () => {
 
 it('labels only deployed features as published and explains why registration does not reopen for signed-in accounts', () => {
   render(<DeviceSettings />)
-  expect(screen.getByText(/2026-10-11 · Settings and update navigation/)).toBeTruthy()
+  expect(screen.getByText(/2026-10-11 · Settings, focus and reading controls/)).toBeTruthy()
   expect(screen.getByText(/Not published in this release/)).toBeTruthy()
   expect(screen.getByText(/MELA opens your existing account rather than showing registration again/)).toBeTruthy()
   expect(screen.getByRole('button',{name:'Check and refresh installed MELA'})).toBeTruthy()

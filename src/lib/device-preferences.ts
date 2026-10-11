@@ -1,7 +1,12 @@
 export type ThemeMode = 'system' | 'dark' | 'light'
+export type AccentColor = 'gold' | 'teal' | 'violet' | 'coral'
+export type ReadingSpacing = 'standard' | 'relaxed' | 'compact'
 
 export type DevicePreferences = {
   theme: ThemeMode
+  accent: AccentColor
+  readingSpacing: ReadingSpacing
+  focusMode: boolean
   largeText: boolean
   highContrast: boolean
   reducedMotion: boolean
@@ -13,6 +18,9 @@ export const DEVICE_PREFERENCES_KEY = 'mela_device_preferences_v1'
 
 export const DEFAULT_DEVICE_PREFERENCES: DevicePreferences = {
   theme: 'system',
+  accent: 'gold',
+  readingSpacing: 'standard',
+  focusMode: false,
   largeText: false,
   highContrast: false,
   reducedMotion: false,
@@ -26,6 +34,9 @@ export function parseDevicePreferences(raw: string | null): DevicePreferences {
     const minutes = Number(value.dailyStudyMinutes)
     return {
       theme: value.theme === 'light' || value.theme === 'dark' ? value.theme : 'system',
+      accent: value.accent === 'teal' || value.accent === 'violet' || value.accent === 'coral' ? value.accent : 'gold',
+      readingSpacing: value.readingSpacing === 'compact' || value.readingSpacing === 'relaxed' ? value.readingSpacing : 'standard',
+      focusMode: value.focusMode === true,
       largeText: value.largeText === true,
       highContrast: value.highContrast === true,
       reducedMotion: value.reducedMotion === true,
@@ -46,6 +57,9 @@ export function applyDevicePreferences(value: DevicePreferences) {
   if (typeof document === 'undefined') return
   const root = document.documentElement
   root.dataset.melaTheme = value.theme
+  root.dataset.melaAccent = value.accent
+  root.dataset.melaReading = value.readingSpacing
+  root.classList.toggle('mela-focus-mode', value.focusMode)
   root.classList.toggle('mela-large-text', value.largeText)
   root.classList.toggle('mela-high-contrast', value.highContrast)
   root.classList.toggle('mela-reduced-motion', value.reducedMotion)

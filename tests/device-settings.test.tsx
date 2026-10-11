@@ -46,7 +46,7 @@ it('opens the published Settings panel from signed-in navigation', () => {
 
 it('labels only deployed features as published and explains why registration does not reopen for signed-in accounts', () => {
   render(<DeviceSettings />)
-  expect(screen.getByText(/2026-10-11 · Settings and update navigation/)).toBeTruthy()
+  expect(screen.getByText(/2026-10-11 · Settings, focus and reading controls/)).toBeTruthy()
   expect(screen.getByText(/Not published in this release/)).toBeTruthy()
   expect(screen.getByText(/MELA opens your existing account rather than showing registration again/)).toBeTruthy()
   expect(screen.getByRole('button',{name:'Check and refresh installed MELA'})).toBeTruthy()
@@ -85,4 +85,40 @@ it('has a Settings center with substantive working sections and no fake notifica
   }
   expect(screen.getByText(/Email, SMS and push reminders are not yet connected/)).toBeTruthy()
   expect(screen.queryByRole('checkbox',{name:/Enable push notifications/})).toBeNull()
+})
+
+it('changes MELA accent palette and comfortable reading spacing on the device', () => {
+  render(<DeviceSettings />)
+  fireEvent.change(screen.getByLabelText('Accent color'),{target:{value:'violet'}})
+  fireEvent.change(screen.getByLabelText('Reading spacing'),{target:{value:'relaxed'}})
+  expect(document.documentElement.dataset.melaAccent).toBe('violet')
+  expect(document.documentElement.dataset.melaReading).toBe('relaxed')
+  const stored=JSON.parse(localStorage.getItem('mela_device_preferences_v1')!)
+  expect(stored.accent).toBe('violet')
+  expect(stored.readingSpacing).toBe('relaxed')
+})
+
+it('enables and persists Focus mode without removing study progress or account information', () => {
+  localStorage.setItem('unrelated-session','keep')
+  const {unmount}=render(<DeviceSettings />)
+  fireEvent.click(screen.getByRole('checkbox',{name:'Focus mode'}))
+  expect(document.documentElement.classList.contains('mela-focus-mode')).toBe(true)
+  expect(JSON.parse(localStorage.getItem('mela_device_preferences_v1')!).focusMode).toBe(true)
+  unmount()
+  render(<DeviceSettings />)
+  expect((screen.getByRole('checkbox',{name:'Focus mode'}) as HTMLInputElement).checked).toBe(true)
+  expect(localStorage.getItem('unrelated-session')).toBe('keep')
+})
+
+it('resets new reading, focus and accent options only after confirmation', () => {
+  render(<DeviceSettings />)
+  fireEvent.change(screen.getByLabelText('Accent color'),{target:{value:'coral'}})
+  fireEvent.change(screen.getByLabelText('Reading spacing'),{target:{value:'compact'}})
+  fireEvent.click(screen.getByRole('checkbox',{name:'Focus mode'}))
+  fireEvent.click(screen.getByRole('button',{name:'Reset display settings'}))
+  expect(document.documentElement.dataset.melaAccent).toBe('coral')
+  fireEvent.click(screen.getByRole('button',{name:'Confirm reset display settings'}))
+  expect(document.documentElement.dataset.melaAccent).toBe('gold')
+  expect(document.documentElement.dataset.melaReading).toBe('standard')
+  expect(document.documentElement.classList.contains('mela-focus-mode')).toBe(false)
 })

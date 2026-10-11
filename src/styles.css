@@ -405,3 +405,40 @@ html.mela-high-contrast .settings-group, html.mela-high-contrast .module-card { 
 html.mela-large-text body { font-size: 1rem; }
 html.mela-low-data .dashboard-hero, html.mela-low-data .dashboard-main .module-card { background-image: none !important; box-shadow: none !important; }
 html.mela-low-data *, html.mela-low-data *::before, html.mela-low-data *::after { transition: none !important; animation: none !important; }
+
+/* Settings: accent palette, readable spacing and opt-in dashboard focus mode. */
+html[data-mela-accent='teal'] { --gold: #49e5c9; --gold-soft: #173c37; }
+html[data-mela-accent='violet'] { --gold: #c8afff; --gold-soft: #312849; }
+html[data-mela-accent='coral'] { --gold: #ffa894; --gold-soft: #442c27; }
+html[data-mela-theme='light'][data-mela-accent='teal'] { --gold-soft: #caf7ed; }
+html[data-mela-theme='light'][data-mela-accent='violet'] { --gold-soft: #e9dfff; }
+html[data-mela-theme='light'][data-mela-accent='coral'] { --gold-soft: #ffe0d7; }
+@media (prefers-color-scheme: light) {
+  html[data-mela-theme='system'][data-mela-accent='teal'] { --gold-soft: #caf7ed; }
+  html[data-mela-theme='system'][data-mela-accent='violet'] { --gold-soft: #e9dfff; }
+  html[data-mela-theme='system'][data-mela-accent='coral'] { --gold-soft: #ffe0d7; }
+}
+html[data-mela-reading='relaxed'] body { line-height: 1.85; }
+html[data-mela-reading='relaxed'] .question-prompt,
+html[data-mela-reading='relaxed'] .settings-group p,
+html[data-mela-reading='relaxed'] .dash-main p,
+html[data-mela-reading='relaxed'] .review-question p,
+html[data-mela-reading='relaxed'] .lesson-content p {
+  line-height: 1.85;
+  letter-spacing: .012em;
+}
+html[data-mela-reading='compact'] body { line-height: 1.35; }
+html[data-mela-reading='compact'] .question-prompt,
+html[data-mela-reading='compact'] .settings-group p,
+html[data-mela-reading='compact'] .dash-main p,
+html[data-mela-reading='compact'] .review-question p,
+html[data-mela-reading='compact'] .lesson-content p { line-height: 1.35; }
+.focus-mode-notice {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  gap: .75rem; margin: 1rem 0;
+  padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface); color: var(--ink);
+}
+.focus-mode-notice p { margin: .3rem 0 0; }
+.focus-mode-notice .btn { flex-shrink: 0; }
+@media (max-width: 440px) { .focus-mode-notice .btn { width: 100%; } }

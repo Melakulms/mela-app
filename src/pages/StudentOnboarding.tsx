@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { saveMyEducationProfile } from '../lib/education-profile-save'
 import {
   educationChoiceFromStage, educationStageFor, effectiveSchoolTrack,
   validateSubjectSelection, type EducationChoice, type ProfileSubject,
@@ -7,6 +8,8 @@ import {
 
 const INTERESTS = ['Mathematics', 'Science', 'Reading & languages', 'Technology & AI', 'Arts & design', 'Agriculture & environment', 'Business & entrepreneurship'] as const
 const GOALS = ['Improve my school results', 'Prepare for exams', 'Develop digital skills', 'Explore a career', 'Prepare for scholarships'] as const
+const PREFERRED_AREAS = ['Step-by-step explanations', 'Extra practice questions', 'Exam preparation', 'AI foundations', 'Career and scholarship guidance'] as const
+const SKILLS = ['Reading and writing', 'Problem solving', 'Research', 'Computer skills', 'Communication', 'Creative projects'] as const
 
 type Props = {
   onComplete: () => void
@@ -27,6 +30,8 @@ export default function StudentOnboarding({
   const [school, setSchool] = useState('')
   const [interests, setInterests] = useState<string[]>([])
   const [goals, setGoals] = useState<string[]>([])
+  const [preferredAreas, setPreferredAreas] = useState<string[]>([])
+  const [skills, setSkills] = useState<string[]>([])
   const [loadingCatalog, setLoadingCatalog] = useState(false)
   const [catalogError, setCatalogError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -101,13 +106,15 @@ export default function StudentOnboarding({
           const {data: auth} = await supabase.auth.getUser()
           if (auth.user) {
             const {data, error: readError} = await supabase.from('student_profiles')
-              .select('subjects, school_name, learning_interests, goals').eq('user_id', auth.user.id).maybeSingle()
+              .select('subjects, school_name, learning_interests, goals, preferred_learning_areas, skills').eq('user_id', auth.user.id).maybeSingle()
             if (readError) throw readError
             if (!active) return
             storedSubjects = Array.isArray(data?.subjects) ? data.subjects : []
             setSchool(data?.school_name ?? '')
             setInterests((data?.learning_interests ?? []).filter((value: string) => INTERESTS.includes(value as typeof INTERESTS[number])))
             setGoals((data?.goals ?? []).filter((value: string) => GOALS.includes(value as typeof GOALS[number])))
+            setPreferredAreas((data?.preferred_learning_areas ?? []).filter((value: string) => PREFERRED_AREAS.includes(value as typeof PREFERRED_AREAS[number])))
+            setSkills((data?.skills ?? []).filter((value: string) => SKILLS.includes(value as typeof SKILLS[number])))
           }
         }
         if (!active) return
@@ -143,53 +150,20 @@ export default function StudentOnboarding({
     setError('')
 
     try {
-      const { data: auth, error: authError } = await supabase.auth.getUser()
-      if (authError) throw authError
-      if (!auth.user) throw new Error('Sign in to save your profile.')
-
-      // Save subject selection FIRST. Never mark onboarding complete when it fails.
-      const { error: studentError } = await supabase.from('student_profiles')
-        .upsert({
-          user_id: auth.user.id,
-          school_name: school.trim() || null,
-          subjects: selected,
-          learning_interests: interests,
-          goals,
-        }, { onConflict: 'user_id' })
-      if (studentError) throw studentError
-
-      const { error: profileError } = await supabase.from('profiles')
-        .update({
-          education_stage_key: stageKey,
-          grade_level: isSchool ? grade : null,
-          institution_name: school.trim() || null,
-          education_onboarding_completed: true,
-          onboarding_step: 'completed',
-        })
-        .eq('id', auth.user.id)
-      if (profileError) throw profileError
-
-      // Verify that both writes are actually readable before navigating away.
-      const {data: savedProfile, error: checkError} = await supabase.from('profiles')
-        .select('education_stage_key,grade_level,education_onboarding_completed')
-        .eq('id', auth.user.id).maybeSingle()
-      if (checkError) throw checkError
-      if (savedProfile?.education_stage_key !== stageKey ||
-          (isSchool && savedProfile.grade_level !== grade) ||
-          !savedProfile?.education_onboarding_completed) {
-        throw new Error('Your education details were not confirmed by the server. Nothing was marked complete; try again or contact MELA support.')
-      }
-      const {data: savedSubjects, error: subjectCheckError} = await supabase.from('student_profiles')
-        .select('subjects').eq('user_id', auth.user.id).maybeSingle()
-      if (subjectCheckError) throw subjectCheckError
-      if (!Array.isArray(savedSubjects?.subjects) ||
-          selected.some(subject => !savedSubjects.subjects.includes(subject))) {
-        throw new Error('Subjects were not confirmed as saved. Please retry and keep this screen open.')
-      }
+      await saveMyEducationProfile({
+        stageKey,
+        grade: isSchool ? grade : null,
+        school,
+        subjects: selected,
+        interests,
+        goals,
+        preferredAreas,
+        skills,
+      })
       onComplete()
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : 'Could not save your education profile.'
-      setError(message + ' Your choices remain on this screen. If it happens again, use Copy error below and share the message with support.')
+      const message = cause instanceof Error ? cause.message : 'The server failed to save your education profile.'
+      setError(message + ' Your choices are still on this screen. Copy this message for support if the problem continues.')
     } finally {
       setBusy(false)
     }
@@ -292,6 +266,26 @@ export default function StudentOnboarding({
                 aria-pressed={goals.includes(value)} disabled={busy}
                 onClick={() => setGoals(current => current.includes(value) ? current.filter(item => item !== value) : [...current, value])}>
                 {goals.includes(value) ? '✓ ' : ''}{value}
+              </button>)}
+            </div>
+          </div>
+          <div className="field">
+            <label id="learning-areas-label">How I learn best</label>
+            <div className="role-grid" role="group" aria-labelledby="learning-areas-label">
+              {PREFERRED_AREAS.map(value => <button key={value} type="button" className="role-option"
+                aria-pressed={preferredAreas.includes(value)} disabled={busy}
+                onClick={() => setPreferredAreas(current => current.includes(value) ? current.filter(item => item !== value) : [...current,value])}>
+                {preferredAreas.includes(value) ? '✓ ' : ''}{value}
+              </button>)}
+            </div>
+          </div>
+          <div className="field">
+            <label id="learning-skills-label">Skills I want to build</label>
+            <div className="role-grid" role="group" aria-labelledby="learning-skills-label">
+              {SKILLS.map(value => <button key={value} type="button" className="role-option"
+                aria-pressed={skills.includes(value)} disabled={busy}
+                onClick={() => setSkills(current => current.includes(value) ? current.filter(item => item !== value) : [...current,value])}>
+                {skills.includes(value) ? '✓ ' : ''}{value}
               </button>)}
             </div>
           </div>

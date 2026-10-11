@@ -30,14 +30,14 @@ describe('Learning dashboard', () => {
   it('recovers from a failed load and distinguishes unavailable badges from an empty collection', async () => {
     mocks.dashboard.mockRejectedValueOnce(new Error('offline'))
     mocks.badges.mockRejectedValue(new Error('offline'))
-    render(<StudentDashboard onNavigate={vi.fn()} />)
+    render(<StudentDashboard onNavigate={vi.fn()} audience={{ stage: 'school_9_10', grade: 9 }} />)
     await screen.findByRole('alert'); fireEvent.click(screen.getByText('Try again'))
     await screen.findByText('Explore MELA')
     expect(screen.getByText(/badges couldn’t load/)).toBeTruthy()
   })
   it('searches learning tools and keeps explicitly disabled question banks disabled', async () => {
     mocks.dashboard.mockResolvedValue({ ...data, feature_flags: { question_bank: false } })
-    render(<StudentDashboard onNavigate={vi.fn()} />)
+    render(<StudentDashboard onNavigate={vi.fn()} audience={{ stage: 'school_9_10', grade: 9 }} />)
     await screen.findByText('Explore MELA')
     fireEvent.change(screen.getByLabelText('Find a learning tool'), { target: { value: 'question bank' } })
     expect((screen.getByRole('button', { name: /Question Bank/ }) as HTMLButtonElement).disabled).toBe(true)

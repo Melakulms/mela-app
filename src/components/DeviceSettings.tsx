@@ -18,6 +18,7 @@ export default function DeviceSettings() {
   const [preferences, setPreferences] = useState<DevicePreferences>(readDevicePreferences)
   const [notice, setNotice] = useState('')
   const [checkingUpdate, setCheckingUpdate] = useState(false)
+  const [releaseVersion, setReleaseVersion] = useState('')
   const [updateNotice, setUpdateNotice] = useState('')
   const [showResetConfirmation, setShowResetConfirmation] = useState(false)
   const wasOpen = useRef(false)
@@ -52,6 +53,22 @@ export default function DeviceSettings() {
     document.addEventListener('keydown', keydown)
     return () => document.removeEventListener('keydown', keydown)
   })
+
+  useEffect(() => {
+    // Read the deployed build marker from the network, not a remembered UI label.
+    // If it cannot be fetched, the app must not falsely claim it is updated.
+    let active = true
+    const marker = new URL('mela-release.json', document.baseURI)
+    marker.searchParams.set('check', String(Date.now()))
+    void fetch(marker.toString(), { cache: 'no-store' }).then(async response => {
+      if (!response.ok) throw new Error('Release marker unavailable')
+      const payload = await response.json() as { commit?: string }
+      if (active && typeof payload.commit === 'string' && /^[a-f0-9]{40}$/.test(payload.commit)) {
+        setReleaseVersion(payload.commit.slice(0, 8))
+      }
+    }).catch(() => { if (active) setReleaseVersion('') })
+    return () => { active = false }
+  }, [])
 
   useEffect(() => {
     // Restore accessibility and theme each time the installed PWA opens.
@@ -105,7 +122,16 @@ export default function DeviceSettings() {
         const registration = await navigator.serviceWorker.getRegistration(new URL('.', document.baseURI).pathname)
         if (registration) await registration.update()
       }
-      window.location.reload()
+      // Keep account tokens and saved preferences. Only evict MELA's old
+      // static shell caches; never clear storage or unrelated apps' caches.
+      if ('caches' in window) {
+        const names = await caches.keys()
+        await Promise.all(names.filter(name => name.startsWith('mela-shell-')).map(name => caches.delete(name)))
+      }
+      const destination = new URL(window.location.href)
+      destination.hash = ''
+      destination.searchParams.set('mela_refresh', String(Date.now()))
+      window.location.replace(destination.toString())
     } catch {
       setUpdateNotice('Could not check for the latest version. Your current app is unchanged. Try again while online.')
       setCheckingUpdate(false)
@@ -125,9 +151,8 @@ export default function DeviceSettings() {
       {notice && <div className="banner banner-info" role="status">{notice}</div>}
 
       <nav className="settings-jump" aria-label="Settings sections">
-        <a href="#settings-language">Language</a><a href="#settings-appearance">Appearance</a>
-        <a href="#settings-learning">Learning</a><a href="#settings-security">Security</a>
-        <a href="#settings-downloads">Downloads</a><a href="#settings-updates">Updates</a>
+        {([['settings-language','Language'],['settings-appearance','Appearance'],['settings-learning','Learning'],['settings-security','Security'],['settings-downloads','Downloads'],['settings-updates','Updates']] as const).map(([id,label]) =>
+          <button type="button" key={id} className="btn btn-secondary" onClick={() => document.getElementById(id)?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })}>{label}</button>)}
       </nav>
 
       <section id="settings-language" className="settings-group" aria-labelledby="settings-language-heading">
@@ -213,7 +238,8 @@ export default function DeviceSettings() {
 
       <section id="settings-updates" className="settings-group" aria-labelledby="settings-updates-heading">
         <h2 id="settings-updates-heading">Installed app updates</h2>
-        <p><strong>MELA published version</strong> · 2026-10-11 · Settings, focus and reading controls</p>
+        <p><strong>MELA release</strong> · {releaseVersion ? `Verified online build ${releaseVersion}` : 'Release not verified on this device'}</p>
+        <p className="settings-hint">If the release is not verified or the new account selector is missing, your installed app may still be running an older publication.</p>
         <p>Save unfinished answers before refreshing. Reloading checks the currently published website; it does not install unreleased development features.</p>
         <button type="button" className="btn btn-primary" onClick={() => void refreshInstalledApp()} disabled={checkingUpdate}>
           {checkingUpdate ? 'Checking published version…' : 'Check and refresh installed MELA'}

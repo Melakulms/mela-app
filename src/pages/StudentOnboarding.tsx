@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { saveMyEducationProfile } from '../lib/education-profile-save'
 import {
   educationChoiceFromStage, educationStageFor, effectiveSchoolTrack,
   validateSubjectSelection, type EducationChoice, type ProfileSubject,
@@ -143,53 +144,18 @@ export default function StudentOnboarding({
     setError('')
 
     try {
-      const { data: auth, error: authError } = await supabase.auth.getUser()
-      if (authError) throw authError
-      if (!auth.user) throw new Error('Sign in to save your profile.')
-
-      // Save subject selection FIRST. Never mark onboarding complete when it fails.
-      const { error: studentError } = await supabase.from('student_profiles')
-        .upsert({
-          user_id: auth.user.id,
-          school_name: school.trim() || null,
-          subjects: selected,
-          learning_interests: interests,
-          goals,
-        }, { onConflict: 'user_id' })
-      if (studentError) throw studentError
-
-      const { error: profileError } = await supabase.from('profiles')
-        .update({
-          education_stage_key: stageKey,
-          grade_level: isSchool ? grade : null,
-          institution_name: school.trim() || null,
-          education_onboarding_completed: true,
-          onboarding_step: 'completed',
-        })
-        .eq('id', auth.user.id)
-      if (profileError) throw profileError
-
-      // Verify that both writes are actually readable before navigating away.
-      const {data: savedProfile, error: checkError} = await supabase.from('profiles')
-        .select('education_stage_key,grade_level,education_onboarding_completed')
-        .eq('id', auth.user.id).maybeSingle()
-      if (checkError) throw checkError
-      if (savedProfile?.education_stage_key !== stageKey ||
-          (isSchool && savedProfile.grade_level !== grade) ||
-          !savedProfile?.education_onboarding_completed) {
-        throw new Error('Your education details were not confirmed by the server. Nothing was marked complete; try again or contact MELA support.')
-      }
-      const {data: savedSubjects, error: subjectCheckError} = await supabase.from('student_profiles')
-        .select('subjects').eq('user_id', auth.user.id).maybeSingle()
-      if (subjectCheckError) throw subjectCheckError
-      if (!Array.isArray(savedSubjects?.subjects) ||
-          selected.some(subject => !savedSubjects.subjects.includes(subject))) {
-        throw new Error('Subjects were not confirmed as saved. Please retry and keep this screen open.')
-      }
+      await saveMyEducationProfile({
+        stageKey,
+        grade: isSchool ? grade : null,
+        school,
+        subjects: selected,
+        interests,
+        goals,
+      })
       onComplete()
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : 'Could not save your education profile.'
-      setError(message + ' Your choices remain on this screen. If it happens again, use Copy error below and share the message with support.')
+      const message = cause instanceof Error ? cause.message : 'The server failed to save your education profile.'
+      setError(message + ' Your choices are still on this screen. Copy this message for support if the problem continues.')
     } finally {
       setBusy(false)
     }

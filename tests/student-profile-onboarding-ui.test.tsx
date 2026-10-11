@@ -28,12 +28,24 @@ it('blocks learning until a real education level, grade and subject catalog are 
   expect(screen.getByText(/do not need to provide a date of birth/)).toBeTruthy()
 })
 
-it('can resume an existing profile safely without offering unverified grade changes', () => {
+it('locks verified profile edits but lets unfinished learners choose their grade', () => {
   render(<StudentOnboarding initialStage="school_9_10" initialGrade={9} editMode onComplete={() => {}} />)
   const grade=screen.getByLabelText('School grade (required)') as HTMLSelectElement
   const level=screen.getByLabelText('Education level (required)') as HTMLSelectElement
   expect(grade.value).toBe('9')
   expect(grade.disabled).toBe(true)
   expect(level.disabled).toBe(true)
-  expect(screen.getByText(/needs a verified correction by MELA support/)).toBeTruthy()
+  expect(screen.getByText(/verified grade corrections are handled by support/)).toBeTruthy()
+})
+
+it('allows grade selection in an incomplete profile even when an education stage is present', () => {
+  render(<StudentOnboarding initialStage="school_9_10" initialGrade={null} onComplete={() => {}} />)
+  const grade=screen.getByLabelText('School grade (required)') as HTMLSelectElement
+  const stage=screen.getByLabelText('Education level (required)') as HTMLSelectElement
+  expect(stage.disabled).toBe(true)
+  expect(grade.disabled).toBe(false)
+  expect(grade.value).toBe('')
+  expect(Array.from(grade.options).map(o=>o.value)).toEqual(['','9','10'])
+  fireEvent.change(grade,{target:{value:'10'}})
+  expect(grade.value).toBe('10')
 })

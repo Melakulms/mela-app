@@ -5,6 +5,8 @@ import {
   type PracticeTopic, type PracticeQuestion, type SubmitResult, type SessionSummary,
 } from '../lib/practice'
 import { fetchDashboard, type PracticeRecommendation } from '../lib/dashboard'
+import { recommendPracticeTopics } from '../lib/personal-learning'
+import type { StudentAudience } from '../lib/feature-audience'
 
 type View =
   | { stage: 'topics' }
@@ -12,10 +14,11 @@ type View =
   | { stage: 'in_session'; sessionId: string; questions: PracticeQuestion[]; index: number; questionStartedAt: number; result: SubmitResult | null; selected: string | null }
   | { stage: 'complete'; summary: SessionSummary }
 
-export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () => void; onOpenQuestionBank?: () => void }) {
+export default function Practice({ onBack, onOpenQuestionBank, audience = { stage: null, grade: null } }: { onBack: () => void; onOpenQuestionBank?: () => void; audience?: StudentAudience }) {
   const { t } = useI18n()
   const [topics, setTopics] = useState<PracticeTopic[] | null>(null)
   const [recommendations, setRecommendations] = useState<PracticeRecommendation[]>([])
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([])
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [textAnswer, setTextAnswer] = useState('')
@@ -26,6 +29,24 @@ export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () =>
     fetchTopics().then(setTopics).catch((e) => setError(e.message ?? 'Could not load topics.'))
     fetchDashboard().then((d) => setRecommendations(d.practice.recommendations)).catch(() => {})
   }, [])
+
+  useEffect(() => {
+    let active = true
+    void import('../lib/learner-discovery').then(async ({ fetchLearnerDiscoveryProfile, fetchGradePrograms }) => {
+      const settings = await fetchLearnerDiscoveryProfile()
+      if (!settings.enable_suggestions || !audience.stage?.startsWith('school_') || !audience.grade) return
+      const tracks = audience.grade >= 11 ? ['natural_sciences', 'social_sciences'] : ['common']
+      const programs = (await Promise.all(tracks.map(track => fetchGradePrograms(audience.grade!, track)))).flat()
+      const titles = programs.filter(program => settings.preferred_program_keys.includes(program.program_key)).map(program => program.subject_title)
+      if (active) setSelectedSubjects(titles)
+    }).catch(() => {
+      // Server recommendations and grade-filtered practice remain available independently.
+    })
+    return () => { active = false }
+  }, [audience.stage, audience.grade])
+
+  const rankedTopics = recommendPracticeTopics(topics ?? [], selectedSubjects, recommendations.map(item => item.topic_id))
+  const preferredTopics = rankedTopics.filter(row => row.score > 0)
 
   const beginTopic = async (topicId: string) => {
     setError('')
@@ -89,17 +110,17 @@ export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () =>
         {onOpenQuestionBank && <div className="list-panel question-card"><p>School learners: practice by grade, subject, chapter, and topic in the curriculum Question Bank.</p><button className="btn btn-primary" onClick={onOpenQuestionBank}>Open curriculum Question Bank</button></div>}
         {error && <div className="banner banner-error">{error}</div>}
 
-        {recommendations.filter(r => topics?.some(t => t.id === r.topic_id)).length > 0 && (
+        {preferredTopics.length > 0 && (
           <>
             <div className="section-heading"><h2>Recommended for you</h2></div>
             <div className="list-panel">
-              {recommendations.filter(r => topics?.some(t => t.id === r.topic_id)).map((r) => (
-                <div className="list-row" key={r.topic_id}>
+              {preferredTopics.map(({ topic: r, reasons }) => (
+                <div className="list-row" key={r.id}>
                   <div>
                     <div className="list-row-title">{r.topic}</div>
-                    <div className="list-row-meta">{r.subject}</div>
+                    <div className="list-row-meta">{r.subject} · {reasons.join(' · ')}</div>
                   </div>
-                  <button className="btn btn-primary" onClick={() => beginTopic(r.topic_id)}>Start</button>
+                  <button className="btn btn-primary" onClick={() => beginTopic(r.id)}>Start</button>
                 </div>
               ))}
             </div>
@@ -111,7 +132,7 @@ export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () =>
         {topics && topics.length === 0 && <div className="empty-panel">No additional practice topics are available for your education level. School curriculum practice is available in the Question Bank.</div>}
         {topics && topics.length > 0 && (
           <div className="list-panel">
-            {topics.map((t) => (
+            {rankedTopics.map(({ topic: t }) => (
               <div className="list-row" key={t.id}>
                 <div>
                   <div className="list-row-title">{t.topic}</div>

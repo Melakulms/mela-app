@@ -22,9 +22,25 @@ export default function DeviceSettings() {
   const [updateNotice, setUpdateNotice] = useState('')
   const [showResetConfirmation, setShowResetConfirmation] = useState(false)
   const wasOpen = useRef(false)
+  const settingsHistoryEntry = useRef(false)
+
+  const markSettingsOpen = () => {
+    if (wasOpen.current) return
+    wasOpen.current = true
+    const previous = window.history.state
+    const state = previous && typeof previous === 'object' ? previous : {}
+    window.history.pushState({ ...state, melaSettingsOpen: true }, '', window.location.href)
+    settingsHistoryEntry.current = true
+  }
 
   const backHome = () => {
     wasOpen.current = false
+    if (settingsHistoryEntry.current) {
+      const previous = window.history.state
+      const state = previous && typeof previous === 'object' ? previous : {}
+      window.history.replaceState({ ...state, melaSettingsOpen: false }, '', window.location.href)
+      settingsHistoryEntry.current = false
+    }
     const panel = document.getElementById('mela-settings') as HTMLDetailsElement | null
     if (panel) panel.open = false
     setShowResetConfirmation(false)
@@ -50,14 +66,24 @@ export default function DeviceSettings() {
         backHome()
       }
     }
+    const restoreOnBack = () => {
+      // On Android the Back key pops the harmless Settings history entry.
+      // Return to the dashboard without accidentally exiting MELA.
+      if (wasOpen.current && !window.history.state?.melaSettingsOpen) backHome()
+    }
     document.addEventListener('keydown', keydown)
-    return () => document.removeEventListener('keydown', keydown)
+    window.addEventListener('popstate', restoreOnBack)
+    return () => {
+      document.removeEventListener('keydown', keydown)
+      window.removeEventListener('popstate', restoreOnBack)
+    }
   })
 
   useEffect(() => {
     // Read the deployed build marker from the network, not a remembered UI label.
     // If it cannot be fetched, the app must not falsely claim it is updated.
     let active = true
+    if (typeof fetch !== 'function') return () => { active = false }
     const marker = new URL('mela-release.json', document.baseURI)
     marker.searchParams.set('check', String(Date.now()))
     void fetch(marker.toString(), { cache: 'no-store' }).then(async response => {
@@ -81,8 +107,8 @@ export default function DeviceSettings() {
     const showSettings = () => {
       const panel = document.getElementById('mela-settings') as HTMLDetailsElement | null
       if (panel) {
+        markSettingsOpen()
         panel.open = true
-        wasOpen.current = true
         panel.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
         panel.querySelector('summary')?.focus()
       }
@@ -139,7 +165,7 @@ export default function DeviceSettings() {
   }
 
   return <details className="device-settings" id="mela-settings" onToggle={event => {
-    if (event.currentTarget.open) wasOpen.current = true
+    if (event.currentTarget.open) markSettingsOpen()
     else if (wasOpen.current) backHome()
   }}>
     <summary tabIndex={0}>Settings & downloads — app version</summary>

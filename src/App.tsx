@@ -35,6 +35,7 @@ const SafetyCenter = lazy(() => import('./pages/SafetyCenter'))
 const SettingsPage = lazy(() => import('./pages/Settings'))
 
 import ErrorBoundary from './components/ErrorBoundary'
+import MfaChallenge from './components/MfaChallenge'
 import { useStudentNavigation, VIEW_LABELS, type StudentView } from './hooks/useStudentNavigation'
 
 type AuthView = 'login' | 'register'
@@ -64,6 +65,9 @@ export default function App() {
   const [actionError, setActionError] = useState('')
   const [signingOut, setSigningOut] = useState(false)
   const [showRoleSettings, setShowRoleSettings] = useState(false)
+  const [mfaState, setMfaState] = useState<'checking' | 'challenge' | 'ready' | 'error'>('checking')
+  const [mfaError, setMfaError] = useState('')
+  const [mfaRevision, setMfaRevision] = useState(0)
   const [savingLanguage, setSavingLanguage] = useState(false)
   const [languages, setLanguages] = useState<PlatformLanguage[]>([])
   const [employerRegistration, setEmployerRegistration] = useState<{ status: string; company_name: string | null } | null>(null)
@@ -86,6 +90,22 @@ export default function App() {
   }, [sessionRevision, t])
 
   useEffect(() => { setEditingEmployerProfile(false) }, [session?.user.id])
+
+  useEffect(() => {
+    let active = true
+    if (!session?.access_token) { setMfaState('ready'); return }
+    setMfaState('checking'); setMfaError('')
+    void supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data, error }) => {
+      if (!active) return
+      if (error || !data) throw error ?? new Error('Authentication assurance is unavailable.')
+      setMfaState(data.currentLevel !== 'aal2' && data.nextLevel === 'aal2' ? 'challenge' : 'ready')
+    }).catch(cause => {
+      if (!active) return
+      setMfaError(cause instanceof Error ? cause.message : 'Cannot verify sign-in security.')
+      setMfaState('error')
+    })
+    return () => { active = false }
+  }, [session?.access_token, mfaRevision])
 
   useEffect(() => {
     const update = () => setOnline(navigator.onLine)
@@ -172,6 +192,15 @@ export default function App() {
       <Register onSwitchToLogin={() => setAuthView('login')} onRegistered={(email) => setPendingEmail(email)} />
     )
   }
+
+  if (mfaState === 'checking') return <div className="centered-loading" role="status">Verifying your account security…</div>
+  if (mfaState === 'error') return <div className="auth-shell"><div className="auth-card">
+    <h1>Security verification unavailable</h1>
+    <div className="banner banner-error" role="alert">{mfaError}</div>
+    <button className="btn btn-primary" onClick={() => setMfaRevision(value => value + 1)}>Retry verification</button>
+    <button className="btn btn-secondary" onClick={signOut}>Sign out</button>
+  </div></div>
+  if (mfaState === 'challenge') return <MfaChallenge onVerified={() => setMfaState('ready')} onSignOut={() => void signOut()} />
 
   if (profileLoading || !profile || profile.id !== session.user.id) return <div className="centered-loading">{t('settingUpAccount')}</div>
   if (profile.account_status === 'pending_verification' || !profile.email_verified) {

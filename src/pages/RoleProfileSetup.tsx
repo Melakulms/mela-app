@@ -11,6 +11,7 @@ export default function RoleProfileSetup({ role, fullName, email, onComplete }: 
   const [interests, setInterests] = useState('')
   const [skills, setSkills] = useState('')
   const [qualification, setQualification] = useState('')
+  const [teacherInstitution, setTeacherInstitution] = useState('')
   const [subjects, setSubjects] = useState('')
   const [grades, setGrades] = useState('')
   const [experience, setExperience] = useState('0')
@@ -36,6 +37,14 @@ export default function RoleProfileSetup({ role, fullName, email, onComplete }: 
     if (trimmedName.length < 2) return setError('Please enter your full name.')
     if (role === 'company' && companyName.trim().length < 2) return setError('Company name is required.')
     if (role === 'teacher' && !qualification.trim()) return setError('Qualification is required for teacher accounts.')
+    if (role === 'teacher' && teacherInstitution.trim().length < 2) return setError('Teaching institution is required for teacher account screening.')
+    if (role === 'teacher' && list(subjects).length === 0) return setError('Enter at least one teaching subject.')
+    if (role === 'teacher' && list(grades).length === 0) return setError('Enter the grades or education stages you teach.')
+    if (role === 'teacher' && list(grades).some(value => {
+      if (value === 'college_tvet' || value === 'university') return false
+      const grade = Number(value)
+      return !Number.isInteger(grade) || grade < 1 || grade > 12
+    })) return setError('Use grades 1–12, college_tvet or university, separated by commas.')
     const years = Number(experience)
     if (role === 'teacher' && (!Number.isInteger(years) || years < 0 || years > 80)) return setError('Teaching experience must be between 0 and 80 years.')
 
@@ -53,7 +62,7 @@ export default function RoleProfileSetup({ role, fullName, email, onComplete }: 
         p_preferred_language: 'en',
         p_city: city.trim() || null,
         p_region: region.trim() || null,
-        p_institution_name: role === 'company' ? companyName.trim() : null,
+        p_institution_name: role === 'company' ? companyName.trim() : role === 'teacher' ? teacherInstitution.trim() : null,
         p_details: details,
       })
       if (rpcError) throw rpcError
@@ -80,12 +89,14 @@ export default function RoleProfileSetup({ role, fullName, email, onComplete }: 
         <div className="field"><label htmlFor="rp-skills">Skills (comma separated)</label><input id="rp-skills" value={skills} onChange={e=>setSkills(e.target.value)} disabled={busy}/></div>
       </>}
       {role === 'teacher' && <>
+        <div className="field"><label htmlFor="rp-institution">Teaching institution</label><input id="rp-institution" required maxLength={160} value={teacherInstitution} onChange={e=>setTeacherInstitution(e.target.value)} disabled={busy} placeholder="School, college or university"/></div>
         <div className="field"><label htmlFor="rp-qual">Qualification</label><input id="rp-qual" required value={qualification} onChange={e=>setQualification(e.target.value)} disabled={busy}/></div>
-        <div className="field"><label htmlFor="rp-subjects">Subjects taught (comma separated)</label><input id="rp-subjects" value={subjects} onChange={e=>setSubjects(e.target.value)} disabled={busy}/></div>
-        <div className="field"><label htmlFor="rp-grades">Grade levels (comma separated)</label><input id="rp-grades" value={grades} onChange={e=>setGrades(e.target.value)} disabled={busy}/></div>
+        <div className="field"><label htmlFor="rp-subjects">Subjects taught (comma separated)</label><input id="rp-subjects" required value={subjects} onChange={e=>setSubjects(e.target.value)} disabled={busy} placeholder="Mathematics, Biology"/><p className="field-hint">List every subject you are qualified to teach. MELA verifies subjects before assigning question reviews.</p></div>
+        <div className="field"><label htmlFor="rp-grades">Grade levels (comma separated)</label><input id="rp-grades" required value={grades} onChange={e=>setGrades(e.target.value)} disabled={busy} placeholder="7, 8, 9 or college_tvet"/><p className="field-hint">Enter grades 1–12 or the stages college_tvet and university, separated by commas.</p></div>
         <div className="field"><label htmlFor="rp-exp">Teaching experience (years)</label><input id="rp-exp" type="number" min="0" max="80" value={experience} onChange={e=>setExperience(e.target.value)} disabled={busy}/></div>
         <div className="field"><label htmlFor="rp-interest">Teaching interests (comma separated)</label><input id="rp-interest" value={interests} onChange={e=>setInterests(e.target.value)} disabled={busy}/></div>
         <div className="field"><label htmlFor="rp-skills">Skills (comma separated)</label><input id="rp-skills" value={skills} onChange={e=>setSkills(e.target.value)} disabled={busy}/></div>
+        <p className="field-hint">Teacher profile creation does not grant question approval access. Only independently verified subject teachers can review and approve assigned questions.</p>
         <div className="field"><label htmlFor="rp-bio">Biography (optional)</label><textarea id="rp-bio" value={biography} onChange={e=>setBiography(e.target.value)} disabled={busy}/></div>
       </>}
       {role === 'company' && <>

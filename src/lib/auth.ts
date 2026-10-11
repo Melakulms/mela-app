@@ -116,7 +116,26 @@ export async function fetchOwnProfile(): Promise<MelaProfile | null> {
     .eq('id', auth.user.id)
     .maybeSingle()
   if (error) throw error
-  return data as MelaProfile | null
+  if (!data) return null
+  const profile = data as MelaProfile
+  if (profile.role === 'student' && profile.education_onboarding_completed) {
+    const stage = profile.education_stage_key
+    const validStage = stage === 'college_tvet' || stage === 'university' ||
+      (stage === 'school_1_6' && profile.grade_level !== null && profile.grade_level >= 1 && profile.grade_level <= 6) ||
+      (stage === 'school_7_8' && profile.grade_level !== null && profile.grade_level >= 7 && profile.grade_level <= 8) ||
+      (stage === 'school_9_10' && profile.grade_level !== null && profile.grade_level >= 9 && profile.grade_level <= 10) ||
+      (stage === 'school_11_12' && profile.grade_level !== null && profile.grade_level >= 11 && profile.grade_level <= 12)
+    if (!validStage) return { ...profile, education_onboarding_completed: false }
+    // Historical profiles can be flagged complete after grade selection alone.
+    // An actual saved list of enrolled subjects must exist before entering lessons.
+    const { data: studentProfile, error: studentError } = await supabase
+      .from('student_profiles').select('subjects').eq('user_id', profile.id).maybeSingle()
+    if (studentError) throw studentError
+    if (!Array.isArray(studentProfile?.subjects) || studentProfile.subjects.length === 0) {
+      return { ...profile, education_onboarding_completed: false }
+    }
+  }
+  return profile
 }
 
 export async function updatePreferredLanguage(languageName: string): Promise<void> {

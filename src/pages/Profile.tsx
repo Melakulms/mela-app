@@ -1,4 +1,5 @@
 import JoinClassroom from '../components/JoinClassroom'
+import StudentOnboarding from './StudentOnboarding'
 import { supabase } from '../lib/supabase'
 import { useEffect, useState } from 'react'
 import { fetchEnabledLanguages, type PlatformLanguage } from '../lib/languages'
@@ -11,6 +12,7 @@ export default function Profile({ profile, onProfileUpdated }: { profile: MelaPr
   const [linkCode, setLinkCode] = useState('')
   const [linkBusy, setLinkBusy] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [editingEducation, setEditingEducation] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -41,6 +43,14 @@ export default function Profile({ profile, onProfileUpdated }: { profile: MelaPr
     finally { setLinkBusy(false) }
   }
 
+  if (editingEducation) return <StudentOnboarding
+    editMode
+    initialGrade={profile.grade_level}
+    initialStage={profile.education_stage_key}
+    onComplete={() => { setEditingEducation(false); onProfileUpdated() }}
+    onCancel={() => setEditingEducation(false)}
+  />
+
   return (
     <div className="dash-main">
       <h1>{t('profileHeading')}</h1>
@@ -53,6 +63,18 @@ export default function Profile({ profile, onProfileUpdated }: { profile: MelaPr
         <div className="list-row"><div className="list-row-title">{t('role')}</div><div className="list-row-meta">{profile.role}</div></div>
         <div className="list-row"><div className="list-row-title">{t('coins')}</div><div className="list-row-meta">{profile.coin_balance}</div></div>
       </div>
+
+      {profile.role === 'student' && <section className="list-panel" aria-label="Education profile">
+        <h2>My education and subjects</h2>
+        <p><strong>Education level:</strong> {profile.education_stage_key === 'university' ? 'University'
+          : profile.education_stage_key === 'college_tvet' ? 'College / TVET'
+          : profile.grade_level ? `Grade ${profile.grade_level}` : 'Not yet selected'}</p>
+        <p>Curriculum subjects, lessons, exercises and question banks are based on your completed education profile.</p>
+        <button type="button" className="btn btn-secondary" onClick={() => setEditingEducation(true)}>
+          Manage my education subjects
+        </button>
+        <p className="field-hint">A school grade or education-stage change needs verified correction by MELA support so competitions and child-safety controls remain accurate.</p>
+      </section>}
 
       <div className="section-heading"><h2>{t('language')}</h2></div>
       <div className="field">

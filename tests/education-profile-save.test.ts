@@ -8,9 +8,9 @@ describe('education profile save troubleshooting', () => {
   it('shows actionable row-level permission errors rather than a generic message', () => {
     const message = explainEducationSaveError(
       { code: '42501', message: 'new row violates row-level security policy' },
-      'saving your subjects',
+      'completing profile',
     )
-    expect(message).toContain('saving your subjects')
+    expect(message).toContain('completing profile')
     expect(message).toContain('database denied this change')
     expect(message).toContain('42501')
     expect(message).toContain('row-level security')

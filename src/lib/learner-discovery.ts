@@ -1,4 +1,5 @@
-import { supabase } from './supabase'
+// Load the API client only during an authenticated call. Pure matching helpers stay testable offline.
+const getClient = async () => (await import('./supabase')).supabase
 
 export type DegreeGoal = 'any' | 'high_school' | 'diploma' | 'bachelor' | 'master' | 'doctorate'
 export type LearnerDiscoveryProfile = {
@@ -28,6 +29,7 @@ const textArray = (values: string[], limit: number) =>
   [...new Set(values.map(value => value.trim()).filter(Boolean))].slice(0, limit)
 
 async function currentUser() {
+  const supabase = await getClient()
   const { data, error } = await supabase.auth.getUser()
   if (error) throw error
   if (!data.user) throw new Error('Sign in to manage your discovery profile.')
@@ -37,6 +39,7 @@ async function currentUser() {
 export async function fetchGradePrograms(grade: number, track: string): Promise<GradeProgram[]> {
   if (!Number.isInteger(grade) || grade < 1 || grade > 12) return []
   const stage = SCHOOL_STAGE_FOR_GRADE(grade)
+  const supabase = await getClient()
   const { data, error } = await supabase.from('mela_learning_programs')
     .select('program_key,subject_title,grade_level,track_key,stage_key')
     .eq('active', true).eq('program_kind', 'school_subject')
@@ -49,6 +52,7 @@ export async function fetchGradePrograms(grade: number, track: string): Promise<
 
 export async function fetchLearnerDiscoveryProfile(): Promise<LearnerDiscoveryProfile> {
   const id = await currentUser()
+  const supabase = await getClient()
   const { data, error } = await supabase.from('mela_learner_discovery_preferences')
     .select('preferred_program_keys,interest_fields,preferred_study_countries,target_degree_level,learning_goal,enable_suggestions')
     .eq('user_id', id).maybeSingle()
@@ -58,6 +62,7 @@ export async function fetchLearnerDiscoveryProfile(): Promise<LearnerDiscoveryPr
 
 export async function saveLearnerDiscoveryProfile(value: LearnerDiscoveryProfile): Promise<void> {
   const id = await currentUser()
+  const supabase = await getClient()
   const goals: DegreeGoal[] = ['any','high_school','diploma','bachelor','master','doctorate']
   if (!goals.includes(value.target_degree_level) || value.learning_goal.length > 300) throw new Error('Invalid discovery preferences.')
   const { error } = await supabase.from('mela_learner_discovery_preferences').upsert({

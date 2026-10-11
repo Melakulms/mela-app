@@ -19,3 +19,10 @@ export function audienceAllowsStudentView(view: string, audience: StudentAudienc
   }
   return audienceAllowsStudentModule(mapping[view] ?? view, audience)
 }
+
+/** Restrict school learner discovery to educational opportunities. This is a UI filter only. */
+export function audienceAllowsOpportunityType(type: string | null | undefined, audience: StudentAudience): boolean {
+  if (!audience.stage?.startsWith('school_')) return true
+  const typeName = (type ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_')
+  return !['job','jobs','employment','full_time','part_time','internship','internships','freelance','gig','paid_work','work','earn_work'].includes(typeName)
+}

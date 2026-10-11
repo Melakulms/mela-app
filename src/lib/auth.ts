@@ -130,8 +130,10 @@ export async function fetchOwnProfile(): Promise<MelaProfile | null> {
     // An actual saved list of enrolled subjects must exist before entering lessons.
     const { data: studentProfile, error: studentError } = await supabase
       .from('student_profiles').select('subjects').eq('user_id', profile.id).maybeSingle()
-    if (studentError) throw studentError
-    if (!Array.isArray(studentProfile?.subjects) || studentProfile.subjects.length === 0) {
+    // A restricted/missing student_profiles read must not trap an otherwise
+    // verified, active learner on the global account-error screen. Keep their
+    // education access incomplete and allow safe feature discovery instead.
+    if (studentError || !Array.isArray(studentProfile?.subjects) || studentProfile.subjects.length === 0) {
       return { ...profile, education_onboarding_completed: false }
     }
   }

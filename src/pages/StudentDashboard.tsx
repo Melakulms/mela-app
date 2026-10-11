@@ -69,7 +69,27 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
     return () => { active = false }
   }, [revision, t])
 
-  if (error) return <div className="dash-main"><h1>{t('yourDashboard')}</h1><div className="banner banner-error" role="alert">{error}</div><button className="btn btn-primary" onClick={() => setRevision(value => value + 1)}>{t('tryAgain')}</button></div>
+  if (error) return <div className="dash-main">
+    <h1>{t('yourDashboard')}</h1>
+    <div className="banner banner-error" role="alert">{error} Your feature overview is still available below.</div>
+    <button className="btn btn-primary" onClick={() => setRevision(value => value + 1)}>{t('tryAgain')}</button>
+    <section aria-label="Available MELA navigation when dashboard data cannot load">
+      <div className="section-heading"><h2>{t('exploreMela')}</h2></div>
+      <div className="module-grid">
+        {MODULES.map(m => {
+          const basicLearningOrSafety = m.view === 'safety' || m.view === 'academy'
+          const Icon = m.icon
+          return <div key={m.key} className={`module-card ${m.cls}`}>
+            <div className="module-icon"><Icon size={20}/></div>
+            <h3>{t(m.labelKey)}</h3><p>{t(m.blurbKey)}</p>
+            {basicLearningOrSafety
+              ? <button type="button" className="btn btn-secondary" onClick={() => onNavigate(m.view!)}>Open</button>
+              : <p className="field-hint">Temporarily unavailable until feature permissions and your dashboard can be checked.</p>}
+          </div>
+        })}
+      </div>
+    </section>
+  </div>
   if (!data) return <div className="dash-main" role="status"><div className="skeleton skeleton-title" /><div className="skeleton skeleton-card" /><p>{t('loadingDashboard')}</p></div>
 
   const { profile, passport, practice, arena, feature_flags } = data

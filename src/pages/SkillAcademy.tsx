@@ -4,7 +4,7 @@ import { fetchCourses, fetchMyEnrollments, enrollInCourse, type Course, type Enr
 import { useI18n } from '../i18n'
 const DraftCourseReader = lazy(() => import('../components/DraftCourseReader'))
 
-export default function SkillAcademy({ onBack }: { onBack: () => void }) {
+export default function SkillAcademy({ onBack, previewOnly = false }: { onBack: () => void; previewOnly?: boolean }) {
   const { t } = useI18n()
   const [query, setQuery] = useState(''), [category, setCategory] = useState(''), [scope, setScope] = useState('all')
   const [preview, setPreview] = useState(false)
@@ -20,7 +20,7 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
   useEffect(() => {
     let active = true
     setError('')
-    Promise.all([fetchCourses(), fetchMyEnrollments()])
+    Promise.all([fetchCourses(), previewOnly ? Promise.resolve([] as Enrollment[]) : fetchMyEnrollments()])
       .then(([c, e]) => {
         if (!active) return
         setCourses(c)
@@ -28,10 +28,10 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
       })
       .catch((err) => { if (active) setError(err.message ?? 'Could not load courses.') })
     return () => { active = false }
-  }, [revision])
+  }, [revision, previewOnly])
 
   const enroll = async (courseId: string) => {
-    if (lock.current) return
+    if (previewOnly || lock.current) return
     lock.current = true
     setBusy(courseId)
     setError('')
@@ -59,14 +59,15 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
         <h1>{t('skillAcademy')}</h1>
         <button className="btn btn-secondary" onClick={onBack}>{t('back')}</button>
       </div>
-      <section className="list-panel" aria-label="AI Year One lessons">
+      {!previewOnly && <section className="list-panel" aria-label="AI Year One lessons">
         <h2>AI Education — Year One</h2>
         <p>52 weekly lessons with worked examples, practical activities and questions. English draft for secondary-age and adult learners; teacher approval and translations are pending.</p>
         <p>This shared foundation is readable now. It does not award certificates, record course completion or replace the 53 specialist courses.</p>
         <a className="btn btn-primary" href={`${import.meta.env.BASE_URL}ai-year-one.html`}>Open AI Year One — draft preview</a>
         <button className="btn btn-primary" onClick={() => setDraftOpen(true)}>Study weekly lessons inside MELA</button>
         <a className="btn btn-secondary" href={`${import.meta.env.BASE_URL}ai-year-one.html`} download="MELA-AI-Year-One.html">Download lesson handbook</a>
-      </section>
+      </section>}
+      {previewOnly && <div className="banner banner-info" role="status">Read-only course catalog. Finish your verified learning profile before enrollment, course progress, certificates or private learning sessions are available.</div>}
       {error && <div className="banner banner-error" role="alert">{error}<button className="btn btn-secondary" onClick={() => setRevision(value => value + 1)}>Retry courses</button></div>}
       {!courses && !error && <p className="muted">Loading courses…</p>}
       {courses && courses.length === 0 && <div className="empty-panel">No courses published yet.</div>}
@@ -91,8 +92,8 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
                 <details><summary>Course overview</summary>{c.audience && <p>Audience: {c.audience}</p>}{c.career_track && <p>Career track: {c.career_track}</p>}{c.prerequisites && <p>Prerequisites: {c.prerequisites}</p>}{Array.isArray(c.learning_outcomes) && <><h4>Learning outcomes</h4><ul>{c.learning_outcomes.filter((item): item is string => typeof item === 'string').map((item, index) => <li key={index}>{item}</li>)}</ul></>}</details>
                 {enrollment && <div className="list-row-meta">{enrollment.completed_at ? '100% of lessons completed' : `${progress}% complete`}</div>}
                 <p>{c.content_available ? `${c.lesson_count} lessons available` : 'Lessons in preparation'}</p>
-                {!!c.preview_lesson_count && !enrollment && <button className="btn btn-secondary" onClick={() => { setPreview(true); setSelected(c) }}>Preview lessons</button>}
-                {!c.content_available ? <span className="pill">Enrollment opens when lessons are available</span> : enrollment ? (
+                {!previewOnly && !!c.preview_lesson_count && !enrollment && <button className="btn btn-secondary" onClick={() => { setPreview(true); setSelected(c) }}>Preview lessons</button>}
+                {previewOnly ? <span className="pill">Read-only preview · Complete your education profile to enroll</span> : !c.content_available ? <span className="pill">Enrollment opens when lessons are available</span> : enrollment ? (
                   <button className="btn btn-primary" onClick={() => { setPreview(false); setSelected(c) }}>{enrollment.completed_at ? 'Review course' : 'Continue learning'}</button>
                 ) : isFree ? (
                   <button className="btn btn-primary" onClick={() => enroll(c.id)} disabled={busy !== null}>

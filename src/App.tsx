@@ -1,7 +1,7 @@
 import { clearCoachHistories } from './lib/coach-history'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { Wifi, WifiOff, LogOut, LayoutDashboard, BookOpen, Swords, Globe, UserRound, GraduationCap } from 'lucide-react'
+import { Wifi, WifiOff, LogOut, LayoutDashboard, BookOpen, Swords, Globe, UserRound, GraduationCap, Settings as SettingsIcon } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { observeSession } from './lib/session-observer'
 import { fetchOwnProfile, logoutUser, updatePreferredLanguage, type MelaProfile } from './lib/auth'
@@ -32,6 +32,7 @@ const VerifiedAssessments = lazy(() => import('./pages/VerifiedAssessments'))
 const StudentOnboarding = lazy(() => import('./pages/StudentOnboarding'))
 const QuestionBank = lazy(() => import('./pages/QuestionBank'))
 const SafetyCenter = lazy(() => import('./pages/SafetyCenter'))
+const SettingsPage = lazy(() => import('./pages/Settings'))
 
 import ErrorBoundary from './components/ErrorBoundary'
 import { useStudentNavigation, VIEW_LABELS, type StudentView } from './hooks/useStudentNavigation'
@@ -62,6 +63,7 @@ export default function App() {
   const [online, setOnline] = useState(navigator.onLine)
   const [actionError, setActionError] = useState('')
   const [signingOut, setSigningOut] = useState(false)
+  const [showRoleSettings, setShowRoleSettings] = useState(false)
   const [savingLanguage, setSavingLanguage] = useState(false)
   const [languages, setLanguages] = useState<PlatformLanguage[]>([])
   const [employerRegistration, setEmployerRegistration] = useState<{ status: string; company_name: string | null } | null>(null)
@@ -228,6 +230,7 @@ export default function App() {
           </select>
           <span className="pill-stat coins">🪙 {profile.coin_balance}</span>
           <span className={`pill-stat ${online ? 'online' : 'offline'}`} role="status">{online ? <Wifi size={13} /> : <WifiOff size={13} />}{online ? t('connected') : t('offline')}</span>
+          <button className="icon-btn" onClick={() => isStudent ? setStudentView('settings') : setShowRoleSettings(value => !value)} aria-label="Settings" title="Account settings"><SettingsIcon size={18} /></button>
           <button className="icon-btn" onClick={signOut} disabled={signingOut} aria-label={t('logout')}><LogOut size={18} /></button>
         </div>
       </header>
@@ -236,7 +239,9 @@ export default function App() {
       {actionError && <div className="banner banner-error shell-message" role="alert">{actionError}</div>}
       <main id="main-content" tabIndex={-1}>
       <ErrorBoundary key={studentView}><Suspense fallback={<div className="page-loading" role="status">{t('loadingPage')}</div>}>
-      {isStudent ? (
+      {!isStudent && showRoleSettings ? (
+        <SettingsPage profile={profile} onProfileUpdated={reloadProfile} onBack={() => setShowRoleSettings(false)} />
+      ) : isStudent ? (
         <>
           {studentView === 'practice' && <Practice onBack={() => setStudentView('dashboard')} onOpenQuestionBank={() => setStudentView('question-bank')} />}
           {studentView === 'question-bank' && <QuestionBank onBack={() => setStudentView('dashboard')} />}
@@ -248,6 +253,7 @@ export default function App() {
           {studentView === 'coach' && <AiCareerCoach key={profile.id} userId={profile.id} onBack={() => setStudentView('dashboard')} />}
           {studentView === 'arena' && <Arena onBack={() => setStudentView('dashboard')} />}
           {studentView === 'profile' && <Profile profile={profile} onProfileUpdated={reloadProfile} />}
+          {studentView === 'settings' && <SettingsPage profile={profile} onProfileUpdated={reloadProfile} onBack={() => setStudentView('profile')} onSafety={() => setStudentView('safety')} />}
           {studentView === 'scholarships' && <EthioScholarConnect onBack={() => setStudentView('dashboard')} />}
           {studentView === 'mastery' && <LearnerTools view="mastery" onNavigate={setStudentView} onBack={() => setStudentView('dashboard')} />}
           {studentView === 'opportunity-graph' && <LearnerTools view="graph" onNavigate={setStudentView} onBack={() => setStudentView('dashboard')} />}

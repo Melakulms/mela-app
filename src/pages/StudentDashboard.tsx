@@ -187,6 +187,20 @@ export default function StudentDashboard({ onNavigate, audience = { stage: null,
         <div><span className="stat-value">{arena.arena_achievements}</span><span className="stat-label">{t('arena')}</span></div>
       </div>
 
+      <section className="settings-panel" aria-label="Suggested next learning steps">
+        <h2>Suggested next learning steps</h2>
+        <p className="settings-note">These links are based on your saved records. They are not automatically graded or counted as completed activities.</p>
+        {courseRecommendations.length > 0 && <div className="list-row"><div><strong>Continue learning</strong><p className="settings-note">{courseRecommendations[0].course.title}</p></div>
+          <button className="btn btn-secondary" onClick={() => onNavigate('academy')}>Open course</button></div>}
+        {practice.recommendations.length > 0 && <div className="list-row"><div><strong>Practice a recommended topic</strong><p className="settings-note">{practice.recommendations[0].subject} · {practice.recommendations[0].topic}</p></div>
+          <button className="btn btn-secondary" onClick={() => onNavigate('practice')}>Practice</button></div>}
+        {suggestedScholarships.length > 0 && <div className="list-row"><div><strong>Review a matching scholarship</strong><p className="settings-note">{suggestedScholarships[0].item.title}</p></div>
+          <button className="btn btn-secondary" onClick={() => onNavigate('scholarships')}>Review</button></div>}
+        {courseRecommendations.length === 0 && practice.recommendations.length === 0 && suggestedScholarships.length === 0 &&
+          <div className="list-row"><div><strong>Build your plan</strong><p className="settings-note">Choose subjects and study goals to find relevant published learning content.</p></div>
+          <button className="btn btn-secondary" onClick={() => onNavigate('profile')}>Set goals</button></div>}
+      </section>
+
       <section className="dashboard-hero"><div><span className="eyebrow">{t('keepMomentum')}</span><h2>{t('learnToday')}</h2><p>{t('explorePrompt')}</p></div>{feature_flags.practice && <button className="btn btn-primary" onClick={() => onNavigate('practice')}>{t('startPracticing')} <BookOpen size={18} /></button>}</section>
       <div className="section-heading"><div><h2>{t('exploreMela')}</h2><p>{t('exploreMelaHelp')}</p></div></div>
       <div className="field module-search"><label htmlFor="module-search">{t('findLearningTool')}</label><input id="module-search" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder={t('searchLearningTools')} /></div>

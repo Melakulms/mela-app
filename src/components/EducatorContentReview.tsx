@@ -220,9 +220,11 @@ export default function EducatorContentReview() {
             p_program_key: programFilter || null, p_status: questionStatus || null,
             p_limit: questionPageSize, p_offset: questionOffset,
           })
-          if (error) {
+          const validPage = !error && data && typeof data === 'object' && Array.isArray((data as {items?: unknown}).items) &&
+            Number.isFinite((data as {total_slices?: unknown}).total_slices)
+          if (!validPage) {
             // Old production database compatibility until the new review migration is deployed.
-            if (error.code !== 'PGRST202' && !/could not find the function/i.test(error.message)) throw error
+            if (error && error.code !== 'PGRST202' && !/could not find the function/i.test(error.message)) throw error
             if (questionOffset !== 0) {
               if (active) { setQuestionOffset(0); setQuestionTotal(null) }
               return
@@ -257,7 +259,14 @@ export default function EducatorContentReview() {
         if (error) {
           if (error.code !== 'PGRST202' && !/could not find the function/i.test(error.message)) setProgressError(errorMessage(error))
           setQuestionProgress(null)
-        } else setQuestionProgress(data as typeof questionProgress)
+        } else if (data && typeof data === 'object' &&
+          Number.isFinite((data as {active_questions_in_authorized_subjects?: unknown}).active_questions_in_authorized_subjects) &&
+          Number.isFinite((data as {teacher_approved?: unknown}).teacher_approved) &&
+          Number.isFinite((data as {teacher_changes_required?: unknown}).teacher_changes_required) &&
+          Number.isFinite((data as {unreviewed_estimate?: unknown}).unreviewed_estimate) &&
+          Number.isFinite((data as {coverage_gap_estimate?: unknown}).coverage_gap_estimate)) {
+          setQuestionProgress(data as typeof questionProgress)
+        } else setQuestionProgress(null)
       })
       .catch((error: unknown) => { if (active) { setQuestionProgress(null); setProgressError(errorMessage(error)) } })
     return () => { active = false }

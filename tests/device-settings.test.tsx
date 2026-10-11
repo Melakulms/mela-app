@@ -154,3 +154,15 @@ it('changes Settings sections without adding Android Back history entries', () =
   expect(window.location.href).toBe(before)
   expect(window.location.hash.startsWith('#settings-')).toBe(false)
 })
+
+it('closes Settings when Android Back restores the prior history entry', () => {
+  const {container}=render(<DeviceSettings />)
+  const panel=container.querySelector('details#mela-settings') as HTMLDetailsElement
+  window.dispatchEvent(new Event('mela:open-settings'))
+  expect(panel.open).toBe(true)
+  expect(window.history.state?.melaSettingsOpen).toBe(true)
+  window.history.replaceState(null, '', '/mela-app/')
+  fireEvent.popState(window, {state:null})
+  expect(panel.open).toBe(false)
+  window.history.replaceState(null, '', '/')
+})

@@ -31,6 +31,7 @@ export default function SettingsPage({ profile, onProfileUpdated, onBack, onSafe
   const [saving, setSaving] = useState(false)
   const [languageBusy, setLanguageBusy] = useState(false)
   const [securityBusy, setSecurityBusy] = useState(false)
+  const [confirmGlobalSignOut, setConfirmGlobalSignOut] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
 
@@ -116,7 +117,22 @@ export default function SettingsPage({ profile, onProfileUpdated, onBack, onSafe
       </div>
       <div className="settings-actions">
         <button className="btn btn-secondary" type="button" onClick={() => void sendPasswordReset()} disabled={securityBusy}>Request password reset</button>
-        <button className="btn btn-secondary" type="button" onClick={() => void supabase.auth.signOut({ scope: 'global' })}>Sign out all sessions</button>
+        {!confirmGlobalSignOut ? (
+          <button className="btn btn-secondary" type="button" onClick={() => setConfirmGlobalSignOut(true)}>Sign out all sessions</button>
+        ) : (
+          <div className="settings-confirm-logout">
+            <p>This signs you out of MELA and revokes refresh tokens for other sessions. Continue?</p>
+            <button className="btn btn-secondary" type="button" disabled={securityBusy} onClick={() => setConfirmGlobalSignOut(false)}>Cancel</button>{' '}
+            <button className="btn btn-primary" type="button" disabled={securityBusy} onClick={() => {
+              setSecurityBusy(true); setError('')
+              void supabase.auth.signOut({ scope: 'global' }).then(({ error: signOutError }) => {
+                if (signOutError) throw signOutError
+              }).catch(cause => {
+                setError(cause instanceof Error ? cause.message : 'Could not sign out all sessions.')
+              }).finally(() => { setSecurityBusy(false); setConfirmGlobalSignOut(false) })
+            }}>Confirm sign out</button>
+          </div>
+        )}
       </div>
       <p className="settings-note">Signing out globally revokes refresh tokens. Already issued access tokens may remain valid until their expiry. Multi-factor enrollment and account deletion need separate verified flows.</p>
     </section>

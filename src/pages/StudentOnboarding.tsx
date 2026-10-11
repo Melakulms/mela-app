@@ -32,13 +32,13 @@ export default function StudentOnboarding({ onComplete, initialGrade = 9, editMo
     setCatalogLoading(true)
     if (grade < 11) setTrack('common')
     else if (track === 'common') setTrack('natural_sciences')
-    supabase
+    void Promise.resolve(supabase
       .from('mela_national_subject_catalog')
       .select('subject_key, subject_title, optional')
       .eq('active', true)
       .eq('stage_key', stageKey)
       .eq('track_key', grade >= 11 ? (track === 'common' ? 'natural_sciences' : track) : 'common')
-      .order('display_order')
+      .order('display_order'))
       .then(async ({ data, error }) => {
         if (error) throw error
         const stageSubjects = (data ?? []) as Subject[]

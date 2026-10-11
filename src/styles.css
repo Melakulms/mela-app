@@ -331,3 +331,16 @@ input, select, textarea { min-width: 0; max-width: 100%; }
 .device-settings input[type=checkbox] { width: auto; margin-right: .6rem; }
 html.mela-large-text { font-size: 20px; }
 html.mela-reduced-motion *, html.mela-reduced-motion *::before, html.mela-reduced-motion *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+
+/* Keep account settings visible on small Android screens without hiding logout. */
+.app-settings-button { white-space: nowrap; padding: .42rem .65rem; font-size: .85rem; }
+.app-settings-button svg { flex: 0 0 auto; }
+@media (max-width: 620px) {
+  .app-topbar { padding: .45rem .6rem; gap: .35rem; }
+  .app-topbar .auth-wordmark { font-size: 1rem; margin: 0; }
+  .app-topbar-right { gap: .3rem; flex-wrap: wrap; justify-content: flex-end; }
+  .app-topbar .pill-stat.coins { display: none; }
+  .app-topbar .pill-stat { padding: .25rem .4rem; font-size: .7rem; }
+  .app-topbar .lang-select { max-width: 110px; font-size: .75rem; }
+  .app-settings-button { padding: .35rem .5rem; }
+}

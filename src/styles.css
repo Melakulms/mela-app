@@ -464,3 +464,8 @@ html[data-mela-reading='compact'] .lesson-content p { line-height: 1.35; }
   .profile-access-controls .btn { flex:1 1 auto; font-size:0.82rem; justify-content:center; }
   .profile-access-intro { margin:0.25rem 0.75rem 0.75rem; }
 }
+
+.profile-access-diagnostic { border:1px solid var(--line); border-radius:0.8rem; padding:1rem; margin:0.8rem auto; max-width:740px; }
+.profile-access-diagnostic h2 { margin-top:0; }
+.profile-access-diagnostic textarea { display:block; width:100%; margin:0.5rem 0; min-height:10rem; color:var(--ink); background:var(--surface); border:1px solid var(--line); border-radius:0.5rem; padding:0.7rem; font-family:ui-monospace,monospace; font-size:0.83rem; }
+@media(max-width:540px){ .profile-access-diagnostic { margin:0.75rem; } }

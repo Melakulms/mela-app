@@ -19,7 +19,7 @@ type PostgrestLikeError = {
   hint?: unknown
 }
 
-type SaveStep = 'loading account' | 'setting education level' | 'saving your subjects' | 'completing profile' | 'verifying saved profile'
+type SaveStep = 'loading account' | 'setting education level' | 'completing profile' | 'verifying saved profile'
 
 /** A PostgREST failure is often a plain object, not a JavaScript Error. */
 export function explainEducationSaveError(cause: unknown, step: SaveStep): string {
@@ -46,10 +46,6 @@ export function explainEducationSaveError(cause: unknown, step: SaveStep): strin
   return `${prefix}${advice}${message ? ' Server: ' + message : ' The server did not return a readable error.'}${code ? ' (code ' + code + ')' : ''}`
 }
 
-function unavailableRpc(cause: PostgrestLikeError | null): boolean {
-  return cause?.code === 'PGRST202' || cause?.code === '42883'
-}
-
 function savedProfileIsValid(
   saved: { education_stage_key?: string | null; grade_level?: number | null; education_onboarding_completed?: boolean } | null,
   input: SaveEducationInput,
@@ -60,9 +56,9 @@ function savedProfileIsValid(
 }
 
 /**
- * Uses the existing authenticated, account-scoped profile RPCs first. If an
- * older backend lacks these RPCs, fall back only on authenticated self-row
- * updates; never retry a security or validation denial through a weaker path.
+ * Uses existing authenticated, account-scoped profile RPCs and verifies
+ * persisted values. Missing server functions or denied permissions are real
+ * errors: do not retry through weaker client-side writes.
  */
 export async function saveMyEducationProfile(input: SaveEducationInput): Promise<void> {
   let step: SaveStep = 'loading account'
@@ -90,19 +86,7 @@ export async function saveMyEducationProfile(input: SaveEducationInput): Promise
         p_grade_level: input.grade,
         p_institution_name: input.school.trim() || null,
       })
-      if (stageError) {
-        if (!unavailableRpc(stageError)) throw stageError
-        // Compatibility only for a server without v36; an RLS rejection must
-        // be presented, not suppressed.
-        const { data: legacyStage, error: legacyStageError } = await supabase.from('profiles')
-          .update({ education_stage_key: input.stageKey, grade_level: input.grade })
-          .eq('id', id).select('education_stage_key,grade_level').maybeSingle()
-        if (legacyStageError) throw legacyStageError
-        if (legacyStage?.education_stage_key !== input.stageKey ||
-            (input.grade !== null && legacyStage.grade_level !== input.grade)) {
-          throw new Error('The server did not accept your education level. Your account may need verified onboarding permissions.')
-        }
-      }
+      if (stageError) throw stageError
     }
 
     step = 'completing profile'
@@ -120,31 +104,7 @@ export async function saveMyEducationProfile(input: SaveEducationInput): Promise
         skills: input.skills,
       },
     })
-    if (completionError) {
-      if (!unavailableRpc(completionError)) throw completionError
-      step = 'saving your subjects'
-      const { error: subjectsError } = await supabase.from('student_profiles')
-        .upsert({
-          user_id: id,
-          school_name: input.school.trim() || null,
-          subjects: input.subjects,
-          learning_interests: input.interests,
-          goals: input.goals,
-          preferred_learning_areas: input.preferredAreas,
-          skills: input.skills,
-        }, { onConflict: 'user_id' })
-      if (subjectsError) throw subjectsError
-      const { data: legacyProfile, error: legacyProfileError } = await supabase.from('profiles')
-        .update({
-          education_onboarding_completed: true,
-          onboarding_step: 'completed',
-          institution_name: input.school.trim() || null,
-        }).eq('id', id).select('education_stage_key,grade_level,education_onboarding_completed').maybeSingle()
-      if (legacyProfileError) throw legacyProfileError
-      if (!savedProfileIsValid(legacyProfile, input)) {
-        throw new Error('The server did not confirm your education profile after saving subjects.')
-      }
-    }
+    if (completionError) throw completionError
 
     step = 'verifying saved profile'
     const { data: savedProfile, error: profileError } = await supabase.from('profiles')

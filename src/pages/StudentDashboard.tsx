@@ -95,7 +95,7 @@ export default function StudentDashboard({ onNavigate, audience = { stage: null,
       if (active) setCourseEnrollments(enrollments)
       if (!discoveryProfile) return
       const catalog = await academy.fetchCourses()
-      const ranked = recommendCourses(catalog, discoveryProfile, new Map(enrollments.map(row => [row.course_id, row])))
+      const ranked = recommendCourses(catalog, discoveryProfile, new globalThis.Map<string, Enrollment>(enrollments.map(row => [row.course_id, row])))
         .filter(row => row.score > 0).slice(0, 3).map(row => ({ course: row.course, reasons: row.reasons }))
       if (active) setCourseRecommendations(ranked)
     }).catch(() => {

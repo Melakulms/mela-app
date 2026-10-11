@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useI18n } from '../i18n'
 import {
   DEFAULT_DEVICE_PREFERENCES, readDevicePreferences, saveDevicePreferences,
@@ -20,6 +20,38 @@ export default function DeviceSettings() {
   const [checkingUpdate, setCheckingUpdate] = useState(false)
   const [updateNotice, setUpdateNotice] = useState('')
   const [showResetConfirmation, setShowResetConfirmation] = useState(false)
+  const wasOpen = useRef(false)
+
+  const backHome = () => {
+    wasOpen.current = false
+    const panel = document.getElementById('mela-settings') as HTMLDetailsElement | null
+    if (panel) panel.open = false
+    setShowResetConfirmation(false)
+    // Section links inside Settings update the hash. Remove only a Settings
+    // hash so returning home does not jump back into a hidden panel.
+    if (window.location.hash.startsWith('#settings-')) {
+      window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search)
+    }
+    window.dispatchEvent(new Event('mela:go-home'))
+    const focusHome = () => {
+      const destination = document.querySelector<HTMLElement>('#main-content, .profile-access-hub, main.auth-layout, .auth-shell')
+      destination?.scrollIntoView?.({ behavior: 'auto', block: 'start' })
+      if (destination?.id === 'main-content') destination.focus({ preventScroll: true })
+    }
+    if (typeof window.requestAnimationFrame === 'function') window.requestAnimationFrame(focusHome)
+    else focusHome()
+  }
+
+  useEffect(() => {
+    const keydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && (document.getElementById('mela-settings') as HTMLDetailsElement | null)?.open) {
+        event.preventDefault()
+        backHome()
+      }
+    }
+    document.addEventListener('keydown', keydown)
+    return () => document.removeEventListener('keydown', keydown)
+  })
 
   useEffect(() => {
     // Restore accessibility and theme each time the installed PWA opens.
@@ -33,6 +65,7 @@ export default function DeviceSettings() {
       const panel = document.getElementById('mela-settings') as HTMLDetailsElement | null
       if (panel) {
         panel.open = true
+        wasOpen.current = true
         panel.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
         panel.querySelector('summary')?.focus()
       }
@@ -79,12 +112,15 @@ export default function DeviceSettings() {
     }
   }
 
-  return <details className="device-settings" id="mela-settings">
+  return <details className="device-settings" id="mela-settings" onToggle={event => {
+    if (event.currentTarget.open) wasOpen.current = true
+    else if (wasOpen.current) backHome()
+  }}>
     <summary tabIndex={0}>Settings & downloads — app version</summary>
     <div className="settings-center">
       <div className="settings-center-heading">
         <div><span className="settings-kicker">MELA PERSONALIZATION</span><h1>Settings</h1><p>Make MELA comfortable to read and use. Changes below work immediately on this phone.</p></div>
-        <button className="btn btn-secondary" type="button" onClick={() => { const panel = document.getElementById('mela-settings') as HTMLDetailsElement | null; if (panel) panel.open = false }}>Close settings</button>
+        <button className="btn btn-primary" type="button" onClick={backHome}>Back to MELA Home</button>
       </div>
       {notice && <div className="banner banner-info" role="status">{notice}</div>}
 
@@ -186,10 +222,11 @@ export default function DeviceSettings() {
         <details className="settings-release-details">
           <summary>Registration, teacher review & pending platform features</summary>
           <p>Registration is the first screen for signed-out users, with a valid beta invitation code. MELA opens your existing account rather than showing registration again when signed in.</p>
-          <p><strong>Not published in this release:</strong> account-synced notification settings, per-user learning discovery and scholarship matching, the new full professional 140,000-question review workflow and teacher approvals. Those require the correct production database, tests and human teacher review.</p>
+          <p><strong>Not published in this release:</strong> account-synced notification settings, fully personalized scholarship matching, and public access to questions before teacher approval. Question review batches are prepared, but only verified teachers may submit decisions; this does not mean the questions are approved.</p>
           <p>Verified teachers can currently access Educator content review → Question reviews from the teacher dashboard where their permissions allow. Central Admin is responsible for teacher credential verification.</p>
         </details>
       </section>
+      <button type="button" className="btn btn-primary btn-block" onClick={backHome}>Back to MELA Home</button>
     </div>
   </details>
 }

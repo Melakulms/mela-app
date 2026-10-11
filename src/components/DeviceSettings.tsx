@@ -5,7 +5,7 @@ import {
   loadDeviceAppearance,
   saveDeviceAppearance,
   type ThemeMode,
-} from '../lib/user-settings'
+} from '../lib/device-appearance'
 
 type Preferences = { largeText: boolean; reducedMotion: boolean; highContrast: boolean; theme: ThemeMode }
 function read(): Preferences {

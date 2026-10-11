@@ -319,6 +319,10 @@ export default function EducatorContentReview() {
     actionPending.current = true
     setBusy(true); setError(''); setSuccess('')
     try {
+      if (queueIsPaged && slice.status !== 'approved') {
+        const claim = await supabase.rpc('claim_question_review_slice_v39', { p_slice_id: slice.slice_id })
+        if (claim.error) throw claim.error
+      }
       const { data, error } = await supabase.rpc('get_question_review_slice_v18', { p_slice_id: slice.slice_id })
       if (error) throw error
       const detail = data as QuestionSliceDetail
@@ -448,7 +452,7 @@ export default function EducatorContentReview() {
         <span role="status">Showing {questionTotal === 0 ? 0 : questionOffset + 1}–{Math.min(questionOffset + questionPageSize, questionTotal ?? 0)} of {(questionTotal ?? 0).toLocaleString()} subject-eligible review slices</span>
         <button className="btn btn-secondary" disabled={busy || questionOffset + questionPageSize >= (questionTotal ?? 0)} onClick={() => setQuestionOffset(offset => offset + questionPageSize)}>Next review page</button></div>}
       <p className="muted">Each slice contains up to 100 questions. Only currently verified subject-and-grade-qualified teachers may approve. A queue position is not evidence of review.</p>
-      {busy ? <p className="muted">Loading question review slices…</p> : questionSlices.length === 0 ? <div className="empty-panel">No eligible question-review slices are available for this educator profile.</div> : <div className="list-panel">{questionSlices.map(slice => <div className="list-row" key={slice.slice_id}><div><strong className="list-row-title">Grade {slice.grade_level ?? '—'} · {slice.subject_title ?? slice.program_key}</strong><div className="muted">Slice {slice.slice_number} · {slice.question_count} questions · {slice.status.replaceAll('_',' ')}</div></div><button className="btn btn-secondary" onClick={() => void openQuestionSlice(slice)} disabled={busy}>Open slice</button></div>)}</div>}
+      {busy ? <p className="muted">Loading question review slices…</p> : questionSlices.length === 0 ? <div className="empty-panel">No eligible question-review slices are available for this educator profile.</div> : <div className="list-panel">{questionSlices.map(slice => <div className="list-row" key={slice.slice_id}><div><strong className="list-row-title">Grade {slice.grade_level ?? '—'} · {slice.subject_title ?? slice.program_key}</strong><div className="muted">Slice {slice.slice_number} · {slice.question_count} questions · {slice.status.replaceAll('_',' ')}</div></div><button className="btn btn-secondary" onClick={() => void openQuestionSlice(slice)} disabled={busy}>{queueIsPaged && slice.status !== 'approved' ? 'Claim and review' : 'Open slice'}</button></div>)}</div>}
     </>}
 
     {mode === 'questions' && questionDetail && <form onSubmit={submitQuestionSlice}>

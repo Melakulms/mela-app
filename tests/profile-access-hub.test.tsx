@@ -1,6 +1,9 @@
 import {afterEach, expect, it, vi} from 'vitest'
 import {cleanup, fireEvent, render, screen} from '@testing-library/react'
 
+vi.mock('../src/lib/profile-diagnostics',()=>({
+  inspectMyProfileSetup:vi.fn().mockResolvedValue('Account role: student'),
+}))
 vi.mock('../src/pages/SkillAcademy',()=>({
   default:({previewOnly}:{previewOnly?:boolean})=><section>Mock course catalog · {previewOnly?'read-only':'unrestricted'}</section>,
 }))

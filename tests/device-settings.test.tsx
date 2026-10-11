@@ -1,4 +1,4 @@
-import {afterEach, expect, it} from 'vitest'
+import {afterEach, expect, it, vi} from 'vitest'
 import {cleanup, fireEvent, render, screen} from '@testing-library/react'
 import DeviceSettings from '../src/components/DeviceSettings'
 import DraftCourseReader from '../src/components/DraftCourseReader'
@@ -121,4 +121,28 @@ it('resets new reading, focus and accent options only after confirmation', () =>
   expect(document.documentElement.dataset.melaAccent).toBe('gold')
   expect(document.documentElement.dataset.melaReading).toBe('standard')
   expect(document.documentElement.classList.contains('mela-focus-mode')).toBe(false)
+})
+
+it('returns from Settings to MELA home, clears the settings anchor and closes the panel', () => {
+  const home = vi.fn()
+  window.addEventListener('mela:go-home', home)
+  const {container}=render(<DeviceSettings />)
+  const panel=container.querySelector('details#mela-settings') as HTMLDetailsElement
+  window.dispatchEvent(new Event('mela:open-settings'))
+  expect(panel.open).toBe(true)
+  window.history.replaceState(null, '', '/mela-app/#settings-learning')
+  fireEvent.click(screen.getAllByRole('button',{name:'Back to MELA Home'})[0])
+  expect(panel.open).toBe(false)
+  expect(window.location.hash).toBe('')
+  expect(home).toHaveBeenCalledOnce()
+  window.removeEventListener('mela:go-home', home)
+  window.history.replaceState(null, '', '/')
+})
+
+it('supports Escape from Settings without signing the user out', () => {
+  const {container}=render(<DeviceSettings />)
+  const panel=container.querySelector('details#mela-settings') as HTMLDetailsElement
+  window.dispatchEvent(new Event('mela:open-settings'))
+  fireEvent.keyDown(document,{key:'Escape'})
+  expect(panel.open).toBe(false)
 })

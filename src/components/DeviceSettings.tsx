@@ -35,6 +35,19 @@ export default function DeviceSettings() {
     }
   }
   useEffect(() => {
+    const showSettings = () => {
+      const panel = document.getElementById('mela-settings') as HTMLDetailsElement | null
+      if (panel) {
+        panel.open = true
+        panel.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
+        panel.querySelector('summary')?.focus()
+      }
+    }
+    window.addEventListener('mela:open-settings', showSettings)
+    return () => window.removeEventListener('mela:open-settings', showSettings)
+  }, [])
+
+  useEffect(() => {
     document.documentElement.classList.toggle('mela-large-text', preferences.largeText)
     document.documentElement.classList.toggle('mela-reduced-motion', preferences.reducedMotion)
   }, [preferences])
@@ -43,9 +56,16 @@ export default function DeviceSettings() {
     try { localStorage.setItem(key, JSON.stringify(next)); setNotice('Display settings saved on this device.') }
     catch { setNotice('Applied for this session. This browser could not save the settings.') }
   }
-  return <details className="device-settings">
-    <summary>Settings & downloads</summary>
+  return <details className="device-settings" id="mela-settings">
+    <summary tabIndex={0}>Settings & downloads — app version</summary>
     <div className="list-panel">
+      <section aria-label="Published MELA release">
+        <h2>MELA published version</h2>
+        <p><strong>2026-10-11 · Settings and update navigation</strong></p>
+        <p>This release includes the beta-registration entry screen, installed-app refresh, display accessibility settings, and the AI Year One draft reader. Registration requires a valid invitation code.</p>
+        <p><strong>Not published in this release:</strong> the new per-account Settings page, grade-specific learner discovery, personalized scholarships, and the full professional 140,000-question review upgrades. Those still require a secure database release and teacher testing.</p>
+        <p>If you are already signed in, MELA opens your existing account rather than showing registration again. To test registration, sign out first; signing out does not delete your account.</p>
+      </section>
       <h2>Display and language</h2>
       <p>These preferences apply on this device. Your signed-in profile has its own saved account language.</p>
       <label>Interface language <select value={language} onChange={e => setLanguage(e.target.value)}>

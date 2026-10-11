@@ -32,3 +32,20 @@ it('shows a clear update control without falsely promising to deploy development
   expect(screen.getByText(/not an APK/)).toBeTruthy()
   expect(screen.getByText(/does not install unreleased development features/)).toBeTruthy()
 })
+
+it('opens the published Settings panel from signed-in navigation', () => {
+  const {container}=render(<DeviceSettings />)
+  const panel=container.querySelector('details#mela-settings') as HTMLDetailsElement
+  expect(panel.open).toBe(false)
+  window.dispatchEvent(new Event('mela:open-settings'))
+  expect(panel.open).toBe(true)
+  expect(screen.getByText('MELA published version')).toBeTruthy()
+})
+
+it('labels only deployed features as published and explains why registration does not reopen for signed-in accounts', () => {
+  render(<DeviceSettings />)
+  expect(screen.getByText(/2026-10-11 · Settings and update navigation/)).toBeTruthy()
+  expect(screen.getByText(/Not published in this release/)).toBeTruthy()
+  expect(screen.getByText(/MELA opens your existing account rather than showing registration again/)).toBeTruthy()
+  expect(screen.getByRole('button',{name:'Check and refresh installed MELA'})).toBeTruthy()
+})

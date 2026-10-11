@@ -1,7 +1,7 @@
 import { clearCoachHistories } from './lib/coach-history'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { Wifi, WifiOff, LogOut, LayoutDashboard, BookOpen, Swords, Globe, UserRound, GraduationCap } from 'lucide-react'
+import { Wifi, WifiOff, LogOut, Settings as SettingsIcon, LayoutDashboard, BookOpen, Swords, Globe, UserRound, GraduationCap } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { observeSession } from './lib/session-observer'
 import { fetchOwnProfile, logoutUser, updatePreferredLanguage, type MelaProfile } from './lib/auth'
@@ -228,6 +228,7 @@ export default function App() {
           </select>
           <span className="pill-stat coins">🪙 {profile.coin_balance}</span>
           <span className={`pill-stat ${online ? 'online' : 'offline'}`} role="status">{online ? <Wifi size={13} /> : <WifiOff size={13} />}{online ? t('connected') : t('offline')}</span>
+          <button type="button" className="btn btn-secondary app-settings-button" onClick={() => window.dispatchEvent(new Event('mela:open-settings'))} aria-label="Open MELA settings"><SettingsIcon size={16} aria-hidden="true" /> Settings</button>
           <button className="icon-btn" onClick={signOut} disabled={signingOut} aria-label={t('logout')}><LogOut size={18} /></button>
         </div>
       </header>

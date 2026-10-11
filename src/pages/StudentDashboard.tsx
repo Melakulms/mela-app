@@ -10,6 +10,7 @@ import {
 import { fetchDashboard, type MelaDashboard } from '../lib/dashboard'
 import { fetchMyBadges, type EarnedBadge } from '../lib/badges'
 import { audienceAllowsStudentModule, type StudentAudience } from '../lib/feature-audience'
+import type { Scholarship } from '../lib/scholarships'
 
 type DashboardModule = {
   key: string
@@ -50,6 +51,7 @@ export default function StudentDashboard({ onNavigate, audience = { stage: null,
   const [revision, setRevision] = useState(0)
   const [query, setQuery] = useState('')
   const [badgeError, setBadgeError] = useState(false)
+  const [suggestedScholarships, setSuggestedScholarships] = useState<{ item: Scholarship; reasons: string[] }[]>([])
 
   useEffect(() => {
     let active = true
@@ -58,6 +60,24 @@ export default function StudentDashboard({ onNavigate, audience = { stage: null,
     fetchMyBadges().then(value => { if (active) setBadges(value) }).catch(() => { if (active) setBadgeError(true) })
     return () => { active = false }
   }, [revision, t])
+
+  useEffect(() => {
+    let active = true
+    void Promise.all([import('../lib/learner-discovery'), import('../lib/scholarships')]).then(async ([discovery, scholarships]) => {
+      const preferences = await discovery.fetchLearnerDiscoveryProfile()
+      if (!preferences.enable_suggestions || (!preferences.interest_fields.length && !preferences.preferred_study_countries.length && preferences.target_degree_level === 'any')) {
+        if (active) setSuggestedScholarships([])
+        return
+      }
+      const available = await scholarships.fetchOpenScholarships()
+      const matches = discovery.rankScholarships(available, preferences).filter(row => row.score > 0).slice(0, 3)
+      if (active) setSuggestedScholarships(matches)
+    }).catch(() => {
+      // Scholarship explorer still provides the full verified catalogue if personalization is not configured.
+      if (active) setSuggestedScholarships([])
+    })
+    return () => { active = false }
+  }, [revision])
 
   if (error) return <div className="dash-main"><h1>{t('yourDashboard')}</h1><div className="banner banner-error" role="alert">{error}</div><button className="btn btn-primary" onClick={() => setRevision(value => value + 1)}>{t('tryAgain')}</button></div>
   if (!data) return <div className="dash-main" role="status"><div className="skeleton skeleton-title" /><div className="skeleton skeleton-card" /><p>{t('loadingDashboard')}</p></div>
@@ -77,6 +97,13 @@ export default function StudentDashboard({ onNavigate, audience = { stage: null,
         <p>{audience.stage?.startsWith('school_') ? `Grade ${audience.grade ?? 'not set'} · Grade-matched curriculum` : 'Higher education and career learning'}. Add subjects and interests to get suggested scholarships and opportunities.</p>
         <button className="btn btn-secondary" type="button" onClick={() => onNavigate('scholarships')}>Discover scholarships</button>
       </div>
+      {suggestedScholarships.length > 0 && <section className="settings-panel" aria-label="Suggested scholarships">
+        <div className="section-heading"><h2>Suggested scholarships</h2><button className="btn btn-secondary" onClick={() => onNavigate('scholarships')}>See all</button></div>
+        <p className="settings-note">Based on your submitted interests and study goals. Matches are not verified admission or funding eligibility.</p>
+        {suggestedScholarships.map(({item, reasons}) => <div className="list-row" key={item.id}>
+          <div><strong>{item.title}</strong><p className="settings-note">{item.study_country ?? 'International'} · {reasons.join(', ')}</p></div>
+        </div>)}
+      </section>}
       <div className="stat-strip">
         <div><span className="stat-value">{passport.profile_score}</span><span className="stat-label">{t('score')}</span></div>
         <div><span className="stat-value">{passport.badge_count}</span><span className="stat-label">{t('badges')}</span></div>

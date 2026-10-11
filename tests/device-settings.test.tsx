@@ -135,6 +135,7 @@ it('returns from Settings to MELA home, clears the settings anchor and closes th
   expect(panel.open).toBe(false)
   expect(window.location.hash).toBe('')
   expect(home).toHaveBeenCalledOnce()
+  expect(new URLSearchParams(window.location.search).get('view')).toBe('dashboard')
   window.removeEventListener('mela:go-home', home)
   window.history.replaceState(null, '', '/')
 })
@@ -165,4 +166,17 @@ it('closes Settings when Android Back restores the prior history entry', () => {
   fireEvent.popState(window, {state:null})
   expect(panel.open).toBe(false)
   window.history.replaceState(null, '', '/')
+})
+
+it('returns to the dashboard even without a mounted student router listener', () => {
+  window.history.replaceState(null, '', '/mela-app/?view=practice&mela_refresh=old#settings-updates')
+  const {container}=render(<DeviceSettings />)
+  const panel=container.querySelector('details#mela-settings') as HTMLDetailsElement
+  window.dispatchEvent(new Event('mela:open-settings'))
+  fireEvent.click(screen.getAllByRole('button',{name:'Back to MELA Home'})[0])
+  expect(panel.open).toBe(false)
+  expect(new URLSearchParams(window.location.search).get('view')).toBe('dashboard')
+  expect(new URLSearchParams(window.location.search).get('mela_refresh')).toBeNull()
+  expect(window.location.hash).toBe('')
+  window.history.replaceState(null,'','/')
 })

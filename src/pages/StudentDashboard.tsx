@@ -10,6 +10,7 @@ import {
 import { fetchDashboard, type MelaDashboard } from '../lib/dashboard'
 import { fetchMyBadges, type EarnedBadge } from '../lib/badges'
 import { readDevicePreferences } from '../lib/device-preferences'
+import { visibleInFocusMode } from '../lib/dashboard-focus'
 
 type DashboardModule = {
   key: string
@@ -50,10 +51,12 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
   const [revision, setRevision] = useState(0)
   const [query, setQuery] = useState('')
   const [badgeError, setBadgeError] = useState(false)
-  const [dailyStudyMinutes, setDailyStudyMinutes] = useState(() => readDevicePreferences().dailyStudyMinutes)
+  const [devicePreferences, setDevicePreferences] = useState(readDevicePreferences)
+  const [showAllTools, setShowAllTools] = useState(false)
+  const { dailyStudyMinutes, focusMode } = devicePreferences
 
   useEffect(() => {
-    const changed = () => setDailyStudyMinutes(readDevicePreferences().dailyStudyMinutes)
+    const changed = () => { setDevicePreferences(readDevicePreferences()); setShowAllTools(false) }
     window.addEventListener('mela:device-preferences-changed', changed)
     return () => window.removeEventListener('mela:device-preferences-changed', changed)
   }, [])
@@ -71,7 +74,7 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
 
   const { profile, passport, practice, arena, feature_flags } = data
   const normalizedQuery = query.trim().toLocaleLowerCase()
-  const visibleModules = MODULES.filter(m => `${t(m.labelKey)} ${t(m.blurbKey)}`.toLocaleLowerCase().includes(normalizedQuery))
+  const visibleModules = MODULES.filter(m => visibleInFocusMode(m.key, focusMode, showAllTools) && `${t(m.labelKey)} ${t(m.blurbKey)}`.toLocaleLowerCase().includes(normalizedQuery))
 
   return (
     <div className="dash-main dashboard-main">
@@ -94,6 +97,12 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
 
       <section className="dashboard-hero"><div><span className="eyebrow">{t('keepMomentum')}</span><h2>{t('learnToday')}</h2><p>{t('explorePrompt')}</p></div>{feature_flags.practice && <button className="btn btn-primary" onClick={() => onNavigate('practice')}>{t('startPracticing')} <BookOpen size={18} /></button>}</section>
       <div className="section-heading"><div><h2>{t('exploreMela')}</h2><p>{t('exploreMelaHelp')}</p></div></div>
+      {focusMode && <section className="focus-mode-notice" aria-label="Student focus mode">
+        <div><strong>Focus mode is on</strong><p>Core learning and safety tools are shown first. Every other feature remains available.</p></div>
+        <button type="button" className="btn btn-secondary" onClick={() => setShowAllTools(current => !current)}>
+          {showAllTools ? 'Show focused tools' : 'Show all tools'}
+        </button>
+      </section>}
       <div className="field module-search"><label htmlFor="module-search">{t('findLearningTool')}</label><input id="module-search" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder={t('searchLearningTools')} /></div>
       {visibleModules.length === 0 && <div className="empty-panel" role="status">{t('noToolsMatch')} “{query}”. <button className="password-toggle" onClick={() => setQuery('')}>{t('clearSearch')}</button></div>}
       <div className="module-grid">

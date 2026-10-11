@@ -58,7 +58,7 @@ describe('Password recovery', () => {
   it('opens the recovery screen when Supabase emits PASSWORD_RECOVERY', async () => {
     mocks.fetchOwnProfile.mockResolvedValue(null)
     render(<App />)
-    await screen.findByRole('heading', { name: 'Welcome back' })
+    await screen.findByRole('heading', { name: 'Join the MELA beta' })
     const callback = mocks.onAuthStateChange.mock.calls[0][0]
     await act(async () => callback('PASSWORD_RECOVERY', { user: { id: 'recovery-user' } }))
     expect(screen.getByLabelText('New password')).toBeTruthy()
@@ -126,7 +126,7 @@ describe('App session ordering', () => {
     const callback = mocks.onAuthStateChange.mock.calls[0][0]
     await act(async () => callback('SIGNED_OUT', null))
     await act(async () => restore({ data: { session: { user: { id: 'old-account' } } }, error: null }))
-    expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Join the MELA beta' })).toBeTruthy()
     expect(mocks.fetchOwnProfile).not.toHaveBeenCalled()
   })
 })

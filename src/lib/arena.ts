@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
 
-export type ArenaMode = 'speed_quiz' | 'skill_sprint' | 'interview_practice' | 'case_sprint'
+export type ArenaMode = 'quiz_battle' | 'speed_quiz' | 'skill_sprint' | 'interview_practice' | 'case_sprint'
 
 export interface LeaderboardRow {
   rank: number

@@ -1,3 +1,4 @@
+import { safeExternalUrl } from '../lib/external-url'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
@@ -107,7 +108,7 @@ type QuestionSliceDetail = {
   questions: Question[]
 }
 
-type QuestionReviewDraft = { decision: QuestionDecision | ''; note: string }
+type QuestionReviewDraft = { decision: QuestionDecision | ''; note: string; attempted?: string; checked?: boolean }
 
 const display = (value: unknown) => {
   if (value == null || value === '') return '—'
@@ -141,6 +142,9 @@ export default function EducatorContentReview() {
   const [chapterDecision, setChapterDecision] = useState<ChapterDecision | ''>('')
   const [chapterNote, setChapterNote] = useState('')
 
+  const [programFilter, setProgramFilter] = useState('')
+  const [programOptions, setProgramOptions] = useState<{program_key: string; subject_title: string; grade_level: number | null}[]>([])
+  const [programError, setProgramError] = useState('')
   const [questionSlices, setQuestionSlices] = useState<QuestionSlice[]>([])
   const [questionDetail, setQuestionDetail] = useState<QuestionSliceDetail | null>(null)
   const [questionDrafts, setQuestionDrafts] = useState<Record<string, QuestionReviewDraft>>({})
@@ -165,6 +169,26 @@ export default function EducatorContentReview() {
   useEffect(() => {
     if (!eligible) return
     let active = true
+    setProgramError('')
+    void (async () => {
+      try {
+        const rows: {program_key: string; subject_title: string; grade_level: number | null}[] = []
+        for (let offset = 0; ; offset += 200) {
+          const { data, error } = await supabase.from('mela_learning_programs').select('program_key,subject_title,grade_level').eq('active', true).order('program_key').range(offset, offset + 199)
+          if (error) throw error
+          rows.push(...(data ?? []))
+          if (!active) return
+          if ((data ?? []).length < 200) break
+        }
+        if (active) setProgramOptions(rows)
+      } catch (cause) { if (active) setProgramError(errorMessage(cause)) }
+    })()
+    return () => { active = false }
+  }, [eligible, revision])
+
+  useEffect(() => {
+    if (!eligible) return
+    let active = true
     const load = async () => {
       setBusy(true); setError('')
       setChapterItems([]); setChapterSummary({}); setQuestionSlices([])
@@ -181,7 +205,7 @@ export default function EducatorContentReview() {
           setChapterItems(Array.isArray(payload.items) ? payload.items : [])
           setChapterSummary(payload.summary ?? {})
         } else {
-          const { data, error } = await supabase.rpc('get_question_review_queue_v18', { p_program_key: null, p_limit: 100 })
+          const { data, error } = await supabase.rpc('get_question_review_queue_v18', { p_program_key: programFilter || null, p_limit: 100 })
           if (error) throw error
           if (!active) return
           setQuestionSlices(Array.isArray(data) ? data as QuestionSlice[] : [])
@@ -191,7 +215,7 @@ export default function EducatorContentReview() {
     }
     void load()
     return () => { active = false }
-  }, [eligible, mode, chapterStatus, revision])
+  }, [eligible, mode, chapterStatus, programFilter, revision])
 
   const openChapter = async (item: ChapterQueueItem) => {
     if (busy || actionPending.current) return
@@ -254,7 +278,7 @@ export default function EducatorContentReview() {
       const detail = data as QuestionSliceDetail
       setQuestionDetail(detail)
       setQuestionDrafts(Object.fromEntries((detail.questions ?? []).map(question => [question.id, {
-        decision: question.existing_decision ?? '',
+        decision: '',
         note: question.existing_note ?? '',
       }])))
     } catch (cause) { setError(errorMessage(cause)) }
@@ -274,8 +298,9 @@ export default function EducatorContentReview() {
       const draft = questionDrafts[question.id]
       if (!draft?.decision) return []
       if (draft.decision === 'changes_required' && draft.note.trim().length < 5) return []
-      return [{ question_id: question.id, decision: draft.decision, note: draft.note.trim() || null }]
+      return [{ question_id: question.id, decision: draft.decision, note: draft.decision === 'approved' ? (`Teacher test response: ${draft.attempted?.trim()}\nVerification: ${draft.note.trim()}`).slice(0, 2000) : draft.note.trim() || null }]
     })
+    if (questionDetail.questions.some(q => { const d = questionDrafts[q.id]; return d?.decision === 'approved' && (!d.attempted?.trim() || !d.checked || d.note.trim().length < 5) })) { setError('For each approval, test the question, check the grading evidence, confirm the review checklist and write a verification note.'); return }
     if (!decisions.length) { setError('Review at least one question before saving.'); return }
     const invalidChanges = questionDetail.questions.some(question => {
       const draft = questionDrafts[question.id]
@@ -341,7 +366,7 @@ export default function EducatorContentReview() {
       <button className="btn btn-secondary" onClick={() => setChapterDetail(null)} disabled={busy}>Back to chapter queue</button>
       <div className="section-heading"><div><h3>Grade {chapterDetail.task.grade_level} · {chapterDetail.chapter.title}</h3><p className="muted">{chapterDetail.task.subject_key} · Chapter {chapterDetail.chapter.chapter_number} · {chapterDetail.chapter.official_alignment_status}</p></div></div>
       <div className={`banner ${chapterDetail.chapter.source_verified ? 'banner-info' : 'banner-error'}`} role="status">Source {chapterDetail.chapter.source_verified ? 'verified' : 'not verified'} · {chapterDetail.chapter.source_kind}{chapterDetail.chapter.source_name ? ` · ${chapterDetail.chapter.source_name}` : ''}</div>
-      {chapterDetail.chapter.source_url && <p><a href={chapterDetail.chapter.source_url} target="_blank" rel="noreferrer">Open source reference ↗</a></p>}
+      {safeExternalUrl(chapterDetail.chapter.source_url) && <p><a href={safeExternalUrl(chapterDetail.chapter.source_url)!} target="_blank" rel="noreferrer">Open source reference ↗</a></p>}
       <div className="list-panel"><div className="list-row"><div><strong>Description</strong><p>{chapterDetail.chapter.description || 'No description.'}</p></div></div><div className="list-row"><div><strong>Learning outcomes</strong><pre className="review-data">{display(chapterDetail.chapter.learning_outcomes)}</pre></div></div></div>
       <div className="section-heading"><h3>Topics ({chapterDetail.topics.length})</h3></div>
       <div className="list-panel">{chapterDetail.topics.map(topic => <div className="list-row" key={topic.id}><div><strong>{topic.topic_number ? `${topic.topic_number} · ` : ''}{topic.title}</strong><p className="muted">{topic.description || 'No description'} · source {topic.source_verified ? 'verified' : 'unverified'} · {topic.status}</p><pre className="review-data">{display(topic.learning_objectives)}</pre></div></div>)}</div>
@@ -353,6 +378,9 @@ export default function EducatorContentReview() {
     </div>}
 
     {mode === 'questions' && !questionDetail && <>
+      <label>Review subject / program<select value={programFilter} disabled={busy} onChange={e => setProgramFilter(e.target.value)}><option value="">All eligible subjects (first 100 slices)</option>{programOptions.map(p => <option key={p.program_key} value={p.program_key}>Grade {p.grade_level ?? '—'} · {p.subject_title} · {p.program_key}</option>)}</select></label>
+      {programError && <p role="alert">Subject list unavailable: {programError}</p>}
+      {questionSlices.length >= 100 && <p role="alert">This response reached the 100-slice server limit. Select a specific subject to reach later subjects. Full within-subject pagination still requires a backend update; this is not the complete inventory.</p>}
       <p className="muted">Review slices are subject-scoped. Only slices matching your verified educator subject areas are shown.</p>
       {busy ? <p className="muted">Loading question review slices…</p> : questionSlices.length === 0 ? <div className="empty-panel">No eligible question-review slices are available for this educator profile.</div> : <div className="list-panel">{questionSlices.map(slice => <div className="list-row" key={slice.slice_id}><div><strong className="list-row-title">Grade {slice.grade_level ?? '—'} · {slice.subject_title ?? slice.program_key}</strong><div className="muted">Slice {slice.slice_number} · {slice.question_count} questions · {slice.status.replaceAll('_',' ')}</div></div><button className="btn btn-secondary" onClick={() => void openQuestionSlice(slice)} disabled={busy}>Open slice</button></div>)}</div>}
     </>}
@@ -364,11 +392,13 @@ export default function EducatorContentReview() {
         const draft = questionDrafts[question.id] ?? { decision: '', note: '' }
         return <article className="review-question" key={question.id}>
           <div className="section-heading"><h4>Question {question.question_number}</h4><span className="pill-stat">{question.question_type} · quality {question.machine_quality_score ?? '—'}</span></div>
-          <p><strong>{question.prompt}</strong></p>
+          <p><strong>{question.prompt}</strong></p>{question.existing_decision && <p>Previous decision: {question.existing_decision.replaceAll('_', ' ')}. A new decision requires a fresh human test.</p>}
           {question.choices != null && <><span className="muted">Choices</span><pre className="review-data">{display(question.choices)}</pre></>}
-          <details><summary>Show grading evidence</summary><dl className="review-dl"><dt>Grading kind</dt><dd>{display(question.grading_kind)}</dd><dt>Correct response</dt><dd><pre className="review-data">{display(question.correct_response)}</pre></dd><dt>Accepted variants</dt><dd><pre className="review-data">{display(question.accepted_variants)}</pre></dd><dt>Rationale</dt><dd>{question.rationale || '—'}</dd></dl></details>
+          <label htmlFor={`attempt-${question.id}`}>Test the question yourself before viewing the key</label><textarea id={`attempt-${question.id}`} maxLength={500} disabled={busy} value={draft.attempted ?? ''} onChange={event => updateQuestion(question.id, { attempted: event.target.value, checked: false })} />
+          {draft.attempted?.trim() && <details><summary>Show grading evidence</summary><dl className="review-dl"><dt>Grading kind</dt><dd>{display(question.grading_kind)}</dd><dt>Correct response</dt><dd><pre className="review-data">{display(question.correct_response)}</pre></dd><dt>Accepted variants</dt><dd><pre className="review-data">{display(question.accepted_variants)}</pre></dd><dt>Rationale</dt><dd>{question.rationale || '—'}</dd></dl></details>}
+          <label><input type="checkbox" disabled={busy || !draft.attempted?.trim()} checked={draft.checked ?? false} onChange={e => updateQuestion(question.id, {checked: e.target.checked})} /> I checked correctness, answer variants, explanation, grade suitability, language, fairness and source rights. This is my own human review.</label>
           <div className="field"><label htmlFor={`decision-${question.id}`}>Decision</label><select id={`decision-${question.id}`} value={draft.decision} onChange={event => updateQuestion(question.id, { decision: event.target.value as QuestionDecision | '' })} disabled={busy}><option value="">Not reviewed yet</option><option value="approved">Approve</option><option value="changes_required">Changes required</option></select></div>
-          <div className="field"><label htmlFor={`note-${question.id}`}>Reviewer note {draft.decision === 'changes_required' ? '(required)' : '(optional)'}</label><textarea id={`note-${question.id}`} value={draft.note} onChange={event => updateQuestion(question.id, { note: event.target.value })} disabled={busy} maxLength={2000} placeholder="Describe any correction needed or record a useful verification note." /></div>
+          <div className="field"><label htmlFor={`note-${question.id}`}>Reviewer note (required for every decision)</label><textarea id={`note-${question.id}`} value={draft.note} onChange={event => updateQuestion(question.id, { note: event.target.value })} disabled={busy} maxLength={2000} placeholder="Describe any correction needed or record a useful verification note." /></div>
         </article>
       })}</div>
       <button className="btn btn-primary" disabled={busy || reviewedCount === 0}>{busy ? 'Saving decisions…' : `Save ${reviewedCount} review decision${reviewedCount === 1 ? '' : 's'}`}</button>

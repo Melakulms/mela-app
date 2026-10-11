@@ -56,7 +56,7 @@ export default function App() {
   const [sessionRevision, setSessionRevision] = useState(0)
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<MelaProfile | null>(null)
-  const [authView, setAuthView] = useState<AuthView>('login')
+  const [authView, setAuthView] = useState<AuthView>('register')
   const [pendingEmail, setPendingEmail] = useState('')
   const [studentView, setStudentView] = useStudentNavigation()
   const [online, setOnline] = useState(navigator.onLine)

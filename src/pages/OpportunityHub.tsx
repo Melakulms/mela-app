@@ -1,3 +1,4 @@
+import ResourceDirectory from '../components/ResourceDirectory'
 import { safeExternalUrl } from '../lib/external-url'
 import { useEffect, useRef, useState } from 'react'
 import { fetchOpenOpportunities, fetchMyApplications, applyToOpportunity, type Opportunity, type MyApplication } from '../lib/opportunities'
@@ -38,7 +39,7 @@ export default function OpportunityHub({ onBack }: { onBack: () => void }) {
 
   const visible = (opportunities ?? []).filter(o => (!type || o.opportunity_type === type) && (scope !== 'remote' || o.is_remote) && `${o.title} ${o.organization_name ?? ''} ${o.location ?? ''} ${o.summary ?? ''}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
   const selectedOpportunity = opportunities?.find(o => o.id === selected)
-  return <div className="dash-main">
+  return <div className="dash-main"><ResourceDirectory />
     <div className="section-heading"><h1>{t('opportunityHub')}</h1><button className="btn btn-secondary" disabled={applying !== null} onClick={onBack}>{t('back')}</button></div>
     {error && <div className="banner banner-error" role="alert">{error}<button className="btn btn-secondary" disabled={applying !== null} onClick={() => setRevision(value => value + 1)}>Retry opportunities</button></div>}
     {notice && <p role="status">{notice}</p>}

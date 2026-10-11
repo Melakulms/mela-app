@@ -29,16 +29,21 @@ export interface MyApplication {
 }
 
 export async function fetchOpenOpportunities(): Promise<Opportunity[]> {
+  const rows: Opportunity[] = []
+  for (let offset = 0; ; offset += 200) {
   const { data, error } = await supabase
     .from('opportunities')
     .select('id, title, organization_name, opportunity_type, location, is_remote, deadline, summary, description, requirements, skills_required, application_instructions, experience_level, education_level, employment_type_label, stipend_or_reward, application_method, external_url')
     .eq('status', 'open')
     .eq('moderation_status', 'approved')
     .eq('verified_active', true)
-    .order('deadline', { ascending: true, nullsFirst: false })
-    .limit(100)
+    .or('deadline.is.null,deadline.gte.' + new Date().toISOString().slice(0,10))
+    .order('deadline', { ascending: true, nullsFirst: false }).order('id')
+    .range(offset, offset + 199)
   if (error) throw error
-  return data as Opportunity[]
+  rows.push(...(data ?? []) as Opportunity[])
+  if ((data ?? []).length < 200) return rows
+  }
 }
 
 export async function fetchMyApplications(): Promise<MyApplication[]> {

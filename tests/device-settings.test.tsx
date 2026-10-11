@@ -41,12 +41,12 @@ it('opens the published Settings panel from signed-in navigation', () => {
   expect(panel.open).toBe(false)
   window.dispatchEvent(new Event('mela:open-settings'))
   expect(panel.open).toBe(true)
-  expect(screen.getByText('MELA published version')).toBeTruthy()
+  expect(screen.getByText('MELA release')).toBeTruthy()
 })
 
 it('labels only deployed features as published and explains why registration does not reopen for signed-in accounts', () => {
   render(<DeviceSettings />)
-  expect(screen.getByText(/2026-10-11 · Settings, focus and reading controls/)).toBeTruthy()
+  expect(screen.getByText(/Release not verified on this device/)).toBeTruthy()
   expect(screen.getByText(/Not published in this release/)).toBeTruthy()
   expect(screen.getByText(/MELA opens your existing account rather than showing registration again/)).toBeTruthy()
   expect(screen.getByRole('button',{name:'Check and refresh installed MELA'})).toBeTruthy()
@@ -145,4 +145,12 @@ it('supports Escape from Settings without signing the user out', () => {
   window.dispatchEvent(new Event('mela:open-settings'))
   fireEvent.keyDown(document,{key:'Escape'})
   expect(panel.open).toBe(false)
+})
+
+it('changes Settings sections without adding Android Back history entries', () => {
+  render(<DeviceSettings />)
+  const before = window.location.href
+  fireEvent.click(screen.getByRole('button',{name:'Learning'}))
+  expect(window.location.href).toBe(before)
+  expect(window.location.hash.startsWith('#settings-')).toBe(false)
 })

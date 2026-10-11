@@ -120,6 +120,7 @@ export default function StudentDashboard({ onNavigate, audience = { stage: null,
   if (!data) return <div className="dash-main" role="status"><div className="skeleton skeleton-title" /><div className="skeleton skeleton-card" /><p>{t('loadingDashboard')}</p></div>
 
   const { profile, passport, practice, arena, feature_flags } = data
+  const practiceSuggestions = Array.isArray(practice.recommendations) ? practice.recommendations : []
   const checklist = discoveryProfile ? profilePreparationChecklist(audience.stage, audience.grade, discoveryProfile) : null
   const readiness = checklist ? Math.round(100 * checklist.filter(row => row.complete).length / checklist.length) : null
   const ongoing = courseEnrollments.filter(row => !row.completed_at).length
@@ -192,11 +193,11 @@ export default function StudentDashboard({ onNavigate, audience = { stage: null,
         <p className="settings-note">These links are based on your saved records. They are not automatically graded or counted as completed activities.</p>
         {courseRecommendations.length > 0 && <div className="list-row"><div><strong>Continue learning</strong><p className="settings-note">{courseRecommendations[0].course.title}</p></div>
           <button className="btn btn-secondary" onClick={() => onNavigate('academy')}>Open course</button></div>}
-        {practice.recommendations.length > 0 && <div className="list-row"><div><strong>Practice a recommended topic</strong><p className="settings-note">{practice.recommendations[0].subject} · {practice.recommendations[0].topic}</p></div>
+        {practiceSuggestions.length > 0 && <div className="list-row"><div><strong>Practice a recommended topic</strong><p className="settings-note">{practiceSuggestions[0].subject} · {practiceSuggestions[0].topic}</p></div>
           <button className="btn btn-secondary" onClick={() => onNavigate('practice')}>Practice</button></div>}
         {suggestedScholarships.length > 0 && <div className="list-row"><div><strong>Review a matching scholarship</strong><p className="settings-note">{suggestedScholarships[0].item.title}</p></div>
           <button className="btn btn-secondary" onClick={() => onNavigate('scholarships')}>Review</button></div>}
-        {courseRecommendations.length === 0 && practice.recommendations.length === 0 && suggestedScholarships.length === 0 &&
+        {courseRecommendations.length === 0 && practiceSuggestions.length === 0 && suggestedScholarships.length === 0 &&
           <div className="list-row"><div><strong>Build your plan</strong><p className="settings-note">Choose subjects and study goals to find relevant published learning content.</p></div>
           <button className="btn btn-secondary" onClick={() => onNavigate('profile')}>Set goals</button></div>}
       </section>

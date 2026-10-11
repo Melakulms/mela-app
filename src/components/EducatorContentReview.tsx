@@ -148,6 +148,17 @@ export default function EducatorContentReview() {
   const [questionSlices, setQuestionSlices] = useState<QuestionSlice[]>([])
   const [questionDetail, setQuestionDetail] = useState<QuestionSliceDetail | null>(null)
   const [questionDrafts, setQuestionDrafts] = useState<Record<string, QuestionReviewDraft>>({})
+  const [questionStatus, setQuestionStatus] = useState('pending')
+  const [questionOffset, setQuestionOffset] = useState(0)
+  const [questionTotal, setQuestionTotal] = useState<number | null>(null)
+  const [questionPageSize] = useState(20)
+  const [queueIsPaged, setQueueIsPaged] = useState(false)
+  const [questionProgress, setQuestionProgress] = useState<{
+    active_questions_in_authorized_subjects: number; question_entries_in_review_slices: number;
+    teacher_decisions_recorded: number; teacher_approved: number; teacher_changes_required: number;
+    unreviewed_estimate: number; coverage_gap_estimate: number
+  } | null>(null)
+  const [progressError, setProgressError] = useState('')
 
   useEffect(() => {
     let active = true
@@ -205,17 +216,61 @@ export default function EducatorContentReview() {
           setChapterItems(Array.isArray(payload.items) ? payload.items : [])
           setChapterSummary(payload.summary ?? {})
         } else {
-          const { data, error } = await supabase.rpc('get_question_review_queue_v18', { p_program_key: programFilter || null, p_limit: 100 })
-          if (error) throw error
-          if (!active) return
-          setQuestionSlices(Array.isArray(data) ? data as QuestionSlice[] : [])
+          const { data, error } = await supabase.rpc('get_question_review_queue_page_v39', {
+            p_program_key: programFilter || null, p_status: questionStatus || null,
+            p_limit: questionPageSize, p_offset: questionOffset,
+          })
+          const validPage = !error && data && typeof data === 'object' && Array.isArray((data as {items?: unknown}).items) &&
+            Number.isFinite((data as {total_slices?: unknown}).total_slices)
+          if (!validPage) {
+            // Old production database compatibility until the new review migration is deployed.
+            if (error && error.code !== 'PGRST202' && !/could not find the function/i.test(error.message)) throw error
+            if (questionOffset !== 0) {
+              if (active) { setQuestionOffset(0); setQuestionTotal(null) }
+              return
+            }
+            const fallback = await supabase.rpc('get_question_review_queue_v18', { p_program_key: programFilter || null, p_limit: 100 })
+            if (fallback.error) throw fallback.error
+            if (!active) return
+            const oldRows = Array.isArray(fallback.data) ? fallback.data as QuestionSlice[] : []
+            setQueueIsPaged(false); setQuestionTotal(null)
+            setQuestionSlices(questionStatus ? oldRows.filter(row => row.status === questionStatus) : oldRows)
+          } else if (active) {
+            const page = (data ?? {}) as {items?: QuestionSlice[];total_slices?: number}
+            setQuestionSlices(Array.isArray(page.items) ? page.items : [])
+            setQuestionTotal(Number.isFinite(page.total_slices) ? Number(page.total_slices) : 0)
+            setQueueIsPaged(true)
+          }
         }
       } catch (cause) { if (active) setError(errorMessage(cause)) }
       finally { if (active) setBusy(false) }
     }
     void load()
     return () => { active = false }
-  }, [eligible, mode, chapterStatus, programFilter, revision])
+  }, [eligible, mode, chapterStatus, programFilter, questionStatus, questionOffset, questionPageSize, revision])
+
+  useEffect(() => {
+    if (!eligible || mode !== 'questions') return
+    let active = true
+    setProgressError('')
+    void Promise.resolve(supabase.rpc('get_my_question_review_progress_v39', { p_program_key: programFilter || null }))
+      .then(({data,error}) => {
+        if (!active) return
+        if (error) {
+          if (error.code !== 'PGRST202' && !/could not find the function/i.test(error.message)) setProgressError(errorMessage(error))
+          setQuestionProgress(null)
+        } else if (data && typeof data === 'object' &&
+          Number.isFinite((data as {active_questions_in_authorized_subjects?: unknown}).active_questions_in_authorized_subjects) &&
+          Number.isFinite((data as {teacher_approved?: unknown}).teacher_approved) &&
+          Number.isFinite((data as {teacher_changes_required?: unknown}).teacher_changes_required) &&
+          Number.isFinite((data as {unreviewed_estimate?: unknown}).unreviewed_estimate) &&
+          Number.isFinite((data as {coverage_gap_estimate?: unknown}).coverage_gap_estimate)) {
+          setQuestionProgress(data as typeof questionProgress)
+        } else setQuestionProgress(null)
+      })
+      .catch((error: unknown) => { if (active) { setQuestionProgress(null); setProgressError(errorMessage(error)) } })
+    return () => { active = false }
+  }, [eligible, mode, programFilter, revision])
 
   const openChapter = async (item: ChapterQueueItem) => {
     if (busy || actionPending.current) return
@@ -273,6 +328,10 @@ export default function EducatorContentReview() {
     actionPending.current = true
     setBusy(true); setError(''); setSuccess('')
     try {
+      if (queueIsPaged && slice.status !== 'approved') {
+        const claim = await supabase.rpc('claim_question_review_slice_v39', { p_slice_id: slice.slice_id })
+        if (claim.error) throw claim.error
+      }
       const { data, error } = await supabase.rpc('get_question_review_slice_v18', { p_slice_id: slice.slice_id })
       if (error) throw error
       const detail = data as QuestionSliceDetail
@@ -380,11 +439,29 @@ export default function EducatorContentReview() {
     </div>}
 
     {mode === 'questions' && !questionDetail && <>
-      <label>Review subject / program<select value={programFilter} disabled={busy} onChange={e => setProgramFilter(e.target.value)}><option value="">All eligible subjects (first 100 slices)</option>{programOptions.map(p => <option key={p.program_key} value={p.program_key}>Grade {p.grade_level ?? '—'} · {p.subject_title} · {p.program_key}</option>)}</select></label>
+      {questionProgress && <div className="stat-strip" aria-label="Professional question review progress">
+        <div><span className="stat-value">{questionProgress.active_questions_in_authorized_subjects.toLocaleString()}</span><span className="stat-label">Active questions in my subjects</span></div>
+        <div><span className="stat-value">{questionProgress.teacher_approved.toLocaleString()}</span><span className="stat-label">Teacher approved</span></div>
+        <div><span className="stat-value">{questionProgress.teacher_changes_required.toLocaleString()}</span><span className="stat-label">Needs corrections</span></div>
+        <div><span className="stat-value">{questionProgress.unreviewed_estimate.toLocaleString()}</span><span className="stat-label">Not yet reviewed</span></div>
+      </div>}
+      {questionProgress && questionProgress.coverage_gap_estimate > 0 && <p role="alert" className="banner banner-error">{questionProgress.coverage_gap_estimate.toLocaleString()} active questions in your subjects may be absent from current review slices. A backend inventory reconciliation is required; these cannot be counted as reviewed.</p>}
+      {progressError && <p role="alert">{progressError}</p>}
+      {!questionProgress && !progressError && <p className="settings-note">Detailed teacher-verified counts require the review-progress database upgrade. MELA will not claim all questions have been checked.</p>}
+      <div className="toolbar">
+        <label>Review subject / program<select value={programFilter} disabled={busy} onChange={e => { setProgramFilter(e.target.value); setQuestionOffset(0) }}><option value="">All qualified subjects</option>{programOptions.map(p => <option key={p.program_key} value={p.program_key}>Grade {p.grade_level ?? '—'} · {p.subject_title} · {p.program_key}</option>)}</select></label>
+        <label>Review status <select value={questionStatus} disabled={busy} onChange={e => { setQuestionStatus(e.target.value); setQuestionOffset(0) }}>
+          <option value="pending">Pending</option><option value="assigned">Assigned</option><option value="in_review">In review</option>
+          <option value="changes_required">Changes required</option><option value="approved">Approved</option><option value="">All statuses</option>
+        </select></label>
+      </div>
       {programError && <p role="alert">Subject list unavailable: {programError}</p>}
-      {questionSlices.length >= 100 && <p role="alert">This response reached the 100-slice server limit. Select a specific subject to reach later subjects. Full within-subject pagination still requires a backend update; this is not the complete inventory.</p>}
-      <p className="muted">Review slices are subject-scoped. Only slices matching your verified educator subject areas are shown.</p>
-      {busy ? <p className="muted">Loading question review slices…</p> : questionSlices.length === 0 ? <div className="empty-panel">No eligible question-review slices are available for this educator profile.</div> : <div className="list-panel">{questionSlices.map(slice => <div className="list-row" key={slice.slice_id}><div><strong className="list-row-title">Grade {slice.grade_level ?? '—'} · {slice.subject_title ?? slice.program_key}</strong><div className="muted">Slice {slice.slice_number} · {slice.question_count} questions · {slice.status.replaceAll('_',' ')}</div></div><button className="btn btn-secondary" onClick={() => void openQuestionSlice(slice)} disabled={busy}>Open slice</button></div>)}</div>}
+      {!queueIsPaged && questionSlices.length >= 100 && <p role="alert">The old backend returned at most 100 review slices. This is only a partial queue. Apply the paginated review migration to display the full backlog.</p>}
+      {queueIsPaged && <div className="toolbar"><button className="btn btn-secondary" disabled={busy || questionOffset === 0} onClick={() => setQuestionOffset(offset => Math.max(0,offset - questionPageSize))}>Previous review page</button>
+        <span role="status">Showing {questionTotal === 0 ? 0 : questionOffset + 1}–{Math.min(questionOffset + questionPageSize, questionTotal ?? 0)} of {(questionTotal ?? 0).toLocaleString()} subject-eligible review slices</span>
+        <button className="btn btn-secondary" disabled={busy || questionOffset + questionPageSize >= (questionTotal ?? 0)} onClick={() => setQuestionOffset(offset => offset + questionPageSize)}>Next review page</button></div>}
+      <p className="muted">Each slice contains up to 100 questions. Only currently verified subject-and-grade-qualified teachers may approve. A queue position is not evidence of review.</p>
+      {busy ? <p className="muted">Loading question review slices…</p> : questionSlices.length === 0 ? <div className="empty-panel">No eligible question-review slices are available for this educator profile.</div> : <div className="list-panel">{questionSlices.map(slice => <div className="list-row" key={slice.slice_id}><div><strong className="list-row-title">Grade {slice.grade_level ?? '—'} · {slice.subject_title ?? slice.program_key}</strong><div className="muted">Slice {slice.slice_number} · {slice.question_count} questions · {slice.status.replaceAll('_',' ')}</div></div><button className="btn btn-secondary" onClick={() => void openQuestionSlice(slice)} disabled={busy}>{queueIsPaged && slice.status !== 'approved' ? 'Claim and review' : 'Open slice'}</button></div>)}</div>}
     </>}
 
     {mode === 'questions' && questionDetail && <form onSubmit={submitQuestionSlice}>

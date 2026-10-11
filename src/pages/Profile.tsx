@@ -1,4 +1,6 @@
 import JoinClassroom from '../components/JoinClassroom'
+import LearnerDiscoveryEditor from '../components/LearnerDiscoveryEditor'
+import StudentOnboarding from './StudentOnboarding'
 import { supabase } from '../lib/supabase'
 import { useEffect, useState } from 'react'
 import { fetchEnabledLanguages, type PlatformLanguage } from '../lib/languages'
@@ -12,6 +14,8 @@ export default function Profile({ profile, onProfileUpdated }: { profile: MelaPr
   const [linkBusy, setLinkBusy] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [editingEducation, setEditingEducation] = useState(false)
+  const [discoveryRevision, setDiscoveryRevision] = useState(0)
 
   useEffect(() => {
     fetchEnabledLanguages().then(setLanguages).catch(() => {})
@@ -41,6 +45,10 @@ export default function Profile({ profile, onProfileUpdated }: { profile: MelaPr
     finally { setLinkBusy(false) }
   }
 
+  if (editingEducation) return <StudentOnboarding initialGrade={profile.grade_level ?? 9} editMode onComplete={() => {
+    setEditingEducation(false); setDiscoveryRevision(value => value + 1); onProfileUpdated()
+  }} />
+
   return (
     <div className="dash-main">
       <h1>{t('profileHeading')}</h1>
@@ -63,6 +71,16 @@ export default function Profile({ profile, onProfileUpdated }: { profile: MelaPr
         </select>
       </div>
 
+      {profile.role === 'student' && <section>
+        <div className="section-heading"><h2>Academic profile</h2></div>
+        <div className="list-panel">
+          <p>Your saved grade determines which curriculum and grade-specific questions you see.</p>
+          <p><strong>Current stage:</strong> {profile.education_stage_key?.replaceAll('_',' ') || 'Not set'}</p>
+          <p><strong>Grade:</strong> {profile.grade_level ? `Grade ${profile.grade_level}` : 'Not applicable'}</p>
+          <button type="button" className="btn btn-secondary" onClick={() => setEditingEducation(true)}>Edit grade and core subjects</button>
+        </div>
+      </section>}
+      {profile.role === 'student' && <LearnerDiscoveryEditor key={discoveryRevision} profile={profile} />}
       {profile.role === 'student' && <JoinClassroom />}
       {profile.role === 'student' && <section>
         <div className="section-heading"><h2>{t('connectParent')}</h2></div>

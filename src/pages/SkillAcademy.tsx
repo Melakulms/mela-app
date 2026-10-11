@@ -2,6 +2,8 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import CourseReader from '../components/CourseReader'
 import { fetchCourses, fetchMyEnrollments, enrollInCourse, type Course, type Enrollment } from '../lib/academy'
 import { useI18n } from '../i18n'
+import { fetchLearnerDiscoveryProfile, type LearnerDiscoveryProfile } from '../lib/learner-discovery'
+import { recommendCourses } from '../lib/personal-learning'
 const DraftCourseReader = lazy(() => import('../components/DraftCourseReader'))
 
 export default function SkillAcademy({ onBack }: { onBack: () => void }) {
@@ -16,6 +18,7 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
   const [enrollments, setEnrollments] = useState<Map<string, Enrollment>>(new Map())
   const [error, setError] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
+  const [preferences, setPreferences] = useState<LearnerDiscoveryProfile | null>(null)
 
   useEffect(() => {
     let active = true
@@ -29,6 +32,14 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
       .catch((err) => { if (active) setError(err.message ?? 'Could not load courses.') })
     return () => { active = false }
   }, [revision])
+
+  useEffect(() => {
+    let active = true
+    fetchLearnerDiscoveryProfile().then(value => { if (active) setPreferences(value) }).catch(() => {
+      // The approved course catalogue remains usable before the optional discovery migration.
+    })
+    return () => { active = false }
+  }, [])
 
   const enroll = async (courseId: string) => {
     if (lock.current) return
@@ -48,7 +59,9 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
     }
   }
 
-  const visibleCourses = (courses ?? []).filter(course => (!category || course.category === category) && (scope === 'all' || (scope === 'enrolled' && enrollments.has(course.id)) || (scope === 'completed' && !!enrollments.get(course.id)?.completed_at) || (scope === 'available' && course.content_available && course.price_cents === 0) || (scope === 'preparing' && !course.content_available)) && `${course.title} ${course.description ?? ''} ${course.category ?? ''}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
+  const rankedCourses = preferences ? recommendCourses(courses ?? [], preferences, enrollments) :
+    (courses ?? []).map(course => ({ course, score: 0, reasons: [] as string[] }))
+  const visibleCourses = rankedCourses.filter(({ course }) => (!category || course.category === category) && (scope === 'all' || (scope === 'enrolled' && enrollments.has(course.id)) || (scope === 'completed' && !!enrollments.get(course.id)?.completed_at) || (scope === 'available' && course.content_available && course.price_cents === 0) || (scope === 'preparing' && !course.content_available) || (scope === 'suggested' && rankedCourses.some(row => row.course.id === course.id && row.score > 0))) && `${course.title} ${course.description ?? ''} ${course.category ?? ''}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
 
   if (draftOpen) return <Suspense fallback={<p role="status">Loading lesson text…</p>}><DraftCourseReader onBack={() => setDraftOpen(false)} /></Suspense>
   if (selected) return <CourseReader course={selected} preview={preview} onBack={() => { setSelected(null); setRevision(value => value + 1) }} />
@@ -59,6 +72,7 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
         <h1>{t('skillAcademy')}</h1>
         <button className="btn btn-secondary" onClick={onBack}>{t('back')}</button>
       </div>
+      {preferences?.enable_suggestions && !!rankedCourses.find(row => row.score > 0) && <p className="banner banner-info">Available lessons related to your interests appear first. Enrolled courses you have not completed are also prioritized. Recommendations are not course approval or certificates.</p>}
       <section className="list-panel" aria-label="AI Year One lessons">
         <h2>AI Education — Year One</h2>
         <p>52 weekly lessons with worked examples, practical activities and questions. English draft for secondary-age and adult learners; teacher approval and translations are pending.</p>
@@ -73,20 +87,20 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
       {courses && courses.length > 0 && <>
         <div className="field"><label htmlFor="course-search">Search courses</label><input id="course-search" type="search" value={query} onChange={e => setQuery(e.target.value)} /></div>
         <div className="field"><label htmlFor="course-category">Category</label><select id="course-category" value={category} onChange={e => setCategory(e.target.value)}><option value="">All categories</option>{Array.from(new Set(courses.map(course => course.category).filter((value): value is string => !!value))).map(value => <option key={value} value={value}>{value}</option>)}</select></div>
-        <div className="field"><label htmlFor="course-scope">Show courses</label><select id="course-scope" value={scope} onChange={e => setScope(e.target.value)}><option value="all">All courses</option><option value="available">Available free courses</option><option value="preparing">Courses in preparation</option><option value="enrolled">My courses</option><option value="completed">Completed courses</option></select></div>
+        <div className="field"><label htmlFor="course-scope">Show courses</label><select id="course-scope" value={scope} onChange={e => setScope(e.target.value)}><option value="all">All courses</option><option value="available">Available free courses</option><option value="preparing">Courses in preparation</option><option value="enrolled">My courses</option><option value="completed">Completed courses</option><option value="suggested">Suggested for me</option></select></div>
         <p role="status">Showing {visibleCourses.length} of {courses.length} courses</p>
         {!visibleCourses.length && <p className="empty-panel">No courses match these filters.</p>}
       </>}
       {courses && <p className="muted">{courses.filter(c => c.content_available && c.price_cents === 0).length} free courses have lessons available. Paid enrollment remains deferred.</p>}
       {visibleCourses.length > 0 && (
         <div className="module-grid">
-          {visibleCourses.map((c) => {
+          {visibleCourses.map(({ course: c, score, reasons }) => {
             const enrollment = enrollments.get(c.id)
             const isFree = (c.price_cents ?? 0) === 0
             const progress = Math.max(0, Math.min(100, enrollment?.progress_pct ?? 0))
             return (
               <div className="module-card" key={c.id} style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}>
-                <h3 style={{ color: 'var(--ink)' }}>{c.title}</h3>
+                <h3 style={{ color: 'var(--ink)' }}>{c.title}</h3>{score > 0 && <p className="settings-note"><strong>Recommended:</strong> {reasons.join(' · ')}</p>}
                 <p style={{ color: 'var(--muted)' }}>{c.description ?? c.category}</p><p>{c.category ?? 'General'}{c.level ? ` · ${c.level}` : ''}{c.duration_minutes ? ` · ${c.duration_minutes} minutes` : ''}</p>
                 <details><summary>Course overview</summary>{c.audience && <p>Audience: {c.audience}</p>}{c.career_track && <p>Career track: {c.career_track}</p>}{c.prerequisites && <p>Prerequisites: {c.prerequisites}</p>}{Array.isArray(c.learning_outcomes) && <><h4>Learning outcomes</h4><ul>{c.learning_outcomes.filter((item): item is string => typeof item === 'string').map((item, index) => <li key={index}>{item}</li>)}</ul></>}</details>
                 {enrollment && <div className="list-row-meta">{enrollment.completed_at ? '100% of lessons completed' : `${progress}% complete`}</div>}

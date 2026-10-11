@@ -1,7 +1,7 @@
 import { clearCoachHistories } from './lib/coach-history'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { Wifi, WifiOff, LogOut, LayoutDashboard, BookOpen, Swords, Globe, UserRound, GraduationCap } from 'lucide-react'
+import { Wifi, WifiOff, LogOut, LayoutDashboard, BookOpen, Swords, Globe, UserRound, GraduationCap, Settings as SettingsIcon } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { observeSession } from './lib/session-observer'
 import { fetchOwnProfile, logoutUser, updatePreferredLanguage, type MelaProfile } from './lib/auth'
@@ -32,9 +32,12 @@ const VerifiedAssessments = lazy(() => import('./pages/VerifiedAssessments'))
 const StudentOnboarding = lazy(() => import('./pages/StudentOnboarding'))
 const QuestionBank = lazy(() => import('./pages/QuestionBank'))
 const SafetyCenter = lazy(() => import('./pages/SafetyCenter'))
+const SettingsPage = lazy(() => import('./pages/Settings'))
 
 import ErrorBoundary from './components/ErrorBoundary'
+import MfaChallenge from './components/MfaChallenge'
 import { useStudentNavigation, VIEW_LABELS, type StudentView } from './hooks/useStudentNavigation'
+import { audienceAllowsStudentView } from './lib/feature-audience'
 
 type AuthView = 'login' | 'register'
 
@@ -62,6 +65,10 @@ export default function App() {
   const [online, setOnline] = useState(navigator.onLine)
   const [actionError, setActionError] = useState('')
   const [signingOut, setSigningOut] = useState(false)
+  const [showRoleSettings, setShowRoleSettings] = useState(false)
+  const [mfaState, setMfaState] = useState<'checking' | 'challenge' | 'ready' | 'error'>('checking')
+  const [mfaError, setMfaError] = useState('')
+  const [mfaRevision, setMfaRevision] = useState(0)
   const [savingLanguage, setSavingLanguage] = useState(false)
   const [languages, setLanguages] = useState<PlatformLanguage[]>([])
   const [employerRegistration, setEmployerRegistration] = useState<{ status: string; company_name: string | null } | null>(null)
@@ -84,6 +91,22 @@ export default function App() {
   }, [sessionRevision, t])
 
   useEffect(() => { setEditingEmployerProfile(false) }, [session?.user.id])
+
+  useEffect(() => {
+    let active = true
+    if (!session?.access_token) { setMfaState('ready'); return }
+    setMfaState('checking'); setMfaError('')
+    void supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data, error }) => {
+      if (!active) return
+      if (error || !data) throw error ?? new Error('Authentication assurance is unavailable.')
+      setMfaState(data.currentLevel !== 'aal2' && data.nextLevel === 'aal2' ? 'challenge' : 'ready')
+    }).catch(cause => {
+      if (!active) return
+      setMfaError(cause instanceof Error ? cause.message : 'Cannot verify sign-in security.')
+      setMfaState('error')
+    })
+    return () => { active = false }
+  }, [session?.access_token, mfaRevision])
 
   useEffect(() => {
     const update = () => setOnline(navigator.onLine)
@@ -171,6 +194,15 @@ export default function App() {
     )
   }
 
+  if (mfaState === 'checking') return <div className="centered-loading" role="status">Verifying your account security…</div>
+  if (mfaState === 'error') return <div className="auth-shell"><div className="auth-card">
+    <h1>Security verification unavailable</h1>
+    <div className="banner banner-error" role="alert">{mfaError}</div>
+    <button className="btn btn-primary" onClick={() => setMfaRevision(value => value + 1)}>Retry verification</button>
+    <button className="btn btn-secondary" onClick={signOut}>Sign out</button>
+  </div></div>
+  if (mfaState === 'challenge') return <MfaChallenge onVerified={() => setMfaState('ready')} onSignOut={() => void signOut()} />
+
   if (profileLoading || !profile || profile.id !== session.user.id) return <div className="centered-loading">{t('settingUpAccount')}</div>
   if (profile.account_status === 'pending_verification' || !profile.email_verified) {
     return <VerifyEmail onRefresh={reloadProfile} email={profile.email ?? pendingEmail} onUseDifferentAccount={() => { setPendingEmail(''); setAuthView('login') }} />
@@ -228,6 +260,7 @@ export default function App() {
           </select>
           <span className="pill-stat coins">🪙 {profile.coin_balance}</span>
           <span className={`pill-stat ${online ? 'online' : 'offline'}`} role="status">{online ? <Wifi size={13} /> : <WifiOff size={13} />}{online ? t('connected') : t('offline')}</span>
+          <button className="icon-btn" onClick={() => isStudent ? setStudentView('settings') : setShowRoleSettings(value => !value)} aria-label="Settings" title="Account settings"><SettingsIcon size={18} /></button>
           <button className="icon-btn" onClick={signOut} disabled={signingOut} aria-label={t('logout')}><LogOut size={18} /></button>
         </div>
       </header>
@@ -236,11 +269,17 @@ export default function App() {
       {actionError && <div className="banner banner-error shell-message" role="alert">{actionError}</div>}
       <main id="main-content" tabIndex={-1}>
       <ErrorBoundary key={studentView}><Suspense fallback={<div className="page-loading" role="status">{t('loadingPage')}</div>}>
-      {isStudent ? (
-        <>
-          {studentView === 'practice' && <Practice onBack={() => setStudentView('dashboard')} onOpenQuestionBank={() => setStudentView('question-bank')} />}
+      {!isStudent && showRoleSettings ? (
+        <SettingsPage profile={profile} onProfileUpdated={reloadProfile} onBack={() => setShowRoleSettings(false)} />
+      ) : isStudent ? (
+        !audienceAllowsStudentView(studentView, { stage: profile.education_stage_key, grade: profile.grade_level }) ? (
+          <div className="dash-main"><h1>Feature not available for this learner</h1><p>This feature is not available for your learning stage, or its financial operations are deferred.</p>
+            <button className="btn btn-primary" onClick={() => setStudentView('dashboard')}>Return to dashboard</button>
+          </div>
+        ) : <>
+          {studentView === 'practice' && <Practice audience={{ stage: profile.education_stage_key, grade: profile.grade_level }} onBack={() => setStudentView('dashboard')} onOpenQuestionBank={() => setStudentView('question-bank')} />}
           {studentView === 'question-bank' && <QuestionBank onBack={() => setStudentView('dashboard')} />}
-          {studentView === 'opportunities' && <OpportunityHub onBack={() => setStudentView('dashboard')} />}
+          {studentView === 'opportunities' && <OpportunityHub audience={{ stage: profile.education_stage_key, grade: profile.grade_level }} onBack={() => setStudentView('dashboard')} />}
           {studentView === 'materials' && <StudyMaterials stageKey={profile.education_stage_key} gradeLevel={profile.grade_level} onBack={() => setStudentView('dashboard')} />}
           {studentView === 'academy' && <SkillAcademy onBack={() => setStudentView('dashboard')} />}
           {studentView === 'mentorship' && <Mentorship onBack={() => setStudentView('dashboard')} />}
@@ -248,6 +287,7 @@ export default function App() {
           {studentView === 'coach' && <AiCareerCoach key={profile.id} userId={profile.id} onBack={() => setStudentView('dashboard')} />}
           {studentView === 'arena' && <Arena onBack={() => setStudentView('dashboard')} />}
           {studentView === 'profile' && <Profile profile={profile} onProfileUpdated={reloadProfile} />}
+          {studentView === 'settings' && <SettingsPage profile={profile} onProfileUpdated={reloadProfile} onBack={() => setStudentView('profile')} onSafety={() => setStudentView('safety')} />}
           {studentView === 'scholarships' && <EthioScholarConnect onBack={() => setStudentView('dashboard')} />}
           {studentView === 'mastery' && <LearnerTools view="mastery" onNavigate={setStudentView} onBack={() => setStudentView('dashboard')} />}
           {studentView === 'opportunity-graph' && <LearnerTools view="graph" onNavigate={setStudentView} onBack={() => setStudentView('dashboard')} />}
@@ -257,7 +297,7 @@ export default function App() {
           {studentView === 'assessments' && <VerifiedAssessments onBack={() => setStudentView('dashboard')} />}
           {studentView === 'earn-work' && <LearnerSubsections view="earn" onBack={() => setStudentView('dashboard')} />}
           {studentView === 'safety' && <SafetyCenter onBack={() => setStudentView('dashboard')} />}
-          {studentView === 'dashboard' && <StudentDashboard onNavigate={setStudentView} />}
+          {studentView === 'dashboard' && <StudentDashboard onNavigate={setStudentView} audience={{ stage: profile.education_stage_key, grade: profile.grade_level }} />}
         </>
       ) : profile.role === 'company' || profile.role === 'employer' ? (
         <EmployerPortal role={profile.role} />

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { fetchLearningLibrary, fetchLearningMaterial, type MaterialContent, type LearningProgram } from '../lib/materials'
 import { useI18n } from '../i18n'
+import { fetchLearnerDiscoveryProfile } from '../lib/learner-discovery'
 
 export default function StudyMaterials({ stageKey, gradeLevel, onBack }: { stageKey: string | null; gradeLevel: number | null; onBack: () => void }) {
   const { t } = useI18n()
@@ -9,6 +10,8 @@ export default function StudyMaterials({ stageKey, gradeLevel, onBack }: { stage
   const [material, setMaterial] = useState<MaterialContent | null>(null)
   const [busy, setBusy] = useState(false)
   const [openProgram, setOpenProgram] = useState<string | null>(null)
+  const [preferredKeys, setPreferredKeys] = useState<string[]>([])
+  const [showAll, setShowAll] = useState(false)
 
   useEffect(() => {
     if (!stageKey) {
@@ -19,6 +22,19 @@ export default function StudyMaterials({ stageKey, gradeLevel, onBack }: { stage
       .then((lib) => setPrograms(lib.programs))
       .catch((e) => setError(e.message ?? 'Could not load study materials.'))
   }, [stageKey, gradeLevel])
+
+  useEffect(() => {
+    let active = true
+    fetchLearnerDiscoveryProfile().then(value => {
+      if (active) setPreferredKeys(value.preferred_program_keys)
+    }).catch(() => {
+      // Grade-filtered learning material remains accessible without optional preferences.
+    })
+    return () => { active = false }
+  }, [stageKey, gradeLevel])
+
+  const matchingPreferred = (programs ?? []).filter(p => preferredKeys.includes(p.program_key))
+  const visiblePrograms = matchingPreferred.length && !showAll ? matchingPreferred : (programs ?? [])
 
   const openMaterial = async (key: string) => {
     if (busy) return
@@ -46,7 +62,12 @@ export default function StudyMaterials({ stageKey, gradeLevel, onBack }: { stage
       {!programs && !error && <p className="muted">Loading…</p>}
       {programs && programs.length === 0 && <div className="empty-panel">No materials published for your stage yet.</div>}
 
-      {programs?.map((p) => (
+      {matchingPreferred.length > 0 && <label className="settings-checkbox">
+        <input type="checkbox" checked={showAll} onChange={event => setShowAll(event.target.checked)} />
+        Show all available programs for this education level
+      </label>}
+      {matchingPreferred.length > 0 && !showAll && <p className="settings-note">Showing your selected subjects. Other published subjects remain available using the checkbox above.</p>}
+      {visiblePrograms.map((p) => (
         <div key={p.program_key} className="list-panel">
           <button
             aria-expanded={openProgram === p.program_key}

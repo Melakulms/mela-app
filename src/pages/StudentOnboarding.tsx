@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { fetchGradePrograms } from '../lib/learner-discovery'
 
 type Subject = {
   subject_key: string
@@ -7,14 +8,16 @@ type Subject = {
   optional: boolean
 }
 
-export default function StudentOnboarding({ onComplete }: { onComplete: () => void }) {
-  const [grade, setGrade] = useState<number>(9)
+export default function StudentOnboarding({ onComplete, initialGrade = 9, editMode = false }: { onComplete: () => void; initialGrade?: number; editMode?: boolean }) {
+  const [grade, setGrade] = useState<number>(initialGrade)
   const [track, setTrack] = useState('natural_sciences')
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [selected, setSelected] = useState<string[]>([])
   const [school, setSchool] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [subjectSource, setSubjectSource] = useState('Loading your subjects…')
+  const [catalogLoading, setCatalogLoading] = useState(false)
 
   const stageKey = useMemo(() => {
     if (grade <= 6) return 'school_1_6'
@@ -24,27 +27,51 @@ export default function StudentOnboarding({ onComplete }: { onComplete: () => vo
   }, [grade])
 
   useEffect(() => {
+    let active = true
     setError('')
+    setCatalogLoading(true)
     if (grade < 11) setTrack('common')
     else if (track === 'common') setTrack('natural_sciences')
-    supabase
+    void Promise.resolve(supabase
       .from('mela_national_subject_catalog')
       .select('subject_key, subject_title, optional')
       .eq('active', true)
       .eq('stage_key', stageKey)
-      .eq('track_key', grade >= 11 ? track : 'common')
-      .order('display_order')
-      .then(({ data, error }) => {
-        if (error) { setError(error.message); return }
-        const rows = (data ?? []) as Subject[]
+      .eq('track_key', grade >= 11 ? (track === 'common' ? 'natural_sciences' : track) : 'common')
+      .order('display_order'))
+      .then(async ({ data, error }) => {
+        if (error) throw error
+        const stageSubjects = (data ?? []) as Subject[]
+        const gradePrograms = await fetchGradePrograms(grade, track === 'common' ? 'natural_sciences' : track).catch(() => [])
+        if (!active) return
+        const title = (value: string) => value.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim()
+        const gradeTitles = new Set(gradePrograms.map(program => title(program.subject_title)))
+        const exact = stageSubjects.filter(subject => gradeTitles.has(title(subject.subject_title)))
+        // Keep the verified stage catalog if a partially published grade catalog lacks mappings.
+        const rows = exact.length ? exact : stageSubjects
+        setSubjectSource(exact.length
+          ? `Grade ${grade} curriculum subjects`
+          : 'School-stage core subjects (grade-specific catalogue is incomplete)')
         setSubjects(rows)
-        setSelected(rows.filter(s => !s.optional).map(s => s.subject_key))
-      })
-  }, [stageKey, track, grade])
+        if (!editMode) { setSelected(rows.filter(s => !s.optional).map(s => s.subject_key)); return }
+        const { data: auth } = await supabase.auth.getUser()
+        if (!auth.user) throw new Error('Your session has expired.')
+        const { data: existing, error: studentError } = await supabase.from('student_profiles')
+          .select('subjects,school_name').eq('user_id', auth.user.id).maybeSingle()
+        if (studentError) throw studentError
+        if (!active) return
+        setSchool(existing?.school_name ?? '')
+        const saved = Array.isArray(existing?.subjects) ? existing.subjects : []
+        setSelected(rows.filter(s => saved.includes(s.subject_key)).map(s => s.subject_key))
+      }).catch(cause => { if (active) setError(cause instanceof Error ? cause.message : 'Could not load subjects.') })
+        .finally(() => { if (active) setCatalogLoading(false) })
+    return () => { active = false }
+  }, [stageKey, track, grade, editMode])
 
   const save = async () => {
+    if (catalogLoading) return
     if (selected.length === 0) {
-      setError('Select at least one subject.')
+      setError('Select at least one subject from your school curriculum.')
       return
     }
     setBusy(true)
@@ -86,8 +113,8 @@ export default function StudentOnboarding({ onComplete }: { onComplete: () => vo
     <div className="auth-shell">
       <div className="auth-card" style={{ maxWidth: 720 }}>
         <span className="auth-wordmark">MELA</span>
-        <h1>Set up your learning profile</h1>
-        <p className="auth-subtitle">Choose your grade and subjects so MELA can show the correct Ethiopian curriculum and question bank for Grades 1–12.</p>
+        <h1>{editMode ? 'Edit your school grade & core subjects' : 'Set up your learning profile'}</h1>
+        <p className="auth-subtitle">Your grade controls the curriculum and Question Bank. Select your core subjects here, then refine grade-specific programs and interests in your Profile.</p>
 
         {error && <div className="banner banner-error">{error}</div>}
 
@@ -114,7 +141,7 @@ export default function StudentOnboarding({ onComplete }: { onComplete: () => vo
         </div>
 
         <div className="field">
-          <label>Subjects</label>
+          <label>Subjects · {subjectSource}</label>
           <div className="role-grid">
             {subjects.map(s => (
               <button
@@ -125,7 +152,7 @@ export default function StudentOnboarding({ onComplete }: { onComplete: () => vo
                 onClick={() => setSelected(current => current.includes(s.subject_key)
                   ? current.filter(x => x !== s.subject_key)
                   : [...current, s.subject_key])}
-                disabled={busy}
+                disabled={busy || catalogLoading}
               >
                 {s.subject_title}{s.optional ? ' (optional)' : ''}
               </button>
@@ -133,8 +160,8 @@ export default function StudentOnboarding({ onComplete }: { onComplete: () => vo
           </div>
         </div>
 
-        <button className="btn btn-primary btn-block" onClick={save} disabled={busy}>
-          {busy ? 'Saving…' : 'Continue to MELA'}
+        <button className="btn btn-primary btn-block" onClick={save} disabled={busy || catalogLoading || subjects.length === 0}>
+          {busy ? 'Saving…' : editMode ? 'Save grade and core subjects' : 'Continue to MELA'}
         </button>
       </div>
     </div>

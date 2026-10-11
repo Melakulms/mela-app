@@ -32,6 +32,7 @@ const LearnerTools = lazy(() => import('./pages/LearnerTools'))
 const LearnerSubsections = lazy(() => import('./pages/LearnerSubsections'))
 const VerifiedAssessments = lazy(() => import('./pages/VerifiedAssessments'))
 const StudentOnboarding = lazy(() => import('./pages/StudentOnboarding'))
+const ProfileAccessHub = lazy(() => import('./pages/ProfileAccessHub'))
 const QuestionBank = lazy(() => import('./pages/QuestionBank'))
 const SafetyCenter = lazy(() => import('./pages/SafetyCenter'))
 
@@ -188,25 +189,31 @@ export default function App() {
   const isStudent = profile.role === 'student'
 
   if (isStudent && !profile.education_onboarding_completed) {
-    return <StudentOnboarding onComplete={reloadProfile} initialGrade={profile.grade_level} initialStage={profile.education_stage_key} />
+    return <Suspense fallback={<div className="centered-loading">Loading your MELA learning profile…</div>}>
+      <ProfileAccessHub role="student" stageKey={profile.education_stage_key} onRefresh={reloadProfile} onSignOut={() => {void signOut()}}
+        setup={<StudentOnboarding onComplete={reloadProfile} initialGrade={profile.grade_level} initialStage={profile.education_stage_key}/>}/>
+    </Suspense>
   }
 
   if (profile.role === 'parent' && (profile.profile_completion ?? 0) < 100) {
     return <Suspense fallback={<div className="centered-loading">Loading family profile…</div>}>
-      <FamilyProfileSetup fullName={profile.full_name} email={profile.email} onComplete={reloadProfile}/>
+      <ProfileAccessHub role="parent" onRefresh={reloadProfile} onSignOut={() => {void signOut()}}
+        setup={<FamilyProfileSetup fullName={profile.full_name} email={profile.email} onComplete={reloadProfile}/>}/>
     </Suspense>
   }
 
   if (profile.role === 'teacher' && (profile.profile_completion ?? 0) < 100) {
     return <Suspense fallback={<div className="centered-loading">Loading teacher profile…</div>}>
-      <TeacherProfileSetup fullName={profile.full_name} email={profile.email} onComplete={reloadProfile}/>
+      <ProfileAccessHub role="teacher" onRefresh={reloadProfile} onSignOut={() => {void signOut()}}
+        setup={<TeacherProfileSetup fullName={profile.full_name} email={profile.email} onComplete={reloadProfile}/>}/>
     </Suspense>
   }
 
   if ((profile.role === 'company' || profile.role === 'employer') && ((profile.profile_completion ?? 0) < 100 || editingEmployerProfile)) {
     return <Suspense fallback={<div className="centered-loading">Loading employer profile…</div>}>
-      <EmployerProfileSetup role={profile.role} fullName={profile.full_name} email={profile.email}
-        onComplete={() => { setEditingEmployerProfile(false); reloadProfile() }}/>
+      <ProfileAccessHub role={profile.role} onRefresh={reloadProfile} onSignOut={() => {void signOut()}}
+        setup={<EmployerProfileSetup role={profile.role} fullName={profile.full_name} email={profile.email}
+          onComplete={() => { setEditingEmployerProfile(false); reloadProfile() }}/>}/>
     </Suspense>
   }
 

@@ -37,6 +37,7 @@ const SettingsPage = lazy(() => import('./pages/Settings'))
 import ErrorBoundary from './components/ErrorBoundary'
 import MfaChallenge from './components/MfaChallenge'
 import { useStudentNavigation, VIEW_LABELS, type StudentView } from './hooks/useStudentNavigation'
+import { audienceAllowsStudentView } from './lib/feature-audience'
 
 type AuthView = 'login' | 'register'
 
@@ -271,7 +272,11 @@ export default function App() {
       {!isStudent && showRoleSettings ? (
         <SettingsPage profile={profile} onProfileUpdated={reloadProfile} onBack={() => setShowRoleSettings(false)} />
       ) : isStudent ? (
-        <>
+        !audienceAllowsStudentView(studentView, { stage: profile.education_stage_key, grade: profile.grade_level }) ? (
+          <div className="dash-main"><h1>Feature not available for this learner</h1><p>This feature is not available for your learning stage, or its financial operations are deferred.</p>
+            <button className="btn btn-primary" onClick={() => setStudentView('dashboard')}>Return to dashboard</button>
+          </div>
+        ) : <>
           {studentView === 'practice' && <Practice onBack={() => setStudentView('dashboard')} onOpenQuestionBank={() => setStudentView('question-bank')} />}
           {studentView === 'question-bank' && <QuestionBank onBack={() => setStudentView('dashboard')} />}
           {studentView === 'opportunities' && <OpportunityHub onBack={() => setStudentView('dashboard')} />}
@@ -292,7 +297,7 @@ export default function App() {
           {studentView === 'assessments' && <VerifiedAssessments onBack={() => setStudentView('dashboard')} />}
           {studentView === 'earn-work' && <LearnerSubsections view="earn" onBack={() => setStudentView('dashboard')} />}
           {studentView === 'safety' && <SafetyCenter onBack={() => setStudentView('dashboard')} />}
-          {studentView === 'dashboard' && <StudentDashboard onNavigate={setStudentView} />}
+          {studentView === 'dashboard' && <StudentDashboard onNavigate={setStudentView} audience={{ stage: profile.education_stage_key, grade: profile.grade_level }} />}
         </>
       ) : profile.role === 'company' || profile.role === 'employer' ? (
         <EmployerPortal role={profile.role} />

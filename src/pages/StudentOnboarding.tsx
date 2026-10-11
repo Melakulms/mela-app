@@ -5,6 +5,9 @@ import {
   validateSubjectSelection, type EducationChoice, type ProfileSubject,
 } from '../lib/education-profile'
 
+const INTERESTS = ['Mathematics', 'Science', 'Reading & languages', 'Technology & AI', 'Arts & design', 'Agriculture & environment', 'Business & entrepreneurship'] as const
+const GOALS = ['Improve my school results', 'Prepare for exams', 'Develop digital skills', 'Explore a career', 'Prepare for scholarships'] as const
+
 type Props = {
   onComplete: () => void
   initialGrade?: number | null
@@ -22,6 +25,8 @@ export default function StudentOnboarding({
   const [subjects, setSubjects] = useState<ProfileSubject[]>([])
   const [selected, setSelected] = useState<string[]>([])
   const [school, setSchool] = useState('')
+  const [interests, setInterests] = useState<string[]>([])
+  const [goals, setGoals] = useState<string[]>([])
   const [loadingCatalog, setLoadingCatalog] = useState(false)
   const [catalogError, setCatalogError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -81,11 +86,13 @@ export default function StudentOnboarding({
           const {data: auth} = await supabase.auth.getUser()
           if (auth.user) {
             const {data, error: readError} = await supabase.from('student_profiles')
-              .select('subjects, school_name').eq('user_id', auth.user.id).maybeSingle()
+              .select('subjects, school_name, learning_interests, goals').eq('user_id', auth.user.id).maybeSingle()
             if (readError) throw readError
             if (!active) return
             storedSubjects = Array.isArray(data?.subjects) ? data.subjects : []
             setSchool(data?.school_name ?? '')
+            setInterests((data?.learning_interests ?? []).filter((value: string) => INTERESTS.includes(value as typeof INTERESTS[number])))
+            setGoals((data?.goals ?? []).filter((value: string) => GOALS.includes(value as typeof GOALS[number])))
           }
         }
         if (!active) return
@@ -131,6 +138,8 @@ export default function StudentOnboarding({
           user_id: auth.user.id,
           school_name: school.trim() || null,
           subjects: selected,
+          learning_interests: interests,
+          goals,
         }, { onConflict: 'user_id' })
       if (studentError) throw studentError
 
@@ -227,6 +236,30 @@ export default function StudentOnboarding({
             <p role="status">{selected.length} selected · {requiredSubjects.length} mandatory</p>
           </>}
         </div>}
+        {stageKey && <section className="field" aria-label="Optional learning personalization">
+          <h2>Personalize your learning (optional)</h2>
+          <p className="field-hint">Choose interests and learning goals to help MELA recommend useful lessons. You can skip these. Do not enter private information here.</p>
+          <div className="field">
+            <label id="learning-interests-label">Your interests</label>
+            <div className="role-grid" role="group" aria-labelledby="learning-interests-label">
+              {INTERESTS.map(value => <button key={value} type="button" className="role-option"
+                aria-pressed={interests.includes(value)} disabled={busy}
+                onClick={() => setInterests(current => current.includes(value) ? current.filter(item => item !== value) : [...current, value])}>
+                {interests.includes(value) ? '✓ ' : ''}{value}
+              </button>)}
+            </div>
+          </div>
+          <div className="field">
+            <label id="learning-goals-label">My learning goals</label>
+            <div className="role-grid" role="group" aria-labelledby="learning-goals-label">
+              {GOALS.map(value => <button key={value} type="button" className="role-option"
+                aria-pressed={goals.includes(value)} disabled={busy}
+                onClick={() => setGoals(current => current.includes(value) ? current.filter(item => item !== value) : [...current, value])}>
+                {goals.includes(value) ? '✓ ' : ''}{value}
+              </button>)}
+            </div>
+          </div>
+        </section>}
         <button type="submit" className="btn btn-primary btn-block"
           disabled={busy || loadingCatalog || !stageKey || !!catalogError || !!selectionError}>
           {busy ? 'Saving education profile…' : editMode ? 'Save my subjects' : 'Complete profile & open MELA'}

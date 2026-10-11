@@ -1,4 +1,19 @@
-import { afterEach, expect, it } from 'vitest'
+import { afterEach, expect, it, vi } from 'vitest'
+
+vi.mock('../src/lib/supabase', () => {
+  const query = {
+    select() { return this },
+    eq() { return this },
+    order() { return Promise.resolve({data: [], error: null}) },
+    maybeSingle() { return Promise.resolve({data: null, error: null}) },
+  }
+  return {
+    supabase: {
+      from: () => query,
+      auth: {getUser: async () => ({data: {user: null}, error: null})},
+    },
+  }
+})
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import StudentOnboarding from '../src/pages/StudentOnboarding'
 

@@ -25,3 +25,10 @@ it('reads the first and last weekly lessons without a database or completion cla
   expect((screen.getByRole('button',{name:'Next week'}) as HTMLButtonElement).disabled).toBe(true)
   expect(screen.queryByRole('button',{name:'Mark lesson complete'})).toBeNull()
 })
+
+it('shows a clear update control without falsely promising to deploy development changes', () => {
+  render(<DeviceSettings />)
+  expect(screen.getByRole('button', {name:'Check and refresh installed MELA'})).toBeTruthy()
+  expect(screen.getByText(/not an APK/)).toBeTruthy()
+  expect(screen.getByText(/does not install unreleased development features/)).toBeTruthy()
+})

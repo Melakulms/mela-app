@@ -49,7 +49,20 @@ export default function DeviceSettings() {
     if (window.location.hash.startsWith('#settings-')) {
       window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search)
     }
+    // Home is a real destination, not only a React event. This also works
+    // while the learner is still on the registration or profile setup screen.
+    const home = new URL(window.location.href)
+    home.searchParams.delete('mela_refresh')
+    home.searchParams.set('view', 'dashboard')
+    home.hash = ''
+    window.history.replaceState(
+      { ...(window.history.state && typeof window.history.state === 'object' ? window.history.state : {}), melaSettingsOpen: false },
+      '',
+      home,
+    )
+    window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }))
     window.dispatchEvent(new Event('mela:go-home'))
+    window.scrollTo?.(0, 0)
     const focusHome = () => {
       const destination = document.querySelector<HTMLElement>('#main-content, .profile-access-hub, main.auth-layout, .auth-shell')
       destination?.scrollIntoView?.({ behavior: 'auto', block: 'start' })

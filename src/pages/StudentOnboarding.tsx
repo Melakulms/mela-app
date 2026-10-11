@@ -76,6 +76,21 @@ export default function StudentOnboarding({
               optional: true,
             }))
           })
+        // Some live deployments have per-grade learning programs but no stage-wide
+        // subject catalog rows. Use those programs as a grounded second source.
+        if (isSchool && grade !== null) {
+          const {data: gradePrograms, error: programsError} = await supabase.from('mela_learning_programs')
+            .select('program_key,subject_title,grade_level,track_key')
+            .eq('active', true).eq('stage_key', stageKey).eq('grade_level', grade)
+            .in('track_key', grade >= 11 ? ['common',trackKey] : ['common'])
+            .order('subject_title')
+          if (programsError && rows.length === 0) throw programsError
+          for (const program of gradePrograms ?? []) {
+            if (!rows.some(subject => subject.subject_title.trim().toLowerCase() === program.subject_title.trim().toLowerCase())) {
+              rows.push({subject_key: program.program_key, subject_title: program.subject_title, optional: true})
+            }
+          }
+        }
         if (!active) return
 
         const uniqueRows = rows.filter((subject, index) =>
@@ -154,9 +169,27 @@ export default function StudentOnboarding({
         .eq('id', auth.user.id)
       if (profileError) throw profileError
 
+      // Verify that both writes are actually readable before navigating away.
+      const {data: savedProfile, error: checkError} = await supabase.from('profiles')
+        .select('education_stage_key,grade_level,education_onboarding_completed')
+        .eq('id', auth.user.id).maybeSingle()
+      if (checkError) throw checkError
+      if (savedProfile?.education_stage_key !== stageKey ||
+          (isSchool && savedProfile.grade_level !== grade) ||
+          !savedProfile?.education_onboarding_completed) {
+        throw new Error('Your education details were not confirmed by the server. Nothing was marked complete; try again or contact MELA support.')
+      }
+      const {data: savedSubjects, error: subjectCheckError} = await supabase.from('student_profiles')
+        .select('subjects').eq('user_id', auth.user.id).maybeSingle()
+      if (subjectCheckError) throw subjectCheckError
+      if (!Array.isArray(savedSubjects?.subjects) ||
+          selected.some(subject => !savedSubjects.subjects.includes(subject))) {
+        throw new Error('Subjects were not confirmed as saved. Please retry and keep this screen open.')
+      }
       onComplete()
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not save your education profile.')
+      const message = cause instanceof Error ? cause.message : 'Could not save your education profile.'
+      setError(message + ' Your choices remain on this screen. If it happens again, use Copy error below and share the message with support.')
     } finally {
       setBusy(false)
     }
@@ -168,7 +201,10 @@ export default function StudentOnboarding({
       <h1>{editMode ? 'Your education profile' : 'Complete your education profile'}</h1>
       <p className="auth-subtitle">Required: education level, school grade where applicable, and your curriculum subjects. MELA uses these to organize lessons, practice questions and appropriate competitions.</p>
       <p className="field-hint">School children do not need to provide a date of birth, home address, phone number, or a photo to choose their school curriculum.</p>
-      {error && <div className="banner banner-error" role="alert">{error}</div>}
+      {error && <div className="banner banner-error" role="alert">
+        <p>{error}</p>
+        <button type="button" className="btn btn-secondary" onClick={() => void navigator.clipboard?.writeText(error).catch(() => {})}>Copy error for support</button>
+      </div>}
       <form onSubmit={e => void save(e)}>
         <div className="field">
           <label htmlFor="education-choice">Education level (required)</label>

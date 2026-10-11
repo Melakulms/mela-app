@@ -277,7 +277,7 @@ export default function App() {
             <button className="btn btn-primary" onClick={() => setStudentView('dashboard')}>Return to dashboard</button>
           </div>
         ) : <>
-          {studentView === 'practice' && <Practice onBack={() => setStudentView('dashboard')} onOpenQuestionBank={() => setStudentView('question-bank')} />}
+          {studentView === 'practice' && <Practice audience={{ stage: profile.education_stage_key, grade: profile.grade_level }} onBack={() => setStudentView('dashboard')} onOpenQuestionBank={() => setStudentView('question-bank')} />}
           {studentView === 'question-bank' && <QuestionBank onBack={() => setStudentView('dashboard')} />}
           {studentView === 'opportunities' && <OpportunityHub audience={{ stage: profile.education_stage_key, grade: profile.grade_level }} onBack={() => setStudentView('dashboard')} />}
           {studentView === 'materials' && <StudyMaterials stageKey={profile.education_stage_key} gradeLevel={profile.grade_level} onBack={() => setStudentView('dashboard')} />}

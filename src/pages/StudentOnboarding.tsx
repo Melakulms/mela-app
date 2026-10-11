@@ -7,8 +7,8 @@ type Subject = {
   optional: boolean
 }
 
-export default function StudentOnboarding({ onComplete }: { onComplete: () => void }) {
-  const [grade, setGrade] = useState<number>(9)
+export default function StudentOnboarding({ onComplete, initialGrade = 9, editMode = false }: { onComplete: () => void; initialGrade?: number; editMode?: boolean }) {
+  const [grade, setGrade] = useState<number>(initialGrade)
   const [track, setTrack] = useState('natural_sciences')
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [selected, setSelected] = useState<string[]>([])
@@ -24,6 +24,7 @@ export default function StudentOnboarding({ onComplete }: { onComplete: () => vo
   }, [grade])
 
   useEffect(() => {
+    let active = true
     setError('')
     if (grade < 11) setTrack('common')
     else if (track === 'common') setTrack('natural_sciences')
@@ -35,16 +36,27 @@ export default function StudentOnboarding({ onComplete }: { onComplete: () => vo
       .eq('track_key', grade >= 11 ? track : 'common')
       .order('display_order')
       .then(({ data, error }) => {
+        if (!active) return
         if (error) { setError(error.message); return }
         const rows = (data ?? []) as Subject[]
         setSubjects(rows)
-        setSelected(rows.filter(s => !s.optional).map(s => s.subject_key))
+        if (!editMode) { setSelected(rows.filter(s => !s.optional).map(s => s.subject_key)); return }
+        void supabase.auth.getUser().then(async ({ data: auth }) => {
+          if (!auth.user) throw new Error('Your session has expired.')
+          const { data: existing, error: studentError } = await supabase.from('student_profiles')
+            .select('subjects').eq('user_id', auth.user.id).maybeSingle()
+          if (studentError) throw studentError
+          if (!active) return
+          const saved = Array.isArray(existing?.subjects) ? existing.subjects : []
+          setSelected(rows.filter(s => saved.includes(s.subject_key)).map(s => s.subject_key))
+        }).catch(cause => { if (active) setError(cause instanceof Error ? cause.message : 'Could not load subjects.') })
       })
-  }, [stageKey, track, grade])
+    return () => { active = false }
+  }, [stageKey, track, grade, editMode])
 
   const save = async () => {
     if (selected.length === 0) {
-      setError('Select at least one subject.')
+      setError('Select at least one subject from your school curriculum.')
       return
     }
     setBusy(true)
@@ -86,8 +98,8 @@ export default function StudentOnboarding({ onComplete }: { onComplete: () => vo
     <div className="auth-shell">
       <div className="auth-card" style={{ maxWidth: 720 }}>
         <span className="auth-wordmark">MELA</span>
-        <h1>Set up your learning profile</h1>
-        <p className="auth-subtitle">Choose your grade and subjects so MELA can show the correct Ethiopian curriculum and question bank for Grades 1–12.</p>
+        <h1>{editMode ? 'Edit your school grade & core subjects' : 'Set up your learning profile'}</h1>
+        <p className="auth-subtitle">Your grade controls the curriculum and Question Bank. Select your core subjects here, then refine grade-specific programs and interests in your Profile.</p>
 
         {error && <div className="banner banner-error">{error}</div>}
 
@@ -134,7 +146,7 @@ export default function StudentOnboarding({ onComplete }: { onComplete: () => vo
         </div>
 
         <button className="btn btn-primary btn-block" onClick={save} disabled={busy}>
-          {busy ? 'Saving…' : 'Continue to MELA'}
+          {busy ? 'Saving…' : editMode ? 'Save grade and core subjects' : 'Continue to MELA'}
         </button>
       </div>
     </div>

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { fetchDashboard, type MelaDashboard } from '../lib/dashboard'
 import { fetchMyBadges, type EarnedBadge } from '../lib/badges'
+import { audienceAllowsStudentModule, type StudentAudience } from '../lib/feature-audience'
 
 type DashboardModule = {
   key: string
@@ -41,7 +42,7 @@ const MODULES: DashboardModule[] = [
   { key: 'earn_work', labelKey: 'earnWork', blurbKey: 'earnWorkBlurb', view: 'earn-work', icon: DollarSign, cls: 'mc-earn_work' },
 ]
 
-export default function StudentDashboard({ onNavigate }: { onNavigate: (view: StudentView) => void }) {
+export default function StudentDashboard({ onNavigate, audience = { stage: null, grade: null } }: { onNavigate: (view: StudentView) => void; audience?: StudentAudience }) {
   const { t } = useI18n()
   const [data, setData] = useState<MelaDashboard | null>(null)
   const [badges, setBadges] = useState<EarnedBadge[]>([])
@@ -63,7 +64,7 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
 
   const { profile, passport, practice, arena, feature_flags } = data
   const normalizedQuery = query.trim().toLocaleLowerCase()
-  const visibleModules = MODULES.filter(m => `${t(m.labelKey)} ${t(m.blurbKey)}`.toLocaleLowerCase().includes(normalizedQuery))
+  const visibleModules = MODULES.filter(m => audienceAllowsStudentModule(m.key, audience)).filter(m => `${t(m.labelKey)} ${t(m.blurbKey)}`.toLocaleLowerCase().includes(normalizedQuery))
 
   return (
     <div className="dash-main dashboard-main">
@@ -71,6 +72,11 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
         <div><span className="eyebrow">{t('learningSpace')}</span><h1>{t('hello')}, {profile.full_name?.split(' ')[0] ?? t('there')} <span className="greeting-dot">.</span></h1><p>{t('dailyProgress')}</p></div>
       </div>
 
+      <div className="settings-panel">
+        <div className="section-heading"><h2>Your learning profile</h2><button className="btn btn-secondary" type="button" onClick={() => onNavigate('profile')}>Edit profile</button></div>
+        <p>{audience.stage?.startsWith('school_') ? `Grade ${audience.grade ?? 'not set'} · Grade-matched curriculum` : 'Higher education and career learning'}. Add subjects and interests to get suggested scholarships and opportunities.</p>
+        <button className="btn btn-secondary" type="button" onClick={() => onNavigate('scholarships')}>Discover scholarships</button>
+      </div>
       <div className="stat-strip">
         <div><span className="stat-value">{passport.profile_score}</span><span className="stat-label">{t('score')}</span></div>
         <div><span className="stat-value">{passport.badge_count}</span><span className="stat-label">{t('badges')}</span></div>

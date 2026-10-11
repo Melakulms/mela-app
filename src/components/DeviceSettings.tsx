@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useI18n } from '../i18n'
 import {
   DEFAULT_DEVICE_PREFERENCES, readDevicePreferences, saveDevicePreferences,
-  type DevicePreferences, type ThemeMode,
+  type DevicePreferences, type ThemeMode, type AccentColor, type ReadingSpacing,
 } from '../lib/device-preferences'
 
 const LANGUAGES = [
@@ -111,6 +111,22 @@ export default function DeviceSettings() {
             <option value="system">Follow device</option><option value="dark">Dark</option><option value="light">Light</option>
           </select>
         </label>
+        <label className="settings-control">Accent color
+          <select aria-label="Accent color" value={preferences.accent} onChange={e => changeSettings({accent:e.target.value as AccentColor})}>
+            <option value="gold">MELA gold</option>
+            <option value="teal">Ocean teal</option>
+            <option value="violet">Lavender violet</option>
+            <option value="coral">Sunset coral</option>
+          </select>
+        </label>
+        <label className="settings-control">Reading spacing
+          <select aria-label="Reading spacing" value={preferences.readingSpacing} onChange={e => changeSettings({readingSpacing:e.target.value as ReadingSpacing})}>
+            <option value="standard">Standard</option>
+            <option value="relaxed">Relaxed — easier reading</option>
+            <option value="compact">Compact — more on screen</option>
+          </select>
+        </label>
+        <p className="settings-hint">Accent and reading changes apply immediately to buttons, study text and supported screens.</p>
         <label className="settings-switch"><input type="checkbox" aria-label="Larger text" checked={preferences.largeText} onChange={e => changeSettings({largeText:e.target.checked})} /><span><strong>Larger text</strong><small>Increase the app's normal text size</small></span></label>
         <label className="settings-switch"><input type="checkbox" aria-label="High contrast" checked={preferences.highContrast} onChange={e => changeSettings({highContrast:e.target.checked})} /><span><strong>High contrast</strong><small>Stronger borders, labels and focus rings</small></span></label>
         <label className="settings-switch"><input type="checkbox" aria-label="Reduce animation" checked={preferences.reducedMotion} onChange={e => changeSettings({reducedMotion:e.target.checked})} /><span><strong>Reduce animation</strong><small>Limit animation and movement</small></span></label>
@@ -126,6 +142,11 @@ export default function DeviceSettings() {
           </select>
         </label>
         <p className="settings-hint">Your goal is shown on the student dashboard. It is not a timer, automatic reminder, proof of study or teacher-certified progress.</p>
+        <h3>Focus mode</h3>
+        <label className="settings-switch"><input type="checkbox" aria-label="Focus mode" checked={preferences.focusMode} onChange={e => changeSettings({focusMode:e.target.checked})} />
+          <span><strong>Focus on learning</strong><small>Show essential learning and safety tools first on the student dashboard, with a Show all tools option. No features or records are deleted.</small></span>
+        </label>
+        <p className="settings-hint">Focus mode changes the dashboard's visible suggestions only. It does not change your permissions or block direct access to other modules.</p>
         <h3>Notifications</h3>
         <p className="settings-hint">Email, SMS and push reminders are not yet connected to user preferences. They cannot be enabled or disabled from this device-settings screen. Essential account messages follow the existing account process.</p>
       </section>
@@ -137,7 +158,7 @@ export default function DeviceSettings() {
         <p>Teacher qualification approval, parent access, account deletion and personal-data exports require verified server-side processes. Changing these device controls cannot grant access or bypass them.</p>
         <div className="settings-confirm-area">
           {showResetConfirmation ? <>
-            <p>Reset only the device's appearance and study-target preferences? This will not remove your account, sign you out or delete learning data.</p>
+            <p>Reset only this device's appearance, focus mode and study-target preferences? This will not remove your account, sign you out or delete learning data.</p>
             <button type="button" className="btn btn-secondary" onClick={() => setShowResetConfirmation(false)}>Cancel reset</button>{' '}
             <button type="button" className="btn btn-primary" onClick={resetSettings}>Confirm reset display settings</button>
           </> : <button type="button" className="btn btn-secondary" onClick={() => setShowResetConfirmation(true)}>Reset display settings</button>}
@@ -156,7 +177,7 @@ export default function DeviceSettings() {
 
       <section id="settings-updates" className="settings-group" aria-labelledby="settings-updates-heading">
         <h2 id="settings-updates-heading">Installed app updates</h2>
-        <p><strong>MELA published version</strong> · 2026-10-11 · Settings and update navigation</p>
+        <p><strong>MELA published version</strong> · 2026-10-11 · Settings, focus and reading controls</p>
         <p>Save unfinished answers before refreshing. Reloading checks the currently published website; it does not install unreleased development features.</p>
         <button type="button" className="btn btn-primary" onClick={() => void refreshInstalledApp()} disabled={checkingUpdate}>
           {checkingUpdate ? 'Checking published version…' : 'Check and refresh installed MELA'}

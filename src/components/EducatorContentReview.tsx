@@ -253,7 +253,7 @@ export default function EducatorContentReview() {
     if (!eligible || mode !== 'questions') return
     let active = true
     setProgressError('')
-    void supabase.rpc('get_my_question_review_progress_v39', { p_program_key: programFilter || null })
+    void Promise.resolve(supabase.rpc('get_my_question_review_progress_v39', { p_program_key: programFilter || null }))
       .then(({data,error}) => {
         if (!active) return
         if (error) {

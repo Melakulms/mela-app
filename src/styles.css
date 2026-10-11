@@ -376,3 +376,11 @@ html.mela-reduced-motion *, html.mela-reduced-motion *::before, html.mela-reduce
   .settings-panel { padding:1rem; }
   .settings-actions .btn { width:100%; }
 }
+
+/* TOTP enrollment and challenge: never put authenticator secrets in browser storage. */
+.settings-mfa { border-top:1px solid var(--line); margin-top:1rem; padding-top:1rem; }
+.settings-mfa h3 { margin-bottom:.65rem; }
+.settings-mfa-qr { display:block; max-width:240px; width:100%; height:auto; margin:1rem 0; padding:.5rem; background:#fff; border-radius:8px; }
+.settings-mfa-challenge .settings-field { margin:1.2rem 0; }
+.settings-mfa-challenge .btn + .btn { margin-top:.65rem; }
+.settings-confirm-logout { padding:.8rem; border:1px solid var(--line); border-radius:var(--radius-sm); }

@@ -8,6 +8,8 @@ type SaveEducationInput = {
   subjects: string[]
   interests: string[]
   goals: string[]
+  preferredAreas: string[]
+  skills: string[]
 }
 
 type PostgrestLikeError = {
@@ -114,6 +116,8 @@ export async function saveMyEducationProfile(input: SaveEducationInput): Promise
         subjects: input.subjects,
         learning_interests: input.interests,
         goals: input.goals,
+        preferred_learning_areas: input.preferredAreas,
+        skills: input.skills,
       },
     })
     if (completionError) {
@@ -126,6 +130,8 @@ export async function saveMyEducationProfile(input: SaveEducationInput): Promise
           subjects: input.subjects,
           learning_interests: input.interests,
           goals: input.goals,
+          preferred_learning_areas: input.preferredAreas,
+          skills: input.skills,
         }, { onConflict: 'user_id' })
       if (subjectsError) throw subjectsError
       const { data: legacyProfile, error: legacyProfileError } = await supabase.from('profiles')

@@ -18,7 +18,10 @@ export async function registerUser({ email, password, fullName, role }: Register
   })
 }
 
+export type BetaSignupRole = 'student' | 'parent' | 'teacher' | 'company'
+
 export interface BetaRegisterInput {
+  role: BetaSignupRole
   username: string
   password: string
   fullName: string
@@ -58,13 +61,14 @@ async function invokeBetaAuth<T>(body: Record<string, unknown>): Promise<T> {
   return data as T
 }
 
-export async function registerBetaUser({ username, password, fullName, accessCode }: BetaRegisterInput) {
+export async function registerBetaUser({ username, password, fullName, accessCode, role }: BetaRegisterInput) {
   return invokeBetaAuth<BetaRegisterResult>({
     action: 'signup',
     username: username.trim().toLowerCase(),
     password,
     full_name: fullName.trim(),
     access_code: accessCode.trim(),
+    requested_role: role,
   })
 }
 

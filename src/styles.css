@@ -331,3 +331,48 @@ input, select, textarea { min-width: 0; max-width: 100%; }
 .device-settings input[type=checkbox] { width: auto; margin-right: .6rem; }
 html.mela-large-text { font-size: 20px; }
 html.mela-reduced-motion *, html.mela-reduced-motion *::before, html.mela-reduced-motion *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+
+
+/* Personal settings center: accessible on mobile without hiding the regular dashboard. */
+.mela-settings-page { max-width: 760px; }
+.settings-heading { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
+.settings-heading h1 { display:flex; align-items:center; gap:.65rem; }
+.settings-panel { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:1.2rem; margin:1rem 0; }
+.settings-panel h2 { display:flex; align-items:center; gap:.6rem; margin-bottom:1rem; }
+.settings-panel p { max-width:70ch; }
+.settings-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:.65rem; }
+.settings-summary>div { overflow-wrap:anywhere; padding:.6rem; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--surface-2); }
+.settings-summary strong,.settings-summary span { display:block; }
+.settings-summary strong { font-size:.8rem; color:var(--muted); }
+.settings-actions { display:flex; flex-wrap:wrap; gap:.6rem; margin:.8rem 0; }
+.settings-actions button { min-height:44px; }
+.settings-field { display:flex; flex-direction:column; gap:.4rem; font-weight:600; margin:1rem 0; }
+.settings-field select,.settings-field input { color:var(--ink); background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius-sm); padding:.7rem; width:100%; min-height:44px; }
+.settings-checkbox { display:flex; align-items:center; gap:.75rem; padding:.65rem 0; min-height:44px; cursor:pointer; }
+.settings-checkbox input { width:20px; height:20px; accent-color:var(--gold); flex-shrink:0; }
+.settings-note { font-size:.82rem; line-height:1.6; }
+.mela-settings-page .btn { min-height:44px; }
+
+/* Theme selection changes the site-wide design tokens. */
+:root[data-mela-theme='light'] {
+  color-scheme:light;
+  --bg:#f6f8fc; --surface:#ffffff; --surface-2:#edf2f9;
+  --line:#c6d1e0; --ink:#18243c; --muted:#41526c;
+  --gold:#aa6500; --gold-soft:#fae7bd; --success:#147443; --error:#b82824;
+}
+@media (prefers-color-scheme:light) {
+  :root[data-mela-theme='system'] {
+    color-scheme:light;
+    --bg:#f6f8fc; --surface:#ffffff; --surface-2:#edf2f9;
+    --line:#c6d1e0; --ink:#18243c; --muted:#41526c;
+    --gold:#aa6500; --gold-soft:#fae7bd; --success:#147443; --error:#b82824;
+  }
+}
+:root.mela-high-contrast { --line:#9caac3; --muted:#e4e9f1; --ink:#ffffff; --bg:#000000; --surface:#111111; --surface-2:#1a1a1a; }
+:root.mela-high-contrast[data-mela-theme='light'] { --line:#26374c; --muted:#213049; --ink:#111827; --bg:#ffffff; --surface:#ffffff; --surface-2:#e7eef7; }
+.mela-high-contrast .btn:focus-visible,.mela-high-contrast a:focus-visible { outline-width:3px; }
+@media (max-width:540px) {
+  .settings-heading { align-items:flex-start; }
+  .settings-panel { padding:1rem; }
+  .settings-actions .btn { width:100%; }
+}

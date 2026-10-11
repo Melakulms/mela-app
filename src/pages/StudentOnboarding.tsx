@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { saveMyEducationProfile } from '../lib/education-profile-save'
 import {
   educationChoiceFromStage, educationStageFor, effectiveSchoolTrack,
-  validateSubjectSelection, type EducationChoice, type ProfileSubject,
+  validateSubjectSelection, allowedSchoolGrades, canChooseSchoolGrade, type EducationChoice, type ProfileSubject,
 } from '../lib/education-profile'
 
 const INTERESTS = ['Mathematics', 'Science', 'Reading & languages', 'Technology & AI', 'Arts & design', 'Agriculture & environment', 'Business & entrepreneurship'] as const
@@ -41,6 +41,7 @@ export default function StudentOnboarding({
   const trackKey = effectiveSchoolTrack(grade, track)
   const isSchool = choice === 'school'
   const priorStageLocked = Boolean(initialStage)
+  const permittedGrades = allowedSchoolGrades(initialStage)
   const requiredSubjects = subjects.filter(subject => !subject.optional)
   const selectionError = validateSubjectSelection(subjects, selected)
 
@@ -189,21 +190,23 @@ export default function StudentOnboarding({
             <option value="college_tvet">College or TVET</option>
             <option value="university">University</option>
           </select>
-          {priorStageLocked && <p className="field-hint">Changing an established education level needs a verified correction by MELA support to protect grade-based competitions and child safety.</p>}
+          {priorStageLocked && <p className="field-hint">Your education stage is already recorded. Grade changes within the same stage are allowed until setup is complete. Moving to a different education stage needs verified support.</p>}
         </div>
         {isSchool && <div className="field">
           <label htmlFor="grade">School grade (required)</label>
-          <select id="grade" required value={grade ?? ''} disabled={busy || priorStageLocked}
+          <select id="grade" required value={grade ?? ''} disabled={busy || !canChooseSchoolGrade(editMode)}
             onChange={event => {
               const nextGrade = Number(event.target.value)
               setGrade(nextGrade)
               setTrack(nextGrade >= 11 ? 'natural_sciences' : 'common')
             }}>
             <option value="" disabled>Select your actual grade</option>
-            {Array.from({length:12}, (_,index)=>index+1).map(value =>
+            {permittedGrades.map(value =>
               <option key={value} value={value}>Grade {value}</option>
             )}
           </select>
+          {priorStageLocked && !editMode && <p className="field-hint">Select the correct grade for your existing school stage to finish your profile.</p>}
+          {priorStageLocked && editMode && <p className="field-hint">After setup, verified grade corrections are handled by support so age and competition rules stay correct.</p>}
         </div>}
         {isSchool && grade !== null && grade >= 11 && <div className="field">
           <label htmlFor="school-track">Grade 11–12 academic stream</label>

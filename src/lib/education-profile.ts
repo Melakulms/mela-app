@@ -32,3 +32,23 @@ export function validateSubjectSelection(subjects: ProfileSubject[], selected: s
 export function isValidSchoolGrade(grade: number | null): boolean {
   return grade !== null && Number.isInteger(grade) && grade >= 1 && grade <= 12
 }
+
+/** A saved school stage locks which grade BAND the user may select.
+ * Incomplete profiles must still be able to pick or correct a grade inside
+ * that band; editing a completed profile stays locked for verified review.
+ */
+export function allowedSchoolGrades(stage: string | null | undefined): number[] {
+  const spans: Record<string, [number, number]> = {
+    school_1_6: [1, 6],
+    school_7_8: [7, 8],
+    school_9_10: [9, 10],
+    school_11_12: [11, 12],
+  }
+  const range = stage ? spans[stage] : undefined
+  const [min, max] = range ?? [1, 12]
+  return Array.from({ length: max - min + 1 }, (_, i) => min + i)
+}
+
+export function canChooseSchoolGrade(isEditingCompletedProfile: boolean): boolean {
+  return !isEditingCompletedProfile
+}

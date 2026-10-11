@@ -13,7 +13,7 @@ This document tracks the full settings inventory requested for the learner appli
 | Large text / reduced motion / high contrast | Added and applied immediately | Screen-reader and mobile tests; layout never clips content |
 | Password reset | Existing auth reset function linked | Emails tested for real email accounts; beta recovery uses separate established flow |
 | Global sign-out | Added with confirmation | Existing refresh tokens revoked and new login required; short JWT expiry reviewed |
-| User MFA and session-device inventory | Not yet implemented | Verified Supabase MFA flows with enrollment/recovery and per-device revocation |
+| User TOTP MFA and session-device inventory | TOTP enrollment + sign-in challenge added in draft; device inventory not built | Live MFA enroll → verify → sign out → sign in → challenge, backup factor and recovery tested; per-device revocation remains |
 | Course, Arena, opportunities, message notification preferences | Added account preferences schema and Settings form | Notification producers must filter deliveries by each saved choice |
 | Daily study target | Added account preferences schema and Settings form | Target available to dashboard/study planner; progress backed by verified records |
 | Profile visibility | Not yet implemented | Enforced server-side in profile and public API queries; minors default private |
@@ -68,7 +68,7 @@ This document tracks the full settings inventory requested for the learner appli
 5. Verify `system.manage` role is necessary and MFA AAL2 is enforced. Test optimistic concurrency conflict.
 6. Verify deferred finance flags cannot be re-enabled through the updated API.
 7. Test app settings on small Android screens, light/dark modes, keyboard and screen-reader navigation.
-8. Check login → Settings → save → reload → sign out → sign back in, and verify consistent preferences.
+8. Check login → Settings → save → reload → sign out → sign back in, and verify consistent preferences. For enrolled MFA, an AAL1 login must not open protected MELA pages before code verification.
 9. Test the lesson file download separately from PWA installation.
 10. Only then merge PRs, deploy the frontend, and repeat smoke tests against the live user application and Central Admin.
 
@@ -77,7 +77,7 @@ This document tracks the full settings inventory requested for the learner appli
 - Notification preferences are saved but delivery systems are not yet wired to honor them.
 - The new settings screen itself still requires complete Amharic, Afaan Oromo, Tigrinya and Somali translations.
 - Profile visibility is not exposed as an editable control until existing read APIs enforce its effects.
-- User MFA, verified account export/deletion, and private session-device lists require additional server operations.
+- TOTP enrollment and the sign-in challenge are added in draft, but require real Supabase Auth smoke tests and a recovery procedure. Verified account export/deletion and a private session-device list remain unimplemented.
 - All eight Arena formats and teacher question coverage require dedicated operational QA; a feature toggle does not create this functionality.
 - AI lesson drafts do not equal a teacher-approved year-long certified curriculum.
 

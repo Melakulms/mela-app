@@ -69,7 +69,8 @@ export default function DeviceSettings() {
     const restoreOnBack = () => {
       // On Android the Back key pops the harmless Settings history entry.
       // Return to the dashboard without accidentally exiting MELA.
-      if (wasOpen.current && !window.history.state?.melaSettingsOpen) backHome()
+      const panel = document.getElementById('mela-settings') as HTMLDetailsElement | null
+      if (panel?.open && !window.history.state?.melaSettingsOpen) backHome()
     }
     document.addEventListener('keydown', keydown)
     window.addEventListener('popstate', restoreOnBack)
@@ -168,7 +169,11 @@ export default function DeviceSettings() {
     if (event.currentTarget.open) markSettingsOpen()
     else if (wasOpen.current) backHome()
   }}>
-    <summary tabIndex={0}>Settings & downloads — app version</summary>
+    <summary tabIndex={0} onClick={event => {
+      // The toggle event may fire asynchronously in Chromium. Claim the
+      // history entry synchronously on touch/click before Android Back can run.
+      if (!(event.currentTarget.parentElement as HTMLDetailsElement | null)?.open) markSettingsOpen()
+    }}>Settings & downloads — app version</summary>
     <div className="settings-center">
       <div className="settings-center-heading">
         <div><span className="settings-kicker">MELA PERSONALIZATION</span><h1>Settings</h1><p>Make MELA comfortable to read and use. Changes below work immediately on this phone.</p></div>

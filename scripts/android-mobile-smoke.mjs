@@ -54,7 +54,11 @@ try {
   await step('Android browser Back closes Settings without leaving MELA', async () => {
     await page.locator('details#mela-settings > summary').click()
     assert.equal(await page.locator('#mela-settings').evaluate(node => node.open), true)
+    const beforeBack = await page.evaluate(() => ({ state: history.state, url: location.href }))
+    assert.equal(beforeBack.state?.melaSettingsOpen, true, 'Settings must add an Android Back history entry')
     await page.goBack({ waitUntil: 'domcontentloaded', timeout: 15000 })
+    const afterBack = await page.evaluate(() => ({ state: history.state, url: location.href, open: document.getElementById('mela-settings')?.open }))
+    console.log('Android Back evidence:', JSON.stringify({ beforeBack, afterBack }))
     await page.waitForFunction(() => document.getElementById('mela-settings')?.open === false, null, { timeout: 10000 })
     assert.equal(new URL(page.url()).origin, new URL(baseUrl).origin)
     assert.equal(page.url().includes('/mela-app/'), true)

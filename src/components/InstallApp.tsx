@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useI18n } from '../i18n'
 
 interface InstallPrompt extends Event {
@@ -20,6 +20,7 @@ export default function InstallApp() {
   const [installed, setInstalled] = useState(() =>
     window.matchMedia?.('(display-mode: standalone)').matches ||
     Boolean((navigator as Navigator & { standalone?: boolean }).standalone))
+  const help = useRef<HTMLDetailsElement>(null)
   const [busy, setBusy] = useState(false)
   useEffect(() => {
     const ready = (event: Event) => { event.preventDefault(); setPrompt(event as InstallPrompt) }
@@ -34,7 +35,8 @@ export default function InstallApp() {
   if (installed) return null
   const copy = messages[language]
   async function install() {
-    if (!prompt || busy) return
+    if (busy) return
+    if (!prompt) { if (help.current) help.current.open = true; return }
     setBusy(true)
     try {
       await prompt.prompt()
@@ -42,10 +44,10 @@ export default function InstallApp() {
       await prompt.userChoice
     } catch {
       // Keep the manual installation instructions available if the browser fails.
-    } finally { setPrompt(null); setBusy(false) }
+    } finally { setPrompt(null); setBusy(false); if (help.current) help.current.open = true }
   }
   return <aside className="install-app" aria-label={copy[1]}>
-    {prompt && <button type="button" disabled={busy} onClick={() => void install()}>{copy[0]}</button>}
-    <details><summary>{copy[1]}</summary><p>{copy[2]}</p></details>
+    {<button type="button" disabled={busy} onClick={() => void install()}>{copy[0]}</button>}
+    <details ref={help}><summary>{copy[1]}</summary><p>{copy[2]}</p></details>
   </aside>
 }

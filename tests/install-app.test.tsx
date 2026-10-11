@@ -18,7 +18,8 @@ function offer(prompt = vi.fn(async () => {}), outcome = 'dismissed') {
 }
 it('offers manual help without claiming that the browser can prompt', () => {
   mount()
-  expect(screen.queryByRole('button', { name: 'Install MELA' })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Install MELA' }))
+  expect(screen.getByText('Add MELA to your phone').closest('details')?.open).toBe(true)
   expect(screen.getByText(/Learning and account features need internet/)).toBeTruthy()
 })
 it('prompts only on a click and consumes a dismissed prompt once', async () => {
@@ -26,14 +27,14 @@ it('prompts only on a click and consumes a dismissed prompt once', async () => {
   expect(event.defaultPrevented).toBe(true)
   expect(prompt).not.toHaveBeenCalled()
   fireEvent.click(screen.getByRole('button', { name: 'Install MELA' }))
-  await waitFor(() => expect(screen.queryByRole('button')).toBeNull())
+  await waitFor(() => expect(screen.getByText('Add MELA to your phone').closest('details')?.open).toBe(true))
   expect(prompt).toHaveBeenCalledTimes(1)
   expect(screen.getByText('Add MELA to your phone')).toBeTruthy()
 })
 it('keeps manual help available after a browser prompt error', async () => {
   mount(); offer(vi.fn(async () => { throw new Error('not supported') }))
   fireEvent.click(screen.getByRole('button', { name: 'Install MELA' }))
-  await waitFor(() => expect(screen.queryByRole('button')).toBeNull())
+  await waitFor(() => expect(screen.getByText('Add MELA to your phone').closest('details')?.open).toBe(true))
   expect(screen.getByText('Add MELA to your phone')).toBeTruthy()
 })
 it('hides installation controls after confirmed installation', () => {

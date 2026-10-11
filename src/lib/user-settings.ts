@@ -1,6 +1,7 @@
 import { supabase } from './supabase'
 
-export type ThemeMode = 'system' | 'dark' | 'light'
+import type { ThemeMode } from './device-appearance'
+export type { ThemeMode } from './device-appearance'
 export type UserSettings = {
   theme: ThemeMode
   large_text: boolean
@@ -27,42 +28,7 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   daily_study_minutes: 20,
 }
 
-export function applyAppearance(settings: Pick<UserSettings, 'theme' | 'large_text' | 'high_contrast' | 'reduced_motion'>) {
-  if (typeof document === 'undefined') return
-  const root = document.documentElement
-  root.dataset.melaTheme = settings.theme
-  root.classList.toggle('mela-large-text', settings.large_text)
-  root.classList.toggle('mela-high-contrast', settings.high_contrast)
-  root.classList.toggle('mela-reduced-motion', settings.reduced_motion)
-}
-
-export function loadDeviceAppearance() {
-  try {
-    const value = JSON.parse(localStorage.getItem('mela_device_preferences_v1') || '{}')
-    const theme = value.theme === 'light' || value.theme === 'dark' ? value.theme : 'system'
-    return {
-      theme: theme as ThemeMode,
-      large_text: value.largeText === true,
-      reduced_motion: value.reducedMotion === true,
-      high_contrast: value.highContrast === true,
-    }
-  } catch {
-    return { theme: 'system' as ThemeMode, large_text: false, reduced_motion: false, high_contrast: false }
-  }
-}
-
-export function saveDeviceAppearance(settings: Pick<UserSettings, 'theme' | 'large_text' | 'high_contrast' | 'reduced_motion'>) {
-  applyAppearance(settings)
-  try {
-    localStorage.setItem('mela_device_preferences_v1', JSON.stringify({
-      theme: settings.theme,
-      largeText: settings.large_text,
-      highContrast: settings.high_contrast,
-      reducedMotion: settings.reduced_motion,
-    }))
-    window.dispatchEvent(new Event('mela-settings-changed'))
-  } catch { /* Appearance still applies during this session. */ }
-}
+export { applyAppearance, loadDeviceAppearance, saveDeviceAppearance } from './device-appearance'
 
 async function currentUserId(): Promise<string> {
   const { data, error } = await supabase.auth.getUser()

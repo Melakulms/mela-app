@@ -21,6 +21,8 @@ export default function InstallApp() {
     window.matchMedia?.('(display-mode: standalone)').matches ||
     Boolean((navigator as Navigator & { standalone?: boolean }).standalone))
   const help = useRef<HTMLDetailsElement>(null)
+  const installLock = useRef(false)
+  const [manualHelp, setManualHelp] = useState(false)
   const [busy, setBusy] = useState(false)
   useEffect(() => {
     const ready = (event: Event) => { event.preventDefault(); setPrompt(event as InstallPrompt) }
@@ -35,8 +37,9 @@ export default function InstallApp() {
   if (installed) return null
   const copy = messages[language]
   async function install() {
-    if (busy) return
-    if (!prompt) { if (help.current) help.current.open = true; return }
+    if (installLock.current) return
+    if (!prompt) { setManualHelp(true); if (help.current) { help.current.open = true; help.current.focus() } return }
+    installLock.current = true
     setBusy(true)
     try {
       await prompt.prompt()
@@ -44,10 +47,12 @@ export default function InstallApp() {
       await prompt.userChoice
     } catch {
       // Keep the manual installation instructions available if the browser fails.
-    } finally { setPrompt(null); setBusy(false); if (help.current) help.current.open = true }
+    } finally { installLock.current = false; setPrompt(null); setBusy(false); setManualHelp(true); if (help.current) help.current.open = true }
   }
   return <aside className="install-app" aria-label={copy[1]}>
     {<button type="button" disabled={busy} onClick={() => void install()}>{copy[0]}</button>}
-    <details ref={help}><summary>{copy[1]}</summary><p>{copy[2]}</p></details>
+    <details ref={help} tabIndex={-1}><summary>{copy[1]}</summary><p>{copy[2]}</p>
+      {manualHelp && <p role="status">Your browser controls installation. If no install window appeared, open MELA in Chrome on Android or Safari on iPhone and use the menu steps above. If MELA is already installed, open its home-screen icon. This button does not download an APK file.</p>}
+    </details>
   </aside>
 }

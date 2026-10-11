@@ -1,12 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import CourseReader from '../components/CourseReader'
 import { fetchCourses, fetchMyEnrollments, enrollInCourse, type Course, type Enrollment } from '../lib/academy'
 import { useI18n } from '../i18n'
+const DraftCourseReader = lazy(() => import('../components/DraftCourseReader'))
 
 export default function SkillAcademy({ onBack }: { onBack: () => void }) {
   const { t } = useI18n()
   const [query, setQuery] = useState(''), [category, setCategory] = useState(''), [scope, setScope] = useState('all')
   const [preview, setPreview] = useState(false)
+  const [draftOpen, setDraftOpen] = useState(false)
   const [selected, setSelected] = useState<Course | null>(null)
   const [revision, setRevision] = useState(0)
   const lock = useRef(false)
@@ -48,6 +50,7 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
 
   const visibleCourses = (courses ?? []).filter(course => (!category || course.category === category) && (scope === 'all' || (scope === 'enrolled' && enrollments.has(course.id)) || (scope === 'completed' && !!enrollments.get(course.id)?.completed_at) || (scope === 'available' && course.content_available && course.price_cents === 0) || (scope === 'preparing' && !course.content_available)) && `${course.title} ${course.description ?? ''} ${course.category ?? ''}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
 
+  if (draftOpen) return <Suspense fallback={<p role="status">Loading lesson text…</p>}><DraftCourseReader onBack={() => setDraftOpen(false)} /></Suspense>
   if (selected) return <CourseReader course={selected} preview={preview} onBack={() => { setSelected(null); setRevision(value => value + 1) }} />
 
   return (
@@ -61,6 +64,8 @@ export default function SkillAcademy({ onBack }: { onBack: () => void }) {
         <p>52 weekly lessons with worked examples, practical activities and questions. English draft for secondary-age and adult learners; teacher approval and translations are pending.</p>
         <p>This shared foundation is readable now. It does not award certificates, record course completion or replace the 53 specialist courses.</p>
         <a className="btn btn-primary" href={`${import.meta.env.BASE_URL}ai-year-one.html`}>Open AI Year One — draft preview</a>
+        <button className="btn btn-primary" onClick={() => setDraftOpen(true)}>Study weekly lessons inside MELA</button>
+        <a className="btn btn-secondary" href={`${import.meta.env.BASE_URL}ai-year-one.html`} download="MELA-AI-Year-One.html">Download lesson handbook</a>
       </section>
       {error && <div className="banner banner-error" role="alert">{error}<button className="btn btn-secondary" onClick={() => setRevision(value => value + 1)}>Retry courses</button></div>}
       {!courses && !error && <p className="muted">Loading courses…</p>}

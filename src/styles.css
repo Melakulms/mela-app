@@ -324,3 +324,10 @@ input, select, textarea { min-width: 0; max-width: 100%; }
 .install-app button { background: #f0b429; color: #0a0d14; border: 0; border-radius: .6rem; padding: .65rem 1rem; font-weight: 700; cursor: pointer; }
 .install-app button:disabled { opacity: .6; cursor: wait; }
 .install-app summary:focus-visible, .install-app button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.device-settings { padding: .75rem 1rem; background: var(--surface); color: var(--ink); border-bottom: 1px solid var(--line); }
+.device-settings > summary { cursor: pointer; font-weight: 700; padding: .5rem; }
+.device-settings .list-panel { max-width: 850px; margin: 1rem auto; }
+.device-settings label { display: block; margin: 1rem 0; }
+.device-settings input[type=checkbox] { width: auto; margin-right: .6rem; }
+html.mela-large-text { font-size: 20px; }
+html.mela-reduced-motion *, html.mela-reduced-motion *::before, html.mela-reduced-motion *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }

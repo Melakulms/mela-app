@@ -1,5 +1,5 @@
 import { clearCoachHistories } from './lib/coach-history'
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { Wifi, WifiOff, LogOut, Settings as SettingsIcon, LayoutDashboard, BookOpen, Swords, Globe, UserRound, GraduationCap } from 'lucide-react'
 import { supabase } from './lib/supabase'
@@ -57,6 +57,7 @@ export default function App() {
   const [profileRevision, setProfileRevision] = useState(0)
   const [loading, setLoading] = useState(true)
   const [sessionRevision, setSessionRevision] = useState(0)
+  const observedUserId = useRef<string | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<MelaProfile | null>(null)
   const [authView, setAuthView] = useState<AuthView>('register')
@@ -74,6 +75,11 @@ export default function App() {
     setLoading(true)
     setAccountError('')
     return observeSession(supabase.auth, (newSession, event) => {
+      const nextUserId = newSession?.user.id ?? null
+      if (event === 'SIGNED_OUT' || (event === 'SIGNED_IN' && nextUserId !== observedUserId.current)) {
+        window.dispatchEvent(new Event('mela:session-boundary'))
+      }
+      observedUserId.current = nextUserId
       if (event === 'PASSWORD_RECOVERY') setRecovering(true)
       if (event === 'USER_UPDATED' || event === 'SIGNED_IN') setProfileRevision(value => value + 1)
       if (event === 'SIGNED_OUT') {setRecovering(false);clearCoachHistories()}

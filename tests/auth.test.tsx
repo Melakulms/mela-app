@@ -143,3 +143,27 @@ it('preserves a retryable profile error during token refresh', async () => {
   expect(screen.getByRole('alert')).toBeTruthy()
   expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy()
 })
+
+it('closes global Settings across sign-out and sign-in and returns to learner home', async () => {
+  const {default: DeviceSettings} = await import('../src/components/DeviceSettings')
+  const session = {user:{id:'returning-learner'}}
+  mocks.getSession.mockResolvedValue({data:{session},error:null})
+  mocks.fetchOwnProfile.mockResolvedValue({id:'returning-learner',role:'student',account_status:'active',email_verified:true,education_onboarding_completed:true,preferred_language:'English'})
+  mocks.logoutUser.mockImplementation(async () => {
+    const callback = mocks.onAuthStateChange.mock.calls[mocks.onAuthStateChange.mock.calls.length-1][0]
+    callback('SIGNED_OUT',null)
+    return {error:null}
+  })
+  render(<><DeviceSettings/><App/></>)
+  await screen.findByRole('button',{name:'Open MELA settings'})
+  fireEvent.click(screen.getByRole('button',{name:'Open MELA settings'}))
+  expect(screen.getByRole('heading',{name:'Settings',exact:true})).toBeTruthy()
+  fireEvent.click(screen.getByRole('button',{name:'Log out'}))
+  await screen.findByRole('heading',{name:'Join the MELA beta'})
+  expect(screen.queryByRole('heading',{name:'Settings',exact:true})).toBeNull()
+  const callback=mocks.onAuthStateChange.mock.calls[mocks.onAuthStateChange.mock.calls.length-1][0]
+  await act(async()=>callback('SIGNED_IN',session))
+  await screen.findByRole('button',{name:'Open MELA settings'})
+  expect(screen.queryByRole('heading',{name:'Settings',exact:true})).toBeNull()
+  expect(new URLSearchParams(window.location.search).get('view')).toBe('dashboard')
+})

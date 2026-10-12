@@ -85,9 +85,16 @@ export default function DeviceSettings() {
       // Return to the dashboard without accidentally exiting MELA.
       if (wasOpen.current && !window.history.state?.melaSettingsOpen) backHome()
     }
+    const restoredPage = (event: PageTransitionEvent) => {
+      if (event.persisted) backHome()
+    }
+    window.addEventListener('mela:session-boundary', backHome)
+    window.addEventListener('pageshow', restoredPage)
     document.addEventListener('keydown', keydown)
     window.addEventListener('popstate', restoreOnBack)
     return () => {
+      window.removeEventListener('mela:session-boundary', backHome)
+      window.removeEventListener('pageshow', restoredPage)
       document.removeEventListener('keydown', keydown)
       window.removeEventListener('popstate', restoreOnBack)
     }
@@ -178,11 +185,12 @@ export default function DeviceSettings() {
   }
 
   return <section className="device-settings" id="mela-settings">
+    <nav aria-label="MELA main navigation" className="settings-buttons"><a className="btn btn-primary" href={`${import.meta.env.BASE_URL}?view=dashboard`} onClick={backHome}>MELA Home</a>
     <button type="button" className="btn btn-secondary" aria-expanded={isOpen} aria-controls="mela-settings-content" onClick={() => {
       if (wasOpen.current) backHome()
       else markSettingsOpen()
-    }}>Settings & downloads — app version</button>
-    <div className="settings-center" id="mela-settings-content" hidden={!isOpen} style={{ display: isOpen ? 'block' : 'none' }}>
+    }}>Settings & downloads — app version</button></nav>
+    {isOpen && <div className="settings-center" id="mela-settings-content">
       <div className="settings-center-heading">
         <div><span className="settings-kicker">MELA PERSONALIZATION</span><h1>Settings</h1><p>Make MELA comfortable to read and use. Changes below work immediately on this phone.</p></div>
         <a className="btn btn-primary" href={`${import.meta.env.BASE_URL}?view=dashboard`} onClick={backHome}>Back to MELA Home</a>
@@ -292,6 +300,6 @@ export default function DeviceSettings() {
         </details>
       </section>
       <a className="btn btn-primary btn-block" href={`${import.meta.env.BASE_URL}?view=dashboard`} onClick={backHome}>Back to MELA Home</a>
-    </div>
+    </div>}
   </section>
 }

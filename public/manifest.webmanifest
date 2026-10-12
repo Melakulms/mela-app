@@ -2,7 +2,7 @@
   "name": "MELA Student Success",
   "short_name": "MELA",
   "description": "Learning, opportunities, mentorship and career progress for Ethiopian learners.",
-  "start_url": "./",
+  "start_url": "./?view=dashboard",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0a0d14",

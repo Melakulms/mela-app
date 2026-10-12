@@ -42,10 +42,9 @@ it('shows a clear update control without falsely promising to deploy development
 
 it('opens the published Settings panel from signed-in navigation', () => {
   const {container}=renderSettings(false)
-  const panel=container.querySelector('#mela-settings-content') as HTMLElement
-  expect(panel.hidden).toBe(true)
+  expect(container.querySelector('#mela-settings-content')).toBeNull()
   act(() => { window.dispatchEvent(new Event('mela:open-settings')) })
-  expect(panel.hidden).toBe(false)
+  expect(container.querySelector('#mela-settings-content')).not.toBeNull()
   expect(screen.getByText('MELA release')).toBeTruthy()
 })
 
@@ -132,12 +131,11 @@ it('returns from Settings to MELA home, clears the settings anchor and closes th
   const home = vi.fn()
   window.addEventListener('mela:go-home', home)
   const {container}=renderSettings()
-  const panel=container.querySelector('#mela-settings-content') as HTMLElement
   act(() => { window.dispatchEvent(new Event('mela:open-settings')) })
-  expect(panel.hidden).toBe(false)
+  expect(container.querySelector('#mela-settings-content')).not.toBeNull()
   window.history.replaceState(null, '', '/mela-app/#settings-learning')
   fireEvent.click(screen.getAllByRole('link',{name:'Back to MELA Home'})[0])
-  expect(panel.hidden).toBe(true)
+  expect(container.querySelector('#mela-settings-content')).toBeNull()
   expect(window.location.hash).toBe('')
   expect(home).toHaveBeenCalledOnce()
   expect(new URLSearchParams(window.location.search).get('view')).toBe('dashboard')
@@ -147,10 +145,9 @@ it('returns from Settings to MELA home, clears the settings anchor and closes th
 
 it('supports Escape from Settings without signing the user out', () => {
   const {container}=renderSettings()
-  const panel=container.querySelector('#mela-settings-content') as HTMLElement
   act(() => { window.dispatchEvent(new Event('mela:open-settings')) })
   fireEvent.keyDown(document,{key:'Escape'})
-  expect(panel.hidden).toBe(true)
+  expect(container.querySelector('#mela-settings-content')).toBeNull()
 })
 
 it('changes Settings sections without adding Android Back history entries', () => {
@@ -163,23 +160,21 @@ it('changes Settings sections without adding Android Back history entries', () =
 
 it('closes Settings when Android Back restores the prior history entry', () => {
   const {container}=renderSettings()
-  const panel=container.querySelector('#mela-settings-content') as HTMLElement
   act(() => { window.dispatchEvent(new Event('mela:open-settings')) })
-  expect(panel.hidden).toBe(false)
+  expect(container.querySelector('#mela-settings-content')).not.toBeNull()
   expect(window.history.state?.melaSettingsOpen).toBe(true)
   window.history.replaceState(null, '', '/mela-app/')
   fireEvent.popState(window, {state:null})
-  expect(panel.hidden).toBe(true)
+  expect(container.querySelector('#mela-settings-content')).toBeNull()
   window.history.replaceState(null, '', '/')
 })
 
 it('returns to the dashboard even without a mounted student router listener', () => {
   window.history.replaceState(null, '', '/mela-app/?view=practice&mela_refresh=old#settings-updates')
   const {container}=renderSettings()
-  const panel=container.querySelector('#mela-settings-content') as HTMLElement
   act(() => { window.dispatchEvent(new Event('mela:open-settings')) })
   fireEvent.click(screen.getAllByRole('link',{name:'Back to MELA Home'})[0])
-  expect(panel.hidden).toBe(true)
+  expect(container.querySelector('#mela-settings-content')).toBeNull()
   expect(new URLSearchParams(window.location.search).get('view')).toBe('dashboard')
   expect(new URLSearchParams(window.location.search).get('mela_refresh')).toBeNull()
   expect(window.location.hash).toBe('')
@@ -193,4 +188,13 @@ it('has a real Home destination and removes Settings controls after Home', () =>
   fireEvent.click(link)
   expect(screen.queryByRole('heading', {name:'Settings'})).toBeNull()
   expect(screen.getByRole('button', {name:'Settings & downloads — app version'}).getAttribute('aria-expanded')).toBe('false')
+})
+
+it('drops Settings when Android restores a cached page', () => {
+  const {container} = renderSettings()
+  const restored = new Event('pageshow')
+  Object.defineProperty(restored, 'persisted', {value:true})
+  act(() => { window.dispatchEvent(restored) })
+  expect(container.querySelector('#mela-settings-content')).toBeNull()
+  expect(new URLSearchParams(window.location.search).get('view')).toBe('dashboard')
 })

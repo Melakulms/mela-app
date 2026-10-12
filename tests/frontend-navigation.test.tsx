@@ -46,3 +46,14 @@ describe('Learning dashboard', () => {
     expect(screen.getByRole('status').textContent).toContain('No tools match')
   })
 })
+
+it('routes Home on older Android browsers without Object.hasOwn', () => {
+  const original = Object.hasOwn
+  try {
+    Object.hasOwn = undefined as any
+    window.history.replaceState(null, '', '?view=dashboard')
+    expect(readStudentView()).toBe('dashboard')
+    window.history.replaceState(null, '', '?view=practice')
+    expect(readStudentView()).toBe('practice')
+  } finally { Object.hasOwn = original }
+})

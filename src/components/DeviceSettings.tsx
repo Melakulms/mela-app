@@ -21,12 +21,14 @@ export default function DeviceSettings() {
   const [releaseVersion, setReleaseVersion] = useState('')
   const [updateNotice, setUpdateNotice] = useState('')
   const [showResetConfirmation, setShowResetConfirmation] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
   const wasOpen = useRef(false)
   const settingsHistoryEntry = useRef(false)
 
   const markSettingsOpen = () => {
     if (wasOpen.current) return
     wasOpen.current = true
+    setIsOpen(true)
     const previous = window.history.state
     const state = previous && typeof previous === 'object' ? previous : {}
     window.history.pushState({ ...state, melaSettingsOpen: true }, '', window.location.href)
@@ -35,14 +37,13 @@ export default function DeviceSettings() {
 
   const backHome = () => {
     wasOpen.current = false
+    setIsOpen(false)
     if (settingsHistoryEntry.current) {
       const previous = window.history.state
       const state = previous && typeof previous === 'object' ? previous : {}
       window.history.replaceState({ ...state, melaSettingsOpen: false }, '', window.location.href)
       settingsHistoryEntry.current = false
     }
-    const panel = document.getElementById('mela-settings') as HTMLDetailsElement | null
-    if (panel) panel.open = false
     setShowResetConfirmation(false)
     // Section links inside Settings update the hash. Remove only a Settings
     // hash so returning home does not jump back into a hidden panel.
@@ -74,7 +75,7 @@ export default function DeviceSettings() {
 
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && (document.getElementById('mela-settings') as HTMLDetailsElement | null)?.open) {
+      if (event.key === 'Escape' && wasOpen.current) {
         event.preventDefault()
         backHome()
       }
@@ -82,8 +83,7 @@ export default function DeviceSettings() {
     const restoreOnBack = () => {
       // On Android the Back key pops the harmless Settings history entry.
       // Return to the dashboard without accidentally exiting MELA.
-      const panel = document.getElementById('mela-settings') as HTMLDetailsElement | null
-      if (panel?.open && !window.history.state?.melaSettingsOpen) backHome()
+      if (wasOpen.current && !window.history.state?.melaSettingsOpen) backHome()
     }
     document.addEventListener('keydown', keydown)
     window.addEventListener('popstate', restoreOnBack)
@@ -119,12 +119,11 @@ export default function DeviceSettings() {
 
   useEffect(() => {
     const showSettings = () => {
-      const panel = document.getElementById('mela-settings') as HTMLDetailsElement | null
+      const panel = document.getElementById('mela-settings') as HTMLElement | null
       if (panel) {
         markSettingsOpen()
-        panel.open = true
         panel.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
-        panel.querySelector('summary')?.focus()
+        panel.querySelector('button')?.focus()
       }
     }
     window.addEventListener('mela:open-settings', showSettings)
@@ -178,19 +177,15 @@ export default function DeviceSettings() {
     }
   }
 
-  return <details className="device-settings" id="mela-settings" onToggle={event => {
-    if (event.currentTarget.open) markSettingsOpen()
-    else if (wasOpen.current) backHome()
-  }}>
-    <summary tabIndex={0} onClick={event => {
-      // The toggle event may fire asynchronously in Chromium. Claim the
-      // history entry synchronously on touch/click before Android Back can run.
-      if (!(event.currentTarget.parentElement as HTMLDetailsElement | null)?.open) markSettingsOpen()
-    }}>Settings & downloads — app version</summary>
-    <div className="settings-center">
+  return <section className="device-settings" id="mela-settings">
+    <button type="button" className="btn btn-secondary" aria-expanded={isOpen} aria-controls="mela-settings-content" onClick={() => {
+      if (wasOpen.current) backHome()
+      else markSettingsOpen()
+    }}>Settings & downloads — app version</button>
+    <div className="settings-center" id="mela-settings-content" hidden={!isOpen} style={{ display: isOpen ? 'block' : 'none' }}>
       <div className="settings-center-heading">
         <div><span className="settings-kicker">MELA PERSONALIZATION</span><h1>Settings</h1><p>Make MELA comfortable to read and use. Changes below work immediately on this phone.</p></div>
-        <button className="btn btn-primary" type="button" onClick={backHome}>Back to MELA Home</button>
+        <a className="btn btn-primary" href={`${import.meta.env.BASE_URL}?view=dashboard`} onClick={backHome}>Back to MELA Home</a>
       </div>
       {notice && <div className="banner banner-info" role="status">{notice}</div>}
 
@@ -296,7 +291,7 @@ export default function DeviceSettings() {
           <p>Verified teachers can currently access Educator content review → Question reviews from the teacher dashboard where their permissions allow. Central Admin is responsible for teacher credential verification.</p>
         </details>
       </section>
-      <button type="button" className="btn btn-primary btn-block" onClick={backHome}>Back to MELA Home</button>
+      <a className="btn btn-primary btn-block" href={`${import.meta.env.BASE_URL}?view=dashboard`} onClick={backHome}>Back to MELA Home</a>
     </div>
-  </details>
+  </section>
 }

@@ -13,7 +13,7 @@ export type StudentView = keyof typeof VIEW_LABELS
 
 export function readStudentView(): StudentView {
   const view = new URLSearchParams(window.location.search).get('view')
-  return view && Object.hasOwn(VIEW_LABELS, view) ? view as StudentView : 'dashboard'
+  return view && Object.prototype.hasOwnProperty.call(VIEW_LABELS, view) ? view as StudentView : 'dashboard'
 }
 
 export function useStudentNavigation() {

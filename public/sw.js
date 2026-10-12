@@ -1,4 +1,4 @@
-const CACHE = 'mela-shell-v4-home-and-roles'
+const CACHE = 'mela-shell-v5-explicit-home'
 const scopeUrl = new URL(self.registration.scope)
 const shellUrl = scopeUrl.pathname
 

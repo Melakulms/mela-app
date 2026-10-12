@@ -87,10 +87,12 @@ try {
     const signedContext = await browser.newContext({ ...pixel, locale: 'en-US', serviceWorkers: 'block' })
     try {
       const signedPage = await signedContext.newPage()
+      signedPage.on('pageerror', error => { throw error })
       const user = { id:'11111111-1111-4111-8111-111111111111', email:'navigation@example.invalid', aud:'authenticated', role:'authenticated', app_metadata:{provider:'email'}, user_metadata:{} }
       const encode = value => Buffer.from(JSON.stringify(value)).toString('base64url')
       const exp = Math.floor(Date.now()/1000)+3600
       const session = { access_token: `${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:user.id,exp,role:'authenticated',aal:'aal1'})}.fixture`, refresh_token:'fixture-only', expires_at:exp, expires_in:3600, token_type:'bearer', user }
+      let hasSubjects = true
       const profile = {...user, full_name:'Navigation Test', account_status:'active', email_verified:true, profile_completion:100, coin_balance:0, education_onboarding_completed:true, education_stage_key:'university', grade_level:null, preferred_language:'English', role:'student'}
       const dashboard = {profile, passport:{profile_score:100,badge_count:0},practice:{stats:{current_streak_days:0}},arena:{arena_achievements:0},feature_flags:{}}
       await signedPage.route('https://duizgtmbptmlbyipreqg.supabase.co/**', async route => {
@@ -100,17 +102,18 @@ try {
         else if (path === '/auth/v1/token') data = session
         else if (path === '/auth/v1/logout') { await route.fulfill({status:204}); return }
         else if (path === '/rest/v1/profiles') data = [profile]
+        else if (path === '/rest/v1/student_profiles') data = [{subjects:hasSubjects?['mathematics']:[]}]
         else if (path === '/rest/v1/rpc/get_my_dashboard_v36') data = dashboard
         await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(data)})
       })
       await signedPage.goto(baseUrl+'?view=dashboard', {waitUntil:'domcontentloaded'})
       await signedPage.getByRole('heading',{name:/join the mela beta/i}).waitFor()
-      const login = async () => {
+      const login = async (homeHeading = 'Explore MELA') => {
         if (!await signedPage.getByLabel('Email or beta username').isVisible()) await signedPage.getByRole('button',{name:'Log in',exact:true}).click()
         await signedPage.getByLabel('Email or beta username').fill(user.email)
         await signedPage.getByLabel('Password',{exact:true}).fill('Fixture-password-123')
         await signedPage.getByRole('button',{name:'Log in',exact:true}).click()
-        await signedPage.getByRole('heading',{name:'Explore MELA',exact:true}).waitFor()
+        await signedPage.getByRole('heading',{name:homeHeading,exact:true}).waitFor().catch(async error => { console.error('Signed-in test page:', await signedPage.locator('body').innerText()); throw error })
         assert.equal(await signedPage.locator('#mela-settings-content').count(),0)
       }
       await login()
@@ -122,9 +125,25 @@ try {
       await login()
       await signedPage.getByRole('button',{name:'Open MELA settings'}).click()
       await signedPage.getByRole('link',{name:'Back to MELA Home',exact:true}).first().click()
-      await signedPage.getByRole('heading',{name:'Explore MELA',exact:true}).waitFor()
+      await signedPage.getByRole('heading',{name:'Explore MELA',exact:true}).waitFor().catch(async error => { console.error('Signed-in test page:', await signedPage.locator('body').innerText()); throw error })
       assert.equal(await signedPage.locator('#mela-settings-content').count(),0)
       assert.equal(new URL(signedPage.url()).searchParams.get('view'),'dashboard')
+      // Reproduce the real account condition: complete flag but no saved subjects.
+      hasSubjects = false
+      await signedPage.reload({waitUntil:'domcontentloaded'})
+      await signedPage.getByRole('heading',{name:'MELA Home',exact:true}).waitFor()
+      await signedPage.getByRole('button',{name:'Complete my profile',exact:true}).click()
+      await signedPage.getByRole('heading',{name:'Complete your education profile',exact:true}).waitFor()
+      await signedPage.getByRole('link',{name:'MELA Home',exact:true}).click()
+      await signedPage.getByRole('heading',{name:'MELA Home',exact:true}).waitFor()
+      assert.equal(await signedPage.getByRole('heading',{name:'Complete your education profile',exact:true}).count(),0)
+      await signedPage.getByRole('button',{name:'Settings & downloads — app version'}).click()
+      await signedPage.getByRole('button',{name:'Sign out',exact:true}).click()
+      await signedPage.getByRole('heading',{name:/join the mela beta/i}).waitFor()
+      assert.equal(await signedPage.locator('#mela-settings-content').count(),0)
+      await login('MELA Home')
+      assert.equal(await signedPage.getByRole('heading',{name:'Complete your education profile',exact:true}).count(),0)
+
     } finally { await signedContext.close() }
   })
 

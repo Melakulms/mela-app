@@ -1,4 +1,4 @@
-import {useState, type ReactNode} from 'react'
+import {useEffect, useState, type ReactNode} from 'react'
 import {BookOpen, ClipboardList, ShieldCheck, ChevronLeft, RefreshCw} from 'lucide-react'
 import {inspectMyProfileSetup} from '../lib/profile-diagnostics'
 import SkillAcademy from './SkillAcademy'
@@ -35,7 +35,7 @@ const ROLE_INFO:Record<Role,{title:string;summary:string;items:string[]}> = {
 export default function ProfileAccessHub({role,stageKey,setup,onRefresh,onSignOut}:{
   role:Role;stageKey?:string|null;setup:ReactNode;onRefresh:()=>void;onSignOut:()=>void
 }){
-  const [section,setSection]=useState<PreviewSection>('setup')
+  const [section,setSection]=useState<PreviewSection>('features')
   const [message,setMessage]=useState('')
   const [diagnostic,setDiagnostic]=useState('')
   const [diagnosticBusy,setDiagnosticBusy]=useState(false)
@@ -45,11 +45,16 @@ export default function ProfileAccessHub({role,stageKey,setup,onRefresh,onSignOu
     catch{setDiagnostic('Could not inspect your account. Please reconnect to the internet and try again.')}
     finally{setDiagnosticBusy(false)}
   }
+  useEffect(() => {
+    const home = () => { setSection('features'); setDiagnostic(''); setMessage('') }
+    window.addEventListener('mela:go-home', home)
+    return () => window.removeEventListener('mela:go-home', home)
+  }, [])
   const details=ROLE_INFO[role]
   const isStudent=role==='student'
   return <div className="profile-access-hub">
     <header className="profile-access-header">
-      <div><span className="auth-wordmark">MELA</span><span className="pill">Account setup</span></div>
+      <div><span className="auth-wordmark">MELA</span><span className="pill">Profile incomplete</span></div>
       <button type="button" className="btn btn-secondary" onClick={onSignOut}>Sign out</button>
     </header>
     <div className="profile-access-controls" role="navigation" aria-label="Account setup and safe browsing">
@@ -73,9 +78,10 @@ export default function ProfileAccessHub({role,stageKey,setup,onRefresh,onSignOu
       </div>
       {setup}
     </>}
-    {section==='features' && <main className="dash-main profile-access-explore">
+    {section==='features' && <main id="main-content" tabIndex={-1} className="dash-main profile-access-explore">
       <span className="eyebrow">MELA · ROLE-SPECIFIC ACCESS</span>
-      <h1>{details.title}</h1><p>{details.summary}</p>
+      <h1>MELA Home</h1><h2>{details.title}</h2><p>{details.summary}</p>
+      <p className="banner banner-info">Your profile still needs to be completed. Choose <strong>Complete my profile</strong> to save your information. You can return to this Home page at any time.</p>
       <section className="list-panel"><h2>Your workspace will include</h2>
         <ul>{details.items.map(item=><li key={item}>{item}</li>)}</ul>
       </section>

@@ -35,6 +35,8 @@ jobs:
           test -s dist/sw.js
           grep -R -F -q "Back to MELA Home" dist/assets
           grep -R -F -q "Account type (required)" dist/assets
+          grep -R -F -q "Create your MELA account" dist/assets
+          grep -R -F -q "No invitation code?" dist/assets
           printf '{"commit":"%s","published_from":"github-actions"}\n' "$GITHUB_SHA" > dist/mela-release.json
           test -s dist/mela-release.json
       - run: cp dist/index.html dist/404.html

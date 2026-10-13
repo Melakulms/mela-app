@@ -54,7 +54,8 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
         setEmailSent(true)
         onRegistered?.(normalizedEmail)
       } catch (err) {
-        setError(err instanceof Error ? err.message : t('authCreateError'))
+        const message = err && typeof err === 'object' && 'message' in err && typeof err.message === 'string' ? err.message : ''
+        setError(message || t('authEmailCreateError'))
       } finally { setBusy(false) }
       return
     }

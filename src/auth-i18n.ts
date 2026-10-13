@@ -1,6 +1,8 @@
 import { COACH_MESSAGES } from './coach-i18n'
 // Product interface translations; native-language acceptance remains a separate review.
 export const AUTH_MESSAGES = {
+  authInvalidLogin: ['Email, username or password is incorrect. Check your details or reset your password.', 'ኢሜይል፣ የተጠቃሚ ስም ወይም የይለፍ ቃል ትክክል አይደለም። ያረጋግጡ ወይም የይለፍ ቃል ይቀይሩ።', 'Imeeliin, maqaan fayyadamaa yookaan jechi icciitii sirrii miti. Ilaalaa ykn jecha icciitii haaromsaa.', 'ኢመይል፣ ስም ተጠቃሚ ወይ ቃል ምስጢር ጌጋ እዩ። ኣረጋግጹ ወይ ቀይሩ።', 'Iimaylka, magaca isticmaalaha ama furaha sirta waa khalad. Hubi ama dib u deji furaha.'],
+  authEmailNotConfirmed: ['Check your email and confirm your address before logging in.', 'ከመግባትዎ በፊት ኢሜይልዎን ይመልከቱና አድራሻዎን ያረጋግጡ።', 'Osoo hin seenin dura imeelii keessan ilaaluu fi teessoo mirkaneessuu qabdu.', 'ቅድሚ ምእታውኩም ኢመይልኩም ርኣዩ እሞ ኣድራሻኹም ኣረጋግጹ።', 'Hubi iimaylkaaga oo xaqiiji cinwaanka ka hor intaadan gelin.'],
   authEmailJoin: ['Create your MELA account', 'የMELA መለያዎን ይፍጠሩ', 'Herrega MELA keessanii banaa', 'ናይ MELA መለያኹም ፍጠሩ', 'Samee akoonkaaga MELA'],
   authEmailHelp: ['Students and families can join with an email. No invitation code needed.', 'ተማሪዎችና ቤተሰቦች በኢሜይል መመዝገብ ይችላሉ። የግብዣ ኮድ አያስፈልግም።', 'Barattoonni fi maatiin imeeliidhaan galmaaʼuu dandaʼu. Koodiin affeerraa hin barbaachisu.', 'ተማሃሮን ስድራቤታትን ብኢመይል ክምዝገቡ ይኽእሉ። ኮድ ዕድመ ኣየድልን።', 'Ardayda iyo qoysasku waxay isku diiwaangelin karaan iimayl. Koodh casuumaad looma baahna.'],
   authEmailAddress: ['Email address', 'የኢሜይል አድራሻ', 'Teessoo imeelii', 'ኣድራሻ ኢመይል', 'Cinwaanka iimaylka'],
@@ -24,7 +26,7 @@ export const AUTH_MESSAGES = {
   authLoggingIn: ['Logging in…','በመግባት ላይ…','Seenaa jira…','ይኣቱ ኣሎ…','Waa la galayaa…'],
   authForgot: ['Forgot password?','የይለፍ ቃል ረሱ?','Jecha icciitii dagattani?','ቃል ምስጢር ረሲዕኩም?','Ma illowday furaha sirta?'],
   authNewHere: ['New to MELA?','ለMELA አዲስ ነዎት?','MELA irratti haaraa dha?','ኣብ MELA ሓድሽ ዲኹም?','Ma ku cusub tahay MELA?'],
-  authUseCode: ['Use a beta access code','የቤታ መግቢያ ኮድ ተጠቀም','Koodii seensaa beta fayyadami','ኮድ መእተዊ ቤታ ተጠቐም','Isticmaal koodhka gelitaanka beta'],
+  authUseCode: ['Create an account','መለያ ፍጠር','Herrega bani','መለያ ፍጠር','Samee akoon'],
   authEnterIdentifier: ['Enter your email or beta username above first, then tap "Forgot password".','መጀመሪያ ኢሜይልዎን ወይም የቤታ ተጠቃሚ ስምዎን ያስገቡ፤ ከዚያ የይለፍ ቃል ረሱ የሚለውን ይጫኑ።','Dura imeelii ykn maqaa fayyadamaa beta galchaa; itti aansuun jecha icciitii dagattani jedhu cuqaasaa.','ቅድም ኢሜይል ወይ ስም ተጠቃሚ ቤታ ኣእትዉ፤ ድሕሪኡ ቃል ምስጢር ረሲዕኩም ዝብል ጠውቑ።','Marka hore geli iimaylkaaga ama magaca beta, dabadeed taabo furaha sirta ma illowday.'],
   authResetEmailSent: ['Check your email for a password reset link.','የይለፍ ቃል መቀየሪያ አገናኝ በኢሜይልዎ ይፈልጉ።','Hidhaa jecha icciitii haaromsuuf imeelii keessan ilaalaa.','ኣብ ኢሜይልኩም መላግቦ መቐየሪ ቃል ምስጢር ድለዩ።','Ka eeg iimaylkaaga xiriirka dib u dejinta furaha sirta.'],
   authResetEmailError: ['Could not send the reset email. Please try again.','የመቀየሪያ ኢሜይል መላክ አልተቻለም። እንደገና ይሞክሩ።','Imeelii haaromsaa erguun hin danda’amne. Irra deebi’aa yaalaa.','ኢሜይል መቐየሪ ክለኣኽ ኣይከኣለን። እንደገና ፈትኑ።','Iimaylka dib u dejinta lama diri karin. Isku day mar kale.'],

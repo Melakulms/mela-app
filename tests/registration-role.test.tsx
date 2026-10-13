@@ -4,8 +4,8 @@ import {cleanup, fireEvent, render, screen, waitFor} from '@testing-library/reac
 import {I18nProvider} from '../src/i18n'
 import Register from '../src/pages/Register'
 
-const mocks = vi.hoisted(() => ({ registerBetaUser: vi.fn() }))
-vi.mock('../src/lib/auth', () => ({ registerBetaUser: mocks.registerBetaUser }))
+const mocks = vi.hoisted(() => ({ registerBetaUser: vi.fn(), registerUser: vi.fn() }))
+vi.mock('../src/lib/auth', () => ({ registerBetaUser: mocks.registerBetaUser, registerUser: mocks.registerUser }))
 
 beforeEach(() => {
   vi.resetAllMocks()
@@ -15,6 +15,7 @@ afterEach(() => { cleanup(); localStorage.removeItem('mela_language') })
 
 function openForm() {
   const view = render(<I18nProvider><Register onSwitchToLogin={vi.fn()}/></I18nProvider>)
+  fireEvent.click(screen.getByRole('button', { name: /Have an invitation code/ }))
   const role = screen.getByLabelText('Account type (required)') as HTMLSelectElement
   return { ...view, role }
 }

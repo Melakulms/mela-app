@@ -45,10 +45,11 @@ export default function Register({ onSwitchToLogin }: {
       if (password !== confirmPassword) { setError(t('authMismatch')); return }
       setBusy(true)
       try {
-        const { error: signupError } = await registerUser({
+        const { data: signupData, error: signupError } = await registerUser({
           email: normalizedEmail, password, fullName: name, role: emailRole,
         })
         if (signupError) throw signupError
+        if (!signupData?.user) throw new Error(t('authCreateError'))
         setPassword(''); setConfirmPassword('')
         setEmailSent(true)
         onRegistered?.(normalizedEmail)

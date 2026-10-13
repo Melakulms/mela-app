@@ -5,7 +5,7 @@ import { I18nProvider, translate } from '../src/i18n'
 import Login from '../src/pages/Login'
 import Register from '../src/pages/Register'
 import ResetPassword from '../src/pages/ResetPassword'
-vi.mock('../src/lib/auth',()=>({loginUser:vi.fn(),requestPasswordReset:vi.fn(),resetBetaPassword:vi.fn(),registerBetaUser:vi.fn()}))
+vi.mock('../src/lib/auth',()=>({loginUser:vi.fn(),requestPasswordReset:vi.fn(),resetBetaPassword:vi.fn(),registerBetaUser:vi.fn(),registerUser:vi.fn()}))
 vi.mock('../src/lib/supabase',()=>({supabase:{auth:{updateUser:vi.fn()}}}))
 beforeEach(()=>localStorage.removeItem('mela_language'))
 afterEach(()=>{cleanup();localStorage.removeItem('mela_language')})
@@ -30,6 +30,7 @@ it.each(['am','om','ti','so'] as const)('switches login language without losing 
 it('restores the selected language in beta registration and expired-link recovery',()=>{
  localStorage.setItem('mela_language','am')
  const view=render(<I18nProvider><Register onSwitchToLogin={vi.fn()} /></I18nProvider>)
+ fireEvent.click(screen.getByRole('button',{name:translate('am','authSwitchInvite')}))
  expect(screen.getByLabelText(translate('am','authAccessCode'))).toBeTruthy()
  expect(screen.getByRole('heading',{name:translate('am','authJoin')})).toBeTruthy()
  view.unmount()

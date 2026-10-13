@@ -17,14 +17,15 @@ function fillEmailForm() {
   fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'A long test passphrase 2026' } })
 }
 
-it('offers student or family email registration without an invitation by default', () => {
+it('offers student, family, teacher and company email registration without an invitation by default', () => {
   render(<I18nProvider><Register onSwitchToLogin={vi.fn()} /></I18nProvider>)
   expect(screen.getByRole('heading', { name: 'Create your MELA account' })).toBeTruthy()
   expect(screen.getByLabelText('Email address')).toBeTruthy()
   expect(screen.queryByLabelText('Beta access code')).toBeNull()
   const role = screen.getByLabelText('I am registering as') as HTMLSelectElement
   expect(role.value).toBe('student')
-  expect(Array.from(role.options).map(option => option.value)).toEqual(['student','parent'])
+  expect(Array.from(role.options).map(option => option.value)).toEqual(['student','parent','teacher','company'])
+  expect(screen.queryByRole('option', { name: /admin/i })).toBeNull()
   expect(screen.getByRole('button', { name: 'Create account' })).toBeTruthy()
 })
 
@@ -78,4 +79,27 @@ it('explains a mail-server failure instead of blaming registration details', asy
   fillEmailForm()
   fireEvent.click(screen.getByRole('button', { name: 'Create account' }))
   expect((await screen.findByRole('alert')).textContent).toContain('MELA could not send a confirmation email')
+})
+
+
+it.each([
+  ['teacher','Teacher / educator'],
+  ['company','Company / employer'],
+] as const)('registers %s by email without admin privileges or invitation',async (value,label)=>{
+  const onRegistered=vi.fn()
+  mocks.registerUser.mockResolvedValue({data:{user:{id:'new-account'},session:null},error:null})
+  render(<I18nProvider><Register onSwitchToLogin={vi.fn()} onRegistered={onRegistered}/></I18nProvider>)
+  fillEmailForm()
+  fireEvent.change(screen.getByLabelText('I am registering as'),{target:{value}})
+  expect(screen.getByRole('option',{name:label})).toBeTruthy()
+  expect(screen.getByRole('status').textContent).toContain('must verify')
+  fireEvent.click(screen.getByRole('button',{name:'Create account'}))
+  await waitFor(()=>expect(mocks.registerUser).toHaveBeenCalledWith({
+    email:'learner@example.com',
+    password:'A long test passphrase 2026',
+    fullName:'MELA Learner',
+    role:value,
+  }))
+  expect(onRegistered).toHaveBeenCalledWith('learner@example.com')
+  expect(mocks.registerBetaUser).not.toHaveBeenCalled()
 })

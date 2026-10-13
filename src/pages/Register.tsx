@@ -55,7 +55,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
         onRegistered?.(normalizedEmail)
       } catch (err) {
         const message = err && typeof err === 'object' && 'message' in err && typeof err.message === 'string' ? err.message : ''
-        setError(message || t('authEmailCreateError'))
+        setError(/error sending confirmation email|535\s+5\.7\.8|smtp|email delivery|mail provider/i.test(message) ? t('authEmailDeliveryIssue') : (message || t('authEmailCreateError')))
       } finally { setBusy(false) }
       return
     }

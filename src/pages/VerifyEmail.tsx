@@ -16,7 +16,7 @@ export default function VerifyEmail({ email, onUseDifferentAccount, onRefresh }:
     setError('')
     try {
       const { error: resendError } = await supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: authRedirectUrl() } })
-      if (resendError) setError(resendError.message)
+      if (resendError) setError(/error sending confirmation email|535\s+5\.7\.8|smtp|email delivery|mail provider/i.test(resendError.message) ? t('authEmailDeliveryIssue') : resendError.message)
       else setSent(true)
     } catch { setError(t('authVerifyError')) }
     finally { setBusy(false) }

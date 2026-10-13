@@ -1,6 +1,7 @@
 import { COACH_MESSAGES } from './coach-i18n'
 // Product interface translations; native-language acceptance remains a separate review.
 export const AUTH_MESSAGES = {
+  authEmailCreateError: ['Could not create an account. Please try again.', 'መለያ መፍጠር አልተቻለም። እንደገና ይሞክሩ።', 'Herrega banuun hin dandaʼamne. Irra deebiʼaa yaalaa.', 'መለያ ምፍጣር ኣይተኻእለን። እንደገና ፈትኑ።', 'Akoon lama samayn karo. Fadlan mar kale isku day.'],
   authInvalidLogin: ['Email, username or password is incorrect. Check your details or reset your password.', 'ኢሜይል፣ የተጠቃሚ ስም ወይም የይለፍ ቃል ትክክል አይደለም። ያረጋግጡ ወይም የይለፍ ቃል ይቀይሩ።', 'Imeeliin, maqaan fayyadamaa yookaan jechi icciitii sirrii miti. Ilaalaa ykn jecha icciitii haaromsaa.', 'ኢመይል፣ ስም ተጠቃሚ ወይ ቃል ምስጢር ጌጋ እዩ። ኣረጋግጹ ወይ ቀይሩ።', 'Iimaylka, magaca isticmaalaha ama furaha sirta waa khalad. Hubi ama dib u deji furaha.'],
   authEmailNotConfirmed: ['Check your email and confirm your address before logging in.', 'ከመግባትዎ በፊት ኢሜይልዎን ይመልከቱና አድራሻዎን ያረጋግጡ።', 'Osoo hin seenin dura imeelii keessan ilaaluu fi teessoo mirkaneessuu qabdu.', 'ቅድሚ ምእታውኩም ኢመይልኩም ርኣዩ እሞ ኣድራሻኹም ኣረጋግጹ።', 'Hubi iimaylkaaga oo xaqiiji cinwaanka ka hor intaadan gelin.'],
   authEmailJoin: ['Create your MELA account', 'የMELA መለያዎን ይፍጠሩ', 'Herrega MELA keessanii banaa', 'ናይ MELA መለያኹም ፍጠሩ', 'Samee akoonkaaga MELA'],

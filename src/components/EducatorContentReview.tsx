@@ -338,7 +338,7 @@ export default function EducatorContentReview() {
     <div className="empty-panel">
       <strong>Reviewer access is not active for this account.</strong>
       <p className="muted">MELA accepts teacher review decisions only after an administrator verifies the teacher profile and authorises the relevant subjects. Register as a teacher and save your qualifications, institution, subjects and grades first.</p>
-      <p>Ask an authorized administrator to open Central Admin → Moderation → Teacher reviewer verification and inspect your qualification, institution, subjects and grade levels. After approval, recheck access below. An administrator account alone does not represent a verified subject teacher.</p>
+      <p>Ask the verification team to review your qualification, institution, subjects and grade levels. After approval, recheck access below. Only verified subject teachers can review questions.</p>
       <button className="btn btn-secondary" onClick={() => setAccessRevision(value => value + 1)}>Recheck teacher review access</button>
     </div>
   </section>

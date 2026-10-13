@@ -200,13 +200,12 @@ export default function App() {
     </div></div>
   }
 
-  if (profile.role === 'admin' || profile.role === 'super_admin') return <div className="auth-shell"><div className="auth-card">
-    <h1>MELA User App</h1>
-    <p>You are signed in with an administrator account. To use this app, switch to your student, employer, mentor, teacher or family account.</p>
-    {actionError && <p role="alert">{actionError}</p>}
-    <button type="button" className="btn btn-primary" disabled={signingOut} onClick={() => { setAuthView('login'); void signOut() }}>Switch to a user account</button>
-    <p><a href="https://melakulms.github.io/Mela-central-dashboard-/">Open the separate Admin app</a></p>
-  </div></div>
+  if (profile.role === 'admin' || profile.role === 'super_admin') return <>
+    <p className="banner banner-info" role="status">Sign in or register with a MELA user account to continue.</p>
+    {authView === 'login'
+      ? <Login onSwitchToRegister={() => setAuthView('register')} />
+      : <Register onSwitchToLogin={() => setAuthView('login')} onRegistered={(email) => setPendingEmail(email)} />}
+  </>
 
   const isStudent = profile.role === 'student'
 

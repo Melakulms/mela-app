@@ -296,7 +296,7 @@ export default function DeviceSettings() {
           <summary>Registration, teacher review & pending platform features</summary>
           <p>Registration is the first screen for signed-out users, with a valid beta invitation code. MELA opens your existing account rather than showing registration again when signed in.</p>
           <p><strong>Not published in this release:</strong> account-synced notification settings, fully personalized scholarship matching, and public access to questions before teacher approval. Question review batches are prepared, but only verified teachers may submit decisions; this does not mean the questions are approved.</p>
-          <p>Verified teachers can currently access Educator content review → Question reviews from the teacher dashboard where their permissions allow. Central Admin is responsible for teacher credential verification.</p>
+          <p>Verified teachers can currently access Educator content review → Question reviews from the teacher dashboard where their permissions allow. The verification team reviews teacher credentials.</p>
         </details>
       </section>
       <a className="btn btn-primary btn-block" href={`${import.meta.env.BASE_URL}?view=dashboard`} onClick={backHome}>Back to MELA Home</a>

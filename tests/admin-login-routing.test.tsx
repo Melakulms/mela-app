@@ -11,7 +11,6 @@ vi.mock('../src/pages/EmployerPortal', () => ({ default: () => <h1>Employer home
 vi.mock('../src/pages/RoleDashboard', () => ({ default: () => <h1>Mentor home</h1> }))
 
 const replace = vi.fn()
-const destination = 'https://melakulms.github.io/Mela-central-dashboard-/'
 beforeEach(() => {
   vi.resetAllMocks()
   window.history.replaceState(null, '', '/')
@@ -43,11 +42,12 @@ async function signIn(role: string, overrides = {}) {
   fireEvent.click(screen.getByRole('button', { name: 'Log in' }))
 }
 
-it.each(['admin', 'super_admin'])('keeps %s in the user app until they explicitly choose the admin link', async role => {
+it.each(['admin', 'super_admin'])('shows only user sign-in for %s without admin links or redirection', async role => {
   await signIn(role)
-  await screen.findByRole('heading', { name: 'MELA User App' })
+  await screen.findByText('Sign in or register with a MELA user account to continue.')
   expect(replace).not.toHaveBeenCalled()
-  expect(screen.getByRole('link', { name: 'Open the separate Admin app' }).getAttribute('href')).toBe(destination)
+  expect(screen.queryByRole('link', { name: /admin/i })).toBeNull()
+  expect(screen.queryByRole('button', { name: /switch/i })).toBeNull()
   expect(mocks.loginUser).toHaveBeenCalledWith('test@example.invalid', 'TestPassword123')
   expect(screen.queryByRole('heading', { name: 'Central Admin' })).toBeNull()
   expect(screen.queryByRole('heading', { name: 'Account setup' })).toBeNull()
@@ -61,9 +61,10 @@ it('keeps an already signed-in admin on the user app during session restoration'
   mocks.getSession.mockResolvedValue({ data: { session: { user: { id: 'admin-user' } } }, error: null })
   mocks.fetchOwnProfile.mockResolvedValue({ id: 'admin-user', role: 'admin', account_status: 'active', email_verified: true, preferred_language: 'English' })
   render(<App />)
-  await screen.findByRole('heading', { name: 'MELA User App' })
+  await screen.findByText('Sign in or register with a MELA user account to continue.')
   expect(replace).not.toHaveBeenCalled()
-  expect(screen.getByRole('link', { name: 'Open the separate Admin app' }).getAttribute('href')).toBe(destination)
+  expect(screen.queryByRole('link', { name: /admin/i })).toBeNull()
+  expect(screen.queryByRole('button', { name: /switch/i })).toBeNull()
 })
 it('preserves account restrictions before redirecting an admin', async () => {
   await signIn('admin', { account_status: 'suspended' })
@@ -71,14 +72,18 @@ it('preserves account restrictions before redirecting an admin', async () => {
   expect(replace).not.toHaveBeenCalled()
 })
 
-it('switches from a saved admin session to user sign-in without navigating to Admin', async () => {
+it('allows a user to sign in after restoring a non-user account', async () => {
   await signIn('admin')
-  await screen.findByRole('heading', { name: 'MELA User App' })
-  mocks.logoutUser.mockImplementation(async () => {
-    mocks.onAuthStateChange.mock.calls.at(-1)![0]('SIGNED_OUT', null)
+  await screen.findByText('Sign in or register with a MELA user account to continue.')
+  mocks.fetchOwnProfile.mockResolvedValue({ id: 'student-user', role: 'student', account_status: 'active', email_verified: true, education_onboarding_completed: true, preferred_language: 'English' })
+  mocks.loginUser.mockImplementation(async () => {
+    mocks.onAuthStateChange.mock.calls.at(-1)![0]('SIGNED_IN', { user: { id: 'student-user' } })
     return { error: null }
   })
-  fireEvent.click(screen.getByRole('button', { name: 'Switch to a user account' }))
-  await screen.findByLabelText('Email or beta username')
+  fireEvent.change(screen.getByLabelText('Email or beta username'), { target: { value: 'student@example.invalid' } })
+  fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'TestPassword123' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Log in' }))
+  await screen.findByRole('heading', { name: 'Student home' })
   expect(replace).not.toHaveBeenCalled()
+  expect(screen.queryByText('Sign in or register with a MELA user account to continue.')).toBeNull()
 })

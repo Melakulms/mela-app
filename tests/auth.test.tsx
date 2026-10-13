@@ -7,7 +7,7 @@ import App from '../src/App'
 
 const mocks = vi.hoisted(() => ({
   updateUser: vi.fn(), getSession: vi.fn(), onAuthStateChange: vi.fn(),
-  loginUser: vi.fn(), requestPasswordReset: vi.fn(), resetBetaPassword: vi.fn(), registerBetaUser: vi.fn(),
+  loginUser: vi.fn(), requestPasswordReset: vi.fn(), resetBetaPassword: vi.fn(), registerBetaUser: vi.fn(), registerUser: vi.fn(),
   logoutUser: vi.fn(), fetchOwnProfile: vi.fn(), fetchEnabledLanguages: vi.fn(),
 }))
 vi.mock('../src/lib/supabase', () => ({ supabase: { auth: {
@@ -58,7 +58,7 @@ describe('Password recovery', () => {
   it('opens the recovery screen when Supabase emits PASSWORD_RECOVERY', async () => {
     mocks.fetchOwnProfile.mockResolvedValue(null)
     render(<App />)
-    await screen.findByRole('heading', { name: 'Join the MELA beta' })
+    await screen.findByRole('heading', { name: 'Create your MELA account' })
     const callback = mocks.onAuthStateChange.mock.calls[0][0]
     await act(async () => callback('PASSWORD_RECOVERY', { user: { id: 'recovery-user' } }))
     expect(screen.getByLabelText('New password')).toBeTruthy()
@@ -126,7 +126,7 @@ describe('App session ordering', () => {
     const callback = mocks.onAuthStateChange.mock.calls[0][0]
     await act(async () => callback('SIGNED_OUT', null))
     await act(async () => restore({ data: { session: { user: { id: 'old-account' } } }, error: null }))
-    expect(screen.getByRole('heading', { name: 'Join the MELA beta' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Create your MELA account' })).toBeTruthy()
     expect(mocks.fetchOwnProfile).not.toHaveBeenCalled()
   })
 })
@@ -159,7 +159,7 @@ it('closes global Settings across sign-out and sign-in and returns to learner ho
   fireEvent.click(screen.getByRole('button',{name:'Open MELA settings'}))
   expect(screen.getByRole('heading',{name:'Settings',exact:true})).toBeTruthy()
   fireEvent.click(screen.getByRole('button',{name:'Log out'}))
-  await screen.findByRole('heading',{name:'Join the MELA beta'})
+  await screen.findByRole('heading',{name:'Create your MELA account'})
   expect(screen.queryByRole('heading',{name:'Settings',exact:true})).toBeNull()
   const callback=mocks.onAuthStateChange.mock.calls[mocks.onAuthStateChange.mock.calls.length-1][0]
   await act(async()=>callback('SIGNED_IN',session))

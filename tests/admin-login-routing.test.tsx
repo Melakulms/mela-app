@@ -2,9 +2,9 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import App from '../src/App'
 
-const mocks = vi.hoisted(() => ({ getSession: vi.fn(), onAuthStateChange: vi.fn(), loginUser: vi.fn(), fetchOwnProfile: vi.fn(), from: vi.fn() }))
+const mocks = vi.hoisted(() => ({ getSession: vi.fn(), onAuthStateChange: vi.fn(), loginUser: vi.fn(), logoutUser: vi.fn(), fetchOwnProfile: vi.fn(), from: vi.fn() }))
 vi.mock('../src/lib/supabase', () => ({ supabase: { auth: { getSession: mocks.getSession, onAuthStateChange: mocks.onAuthStateChange }, from: mocks.from } }))
-vi.mock('../src/lib/auth', () => ({ ...mocks, logoutUser: vi.fn(), updatePreferredLanguage: vi.fn() }))
+vi.mock('../src/lib/auth', () => ({ ...mocks, updatePreferredLanguage: vi.fn() }))
 vi.mock('../src/lib/languages', () => ({ fetchEnabledLanguages: async () => [] }))
 vi.mock('../src/pages/StudentDashboard', () => ({ default: () => <h1>Student home</h1> }))
 vi.mock('../src/pages/EmployerPortal', () => ({ default: () => <h1>Employer home</h1> }))
@@ -43,9 +43,11 @@ async function signIn(role: string, overrides = {}) {
   fireEvent.click(screen.getByRole('button', { name: 'Log in' }))
 }
 
-it.each(['admin', 'super_admin'])('redirects %s after login without rendering the placeholder', async role => {
+it.each(['admin', 'super_admin'])('keeps %s in the user app until they explicitly choose the admin link', async role => {
   await signIn(role)
-  await waitFor(() => expect(replace).toHaveBeenCalledWith(destination))
+  await screen.findByRole('heading', { name: 'MELA User App' })
+  expect(replace).not.toHaveBeenCalled()
+  expect(screen.getByRole('link', { name: 'Open the separate Admin app' }).getAttribute('href')).toBe(destination)
   expect(mocks.loginUser).toHaveBeenCalledWith('test@example.invalid', 'TestPassword123')
   expect(screen.queryByRole('heading', { name: 'Central Admin' })).toBeNull()
   expect(screen.queryByRole('heading', { name: 'Account setup' })).toBeNull()
@@ -55,14 +57,28 @@ it.each([['student', 'Student home'], ['employer', 'Employer home'], ['mentor', 
   expect(await screen.findByRole('heading', { name: heading })).toBeTruthy()
   expect(replace).not.toHaveBeenCalled()
 })
-it('redirects an already signed-in admin on session restoration', async () => {
+it('keeps an already signed-in admin on the user app during session restoration', async () => {
   mocks.getSession.mockResolvedValue({ data: { session: { user: { id: 'admin-user' } } }, error: null })
   mocks.fetchOwnProfile.mockResolvedValue({ id: 'admin-user', role: 'admin', account_status: 'active', email_verified: true, preferred_language: 'English' })
   render(<App />)
-  await waitFor(() => expect(replace).toHaveBeenCalledWith(destination))
+  await screen.findByRole('heading', { name: 'MELA User App' })
+  expect(replace).not.toHaveBeenCalled()
+  expect(screen.getByRole('link', { name: 'Open the separate Admin app' }).getAttribute('href')).toBe(destination)
 })
 it('preserves account restrictions before redirecting an admin', async () => {
   await signIn('admin', { account_status: 'suspended' })
   await screen.findByRole('heading', { name: 'Account unavailable' })
+  expect(replace).not.toHaveBeenCalled()
+})
+
+it('switches from a saved admin session to user sign-in without navigating to Admin', async () => {
+  await signIn('admin')
+  await screen.findByRole('heading', { name: 'MELA User App' })
+  mocks.logoutUser.mockImplementation(async () => {
+    mocks.onAuthStateChange.mock.calls.at(-1)![0]('SIGNED_OUT', null)
+    return { error: null }
+  })
+  fireEvent.click(screen.getByRole('button', { name: 'Switch to a user account' }))
+  await screen.findByLabelText('Email or beta username')
   expect(replace).not.toHaveBeenCalled()
 })

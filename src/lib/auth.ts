@@ -88,7 +88,7 @@ export async function loginUser(identifier: string, password: string) {
 }
 
 export async function logoutUser() {
-  return supabase.auth.signOut()
+  return supabase.auth.signOut({ scope: 'local' })
 }
 
 export async function requestPasswordReset(email: string) {

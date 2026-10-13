@@ -8,7 +8,6 @@ import { fetchOwnProfile, logoutUser, updatePreferredLanguage, type MelaProfile 
 import { fetchEnabledLanguages, type PlatformLanguage } from './lib/languages'
 import { useI18n, type TranslationKey } from './i18n'
 import ResetPassword from './pages/ResetPassword'
-import CentralDashboardRedirect from './components/CentralDashboardRedirect'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import VerifyEmail from './pages/VerifyEmail'
@@ -201,7 +200,13 @@ export default function App() {
     </div></div>
   }
 
-  if (profile.role === 'admin' || profile.role === 'super_admin') return <CentralDashboardRedirect />
+  if (profile.role === 'admin' || profile.role === 'super_admin') return <div className="auth-shell"><div className="auth-card">
+    <h1>MELA User App</h1>
+    <p>You are signed in with an administrator account. To use this app, switch to your student, employer, mentor, teacher or family account.</p>
+    {actionError && <p role="alert">{actionError}</p>}
+    <button type="button" className="btn btn-primary" disabled={signingOut} onClick={() => { setAuthView('login'); void signOut() }}>Switch to a user account</button>
+    <p><a href="https://melakulms.github.io/Mela-central-dashboard-/">Open the separate Admin app</a></p>
+  </div></div>
 
   const isStudent = profile.role === 'student'
 

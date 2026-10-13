@@ -1,7 +1,7 @@
 import { supabase } from './supabase'
 import { authRedirectUrl } from './auth-redirect'
 
-export type MelaRole = 'student' | 'parent' | 'teacher' | 'employer' | 'company' | 'mentor' | 'admin'
+export type MelaRole = 'student' | 'parent' | 'teacher' | 'employer' | 'company' | 'mentor' | 'admin' | 'super_admin'
 
 export interface RegisterInput {
   email: string

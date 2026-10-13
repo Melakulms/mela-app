@@ -8,6 +8,7 @@ import { fetchOwnProfile, logoutUser, updatePreferredLanguage, type MelaProfile 
 import { fetchEnabledLanguages, type PlatformLanguage } from './lib/languages'
 import { useI18n, type TranslationKey } from './i18n'
 import ResetPassword from './pages/ResetPassword'
+import CentralDashboardRedirect from './components/CentralDashboardRedirect'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import VerifyEmail from './pages/VerifyEmail'
@@ -200,6 +201,8 @@ export default function App() {
     </div></div>
   }
 
+  if (profile.role === 'admin' || profile.role === 'super_admin') return <CentralDashboardRedirect />
+
   const isStudent = profile.role === 'student'
 
   if (isStudent && !profile.education_onboarding_completed) {
@@ -302,8 +305,6 @@ export default function App() {
         <EmployerPortal role={profile.role} />
       ) : profile.role === 'parent' || profile.role === 'teacher' || profile.role === 'mentor' ? (
         <RoleDashboard role={profile.role} fullName={profile.full_name} />
-      ) : profile.role === 'admin' ? (
-        <div className="dash-main"><h1>{t('centralAdmin')}</h1><p className="muted">{t('centralAdminHelp')}</p></div>
       ) : (
         <div className="dash-main"><h1>{t('accountSetup')}</h1><p className="muted">{t('unsupportedRole')}</p></div>
       )}

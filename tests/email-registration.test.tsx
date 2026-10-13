@@ -71,3 +71,11 @@ it('keeps invitation signup for authorized educators and employers', () => {
   fireEvent.click(screen.getByRole('button', { name: /No invitation code/ }))
   expect(screen.getByLabelText('Email address')).toBeTruthy()
 })
+
+it('explains a mail-server failure instead of blaming registration details', async () => {
+  mocks.registerUser.mockResolvedValue({ data: { user: null, session: null }, error: { message: 'Error sending confirmation email' } })
+  render(<I18nProvider><Register onSwitchToLogin={vi.fn()} /></I18nProvider>)
+  fillEmailForm()
+  fireEvent.click(screen.getByRole('button', { name: 'Create account' }))
+  expect((await screen.findByRole('alert')).textContent).toContain('MELA could not send a confirmation email')
+})

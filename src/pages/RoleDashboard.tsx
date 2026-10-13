@@ -119,6 +119,8 @@ export default function RoleDashboard({ role, fullName }: Props) {
   if (error) return <div className="dash-main"><div className="banner banner-error" role="alert">{error}</div><button className="btn btn-primary" onClick={() => setRevision(value => value + 1)}>Retry dashboard</button><button className="btn btn-secondary" onClick={() => logoutUser()}>Log out</button></div>
   if (!summary) return <div className="centered-loading">Loading your dashboard…</div>
 
+  const teacherApproved = role === 'teacher' && ['approved', 'verified'].includes(summary.status.toLowerCase())
+
   return (
     <div className="dash-main">
       <div className="dash-greeting">
@@ -132,9 +134,10 @@ export default function RoleDashboard({ role, fullName }: Props) {
       {summary.details.length === 0
         ? <div className="empty-panel">No activity yet. Complete your profile or start using your MELA tools.</div>
         : <div className="list-panel">{summary.details.map((d, i) => <div className="list-row" key={i}><span className="list-row-title">{d}</span></div>)}</div>}
-      {role === 'teacher' && <TeacherClassrooms onChanged={() => setRevision(value => value + 1)} />}
-      {role === 'teacher' && <EducatorContentReview />}
-      {role === 'teacher' && <AICourseLessonReview />}
+      {role === 'teacher' && !teacherApproved && <div className="banner banner-info" role="status">Teacher verification is pending. Your profile is registered, but classroom management and question review will open only after MELA independently approves your qualifications and teaching subjects. Check back for updates.</div>}
+      {teacherApproved && <TeacherClassrooms onChanged={() => setRevision(value => value + 1)} />}
+      {teacherApproved && <EducatorContentReview />}
+      {teacherApproved && <AICourseLessonReview />}
       {role === 'mentor' && <MentorLifecycle onChanged={() => setRevision(value => value + 1)} />}
       {role === 'parent' && <ParentLearnerProgress />}
       {role === 'parent' && <ParentActions onLinked={() => setRevision(value => value + 1)} />}

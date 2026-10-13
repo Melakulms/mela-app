@@ -7,7 +7,7 @@ export interface RegisterInput {
   email: string
   password: string
   fullName: string
-  role: Extract<MelaRole, 'student' | 'parent'>
+  role: BetaSignupRole
 }
 
 export async function registerUser({ email, password, fullName, role }: RegisterInput) {

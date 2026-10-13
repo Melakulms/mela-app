@@ -10,7 +10,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
   const { t } = useI18n()
   const [mode, setMode] = useState<'email' | 'invite'>('email')
   const [email, setEmail] = useState('')
-  const [emailRole, setEmailRole] = useState<'student' | 'parent'>('student')
+  const [emailRole, setEmailRole] = useState<BetaSignupRole>('student')
   const [emailSent, setEmailSent] = useState(false)
   const [fullName, setFullName] = useState('')
   const [username, setUsername] = useState('')
@@ -128,10 +128,13 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
           </div>
           <div className="field">
             <label htmlFor="email-role">{t('authEmailRole')}</label>
-            <select id="email-role" required value={emailRole} onChange={e => setEmailRole(e.target.value as 'student' | 'parent')} disabled={busy}>
+            <select id="email-role" required value={emailRole} onChange={e => setEmailRole(e.target.value as BetaSignupRole)} disabled={busy}>
               <option value="student">{t('authEmailStudent')}</option>
               <option value="parent">{t('authEmailParent')}</option>
+              <option value="teacher">{t('authEmailTeacher')}</option>
+              <option value="company">{t('authEmailCompany')}</option>
             </select>
+            {(emailRole === 'teacher' || emailRole === 'company') && <span className="field-hint" role="status">{t('authProfessionalVerification')}</span>}
           </div>
           <div className="field">
             <label htmlFor="password">{t('authPassword')}</label>

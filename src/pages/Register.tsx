@@ -3,7 +3,7 @@ import AuthLayout from '../components/AuthLayout'
 import { useMemo, useState } from 'react'
 import { registerBetaUser, registerUser, type BetaRegisterResult, type BetaSignupRole } from '../lib/auth'
 
-export default function Register({ onSwitchToLogin }: {
+export default function Register({ onSwitchToLogin, onRegistered }: {
   onSwitchToLogin: () => void
   onRegistered?: (email: string) => void
 }) {

@@ -24,7 +24,11 @@ export default function Login({ onSwitchToRegister }: { onSwitchToRegister: () =
     setBusy(true)
     try {
       const { error: loginError } = await loginUser(identifier, password)
-      if (loginError) setError(loginError.message)
+      if (loginError) {
+        const message = loginError.message
+        setError(/invalid login credentials|invalid email or password/i.test(message) ? t('authInvalidLogin')
+          : /email not confirmed/i.test(message) ? t('authEmailNotConfirmed') : message)
+      }
     } catch { setError(t('connectionError')) }
     finally { setBusy(false) }
   }
@@ -110,11 +114,11 @@ export default function Login({ onSwitchToRegister }: { onSwitchToRegister: () =
       <form onSubmit={submit}>
         <div className="field">
           <label htmlFor="identifier">{t('authIdentifier')}</label>
-          <input id="identifier" autoComplete="username" required value={identifier} onChange={(e) => setIdentifier(e.target.value)} />
+          <input id="identifier" autoCapitalize="none" spellCheck={false} autoComplete="username" required value={identifier} onChange={(e) => setIdentifier(e.target.value)} disabled={busy} />
         </div>
         <div className="field">
           <label htmlFor="password">{t('authPassword')}</label>
-          <input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={busy} />
           <button type="button" className="password-toggle" aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>{showPassword ? t('authHide') : t('authShow')}</button>
         </div>
         <button className="btn btn-primary btn-block" type="submit" disabled={busy}>{busy ? t('authLoggingIn') : t('authLogin')}</button>

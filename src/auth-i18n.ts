@@ -1,6 +1,18 @@
 import { COACH_MESSAGES } from './coach-i18n'
 // Product interface translations; native-language acceptance remains a separate review.
 export const AUTH_MESSAGES = {
+  authEmailJoin: ['Create your MELA account', 'የMELA መለያዎን ይፍጠሩ', 'Herrega MELA keessanii banaa', 'ናይ MELA መለያኹም ፍጠሩ', 'Samee akoonkaaga MELA'],
+  authEmailHelp: ['Students and families can join with an email. No invitation code needed.', 'ተማሪዎችና ቤተሰቦች በኢሜይል መመዝገብ ይችላሉ። የግብዣ ኮድ አያስፈልግም።', 'Barattoonni fi maatiin imeeliidhaan galmaaʼuu dandaʼu. Koodiin affeerraa hin barbaachisu.', 'ተማሃሮን ስድራቤታትን ብኢመይል ክምዝገቡ ይኽእሉ። ኮድ ዕድመ ኣየድልን።', 'Ardayda iyo qoysasku waxay isku diiwaangelin karaan iimayl. Koodh casuumaad looma baahna.'],
+  authEmailAddress: ['Email address', 'የኢሜይል አድራሻ', 'Teessoo imeelii', 'ኣድራሻ ኢመይል', 'Cinwaanka iimaylka'],
+  authEmailRole: ['I am registering as', 'የምመዘገበው እንደ', 'Akka eenyutti galmaaʼa', 'ከምዚ ይምዝገብ ኣለኹ', 'Waxaan isu diiwaangelinayaa sida'],
+  authEmailStudent: ['Student / learner', 'ተማሪ', 'Barataa', 'ተማሃራይ', 'Arday'],
+  authEmailParent: ['Parent / guardian', 'ወላጅ / አሳዳጊ', 'Maatii / guddisaa', 'ወላዲ / ኣላዪ', 'Waalid / masuul'],
+  authEmailPasswordHelp: ['Use at least 12 characters. A long, memorable phrase works well.', 'ቢያንስ 12 ቁምፊዎችን ይጠቀሙ። ረጅም የሚታወስ ሐረግ ጥሩ ነው።', 'Yoo xiqqaate qubee 12 fayyadamaa. Gaaleen dheeraan yaadatamu gaariidha.', 'ብውሑዱ 12 ፊደላት ተጠቐሙ። ነዊሕ ቀሊል ዝዝከር ሓረግ ጽቡቕ እዩ።', 'Isticmaal ugu yaraan 12 xaraf. Weedh dheer oo la xasuusan karo way fiican tahay.'],
+  authEmailInvalid: ['Enter a valid email address.', 'ትክክለኛ የኢሜይል አድራሻ ያስገቡ።', 'Teessoo imeelii sirrii galchaa.', 'ቅኑዕ ኣድራሻ ኢመይል ኣእትዉ።', 'Geli cinwaan iimayl sax ah.'],
+  authEmailSubmit: ['Create account', 'መለያ ፍጠር', 'Herrega bani', 'መለያ ፍጠር', 'Samee akoon'],
+  authEmailSent: ['Account request received. Check your email to confirm your address, then log in.', 'ጥያቄዎ ደርሷል። ኢሜይልዎን ያረጋግጡና ከዚያ ይግቡ።', 'Gaaffiin keessan gaheera. Imeelii mirkaneessaa, achiis seenaa.', 'ሕቶኹም ተቐቢሉ። ኢመይልኩም ኣረጋግጹ፣ ድሕሪኡ እተዉ።', 'Codsigaaga waa la helay. Xaqiiji iimaylkaaga, dabadeed gal.'],
+  authSwitchInvite: ['Have an invitation code? Sign up with a username instead. Teachers and employers start here.', 'የግብዣ ኮድ አለዎት? በተጠቃሚ ስም ይመዝገቡ። መምህራንና አሰሪዎች እዚህ ይጀምሩ።', 'Koodii affeerraa qabduu? Maqaa fayyadamaatiin galmaaʼaa. Barsiisonnii fi hojjechiistonni as irraa jalqabu.', 'ናይ ዕድመ ኮድ ኣለኩም? ብስም ተጠቃሚ ተመዝገቡ። መምህራንን ኣስራሕትን ካብዚ ይጀምሩ።', 'Ma haysaa koodh casuumaad? Isku diiwaangeli magac isticmaale. Macallimiinta iyo shaqo-bixiyeyaashu halkan ha ka bilaabaan.'],
+  authSwitchEmail: ['No invitation code? Create a student or family account with email.', 'የግብዣ ኮድ የለዎትም? የተማሪ ወይም የቤተሰብ መለያ በኢሜይል ይፍጠሩ።', 'Koodii affeerraa hin qabduu? Herrega barataa ykn maatii imeeliidhaan banaa.', 'ናይ ዕድመ ኮድ የብልኩምን? መለያ ተማሃራይ ወይ ስድራ ብኢመይል ፍጠሩ።', 'Koodh casuumaad ma haysatid? Iimayl ku samee akoon arday ama qoys.'],
   ...COACH_MESSAGES,
   authWelcome: ['Welcome back','እንኳን ደህና መጡ','Baga nagaan dhuftan','እንቋዕ ብደሓን መጻእኩም','Soo dhowow'],
   authLoginHelp: ['Log in with your email or MELA beta username.','በኢሜይልዎ ወይም በMELA ቤታ የተጠቃሚ ስምዎ ይግቡ።','Imeelii ykn maqaa fayyadamaa MELA beta tiin seenaa.','ብኢሜይልኩም ወይ ብስም ተጠቃሚ MELA ቤታ እተዉ።','Ku gal iimaylkaaga ama magacaaga MELA beta.'],

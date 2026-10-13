@@ -1,13 +1,17 @@
 import { useI18n } from '../i18n'
 import AuthLayout from '../components/AuthLayout'
 import { useMemo, useState } from 'react'
-import { registerBetaUser, type BetaRegisterResult, type BetaSignupRole } from '../lib/auth'
+import { registerBetaUser, registerUser, type BetaRegisterResult, type BetaSignupRole } from '../lib/auth'
 
-export default function Register({ onSwitchToLogin }: {
+export default function Register({ onSwitchToLogin, onRegistered }: {
   onSwitchToLogin: () => void
   onRegistered?: (email: string) => void
 }) {
   const { t } = useI18n()
+  const [mode, setMode] = useState<'email' | 'invite'>('email')
+  const [email, setEmail] = useState('')
+  const [emailRole, setEmailRole] = useState<'student' | 'parent'>('student')
+  const [emailSent, setEmailSent] = useState(false)
   const [fullName, setFullName] = useState('')
   const [username, setUsername] = useState('')
   const [accessCode, setAccessCode] = useState('')
@@ -32,6 +36,29 @@ export default function Register({ onSwitchToLogin }: {
     setError('')
     const name = fullName.trim()
     const handle = username.trim().toLowerCase()
+
+    if (mode === 'email') {
+      const normalizedEmail = email.trim().toLowerCase()
+      if (name.length < 2) { setError(t('authNameRequired')); return }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) { setError(t('authEmailInvalid')); return }
+      if (password.length < 12) { setError(t('authEmailPasswordHelp')); return }
+      if (password !== confirmPassword) { setError(t('authMismatch')); return }
+      setBusy(true)
+      try {
+        const { data: signupData, error: signupError } = await registerUser({
+          email: normalizedEmail, password, fullName: name, role: emailRole,
+        })
+        if (signupError) throw signupError
+        if (!signupData?.user) throw new Error(t('authCreateError'))
+        setPassword(''); setConfirmPassword('')
+        setEmailSent(true)
+        onRegistered?.(normalizedEmail)
+      } catch (err) {
+        const message = err && typeof err === 'object' && 'message' in err && typeof err.message === 'string' ? err.message : ''
+        setError(message || t('authEmailCreateError'))
+      } finally { setBusy(false) }
+      return
+    }
 
     if (!role) { setError('Select your account type before creating your MELA account.'); return }
     if (name.length < 2) { setError(t('authNameRequired')); return }
@@ -81,11 +108,55 @@ export default function Register({ onSwitchToLogin }: {
     )
   }
 
+
+  if (mode === 'email') {
+    return (
+      <AuthLayout>
+        <span className="auth-wordmark">MELA</span>
+        <h1>{t('authEmailJoin')}</h1>
+        <p className="auth-subtitle">{t('authEmailHelp')}</p>
+        {error && <div className="banner banner-error" role="alert">{error}</div>}
+        {emailSent && <div className="banner banner-info" role="status">{t('authEmailSent')}</div>}
+        <form onSubmit={submit}>
+          <div className="field">
+            <label htmlFor="fullName">{t('authFullName')}</label>
+            <input id="fullName" required minLength={2} maxLength={100} autoComplete="name" value={fullName} onChange={e => setFullName(e.target.value)} disabled={busy} />
+          </div>
+          <div className="field">
+            <label htmlFor="email">{t('authEmailAddress')}</label>
+            <input id="email" type="email" inputMode="email" required autoCapitalize="none" autoComplete="email" maxLength={254} value={email} onChange={e => setEmail(e.target.value)} disabled={busy} />
+          </div>
+          <div className="field">
+            <label htmlFor="email-role">{t('authEmailRole')}</label>
+            <select id="email-role" required value={emailRole} onChange={e => setEmailRole(e.target.value as 'student' | 'parent')} disabled={busy}>
+              <option value="student">{t('authEmailStudent')}</option>
+              <option value="parent">{t('authEmailParent')}</option>
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="password">{t('authPassword')}</label>
+            <input id="password" type={showPassword ? 'text' : 'password'} required minLength={12} autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} disabled={busy} aria-describedby="email-password-help" />
+            <span id="email-password-help" className="field-hint">{t('authEmailPasswordHelp')}</span>
+            <button type="button" className="password-toggle" onClick={() => setShowPassword(v => !v)} disabled={busy} aria-pressed={showPassword}>{showPassword ? t('authHide') : t('authShow')}</button>
+          </div>
+          <div className="field">
+            <label htmlFor="confirmPassword">{t('authConfirm')}</label>
+            <input id="confirmPassword" type={showPassword ? 'text' : 'password'} required minLength={12} autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} disabled={busy} />
+          </div>
+          <button className="btn btn-primary btn-block" type="submit" disabled={busy}>{busy ? t('authCreating') : t('authEmailSubmit')}</button>
+        </form>
+        <div className="auth-switch">{t('authExisting')} <button type="button" onClick={onSwitchToLogin}>{t('authLogin')}</button></div>
+        <div className="auth-switch"><button type="button" disabled={busy} onClick={() => { setMode('invite'); setError('') }}>{t('authSwitchInvite')}</button></div>
+      </AuthLayout>
+    )
+  }
+
   return (
     <AuthLayout>
       <span className="auth-wordmark">MELA</span>
       <h1>{t('authJoin')}</h1>
       <p className="auth-subtitle">{t('authJoinHelp')}</p>
+      <div className="auth-switch"><button type="button" disabled={busy} onClick={() => { setMode('email'); setError('') }}>{t('authSwitchEmail')}</button></div>
 
       {error && <div className="banner banner-error" role="alert">{error}</div>}
 

@@ -5,6 +5,19 @@ vi.mock('../src/lib/role-profile-save',()=>({
   parseSafeList:(raw:string)=>raw.split(',').map(s=>s.trim()).filter(Boolean),
   saveRoleProfile:vi.fn().mockResolvedValue(undefined),
 }))
+vi.mock('../src/lib/supabase',()=>({
+  supabase:{
+    from:()=>({
+      select:()=>({
+        eq:()=>({
+          order:()=>({
+            limit:async()=>({data:[{subject_title:'Mathematics'},{subject_title:'Biology'}],error:null}),
+          }),
+        }),
+      }),
+    }),
+  },
+}))
 import FamilyProfileSetup from '../src/pages/FamilyProfileSetup'
 import TeacherProfileSetup from '../src/pages/TeacherProfileSetup'
 import EmployerProfileSetup from '../src/pages/EmployerProfileSetup'
@@ -46,4 +59,12 @@ it('restricts selectable grades to the saved stage; permits unfinished but not c
   expect(allowedSchoolGrades(null)).toHaveLength(12)
   expect(canChooseSchoolGrade(false)).toBe(true)
   expect(canChooseSchoolGrade(true)).toBe(false)
+})
+
+it('shows canonical curriculum subject suggestions without granting teacher review privileges',async()=>{
+  render(<TeacherProfileSetup fullName="Test Teacher" email={null} onComplete={()=>{}}/>)
+  const picker=await screen.findByLabelText('Add an existing MELA curriculum subject')
+  expect((picker as HTMLSelectElement).querySelector('option[value="Mathematics"]')).toBeTruthy()
+  expect((picker as HTMLSelectElement).querySelector('option[value="Biology"]')).toBeTruthy()
+  expect(screen.getByText(/administrator-verified subjects that match the curriculum/)).toBeTruthy()
 })

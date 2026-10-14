@@ -60,3 +60,16 @@ it('returns an incomplete profile to Home instead of trapping it in setup after 
   expect(screen.getByRole('heading',{name:'MELA Home',exact:true})).toBeTruthy()
   expect(screen.queryByText('Required subject setup')).toBeNull()
 })
+
+it('puts an email-verified teacher directly into professional profile setup until saved',()=>{
+  render(<ProfileAccessHub role="teacher" setup={<div>Teacher qualifications and subjects form</div>}
+    onRefresh={()=>{}} onSignOut={()=>{}} />)
+  expect(screen.getByText('Teacher qualifications and subjects form')).toBeTruthy()
+  expect(screen.queryByRole('heading',{name:'MELA Home',exact:true})).toBeNull()
+  fireEvent.click(screen.getByRole('button',{name:'Explore MELA features'}))
+  expect(screen.getByRole('heading',{name:'Teacher features'})).toBeTruthy()
+  fireEvent.click(screen.getByRole('button',{name:'Complete my profile'}))
+  expect(screen.getByText('Teacher qualifications and subjects form')).toBeTruthy()
+  act(()=>window.dispatchEvent(new Event('mela:go-home')))
+  expect(screen.getByRole('heading',{name:'MELA Home',exact:true})).toBeTruthy()
+})

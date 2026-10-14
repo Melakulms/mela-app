@@ -103,3 +103,27 @@ it.each([
   expect(onRegistered).toHaveBeenCalledWith('learner@example.com')
   expect(mocks.registerBetaUser).not.toHaveBeenCalled()
 })
+
+
+it('offers safe invitation signup after a live SMTP failure without disabling verification', async () => {
+  mocks.registerUser.mockResolvedValue({ data: { user: null, session: null }, error: { message: '535 5.7.8 Authentication failed' } })
+  render(<I18nProvider><Register onSwitchToLogin={vi.fn()} /></I18nProvider>)
+  fillEmailForm()
+  fireEvent.click(screen.getByRole('button', { name: 'Create account' }))
+  await screen.findByRole('button', { name: 'Register with an invitation code' })
+  fireEvent.click(screen.getByRole('button', { name: 'Register with an invitation code' }))
+  expect(screen.getByLabelText('Beta access code')).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'Register with an invitation code' })).toBeNull()
+})
+
+it('accepts a direct link to the invite-only beta registration screen', () => {
+  const current = window.location.href
+  try {
+    window.history.replaceState(null, '', '/mela-app/?signup=invite')
+    render(<I18nProvider><Register onSwitchToLogin={vi.fn()} /></I18nProvider>)
+    expect(screen.getByLabelText('Beta access code')).toBeTruthy()
+    expect(screen.queryByLabelText('Email address')).toBeNull()
+  } finally {
+    window.history.replaceState(null, '', current)
+  }
+})

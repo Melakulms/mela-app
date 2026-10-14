@@ -35,7 +35,7 @@ const ROLE_INFO:Record<Role,{title:string;summary:string;items:string[]}> = {
 export default function ProfileAccessHub({role,stageKey,setup,onRefresh,onSignOut}:{
   role:Role;stageKey?:string|null;setup:ReactNode;onRefresh:()=>void;onSignOut:()=>void
 }){
-  const [section,setSection]=useState<PreviewSection>('features')
+  const [section,setSection]=useState<PreviewSection>(() => role === 'teacher' ? 'setup' : 'features')
   const [message,setMessage]=useState('')
   const [diagnostic,setDiagnostic]=useState('')
   const [diagnosticBusy,setDiagnosticBusy]=useState(false)

@@ -30,6 +30,26 @@ export async function inspectMyProfileSetup():Promise<string>{
       ? `Saved subjects: unreadable (${formatProfileDiagnosticError(subjectError)})`
       : `Saved subjects: ${Array.isArray(subjects?.subjects)?subjects.subjects.length:'no record'}`)
   }
+  if(profile.role==='teacher'){
+    const {data:teacher,error:teacherError}=await supabase.from('teacher_profiles')
+      .select('subjects_taught,grade_levels,verification_status').eq('user_id',auth.user.id).maybeSingle()
+    output.push(teacherError
+      ? `Teaching profile: unreadable (${formatProfileDiagnosticError(teacherError)})`
+      : teacher ? 'Teaching profile: submitted' : 'Teaching profile: not submitted')
+    if(teacher){
+      output.push(`Teaching subjects recorded: ${Array.isArray(teacher.subjects_taught)?teacher.subjects_taught.length:0}`)
+      output.push(`Grade levels recorded: ${Array.isArray(teacher.grade_levels)?teacher.grade_levels.length:0}`)
+      output.push(`Teaching credential review: ${teacher.verification_status??'pending'}`)
+    }
+  }
+  if(profile.role==='parent' || profile.role==='company'){
+    const table=profile.role==='parent'?'parent_profiles':'company_profiles'
+    const {data:record,error:recordError}=await supabase.from(table).select('user_id')
+      .eq('user_id',auth.user.id).maybeSingle()
+    output.push(recordError
+      ? `Role-specific profile: unreadable (${formatProfileDiagnosticError(recordError)})`
+      : record?'Role-specific profile: submitted':'Role-specific profile: not submitted')
+  }
   output.push('This read-only check cannot confirm backend functions or update account permissions.')
   return output.join('\n')
 }

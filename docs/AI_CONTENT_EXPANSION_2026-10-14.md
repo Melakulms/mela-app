@@ -20,3 +20,13 @@ The JSON contains learner-facing additions only. Formative feedback is deliberat
 - The six-lesson packs are introductory study drafts, not complete year-long professional qualifications. The separate 52-week shared foundation remains a draft.
 - English only. Teacher review, native-language translation review and professional curriculum expansion remain necessary.
 - No certification, teacher approval, payments, learner completion or private review data is changed.
+
+## Verified live installation
+
+Installed version 1.1.0 in the configured MELA project on 14 October 2026.
+Read back every learner lesson and compared it exactly with its original text plus the authored addition: 318 matches, zero mismatches.
+All 318 remain draft; 53 distinct courses are covered.
+A transaction using the authenticated database role and an existing active profile's subject claim could read all 318 revised lessons. The catalog RPC returned 53 courses, each with six prepared lessons.
+This is a database-role access test, not a real signed-in Android/browser acceptance test.
+The standard-library Python reference example passed all included normal and invalid-input checks.
+No frontend code or database access policy changed in this revision.

@@ -3,7 +3,7 @@
   "title": "MELA AI Education — Year One",
   "status": "draft",
   "audience": "Secondary-age learners, TVET, university and adult beginners; teacher adaptation required. Not a ready-made grades 1–12 curriculum.",
-  "hours": 208,
+  "hours": 49,
   "weeks": 52,
   "language": "English; translation and native-language review pending",
   "lessons": [
@@ -17,7 +17,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain what ai can and cannot do using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -29,20 +29,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": null
@@ -57,7 +57,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain learning goals and a baseline using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -69,20 +69,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 1
@@ -97,7 +97,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain data, consent and minimization using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -109,20 +109,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 2
@@ -137,7 +137,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain accounts, scams and safe access using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -149,20 +149,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 3
@@ -177,7 +177,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain questions, context and output formats using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -189,20 +189,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 4
@@ -217,7 +217,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain verification and fabricated sources using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -229,20 +229,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 5
@@ -257,7 +257,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain bias, language and fairness using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -269,20 +269,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 6
@@ -297,7 +297,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain intellectual honesty and creative rights using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -309,20 +309,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 7
@@ -337,7 +337,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain safe summarization using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -349,20 +349,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 8
@@ -377,7 +377,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain research questions and evidence logs using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -389,20 +389,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 9
@@ -417,7 +417,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain study methods and feedback using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -429,20 +429,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 10
@@ -457,7 +457,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain foundation review and safety brief using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -469,20 +469,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 11
@@ -497,7 +497,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain documents and accessible writing using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -509,20 +509,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 12
@@ -537,7 +537,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain email and communication using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -549,20 +549,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 13
@@ -577,7 +577,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain spreadsheets and checking calculations using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -589,20 +589,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 14
@@ -617,7 +617,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain presentations and truthful charts using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -629,20 +629,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 15
@@ -657,7 +657,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain images and visual evaluation using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -669,20 +669,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 16
@@ -697,7 +697,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain audio, video and consent using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -709,20 +709,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 17
@@ -737,7 +737,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain customer service and escalation using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -749,20 +749,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 18
@@ -777,7 +777,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain career preparation without fabrication using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -789,20 +789,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 19
@@ -817,7 +817,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain data tables and measurement using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -829,20 +829,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 20
@@ -857,7 +857,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain data cleaning and provenance using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -869,20 +869,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 21
@@ -897,7 +897,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain descriptive statistics using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -909,20 +909,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 22
@@ -937,7 +937,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 45,
       "objectives": [
         "Explain visualization and uncertainty using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -949,20 +949,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 20,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 23
@@ -977,7 +977,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain python values and expressions using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -989,20 +989,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 24
@@ -1017,7 +1017,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain conditions, loops and functions using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1029,20 +1029,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 25
@@ -1057,7 +1057,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain files, structured data and safe parsing using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1069,20 +1069,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 26
@@ -1097,7 +1097,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain data project checkpoint using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1109,20 +1109,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 27
@@ -1137,7 +1137,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain supervised learning and labels using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1149,20 +1149,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 28
@@ -1177,7 +1177,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain training, validation and test sets using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1189,20 +1189,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 29
@@ -1217,7 +1217,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain regression and error using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1229,20 +1229,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 30
@@ -1257,7 +1257,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain classification and confusion matrices using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1269,20 +1269,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 31
@@ -1297,7 +1297,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain overfitting and baselines using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1309,20 +1309,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 32
@@ -1337,7 +1337,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain clustering and pattern discovery using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1349,20 +1349,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 33
@@ -1377,7 +1377,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain neural networks as learned functions using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1389,20 +1389,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 34
@@ -1417,7 +1417,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain model documentation and release judgment using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1429,20 +1429,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 35
@@ -1457,7 +1457,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain language models, tokens and context using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1469,20 +1469,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 36
@@ -1497,7 +1497,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain prompt experiments and evaluation sets using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1509,20 +1509,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 37
@@ -1537,7 +1537,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain retrieval and source-grounded answers using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1549,20 +1549,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 38
@@ -1577,7 +1577,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain embeddings and similarity using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1589,20 +1589,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 39
@@ -1617,7 +1617,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain prompt injection and untrusted content using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1629,20 +1629,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 40
@@ -1657,7 +1657,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain tools, actions and least privilege using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1669,20 +1669,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 41
@@ -1697,7 +1697,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain automation, retries and human control using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1709,20 +1709,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 42
@@ -1737,7 +1737,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain testing an ai-assisted service using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1749,20 +1749,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 43
@@ -1777,7 +1777,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain education applications and safeguarding using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1789,20 +1789,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 44
@@ -1817,7 +1817,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain agriculture, health and public-service limits using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1829,20 +1829,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 45
@@ -1857,7 +1857,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain business, customer value and honest earning using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1869,20 +1869,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 46
@@ -1897,7 +1897,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain sector project and human review using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1909,20 +1909,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 47
@@ -1937,7 +1937,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain capstone problem and acceptance criteria using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1949,20 +1949,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 48
@@ -1977,7 +1977,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 180,
       "objectives": [
         "Explain capstone construction and failure handling using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -1989,20 +1989,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 155,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 49
@@ -2017,7 +2017,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 120,
       "objectives": [
         "Explain capstone evaluation and correction using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -2029,20 +2029,20 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 95,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 50
@@ -2057,7 +2057,7 @@
       "reviewer_id": null,
       "reviewed_at": null,
       "language": "en",
-      "estimated_minutes": 240,
+      "estimated_minutes": 60,
       "objectives": [
         "Explain portfolio defense and next-year plan using the worked example.",
         "Complete the practical task and justify a safety or quality check."
@@ -2069,23 +2069,24 @@
       "evidence_required": "Completed task, source/assistance log, a failure or correction, and an independent oral explanation.",
       "sessions": [
         {
-          "minutes": 60,
-          "activity": "Read the lesson, discuss the example and answer the first checkpoint without AI."
+          "minutes": 10,
+          "activity": "Read the explanation and worked example; answer the initial checkpoint."
         },
         {
-          "minutes": 60,
-          "activity": "Complete the practical task using fictional data. Paper work is acceptable."
+          "minutes": 35,
+          "activity": "Complete the practical task or capstone work using fictional data; retain your first attempt."
         },
         {
-          "minutes": 60,
-          "activity": "Peer-check the artifact, verify sources, identify a failure and revise."
+          "minutes": 10,
+          "activity": "Check the result, correct a mistake and record evidence. Teacher waiting time is not included."
         },
         {
-          "minutes": 60,
-          "activity": "Teacher-led assessment, correction and short oral explanation."
+          "minutes": 5,
+          "activity": "Explain one decision independently and record your actual study time."
         }
       ],
       "prerequisite_week": 51
     }
-  ]
+  ],
+  "pacing_note": "52 self-paced units; one unit per week is optional, not required. Estimated active study time includes practical tasks and a small capstone, excludes optional videos, device setup, prerequisite catch-up and waiting for teacher feedback. These are author estimates awaiting learner timing feedback; this is not a full professional qualification."
 }

@@ -1,5 +1,6 @@
 import AICourseLessonReview from '../components/AICourseLessonReview'
 import TeacherClassrooms from '../components/TeacherClassrooms'
+import TeacherCredentialUpload from '../components/TeacherCredentialUpload'
 import EducatorContentReview from '../components/EducatorContentReview'
 import MentorLifecycle from '../components/MentorLifecycle'
 import ParentLearnerProgress from '../components/ParentLearnerProgress'
@@ -134,6 +135,7 @@ export default function RoleDashboard({ role, fullName }: Props) {
       {summary.details.length === 0
         ? <div className="empty-panel">No activity yet. Complete your profile or start using your MELA tools.</div>
         : <div className="list-panel">{summary.details.map((d, i) => <div className="list-row" key={i}><span className="list-row-title">{d}</span></div>)}</div>}
+      {role === 'teacher' && <TeacherCredentialUpload />}
       {role === 'teacher' && !teacherApproved && <div className="banner banner-info" role="status">Teacher verification is pending. Your profile is registered, but classroom management and question review will open only after MELA independently approves your qualifications and teaching subjects. Check back for updates.</div>}
       {teacherApproved && <TeacherClassrooms onChanged={() => setRevision(value => value + 1)} />}
       {teacherApproved && <EducatorContentReview />}

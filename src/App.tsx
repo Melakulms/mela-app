@@ -1,3 +1,4 @@
+import { initialAuthCallbackError, hasAuthCallbackError, clearAuthCallbackError } from './lib/auth-redirect'
 import { clearCoachHistories } from './lib/coach-history'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
@@ -51,6 +52,7 @@ const BOTTOM_NAV: { view: StudentView; labelKey: TranslationKey; icon: typeof Bo
 
 export default function App() {
   const { t, setLanguage } = useI18n()
+  const [callbackFailed, setCallbackFailed] = useState(() => initialAuthCallbackError || hasAuthCallbackError(window.location.href))
   const [recovering, setRecovering] = useState(() => new URLSearchParams(window.location.search).get('recovery') === '1')
   const [accountError, setAccountError] = useState('')
   const [profileLoading, setProfileLoading] = useState(true)
@@ -160,6 +162,16 @@ export default function App() {
     fetchEnabledLanguages().then((data) => { if (active) setLanguages(data) }).catch(() => {})
     return () => { active = false }
   }, [session?.user.id, profileRevision, setLanguage, t])
+
+  const leaveFailedCallback = () => {
+    clearAuthCallbackError()
+    setCallbackFailed(false)
+    setRecovering(false)
+    setAuthView('login')
+  }
+  if (callbackFailed) return recovering
+    ? <ResetPassword sessionReady={false} onComplete={leaveFailedCallback} />
+    : <VerifyEmail email="" linkError onUseDifferentAccount={leaveFailedCallback} />
 
   if (loading) return <div className="centered-loading">{t('loading')}</div>
 

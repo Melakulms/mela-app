@@ -1,3 +1,4 @@
+import { initialAuthCallbackError } from './auth-redirect'
 import { createClient } from '@supabase/supabase-js'
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
@@ -12,4 +13,5 @@ if (!url || !key) {
 // Separate namespaces keep learner and central-admin sign-ins independent.
 // Existing shared-key sessions intentionally require a fresh sign-in once.
 export const AUTH_STORAGE_KEY = 'mela-users-supabase-auth-v1'
+void initialAuthCallbackError
 export const supabase = createClient(url, key, { auth: { storageKey: AUTH_STORAGE_KEY } })

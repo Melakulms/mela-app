@@ -5,8 +5,9 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { logoutUser } from '../lib/auth'
 
-export default function VerifyEmail({ email, onUseDifferentAccount, onRefresh }: { email: string; onUseDifferentAccount: () => void; onRefresh?: () => void }) {
+export default function VerifyEmail({ email, onUseDifferentAccount, onRefresh, linkError = false }: { linkError?: boolean; email: string; onUseDifferentAccount: () => void; onRefresh?: () => void }) {
   const { t } = useI18n()
+  const [resendEmail, setResendEmail] = useState(email)
   const [sent, setSent] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -15,7 +16,7 @@ export default function VerifyEmail({ email, onUseDifferentAccount, onRefresh }:
     setBusy(true)
     setError('')
     try {
-      const { error: resendError } = await supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: authRedirectUrl() } })
+      const { error: resendError } = await supabase.auth.resend({ type: 'signup', email: resendEmail.trim(), options: { emailRedirectTo: authRedirectUrl() } })
       if (resendError) setError(/error sending confirmation email|535\s+5\.7\.8|smtp|email delivery|mail provider/i.test(resendError.message) ? t('authEmailDeliveryIssue') : resendError.message)
       else setSent(true)
     } catch { setError(t('authVerifyError')) }
@@ -37,13 +38,15 @@ export default function VerifyEmail({ email, onUseDifferentAccount, onRefresh }:
         <span className="auth-wordmark">MELA</span>
         <h1>{t('authConfirmEmail')}</h1>
         <p className="auth-subtitle">
-          <strong>{email}</strong>. {t('authVerifyHelp')}
+          <strong>{email}</strong> {t('authVerifyHelp')}
         </p>
 
+        {linkError && <p role="alert">{t('authExpiredConfirmation')}</p>}
+        {linkError && <div className="field"><label htmlFor="resend-email">{t('authEmailAddress')}</label><input id="resend-email" type="email" autoComplete="email" value={resendEmail} onChange={event => { setResendEmail(event.target.value); setSent(false) }} disabled={busy} /></div>}
         {error && <div className="banner banner-error">{error}</div>}
         {sent && <div className="banner banner-info">{t('authResent')}</div>}
 
-        <button className="btn btn-secondary btn-block" onClick={resend} disabled={busy}>
+        <button className="btn btn-secondary btn-block" onClick={resend} disabled={busy || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resendEmail.trim())}>
           {busy ? t('loading') : t('authResend')}
         </button>
         {onRefresh && <button className="btn btn-primary btn-block" onClick={onRefresh} disabled={busy}>{t('authConfirmedEmail')}</button>}

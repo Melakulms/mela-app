@@ -167,3 +167,14 @@ it('closes global Settings across sign-out and sign-in and returns to learner ho
   expect(screen.queryByRole('heading',{name:'Settings',exact:true})).toBeNull()
   expect(new URLSearchParams(window.location.search).get('view')).toBe('dashboard')
 })
+
+it('offers a new confirmation link for an expired callback and can return to login', async () => {
+ window.history.replaceState(null, '', '/#error=access_denied&error_code=otp_expired')
+ mocks.logoutUser.mockResolvedValue({ error: null })
+ render(<App />)
+ expect(screen.getByText(/confirmation link is invalid/)).toBeTruthy()
+ expect(screen.getByLabelText('Email address')).toBeTruthy()
+ fireEvent.click(screen.getByRole('button', { name: /different account/i }))
+ await waitFor(() => expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeTruthy())
+ expect(window.location.hash).toBe('')
+})

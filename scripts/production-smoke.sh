@@ -90,12 +90,40 @@ check_data() {
     "$SUPABASE_URL/rest/v1/platform_languages?select=language_code&enabled=eq.true&limit=1"
 }
 
+check_privacy() {
+  echo "Checking anonymous access cannot read private MELA accounts or teacher review records"
+  local table code payload
+  for table in profiles student_profiles parent_profiles teacher_profiles company_profiles mela_question_assignments mela_question_reviews; do
+    payload="$(mktemp)"
+    code="$(curl --silent --show-error --connect-timeout 10 --max-time 30 \
+      --header "apikey: $SUPABASE_PUBLISHABLE_KEY" \
+      --header "Accept: application/json" \
+      --output "$payload" --write-out '%{http_code}' \
+      "$SUPABASE_URL/rest/v1/$table?select=*&limit=1")"
+    if [[ "$code" == '200' ]]; then
+      # An empty JSON array is a successful deny-by-RLS result. Never print rows.
+      if ! python -c 'import json,sys; sys.exit(0 if json.load(open(sys.argv[1])) == [] else 1)' "$payload"; then
+        rm -f "$payload"
+        echo "::error::Anonymous request returned data or an unexpected response from $table." >&2
+        return 1
+      fi
+    elif [[ "$code" != '401' && "$code" != '403' ]]; then
+      rm -f "$payload"
+      echo "::error::Unexpected $code response checking anonymous privacy for $table." >&2
+      return 1
+    fi
+    rm -f "$payload"
+  done
+  echo "Anonymous account and reviewer access: denied in every checked table."
+}
+
 case "$TARGET" in
   app) check_app ;;
   auth) check_auth ;;
   auth-settings) check_auth_settings ;;
   beta-auth) check_beta_auth ;;
   data) check_data ;;
-  all) check_app; check_auth; check_auth_settings; check_beta_auth; check_data ;;
+  privacy) check_privacy ;;
+  all) check_app; check_auth; check_auth_settings; check_beta_auth; check_data; check_privacy ;;
   *) echo "Unknown smoke target: $TARGET" >&2; exit 2 ;;
 esac

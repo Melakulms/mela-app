@@ -89,3 +89,5 @@ jobs:
         run: bash scripts/production-smoke.sh beta-auth
       - name: Verify Supabase Data API
         run: bash scripts/production-smoke.sh data
+      - name: Verify anonymous account and reviewer privacy
+        run: bash scripts/production-smoke.sh privacy

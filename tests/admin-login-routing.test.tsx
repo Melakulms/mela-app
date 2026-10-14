@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import App from '../src/App'
 
 const mocks = vi.hoisted(() => ({ getSession: vi.fn(), onAuthStateChange: vi.fn(), loginUser: vi.fn(), logoutUser: vi.fn(), fetchOwnProfile: vi.fn(), from: vi.fn() }))
@@ -86,4 +86,13 @@ it('allows a user to sign in after restoring a non-user account', async () => {
   await screen.findByRole('heading', { name: 'Student home' })
   expect(replace).not.toHaveBeenCalled()
   expect(screen.queryByText('Sign in or register with a MELA user account to continue.')).toBeNull()
+})
+
+// A confirmation screen must not survive a successful login and later logout.
+it('returns to login after signing out of a restored student session', async () => {
+  await signIn('student')
+  await screen.findByRole('heading', { name: 'Student home' })
+  act(() => mocks.onAuthStateChange.mock.calls.at(-1)![0]('SIGNED_OUT', null))
+  expect(await screen.findByLabelText('Email or beta username')).toBeTruthy()
+  expect(screen.queryByRole('heading', { name: 'Student home' })).toBeNull()
 })

@@ -126,7 +126,7 @@ describe('App session ordering', () => {
     const callback = mocks.onAuthStateChange.mock.calls[0][0]
     await act(async () => callback('SIGNED_OUT', null))
     await act(async () => restore({ data: { session: { user: { id: 'old-account' } } }, error: null }))
-    expect(screen.getByRole('heading', { name: 'Create your MELA account' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeTruthy()
     expect(mocks.fetchOwnProfile).not.toHaveBeenCalled()
   })
 })
@@ -159,7 +159,7 @@ it('closes global Settings across sign-out and sign-in and returns to learner ho
   fireEvent.click(screen.getByRole('button',{name:'Open MELA settings'}))
   expect(screen.getByRole('heading',{name:'Settings',exact:true})).toBeTruthy()
   fireEvent.click(screen.getByRole('button',{name:'Log out'}))
-  await screen.findByRole('heading',{name:'Create your MELA account'})
+  await screen.findByRole('heading',{name:'Welcome back'})
   expect(screen.queryByRole('heading',{name:'Settings',exact:true})).toBeNull()
   const callback=mocks.onAuthStateChange.mock.calls[mocks.onAuthStateChange.mock.calls.length-1][0]
   await act(async()=>callback('SIGNED_IN',session))

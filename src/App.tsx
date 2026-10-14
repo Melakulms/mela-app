@@ -82,7 +82,8 @@ export default function App() {
       observedUserId.current = nextUserId
       if (event === 'PASSWORD_RECOVERY') setRecovering(true)
       if (event === 'USER_UPDATED' || event === 'SIGNED_IN') setProfileRevision(value => value + 1)
-      if (event === 'SIGNED_OUT') {setRecovering(false);clearCoachHistories()}
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') setPendingEmail('')
+      if (event === 'SIGNED_OUT') {setRecovering(false);setAuthView('login');clearCoachHistories()}
       if (event !== 'TOKEN_REFRESHED') setAccountError('')
       setSession(newSession)
       setLoading(false)

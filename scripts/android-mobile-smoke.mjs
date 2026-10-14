@@ -30,7 +30,7 @@ try {
   })
 
   await step('Student, family, teacher and employer are selectable', async () => {
-    const select = page.getByLabel('Account type (required)')
+    const select = page.getByLabel('I am registering as')
     for (const role of ['student', 'parent', 'teacher', 'company']) {
       await select.selectOption(role)
       assert.equal(await select.inputValue(), role)
@@ -139,7 +139,7 @@ try {
       assert.equal(await signedPage.getByRole('heading',{name:'Complete your education profile',exact:true}).count(),0)
       await signedPage.getByRole('button',{name:'Settings & downloads — app version'}).click()
       await signedPage.getByRole('button',{name:'Sign out',exact:true}).click()
-      await signedPage.getByRole('heading',{name:/create your mela account/i}).waitFor()
+      await signedPage.getByLabel('Email or beta username').waitFor()
       assert.equal(await signedPage.locator('#mela-settings-content').count(),0)
       await login('MELA Home')
       assert.equal(await signedPage.getByRole('heading',{name:'Complete your education profile',exact:true}).count(),0)

@@ -91,7 +91,7 @@ export default function SkillAcademy({ onBack, previewOnly = false }: { onBack: 
             return (
               <div className="module-card" key={c.id} style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}>
                 <h3 style={{ color: 'var(--ink)' }}>{c.title}</h3>
-                <p style={{ color: 'var(--muted)' }}>{c.description ?? c.category}</p><p>{c.category ?? 'General'}{c.level ? ` · ${c.level}` : ''}{c.duration_minutes ? ` · ${c.duration_minutes} estimated active minutes${(c.prepared_lesson_count ?? 0) > 0 ? ' for the introductory pack' : ''}` : ''}</p>
+                <p style={{ color: 'var(--muted)' }}>{c.description ?? c.category}</p><p>{c.category ?? 'General'}{c.level ? ` · ${c.level}` : ''}{c.duration_minutes ? ` · ${c.duration_minutes}${(c.prepared_lesson_count ?? 0) > 0 ? ' estimated active minutes for the introductory pack' : ' minutes'}` : ''}</p>
                 <details><summary>Course overview</summary>{c.audience && <p>Audience: {c.audience}</p>}{c.career_track && <p>Career track: {c.career_track}</p>}{c.prerequisites && <p>Prerequisites: {c.prerequisites}</p>}{Array.isArray(c.learning_outcomes) && <><h4>Learning outcomes</h4><ul>{c.learning_outcomes.filter((item): item is string => typeof item === 'string').map((item, index) => <li key={index}>{item}</li>)}</ul></>}</details>
                 {enrollment && <div className="list-row-meta">{enrollment.completed_at ? '100% of lessons completed' : `${progress}% complete`}</div>}
                 <p>{(c.prepared_lesson_count ?? 0) > 0 && <button className="btn btn-primary" onClick={() => setPreparedCourse(c)}>Read {c.prepared_lesson_count} prepared lessons</button>}</p>

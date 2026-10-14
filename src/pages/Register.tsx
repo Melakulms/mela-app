@@ -8,7 +8,9 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
   onRegistered?: (email: string) => void
 }) {
   const { t } = useI18n()
-  const [mode, setMode] = useState<'email' | 'invite'>('email')
+  const [mode, setMode] = useState<'email' | 'invite'>(() =>
+    new URLSearchParams(window.location.search).get('signup') === 'invite' ? 'invite' : 'email')
+  const [emailDeliveryBlocked, setEmailDeliveryBlocked] = useState(false)
   const [email, setEmail] = useState('')
   const [emailRole, setEmailRole] = useState<BetaSignupRole>('student')
   const [emailSent, setEmailSent] = useState(false)
@@ -44,6 +46,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
       if (password.length < 12) { setError(t('authEmailPasswordHelp')); return }
       if (password !== confirmPassword) { setError(t('authMismatch')); return }
       setBusy(true)
+      setEmailDeliveryBlocked(false)
       try {
         const { data: signupData, error: signupError } = await registerUser({
           email: normalizedEmail, password, fullName: name, role: emailRole,
@@ -55,7 +58,9 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
         onRegistered?.(normalizedEmail)
       } catch (err) {
         const message = err && typeof err === 'object' && 'message' in err && typeof err.message === 'string' ? err.message : ''
-        setError(/error sending confirmation email|535\s+5\.7\.8|smtp|email delivery|mail provider/i.test(message) ? t('authEmailDeliveryIssue') : (message || t('authEmailCreateError')))
+        const deliveryProblem = /error sending confirmation email|535\s+5\.7\.8|smtp|email delivery|mail provider/i.test(message)
+        setEmailDeliveryBlocked(deliveryProblem)
+        setError(deliveryProblem ? t('authEmailDeliveryIssue') : (message || t('authEmailCreateError')))
       } finally { setBusy(false) }
       return
     }
@@ -116,6 +121,12 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
         <h1>{t('authEmailJoin')}</h1>
         <p className="auth-subtitle">{t('authEmailHelp')}</p>
         {error && <div className="banner banner-error" role="alert">{error}</div>}
+        {emailDeliveryBlocked && <div className="banner banner-info" role="status">
+          For the closed MELA test, you can register without email delivery using a one-time invitation from an authorized MELA administrator.
+          <button type="button" className="btn btn-primary btn-block" onClick={() => { setMode('invite'); setError(''); setEmailDeliveryBlocked(false) }}>
+            Register with an invitation code
+          </button>
+        </div>}
         {emailSent && <div className="banner banner-info" role="status">{t('authEmailSent')}</div>}
         <form onSubmit={submit}>
           <div className="field">

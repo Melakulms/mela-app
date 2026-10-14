@@ -91,3 +91,7 @@ jobs:
         run: bash scripts/production-smoke.sh data
       - name: Verify anonymous account and reviewer privacy
         run: bash scripts/production-smoke.sh privacy
+      - name: Verify published practice download
+        run: |
+          curl -fSL --retry 3 --max-time 30 "https://melakulms.github.io/mela-app/ai-practice-projects-v1.zip?check=${GITHUB_SHA}" -o /tmp/mela-practice.zip
+          cmp public/ai-practice-projects-v1.zip /tmp/mela-practice.zip

@@ -27,9 +27,9 @@ it('provides a real lesson download distinct from app installation', () => {
 it('reads the first and last weekly lessons without a database or completion claim', () => {
   render(<DraftCourseReader onBack={() => {}} />)
   expect(screen.getByRole('heading',{name:'What AI can and cannot do'})).toBeTruthy()
-  fireEvent.change(screen.getByLabelText('Choose a week'),{target:{value:'51'}})
-  expect(screen.getByRole('status').textContent).toContain('Week 52 of 52')
-  expect((screen.getByRole('button',{name:'Next week'}) as HTMLButtonElement).disabled).toBe(true)
+  fireEvent.change(screen.getByLabelText('Choose a unit'),{target:{value:'51'}})
+  expect(screen.getByRole('status').textContent).toContain('Unit 52 of 52')
+  expect((screen.getByRole('button',{name:'Next unit'}) as HTMLButtonElement).disabled).toBe(true)
   expect(screen.queryByRole('button',{name:'Mark lesson complete'})).toBeNull()
 })
 

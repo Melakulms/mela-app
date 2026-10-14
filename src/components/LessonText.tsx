@@ -16,6 +16,17 @@ export default function LessonText({ text }: { text: string }) {
       nodes.push(<pre key={nodes.length} style={{ overflowX: 'auto', whiteSpace: 'pre-wrap' }}><code>{block.join('\n')}</code></pre>)
       continue
     }
+    // Only standalone HTTPS URLs become links; all other text stays escaped.
+    const candidate = line.trim()
+    if (/^https:\/\/[^\s]+$/.test(candidate)) {
+      try {
+        const url = new URL(candidate)
+        if (url.protocol === 'https:' && !url.username && !url.password) {
+          nodes.push(<p key={nodes.length}><a href={url.href} target="_blank" rel="noopener noreferrer" style={{overflowWrap:'anywhere'}}>{candidate}</a></p>)
+          index++; continue
+        }
+      } catch { /* Invalid URLs remain ordinary text. */ }
+    }
     const heading = /^(#{1,6})\s+(.+)$/.exec(line)
     if (heading) {
       nodes.push(<h3 key={nodes.length}>{heading[2]}</h3>)
@@ -31,7 +42,7 @@ export default function LessonText({ text }: { text: string }) {
       continue
     }
     const paragraph = [line]; index++
-    while (index < lines.length && lines[index].trim() && !/^(#{1,6}\s|```|[-*]\s|\d+[.)]\s)/.test(lines[index])) paragraph.push(lines[index++])
+    while (index < lines.length && lines[index].trim() && !/^https:\/\/\S+$/.test(lines[index].trim()) && !/^(#{1,6}\s|```|[-*]\s|\d+[.)]\s)/.test(lines[index])) paragraph.push(lines[index++])
     nodes.push(<p key={nodes.length} style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{paragraph.join('\n')}</p>)
   }
   return <div className="lesson-text">{nodes}</div>

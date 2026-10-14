@@ -147,6 +147,57 @@ try {
     } finally { await signedContext.close() }
   })
 
+  await step('Verified teacher can fill and save grade-specific teaching profile on Android (isolated fixtures)', async () => {
+    // No real production account is created, impersonated or modified.
+    const teacherContext=await browser.newContext({ ...pixel, locale:'en-US', serviceWorkers:'block' })
+    try {
+      const teacherPage=await teacherContext.newPage()
+      teacherPage.on('pageerror', error=>{ throw error })
+      const teacher={id:'22222222-2222-4222-8222-222222222222',email:'teacher-fixture@example.invalid',aud:'authenticated',role:'authenticated',app_metadata:{provider:'email'},user_metadata:{}}
+      const encode=value=>Buffer.from(JSON.stringify(value)).toString('base64url')
+      const exp=Math.floor(Date.now()/1000)+3600
+      const session={access_token:`${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:teacher.id,exp,role:'authenticated',aal:'aal1'})}.fixture`,refresh_token:'fixture-only',expires_at:exp,expires_in:3600,token_type:'bearer',user:teacher}
+      let saved=false,readBack=false
+      const baseProfile={id:teacher.id,email:teacher.email,role:'teacher',full_name:'Verified Teacher',account_status:'active',email_verified:true,role_selected_at:new Date().toISOString(),profile_completion:0,preferred_language:'English',coin_balance:0}
+      await teacherPage.route('https://duizgtmbptmlbyipreqg.supabase.co/**',async route=>{
+        const path=new URL(route.request().url()).pathname
+        let data=[]
+        if(path==='/auth/v1/user')data=teacher
+        else if(path==='/auth/v1/token')data=session
+        else if(path==='/rest/v1/profiles'){
+          if(saved)readBack=true
+          data=[{...baseProfile,profile_completion:saved?100:0}]
+        }
+        else if(path==='/rest/v1/teacher_profiles')data=saved?[{user_id:teacher.id}]:[]
+        else if(path==='/rest/v1/mela_learning_programs')data=[{subject_title:'Mathematics'}]
+        else if(path==='/rest/v1/rpc/complete_my_profile_v37'){
+          saved=true
+          data={...baseProfile,profile_completion:100}
+        }
+        else if(path==='/rest/v1/rpc/get_my_dashboard_v36')data={profile:{...baseProfile,profile_completion:100},feature_flags:{}}
+        await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(data)})
+      })
+      await teacherPage.goto(baseUrl+'?view=dashboard',{waitUntil:'domcontentloaded'})
+      await teacherPage.getByRole('heading',{name:/create your mela account/i}).waitFor()
+      await teacherPage.getByRole('button',{name:'Log in',exact:true}).click()
+      await teacherPage.getByLabel('Email or beta username').fill(teacher.email)
+      await teacherPage.getByLabel('Password',{exact:true}).fill('Fixture-password-123')
+      await teacherPage.getByRole('button',{name:'Log in',exact:true}).click()
+      await teacherPage.getByRole('heading',{name:'Teacher profile',exact:true}).waitFor({timeout:30000})
+      await teacherPage.getByLabel('School / teaching institution (required)').fill('Demo School')
+      await teacherPage.getByLabel('Teaching qualification (required)').fill('Sample certification for UI testing')
+      await teacherPage.getByLabel('Add an existing MELA curriculum subject').selectOption('Mathematics')
+      assert.equal((await teacherPage.getByLabel('Subjects you teach (required, comma separated)').inputValue()).includes('Mathematics'),true)
+      await teacherPage.getByRole('button',{name:'Grade 7'}).click()
+      await teacherPage.getByRole('button',{name:'Save teacher profile'}).click()
+      await teacherPage.waitForFunction(()=>!document.querySelector('h1')?.textContent?.includes('Teacher profile'),null,{timeout:30000})
+      assert.equal(saved,true,'Profile completion RPC must run')
+      assert.equal(readBack,true,'Saved profile must be independently re-read')
+      const dimensions=await teacherPage.evaluate(()=>({viewport:innerWidth,width:document.documentElement.scrollWidth}))
+      assert.ok(dimensions.width<=dimensions.viewport+2,'Teacher setup must fit Android viewport')
+    } finally { await teacherContext.close() }
+  })
+
   await step('No uncaught mobile page errors', async () => {
     assert.equal(pageError, '')
   })

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { observeSession } from '../src/lib/session-observer'
 
@@ -19,8 +19,38 @@ function setup() {
   return { resolve, reject, emit, receive, fail, stop, unsubscribe }
 }
 const flush = async () => { await Promise.resolve(); await Promise.resolve() }
+afterEach(() => vi.useRealTimers())
 
 describe('session restoration ordering', () => {
+  it('surfaces a stalled restore once and ignores its late snapshot', async () => {
+    vi.useFakeTimers()
+    const s = setup()
+    await vi.advanceTimersByTimeAsync(15000)
+    expect(s.fail).toHaveBeenCalledOnce()
+    expect(s.receive).not.toHaveBeenCalled()
+    s.resolve({ data: { session: oldSession }, error: null }); await flush()
+    expect(s.receive).not.toHaveBeenCalled()
+    s.emit('SIGNED_IN', newSession)
+    expect(s.receive).toHaveBeenCalledWith(newSession, 'SIGNED_IN')
+    s.stop()
+  })
+  it('does not time out after successful restoration or a newer auth event', async () => {
+    vi.useFakeTimers()
+    const snapshot = setup(), event = setup()
+    snapshot.resolve({ data: { session: oldSession }, error: null }); await flush()
+    event.emit('SIGNED_OUT', null)
+    await vi.advanceTimersByTimeAsync(30000)
+    expect(snapshot.fail).not.toHaveBeenCalled()
+    expect(event.fail).not.toHaveBeenCalled()
+    snapshot.stop(); event.stop()
+  })
+  it('cancels the timeout when the observer is replaced or unmounted', async () => {
+    vi.useFakeTimers()
+    const s = setup(); s.stop()
+    await vi.advanceTimersByTimeAsync(30000)
+    expect(s.fail).not.toHaveBeenCalled()
+    expect(vi.getTimerCount()).toBe(0)
+  })
   it('restores an initial session when no event has arrived', async () => {
     const s = setup(); s.resolve({ data: { session: oldSession }, error: null }); await flush()
     expect(s.receive).toHaveBeenCalledWith(oldSession, 'INITIAL_SESSION')

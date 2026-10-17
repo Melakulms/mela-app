@@ -23,6 +23,7 @@ const EmployerPortal = lazy(() => import('./pages/EmployerPortal'))
 const AiCareerCoach = lazy(() => import('./pages/AiCareerCoach'))
 const Arena = lazy(() => import('./pages/Arena'))
 const Profile = lazy(() => import('./pages/Profile'))
+const AccountOverview = lazy(() => import('./pages/AccountOverview'))
 const EthioScholarConnect = lazy(() => import('./pages/EthioScholarConnect'))
 const RoleDashboard = lazy(() => import('./pages/RoleDashboard'))
 const FamilyProfileSetup = lazy(() => import('./pages/FamilyProfileSetup'))
@@ -72,6 +73,7 @@ export default function App() {
   const [languages, setLanguages] = useState<PlatformLanguage[]>([])
   const [employerRegistration, setEmployerRegistration] = useState<{ status: string; company_name: string | null } | null>(null)
   const [editingEmployerProfile, setEditingEmployerProfile] = useState(false)
+  const [showAccount, setShowAccount] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -95,12 +97,12 @@ export default function App() {
     })
   }, [sessionRevision, t])
 
-  useEffect(() => { setEditingEmployerProfile(false) }, [session?.user.id])
+  useEffect(() => { setEditingEmployerProfile(false); setShowAccount(false) }, [session?.user.id])
 
   // Settings lives outside App. Returning home must also reset student section
   // navigation, rather than merely hiding the global settings disclosure.
   useEffect(() => {
-    const onHome = () => setStudentView('dashboard')
+    const onHome = () => { setStudentView('dashboard'); setShowAccount(false) }
     window.addEventListener('mela:go-home', onHome)
     return () => window.removeEventListener('mela:go-home', onHome)
   }, [setStudentView])
@@ -286,6 +288,7 @@ export default function App() {
           </select>
           <span className="pill-stat coins">🪙 {profile.coin_balance}</span>
           <span className={`pill-stat ${online ? 'online' : 'offline'}`} role="status">{online ? <Wifi size={13} /> : <WifiOff size={13} />}{online ? t('connected') : t('offline')}</span>
+          <button type="button" className="btn btn-secondary" onClick={() => { if (isStudent) setStudentView('profile'); else setShowAccount(true) }} aria-label="Open my MELA account"><UserRound size={16} aria-hidden="true" /> My account</button>
           <button type="button" className="btn btn-secondary app-settings-button" onClick={() => window.dispatchEvent(new Event('mela:open-settings'))} aria-label="Open MELA settings"><SettingsIcon size={16} aria-hidden="true" /> Settings</button>
           <button className="icon-btn" onClick={signOut} disabled={signingOut} aria-label={t('logout')}><LogOut size={18} /></button>
         </div>
@@ -295,7 +298,9 @@ export default function App() {
       {actionError && <div className="banner banner-error shell-message" role="alert">{actionError}</div>}
       <main id="main-content" tabIndex={-1}>
       <ErrorBoundary key={studentView}><Suspense fallback={<div className="page-loading" role="status">{t('loadingPage')}</div>}>
-      {isStudent ? (
+      {!isStudent && showAccount ? (
+        <AccountOverview profile={profile} onBack={() => setShowAccount(false)} />
+      ) : isStudent ? (
         <>
           {studentView === 'practice' && <Practice onBack={() => setStudentView('dashboard')} onOpenQuestionBank={() => setStudentView('question-bank')} />}
           {studentView === 'question-bank' && <QuestionBank onBack={() => setStudentView('dashboard')} />}
@@ -320,7 +325,7 @@ export default function App() {
         </>
       ) : profile.role === 'company' || profile.role === 'employer' ? (
         <EmployerPortal role={profile.role} />
-      ) : profile.role === 'parent' || profile.role === 'teacher' || profile.role === 'mentor' ? (
+      ) : profile.role === 'parent' || profile.role === 'teacher' || profile.role === 'mentor' || profile.role === 'partner' ? (
         <RoleDashboard role={profile.role} fullName={profile.full_name} />
       ) : (
         <div className="dash-main"><h1>{t('accountSetup')}</h1><p className="muted">{t('unsupportedRole')}</p></div>

@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { logoutUser } from '../lib/auth'
 
-type Props = { role: 'parent' | 'teacher' | 'mentor'; fullName?: string | null }
+type Props = { role: 'parent' | 'teacher' | 'mentor' | 'partner'; fullName?: string | null }
 
 type Summary = {
   title: string
@@ -58,6 +58,23 @@ async function loadRoleSummary(role: Props['role']): Promise<Summary> {
         { label: 'Subjects', value: profile?.subjects_taught?.length ?? 0 },
       ],
       details: rooms.slice(0, 5).map((r) => `${r.title} · ${r.subject ?? r.stage_key ?? 'Classroom'}`),
+    }
+  }
+
+  if (role === 'partner') {
+    const { data, error } = await supabase.from('sector_partner_members')
+      .select('partner_organization_id, member_role, status').eq('user_id', id)
+    if (error) throw error
+    const memberships = data ?? []
+    const active = memberships.filter(row => row.status === 'active' || row.status === 'approved')
+    return {
+      title: 'Institutional Partner Dashboard',
+      status: active.length ? 'Active organization membership' : 'Awaiting approved organization membership',
+      stats: [
+        { label: 'My organizations', value: memberships.length },
+        { label: 'Active memberships', value: active.length },
+      ],
+      details: memberships.map(row => `${row.member_role || 'Member'} · ${row.status}`),
     }
   }
 
@@ -121,6 +138,7 @@ export default function RoleDashboard({ role, fullName }: Props) {
   if (!summary) return <div className="centered-loading">Loading your dashboard…</div>
 
   const teacherApproved = role === 'teacher' && ['approved', 'verified'].includes(summary.status.toLowerCase())
+  const mentorApproved = role === 'mentor' && summary.status === 'Verified and active'
 
   return (
     <div className="dash-main">
@@ -140,7 +158,9 @@ export default function RoleDashboard({ role, fullName }: Props) {
       {teacherApproved && <TeacherClassrooms onChanged={() => setRevision(value => value + 1)} />}
       {teacherApproved && <EducatorContentReview />}
       {teacherApproved && <AICourseLessonReview />}
-      {role === 'mentor' && <MentorLifecycle onChanged={() => setRevision(value => value + 1)} />}
+      {role === 'mentor' && !mentorApproved && <div className="banner banner-info" role="status">Your mentorship tools require independent mentor verification and an active profile. You can review your account status while awaiting approval.</div>}
+      {mentorApproved && <MentorLifecycle onChanged={() => setRevision(value => value + 1)} />}
+      {role === 'partner' && <div className="banner banner-info" role="status">Partner programs, scholarships and reports require approved institutional membership and server-side permissions. This view shows only your own membership status.</div>}
       {role === 'parent' && <ParentLearnerProgress />}
       {role === 'parent' && <ParentActions onLinked={() => setRevision(value => value + 1)} />}
       <button className="btn btn-secondary" onClick={() => logoutUser()}>Log out</button>

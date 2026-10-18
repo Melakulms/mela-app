@@ -57,3 +57,14 @@ it('routes Home on older Android browsers without Object.hasOwn', () => {
     expect(readStudentView()).toBe('practice')
   } finally { Object.hasOwn = original }
 })
+
+it('clears the previous route and settings history at an authentication boundary', () => {
+  window.history.replaceState({melaSettingsOpen: true}, '', '/mela-app/?view=passport#settings-privacy')
+  render(<Navigation />)
+  expect(screen.getByText('passport')).toBeTruthy()
+  act(() => window.dispatchEvent(new Event('mela:session-boundary')))
+  expect(screen.getByText('dashboard')).toBeTruthy()
+  expect(window.location.search).toBe('?view=dashboard')
+  expect(window.location.hash).toBe('')
+  expect(window.history.state).toBeNull()
+})

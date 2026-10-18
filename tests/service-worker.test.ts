@@ -38,7 +38,7 @@ describe('learner offline cache isolation', () => {
     w.fetch.mockRejectedValue(new Error('offline')); w.cache.match.mockResolvedValue(new Response('MELA offline shell'))
     w.listeners.fetch({ request: { method: 'GET', mode: 'navigate', url: 'https://example.test/mela-app/' }, respondWith: (p: Promise<Response>) => { response = p } })
     expect(await (await response).text()).toBe('MELA offline shell')
-    expect(w.caches.open).toHaveBeenCalledWith('mela-shell-v6-session-home')
+    expect(w.caches.open).toHaveBeenCalledWith('mela-shell-v7-public-offline')
   })
 })
 
@@ -47,5 +47,31 @@ it('does not save the lesson handbook over the app opening screen', async () => 
   w.fetch.mockResolvedValue(new Response('Lesson handbook', {headers: {'Content-Type': 'text/html'}}))
   w.listeners.fetch({request: {method: 'GET', mode: 'navigate', url: 'https://example.test/mela-app/ai-year-one.html'}, respondWith: (p: Promise<Response>) => {response = p}, waitUntil: vi.fn()})
   expect(await (await response).text()).toBe('Lesson handbook')
+  expect(w.cache.put).toHaveBeenCalledWith('/mela-app/ai-year-one.html', expect.any(Response))
+})
+
+it('never caches auth callback URLs or intercepts APIs and writes', async () => {
+  const w = worker()
+  for (const request of [
+    {method:'POST',url:'https://example.test/mela-app/assets/write.js'},
+    {method:'GET',url:'https://project.supabase.co/rest/v1/profiles'},
+    {method:'GET',url:'https://example.test/mela-app/private.pdf?token=secret'},
+    {method:'GET',url:'https://example.test/mela-app/assets/app.js',headers:new Headers({Authorization:'Bearer private'})},
+  ]) {
+    const respondWith = vi.fn(); w.listeners.fetch({request,respondWith})
+    expect(respondWith).not.toHaveBeenCalled()
+  }
+  let response!: Promise<Response>
+  w.fetch.mockResolvedValue(new Response('callback shell',{headers:{'Content-Type':'text/html'}}))
+  w.listeners.fetch({request:{method:'GET',mode:'navigate',url:'https://example.test/mela-app/?code=private'},respondWith:(p:Promise<Response>)=>{response=p},waitUntil:vi.fn()})
+  await response
   expect(w.cache.put).not.toHaveBeenCalled()
+})
+
+it('opens the public handbook offline without needing a session or Javascript bundle', async () => {
+  const w=worker();let response!:Promise<Response>
+  w.fetch.mockRejectedValue(new Error('offline'));w.cache.match.mockResolvedValue(new Response('Public handbook'))
+  w.listeners.fetch({request:{method:'GET',mode:'navigate',url:'https://example.test/mela-app/ai-year-one.html'},respondWith:(p:Promise<Response>)=>{response=p}})
+  expect(await (await response).text()).toBe('Public handbook')
+  expect(w.cache.match).toHaveBeenCalledWith('/mela-app/ai-year-one.html')
 })

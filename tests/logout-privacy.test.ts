@@ -8,6 +8,7 @@ it('removes only learner credentials and chats even when logout fails offline',a
   localStorage.setItem('mela-users-supabase-auth-v1','private token')
   localStorage.setItem('mela-users-supabase-auth-v1-code-verifier','private verifier')
   localStorage.setItem('other-app','keep')
+  localStorage.setItem('mela-public-ai-last-unit-v1','18')
   sessionStorage.setItem('mela_coach_v1:learner','private conversation')
   vi.stubGlobal('window',{localStorage,sessionStorage,location:{replace},dispatchEvent})
   mocks.signOut.mockRejectedValue(new Error('offline'))
@@ -16,6 +17,7 @@ it('removes only learner credentials and chats even when logout fails offline',a
   expect(localStorage.getItem('mela-users-supabase-auth-v1-code-verifier')).toBeNull()
   expect(sessionStorage.getItem('mela_coach_v1:learner')).toBeNull()
   expect(localStorage.getItem('other-app')).toBe('keep')
+  expect(localStorage.getItem('mela-public-ai-last-unit-v1')).toBe('18')
   expect(replace).toHaveBeenCalledWith(expect.stringContaining('?signed_out=1'))
 })
 it('bounds logout waiting so a stalled connection cannot retain the private screen',async()=>{

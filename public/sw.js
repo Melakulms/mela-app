@@ -1,12 +1,13 @@
-const CACHE = 'mela-shell-v7-public-offline'
+const CACHE = 'mela-shell-v8-public-offline'
 const scopeUrl = new URL(self.registration.scope)
 const shellUrl = scopeUrl.pathname
 const offlineUrl = `${shellUrl}offline.html`
 const handbookUrl = `${shellUrl}ai-year-one.html`
 const publicPages = [offlineUrl, handbookUrl]
+const publicFiles = [`${shellUrl}offline-progress.js`]
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(publicPages)).then(() => self.skipWaiting()))
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll([...publicPages, ...publicFiles])).then(() => self.skipWaiting()))
 })
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('mela-shell-') && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim()))
@@ -35,7 +36,7 @@ self.addEventListener('fetch', event => {
     return
   }
   // APIs, private documents, arbitrary paths and signed query URLs are excluded.
-  if (!url.search && (url.pathname.startsWith(`${shellUrl}assets/`) || /^mela-icon[^/]*\.(png|svg)$/.test(url.pathname.slice(shellUrl.length)))) {
+  if (!url.search && (publicFiles.includes(url.pathname) || url.pathname.startsWith(`${shellUrl}assets/`) || /^mela-icon[^/]*\.(png|svg)$/.test(url.pathname.slice(shellUrl.length)))) {
     event.respondWith(caches.open(CACHE).then(cache => cache.match(request)).then(cached => cached || fetch(request).then(response => {
       if (response.ok) {
         const copy = response.clone()

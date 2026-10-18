@@ -1,0 +1,28 @@
+name: Check learner changes
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Build public offline app without production secrets
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_build_test
+      - name: Verify public offline assets exist
+        run: |
+          test -s dist/offline.html
+          test -s dist/ai-year-one.html
+          test -s dist/offline-progress.js
+          test -s dist/sw.js

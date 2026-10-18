@@ -80,7 +80,14 @@ export default function App() {
     setAccountError('')
     return observeSession(supabase.auth, (newSession, event) => {
       const nextUserId = newSession?.user.id ?? null
-      if (event === 'SIGNED_OUT' || (event === 'SIGNED_IN' && nextUserId !== observedUserId.current)) {
+      // A restored session starts at Home on a newly opened app; private
+      // screens are never auto-reopened from an old URL or browser history.
+      // Password recovery/callback links must keep their own flow intact.
+      const params = new URLSearchParams(window.location.search)
+      const ordinaryRestore = event === 'INITIAL_SESSION' && !!nextUserId &&
+        !params.has('recovery') && !params.has('code') && !params.has('error') &&
+        !window.location.hash.includes('access_token')
+      if (event === 'SIGNED_OUT' || ordinaryRestore || (event === 'SIGNED_IN' && nextUserId !== observedUserId.current)) {
         clearCoachHistories()
         setProfile(null); setEmployerRegistration(null); setShowAccount(false); setEditingEmployerProfile(false)
         setActionError(''); setPendingEmail('')

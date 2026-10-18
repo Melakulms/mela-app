@@ -178,3 +178,14 @@ it('offers a new confirmation link for an expired callback and can return to log
  await waitFor(() => expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeTruthy())
  expect(window.location.hash).toBe('')
 })
+
+it('starts a restored learner session at Home rather than reopening private bookmarked pages', async () => {
+  const session = { user: { id: 'returning-learner' } }
+  window.history.replaceState(null, '', '/mela-app/?view=profile#settings-privacy')
+  mocks.getSession.mockResolvedValue({ data: { session }, error: null })
+  mocks.fetchOwnProfile.mockResolvedValue(null)
+  render(<App />)
+  await screen.findByRole('alert')
+  expect(window.location.search).toBe('?view=dashboard')
+  expect(window.location.hash).toBe('')
+})

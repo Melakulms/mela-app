@@ -5,18 +5,26 @@ import { describe, expect, it, vi } from 'vitest'
 
 function worker() {
   const listeners: Record<string, (event: any) => void> = {}
-  const cache = { put: vi.fn(), match: vi.fn(), add: vi.fn() }
+  const cache = { put: vi.fn(), match: vi.fn(), add: vi.fn(), addAll: vi.fn(async () => {}) }
   const caches = { open: vi.fn(async () => cache), keys: vi.fn(async () => ['mela-shell-v0', 'mela-shell-v1', 'mela-shell-v3-ai-review', 'other-app-cache']), delete: vi.fn() }
   const fetch = vi.fn()
   runInNewContext(readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8'), {
     URL, Response, caches, fetch,
     self: { registration: { scope: 'https://example.test/mela-app/' }, location: { origin: 'https://example.test' },
-      addEventListener: (name: string, callback: any) => { listeners[name] = callback }, clients: { claim: vi.fn() } },
+      addEventListener: (name: string, callback: any) => { listeners[name] = callback }, skipWaiting: vi.fn(), clients: { claim: vi.fn() } },
   })
   return { listeners, caches, cache, fetch }
 }
 
 describe('learner offline cache isolation', () => {
+  it('precaches the public library, handbook and reading bookmark script', async () => {
+    const w = worker(); let done!: Promise<unknown>
+    w.listeners.install({ waitUntil: (p: Promise<unknown>) => { done = p } })
+    await done
+    expect(w.cache.addAll).toHaveBeenCalledWith([
+      '/mela-app/offline.html', '/mela-app/ai-year-one.html', '/mela-app/offline-progress.js',
+    ])
+  })
   it('only removes outdated learner caches on activation', async () => {
     const w = worker(); let done!: Promise<unknown>
     w.listeners.activate({ waitUntil: (p: Promise<unknown>) => { done = p } }); await done

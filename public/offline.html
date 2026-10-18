@@ -1,10 +1,11 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#153b33"><title>MELA · Offline library</title>
-<style>body{margin:0;background:#f1f5ef;color:#183a32;font:17px/1.6 system-ui,sans-serif}main{max-width:850px;margin:auto;padding:24px}header{background:#153b33;color:white;padding:28px;border-radius:20px}h1,h2{line-height:1.2}section{background:white;border:1px solid #d6e1d7;border-radius:16px;padding:24px;margin:20px 0}a{color:#116348}button,.button{display:inline-block;background:#176649;color:white;border:0;border-radius:10px;padding:12px 18px;font:inherit;text-decoration:none;cursor:pointer}input{font:inherit;padding:10px;max-width:140px;border:1px solid #8fa99c;border-radius:8px}small{display:block}summary{cursor:pointer}footer{padding:16px 0}.muted{color:#47665b}</style></head>
+<style>body{margin:0;background:#f1f5ef;color:#183a32;font:17px/1.6 system-ui,sans-serif}main{max-width:850px;margin:auto;padding:24px}header{background:#153b33;color:white;padding:28px;border-radius:20px}h1,h2{line-height:1.2}section{background:white;border:1px solid #d6e1d7;border-radius:16px;padding:24px;margin:20px 0}a{color:#116348}button,.button{display:inline-block;background:#176649;color:white;border:0;border-radius:10px;padding:12px 18px;font:inherit;text-decoration:none;cursor:pointer}input{font:inherit;padding:10px;max-width:140px;border:1px solid #8fa99c;border-radius:8px}small{display:block}summary{cursor:pointer}[hidden]{display:none!important}footer{padding:16px 0}.muted{color:#47665b}</style></head>
 <body><main><header><small>MELA / LEARN ANYWHERE</small><h1>Your offline library</h1><p>Public learning resources. No account records, messages or personal details are stored here.</p></header>
 <p id="status" role="status">Checking offline availability…</p><a class="button" id="return" href="./?view=dashboard">Return to MELA</a> <button id="logout" type="button">Log out on this device</button>
-<section><h2>AI foundations handbook</h2><p>Read 52 units with explanations, worked examples and project tasks. The English handbook is a draft awaiting teacher review. Some practical tasks require online tools.</p><a class="button" href="ai-year-one.html">Read the handbook</a><p class="muted">Prepare this library while connected. Once ready, the handbook and this page can open without internet. Videos and external links require a connection.</p></section>
+<section><h2>AI foundations handbook</h2><p>Read 52 units with explanations, worked examples and project tasks. The English handbook is a draft awaiting teacher review. Some practical tasks require online tools.</p><a class="button" href="ai-year-one.html">Read the handbook</a> <a class="button" id="continue-reading" hidden href="ai-year-one.html">Continue last public unit</a> <button id="clear-bookmark" type="button" hidden>Clear reading place</button><p id="bookmark-status" class="muted" role="status">Your public reading bookmark is saved on this device only. You can clear it before sharing the phone.</p><p class="muted">Prepare this library while connected. Once ready, the handbook and this page can open without internet. Videos and external links require a connection.</p></section>
 <section><h2>Quick maths practice</h2><p>Practise addition, subtraction and multiplication. This exercise is for self-study; it does not award coins, certificates or account scores.</p><form id="practice"><label for="answer" id="question"></label> <input id="answer" type="number" required autocomplete="off"><button>Check answer</button></form><p id="feedback" role="status"></p><button id="next" type="button">New question</button></section>
+<section><h2>Continuing safely after sign-out</h2><p>Completed lessons, scores and private account progress stay with your online MELA account. After you log back in, the app starts at the Home dashboard instead of reopening private pages. The public handbook can continue at a saved unit on this device, but no account, chat, quiz answers, or private screens are saved by the offline library.</p><p>For shared phones, use <strong>Clear reading place</strong> and sign out before handing the phone to someone else.</p></section>
 <section><h2>Study without a connection</h2><ol><li>Choose one handbook unit and read its explanation.</li><li>Close the explanation and describe the idea in your own words.</li><li>Try its practical task on paper using fictional information.</li><li>Compare your work with the example and write down what to ask your teacher.</li></ol><details><summary>What still needs internet?</summary><p>Sign-in, profile changes, AI Coach, live Arena matches, question-bank retrieval, applications, messaging, payments and teacher approvals need internet. This library does not queue submissions. Keep work in your own notebook and submit it after reconnecting.</p></details></section>
 <footer>For shared phones: log out in MELA before lending the device. Public study resources remain available; saved account progress stays online.</footer></main>
 <script>
@@ -12,9 +13,33 @@ document.getElementById('logout').onclick=()=>{
  for(const name of ['localStorage','sessionStorage']){try{const storage=window[name];for(const key of Object.keys(storage)){if(key==='mela-users-supabase-auth-v1'||key.startsWith('mela-users-supabase-auth-v1-')||key.startsWith('mela_coach_v1:'))storage.removeItem(key)}}catch{}}
  document.getElementById('status').textContent='Signed out on this device. Connect to sign in again.';document.getElementById('return').href='./?signed_out=1';next();
 };
+const bookmarkKey = 'mela-public-ai-last-unit-v1';
+function refreshBookmark(){
+  const link=document.getElementById('continue-reading'), clear=document.getElementById('clear-bookmark'), status=document.getElementById('bookmark-status');
+  let raw=null;
+  try{raw=localStorage.getItem(bookmarkKey)}catch{}
+  const unit=raw && /^[0-9]{1,2}$/.test(raw) ? Number(raw) : 0;
+  if(unit>=1 && unit<=52){
+    link.href='ai-year-one.html#week-'+unit;
+    link.textContent='Continue at Unit '+unit;
+    link.hidden=false;
+    clear.hidden=false;
+    status.textContent='Public Unit '+unit+' is bookmarked on this device. Clear it on shared phones.';
+  }else{
+    link.hidden=true;
+    clear.hidden=true;
+    status.textContent='No public reading place is saved yet. Choose a unit in the handbook to remember it.';
+  }
+}
+document.getElementById('clear-bookmark').onclick=()=>{
+  try{localStorage.removeItem(bookmarkKey)}catch{}
+  refreshBookmark();
+};
+window.addEventListener('storage',refreshBookmark);
+refreshBookmark();
 let expected=0;
 function next(){const a=1+Math.floor(Math.random()*12),b=1+Math.floor(Math.random()*12),op=Math.floor(Math.random()*3);expected=op===0?a+b:op===1?Math.max(a,b)-Math.min(a,b):a*b;document.getElementById('question').textContent=(op===1?Math.max(a,b):a)+' '+['+','−','×'][op]+' '+(op===1?Math.min(a,b):b)+' =';document.getElementById('answer').value='';document.getElementById('feedback').textContent=''}
-document.getElementById('practice').onsubmit=e=>{e.preventDefault();document.getElementById('feedback').textContent=Number(document.getElementById('answer').value)===expected?'Correct! Try another question.':'Try again. Work through the calculation one step at a time.'};document.getElementById('next').onclick=next;next();window.addEventListener('pageshow',next);
-async function ready(){const status=document.getElementById('status');try{if(!('serviceWorker' in navigator))throw Error();await navigator.serviceWorker.register('sw.js',{scope:'./'});await navigator.serviceWorker.ready;const cache=await caches.open('mela-shell-v7-public-offline');const pages=await Promise.all(['offline.html','ai-year-one.html'].map(p=>cache.match(new URL(p,location.href).pathname)));status.textContent=pages.every(Boolean)?'Ready for offline use on this device. Public study content only.':'Offline preparation is still in progress. Reopen this page while connected to check again.'}catch{status.textContent='Offline storage is unavailable. Reopen this page with internet to prepare it.'}}
+document.getElementById('practice').onsubmit=e=>{e.preventDefault();document.getElementById('feedback').textContent=Number(document.getElementById('answer').value)===expected?'Correct! Try another question.':'Try again. Work through the calculation one step at a time.'};document.getElementById('next').onclick=next;next();window.addEventListener('pageshow',()=>{next();refreshBookmark()});
+async function ready(){const status=document.getElementById('status');try{if(!('serviceWorker' in navigator))throw Error();await navigator.serviceWorker.register('sw.js',{scope:'./'});await navigator.serviceWorker.ready;const cache=await caches.open('mela-shell-v8-public-offline');const pages=await Promise.all(['offline.html','ai-year-one.html'].map(p=>cache.match(new URL(p,location.href).pathname)));status.textContent=pages.every(Boolean)?'Ready for offline use on this device. Public study content only.':'Offline preparation is still in progress. Reopen this page while connected to check again.'}catch{status.textContent='Offline storage is unavailable. Reopen this page with internet to prepare it.'}}
 ready();window.addEventListener('online',ready);
 </script></body></html>

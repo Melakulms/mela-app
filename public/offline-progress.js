@@ -6,7 +6,7 @@
   const read = () => {
     try {
       const raw = localStorage.getItem(KEY)
-      if (!raw || !/^\\d{1,2}$/.test(raw)) return null
+      if (!raw || !/^\d{1,2}$/.test(raw)) return null
       const unit = Number(raw)
       return valid(unit) ? unit : null
     } catch { return null }
@@ -28,7 +28,7 @@
       : 'No reading place saved on this device.'
   }
   const hashUnit = () => {
-    const match = /^#week-(\\d{1,2})$/.exec(location.hash)
+    const match = /^#week-(\d{1,2})$/.exec(location.hash)
     if (match) write(Number(match[1]))
   }
   const init = () => {
@@ -67,7 +67,7 @@
     nav.addEventListener('click', event => {
       const link = event.target.closest('a[href^="#week-"]')
       if (!link) return
-      const match = /^#week-(\\d{1,2})$/.exec(link.getAttribute('href'))
+      const match = /^#week-(\d{1,2})$/.exec(link.getAttribute('href'))
       if (match) write(Number(match[1]))
     })
     // Also remember the section being read when users scroll instead of using links.
@@ -82,7 +82,7 @@
           if (article.getBoundingClientRect().top <= 180) visible = article
         })
         if (visible) {
-          const match = /^week-(\\d{1,2})$/.exec(visible.id)
+          const match = /^week-(\d{1,2})$/.exec(visible.id)
           if (match && read() !== Number(match[1])) write(Number(match[1]))
         }
       })

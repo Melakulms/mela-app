@@ -16,5 +16,11 @@ it('ships all 52 navigable weeks without exposing teacher answer keys', () => {
   expect((html.match(/id="week-\d+"/g) ?? []).length).toBe(52)
   expect((html.match(/href="#week-\d+"/g) ?? []).length).toBe(52)
   expect(html).not.toContain('teacher_answer_guide')
-  expect(html).not.toContain('<script')
+  // One same-origin, reviewed helper is allowed for public reading bookmarks.
+  // No inline scripts or extra external scripts are allowed in lesson content.
+  expect(html.match(/<script[^>]*>/g)).toEqual(['<script defer src="offline-progress.js">'])
+  const helper = readFileSync('public/offline-progress.js', 'utf8')
+  expect(helper).toContain('mela-public-ai-last-unit-v1')
+  expect(helper).not.toContain('supabase')
+  expect(helper).not.toContain('access_token')
 })

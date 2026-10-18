@@ -1,4 +1,5 @@
-import { supabase } from './supabase'
+import { clearCoachHistories } from './coach-history'
+import { supabase, AUTH_STORAGE_KEY } from './supabase'
 import { authRedirectUrl } from './auth-redirect'
 
 export type MelaRole = 'student' | 'parent' | 'teacher' | 'employer' | 'company' | 'mentor' | 'admin' | 'super_admin'
@@ -88,7 +89,29 @@ export async function loginUser(identifier: string, password: string) {
 }
 
 export async function logoutUser() {
-  return supabase.auth.signOut({ scope: 'local' })
+  // Local privacy must not depend on the network being available.
+  let timer: ReturnType<typeof setTimeout> | undefined
+  try {
+    await Promise.race([
+      supabase.auth.signOut({ scope: 'local' }),
+      new Promise<void>(resolve => { timer = setTimeout(resolve, 4000) }),
+    ])
+  } catch { /* The hard navigation below also discards the in-memory session. */ }
+  finally {
+    clearTimeout(timer)
+    clearCoachHistories()
+    for (const name of ['localStorage', 'sessionStorage'] as const) {
+      try {
+        const storage = window[name]
+        for (const key of Object.keys(storage)) {
+          if (key === AUTH_STORAGE_KEY || key.startsWith(AUTH_STORAGE_KEY + '-')) storage.removeItem(key)
+        }
+      } catch { /* Storage can be disabled by the browser. */ }
+    }
+    window.dispatchEvent(new Event('mela:session-boundary'))
+    window.location.replace(import.meta.env.BASE_URL + '?signed_out=1')
+  }
+  return { error: null }
 }
 
 export async function requestPasswordReset(email: string) {

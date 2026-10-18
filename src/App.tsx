@@ -63,7 +63,7 @@ export default function App() {
   const observedUserId = useRef<string | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<MelaProfile | null>(null)
-  const [authView, setAuthView] = useState<AuthView>('register')
+  const [authView, setAuthView] = useState<AuthView>(() => new URLSearchParams(window.location.search).has('signed_out') ? 'login' : 'register')
   const [pendingEmail, setPendingEmail] = useState('')
   const [studentView, setStudentView] = useStudentNavigation()
   const [online, setOnline] = useState(navigator.onLine)
@@ -81,6 +81,9 @@ export default function App() {
     return observeSession(supabase.auth, (newSession, event) => {
       const nextUserId = newSession?.user.id ?? null
       if (event === 'SIGNED_OUT' || (event === 'SIGNED_IN' && nextUserId !== observedUserId.current)) {
+        clearCoachHistories()
+        setProfile(null); setEmployerRegistration(null); setShowAccount(false); setEditingEmployerProfile(false)
+        setActionError(''); setPendingEmail('')
         window.dispatchEvent(new Event('mela:session-boundary'))
       }
       observedUserId.current = nextUserId
@@ -174,6 +177,14 @@ export default function App() {
   if (callbackFailed) return recovering
     ? <ResetPassword sessionReady={false} onComplete={leaveFailedCallback} />
     : <VerifyEmail email="" linkError onUseDifferentAccount={leaveFailedCallback} />
+
+  if (!online) return <main className="auth-shell"><div className="auth-card">
+    <h1>MELA offline learning</h1>
+    <p>Read public study materials and try practice exercises without a connection. Account features need internet.</p>
+    <a className="btn btn-primary" href={`${import.meta.env.BASE_URL}offline.html`}>Open offline library</a>
+    <button className="btn btn-secondary" onClick={() => window.location.reload()}>Try reconnecting</button>
+    <button className="btn btn-secondary" onClick={signOut} disabled={signingOut}>Log out on this device</button>
+  </div></main>
 
   if (loading) return <div className="centered-loading">{t('loading')}</div>
 
@@ -349,3 +360,4 @@ export default function App() {
     </div>
   )
 }
+

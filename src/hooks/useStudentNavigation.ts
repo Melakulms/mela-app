@@ -20,8 +20,13 @@ export function useStudentNavigation() {
   const [view, setView] = useState<StudentView>(readStudentView)
   useEffect(() => {
     const restore = () => setView(readStudentView())
+    const reset = () => {
+      window.history.replaceState(null, '', window.location.pathname + '?view=dashboard')
+      setView('dashboard')
+    }
+    window.addEventListener('mela:session-boundary', reset)
     window.addEventListener('popstate', restore)
-    return () => window.removeEventListener('popstate', restore)
+    return () => { window.removeEventListener('popstate', restore); window.removeEventListener('mela:session-boundary', reset) }
   }, [])
   const navigate = (next: StudentView) => {
     if (next === view) return
@@ -32,3 +37,4 @@ export function useStudentNavigation() {
   }
   return [view, navigate] as const
 }
+

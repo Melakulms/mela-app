@@ -5,7 +5,7 @@ Implemented 19 October 2026. The real payment module is installed on **mela-stag
 ## What is available
 
 - `public/payment-test.html`: phone-friendly, clearly labeled **browser-only simulator**. It contacts no provider and grants no real access. Submit the sample reference, select a scenario, confirm the simulated account check, and run the agent. Reset to try another case.
-- `src/pages/ManualPayments.tsx`: authenticated customer/payment-review interface, ready to mount after app login. `reviewer` only controls presentation; the backend checks permissions independently. It is **not yet mounted in the production learner or central dashboard**.
+- `src/pages/ManualPayments.tsx`: authenticated customer/payment-review interface, ready to mount after app login. `reviewer` only controls presentation; the backend checks permissions independently. It is now wired into the learner header and the central dashboard Payments section in the proposed code, behind `VITE_MANUAL_PAYMENTS_ENABLED=true`. The changes are not merged or enabled in production.
 - `src/lib/manual-payments.ts`: typed Supabase RPC adapter.
 - Migration: isolated private schema, server-priced orders, trusted receipt records, atomic reconciliation agent, entitlements and audit log. Public RPC is invoker-only; private privileged function authenticates every caller. All table access is denied to client roles.
 - No LLM, paid AI API or undocumented bank scraper is used. The agent is deterministic and runs when a reference or verified record is submitted, or when a reviewer requests a recheck.
@@ -14,7 +14,7 @@ Implemented 19 October 2026. The real payment module is installed on **mela-stag
 
 The customer submits an **untrusted claim**. It never becomes proof of payment on its own. A specifically provisioned payment reviewer, signed in with MFA (`aal2`), must inspect a successful credit in the merchant's own receiving account and confirm the buyer/order association from the order memo or an independent payer check. The reviewer enters the actual reference, recipient, amount, currency, date, and verification note. A customer's screenshot or public receipt alone is insufficient.
 
-The agent checks provider/reference, exact recipient and amount, ETB currency, order association, the order's 24-hour payment window and whether a receipt was used. Receipt recording, approval, entitlement and audit are one database transaction. Order row locks and unique receipt/entitlement constraints protect retries and competing submissions. An unverified reference does not reserve a receipt, preventing a different customer from blocking its legitimate owner by claiming it first.
+The cross-bank follow-up keeps the customer reference and sending bank separate from the receiving-account reference. Any sending bank can be entered for manual reconciliation; this is not a claim of automated coverage. The agent checks receiving provider/reference, exact recipient and amount, ETB currency, order association, the order's 24-hour payment window and whether a receipt was used. Receipt recording, approval, entitlement and audit are one database transaction. Order row locks and unique receipt/entitlement constraints protect retries and competing submissions. An unverified reference does not reserve a receipt, preventing a different customer from blocking its legitimate owner by claiming it first.
 
 Accounts and prices are snapshotted in the order. The client cannot override ownership or price. Anonymous access, anonymous Auth accounts, customer admin calls and direct table mutations are denied. Order creation is limited to ten per user per 24 hours; reference submissions to ten per order. Approved/rejected states cannot be reopened by a customer. Rejection is audited; refunds/reversals need a separate audited workflow before live release.
 
@@ -53,3 +53,17 @@ The test helper's absolute import points only to the explicitly installed tempor
 7. Enable a small real-money pilot only after the above, using a genuine received transaction. Add refund/reversal and reconciliation procedures before broader collection.
 
 This module handles MELA's own product purchases only. It does not enable marketplace escrow, wallet balances, cash rewards or payouts.
+
+## Follow-up: real cross-bank implementation (19 October 2026)
+
+The owner rejected simulated payment testing as the deliverable. No additional simulator was built. Updated the actual backend and both app forms:
+
+- The customer supplies the sending bank/wallet name and sender reference.
+- The reviewer records the separately verified incoming credit reference. Sender and receiver references can differ.
+- Duplicate prevention keys on the verified receiving-provider reference, so changing the sender bank/reference cannot reuse the same received payment.
+- Any configured receiving bank is supported by this manual-record workflow. No universal receipt API, provider scraper, connected bank account or live settlement is claimed.
+- `20261019142948_cross_bank_payment_references.sql` and cross-bank PostgreSQL tests were added. Tests passed locally. Installing this follow-up migration on staging was declined by automatic approval review without a reason; it is NOT installed. The initial staging migration remains unchanged and collection is disabled.
+- Learner navigation and admin Payments UI are wired in proposed code with the frontend feature flag off. The admin backend still requires its dedicated reviewer allowlist and MFA, regardless of menu visibility.
+- Real activation is blocked on the approved receiving-account details, product/price and trusted transaction evidence, plus completion of the database rollout, entitlement integration and real Auth/MFA/settlement tests. Keep production collection disabled.
+
+The sample HTML link from the initial work remains only a simulator and is not the real-payment test URL. Do not ask the owner to transfer money through it.

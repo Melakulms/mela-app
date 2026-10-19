@@ -1,0 +1,35 @@
+import { chromium } from '/tmp/mela-payment-test-runtime/node_modules/playwright/index.mjs'
+import assert from 'node:assert/strict'
+import chromiumBinary from '/tmp/mela-payment-test-runtime/node_modules/@sparticuz/chromium/build/index.js'
+import { resolve } from 'node:path'
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH || await chromiumBinary.executablePath(),headless:true,args:chromiumBinary.args})
+const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,deviceScaleFactor:1})
+const errors=[];page.on('pageerror',e=>errors.push(e.message))
+await page.goto(process.env.PAYMENT_TEST_URL || 'file://'+resolve('public/payment-test.html'))
+for(const scenario of ['missing','underpaid','recipient','duplicate','owner','expired']){
+ await page.locator('#reset').click()
+ await page.locator('#submit').click()
+ assert.equal(await page.locator('#status').getAttribute('data-status'),'pending')
+ await page.locator('#scenario').selectOption(scenario)
+ await page.locator('#confirmed').check()
+ await page.locator('#verify').click()
+ assert.equal(await page.locator('#status').getAttribute('data-status'),'pending',scenario)
+ assert.equal(await page.locator('#access').textContent(),'Sample course is locked')
+}
+await page.locator('#reset').click()
+await page.locator('#submit').click()
+await page.locator('#verify').click()
+assert.equal(await page.locator('#status-title').textContent(),'Confirmation required')
+await page.locator('#confirmed').check()
+await page.locator('#verify').click()
+assert.equal(await page.locator('#status').getAttribute('data-status'),'approved')
+assert.equal(await page.locator('#access').textContent(),'Sample course unlocked')
+assert.equal(await page.locator('#verify').isDisabled(),true)
+assert.equal(await page.locator('#submit').isDisabled(),true)
+assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true)
+await page.screenshot({path:'/tmp/mela-payment-mobile-test.png',fullPage:true})
+await page.reload()
+assert.equal(await page.locator('#status').getAttribute('data-status'),'awaiting_payment')
+assert.deepEqual(errors,[])
+console.log('PASS: mobile happy path, six held-payment cases, required confirmation, one-time unlock, reset on reload, no overflow or JS errors')
+await browser.close()

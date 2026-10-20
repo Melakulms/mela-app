@@ -22,7 +22,7 @@ window.addEventListener('storage', event => {
   }
 })
 
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
+if ('serviceWorker' in navigator && import.meta.env.PROD && import.meta.env.VITE_MELA_STAGING !== 'true') {
   window.addEventListener('load', () => {
     const serviceWorkerUrl = new URL('sw.js', document.baseURI).toString()
     void navigator.serviceWorker.register(serviceWorkerUrl, { scope: new URL('.', document.baseURI).pathname }).catch(() => {})

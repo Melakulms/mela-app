@@ -63,7 +63,7 @@ export default function App() {
   const observedUserId = useRef<string | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<MelaProfile | null>(null)
-  const [authView, setAuthView] = useState<AuthView>(() => new URLSearchParams(window.location.search).has('signed_out') ? 'login' : 'register')
+  const [authView, setAuthView] = useState<AuthView>(() => (import.meta.env.VITE_MELA_STAGING === 'true' || new URLSearchParams(window.location.search).has('signed_out')) ? 'login' : 'register')
   const [pendingEmail, setPendingEmail] = useState('')
   const [studentView, setStudentView] = useStudentNavigation()
   const [online, setOnline] = useState(navigator.onLine)

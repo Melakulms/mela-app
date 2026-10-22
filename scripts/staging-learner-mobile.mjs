@@ -1,0 +1,43 @@
+// Staging-only public UI mobile smoke. Does not sign in, sign up, write data or capture private screens.
+import { chromium, devices } from 'playwright'
+import { spawn } from 'node:child_process'
+import { mkdir } from 'node:fs/promises'
+const address='http://127.0.0.1:4173'
+if(process.env.MELA_MOBILE_STAGING!=='true')throw new Error('This smoke must be launched explicitly in staging mode')
+const server=spawn('node',['node_modules/vite/bin/vite.js','preview','--host','127.0.0.1','--port','4173','--strictPort'],{stdio:'ignore'})
+let browser
+try {
+ let up=false
+ for(let i=0;i<40;i++){
+   try { const r=await fetch(address,{signal:AbortSignal.timeout(1200)}); if(r.ok){up=true;break} }catch{}
+   await new Promise(r=>setTimeout(r,300))
+ }
+ if(!up)throw new Error('Built staging learner did not serve its HTML')
+ browser=await chromium.launch({headless:true})
+ const context=await browser.newContext({...devices['Pixel 7'],serviceWorkers:'block'})
+ const page=await context.newPage()
+ const errors=[]
+ page.on('pageerror',error=>errors.push(error.message))
+ const response=await page.goto(address,{waitUntil:'domcontentloaded',timeout:20000})
+ if(response?.status()!==200)throw new Error('Staging learner returned unexpected HTTP status')
+ await page.getByText('MELA',{exact:true}).first().waitFor({timeout:30000})
+ const password=page.locator('input[type="password"]')
+ await password.first().waitFor({timeout:20000})
+ const heading=await page.locator('h1').allTextContents()
+ if(!heading.length)throw new Error('Mobile staging login heading missing')
+ const origin=await page.evaluate(()=>window.location.origin)
+ if(origin!==address)throw new Error('Unexpected origin')
+ const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+6)
+ if(overflow)throw new Error('Mobile login horizontally overflows viewport')
+ await mkdir('android-staging-artifacts',{recursive:true})
+ await page.screenshot({path:'android-staging-artifacts/staging-public-login.png',fullPage:true})
+ if(errors.length)throw new Error('Browser script errors: '+errors.slice(0,2).join('; ').slice(0,220))
+ console.log('STAGING_PIXEL_LOGIN_PASS: mobile login heading, password form, no horizontal overflow, no JS crash')
+ const offline=await page.goto(address+'/offline.html',{waitUntil:'domcontentloaded'})
+ if(offline?.status()!==200)throw new Error('Offline public resource returned '+offline?.status())
+ console.log('STAGING_OFFLINE_PASS: public offline.html opens on Pixel-sized Chromium')
+ await context.close()
+}finally{
+ if(browser)await browser.close()
+ server.kill('SIGTERM')
+}

@@ -36,6 +36,9 @@ export default function InstallApp() {
   }, [])
   if (installed) return null
   const copy = messages[language]
+  const stagingOnly = import.meta.env.VITE_MELA_STAGING === 'true'
+  const displayName = stagingOnly ? 'Install MELA TEST' : copy[0]
+  const helpName = stagingOnly ? 'MELA STAGING — separate test app' : copy[1]
   async function install() {
     if (installLock.current) return
     if (!prompt) { setManualHelp(true); if (help.current) { help.current.open = true; help.current.focus() } return }
@@ -49,9 +52,11 @@ export default function InstallApp() {
       // Keep the manual installation instructions available if the browser fails.
     } finally { installLock.current = false; setPrompt(null); setBusy(false); setManualHelp(true); if (help.current) help.current.open = true }
   }
-  return <aside className="install-app" aria-label={copy[1]}>
-    {<button type="button" disabled={busy} onClick={() => void install()}>{copy[0]}</button>}
-    <details ref={help} tabIndex={-1}><summary>{copy[1]}</summary><p>{copy[2]}</p>
+  return <aside className="install-app" aria-label={helpName}>
+    {<button type="button" disabled={busy} onClick={() => void install()}>{displayName}</button>}
+    <details ref={help} tabIndex={-1}><summary>{helpName}</summary>
+      {stagingOnly && <p role="status"><strong>TEST APP ONLY.</strong> Not the live MELA app. No payments, and new-account registration is closed until approved staging test identities are available.</p>}
+      <p>{copy[2]}</p>
       {manualHelp && <p role="status">Your browser controls installation. If no install window appeared, open MELA in Chrome on Android or Safari on iPhone and use the menu steps above. If MELA is already installed, open its home-screen icon. This button does not download an APK file.</p>}
     </details>
   </aside>

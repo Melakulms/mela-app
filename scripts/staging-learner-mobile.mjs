@@ -38,6 +38,8 @@ try {
    console.log('STAGING_BROWSER_ERRORS '+JSON.stringify(errors.slice(0,3)))
    throw cause
  }
+ await page.getByText('Your normal MELA account will not work here.',{exact:false}).waitFor({timeout:12000})
+ console.log('STAGING_PIXEL_AUTH_NOTICE_PASS: isolated test credentials clearly distinguished from live MELA')
  const heading=await page.locator('h1').allTextContents()
  if(!heading.length)throw new Error('Mobile staging login heading missing')
  const origin=await page.evaluate(()=>window.location.origin)

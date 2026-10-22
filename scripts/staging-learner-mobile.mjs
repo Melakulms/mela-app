@@ -20,9 +20,17 @@ try {
  page.on('pageerror',error=>errors.push(error.message))
  const response=await page.goto(address,{waitUntil:'domcontentloaded',timeout:20000})
  if(response?.status()!==200)throw new Error('Staging learner returned unexpected HTTP status')
- await page.getByText('MELA',{exact:true}).first().waitFor({timeout:30000})
- const password=page.locator('input[type="password"]')
- await password.first().waitFor({timeout:20000})
+ await mkdir('android-staging-artifacts',{recursive:true})
+ try {
+   await page.locator('input[type="password"]').first().waitFor({timeout:20000})
+ } catch (cause) {
+   await page.screenshot({path:'android-staging-artifacts/staging-login-diagnostic.png',fullPage:true})
+   const words=(await page.locator('body').innerText().catch(()=>''))?.slice(0,700)
+   console.log('STAGING_DIAGNOSTIC_HEADINGS '+JSON.stringify(await page.locator('h1,h2').allTextContents().catch(()=>[])))
+   console.log('STAGING_DIAGNOSTIC_BODY '+JSON.stringify(words))
+   console.log('STAGING_BROWSER_ERRORS '+JSON.stringify(errors.slice(0,3)))
+   throw cause
+ }
  const heading=await page.locator('h1').allTextContents()
  if(!heading.length)throw new Error('Mobile staging login heading missing')
  const origin=await page.evaluate(()=>window.location.origin)

@@ -16,10 +16,6 @@ jobs:
     if: github.ref == 'refs/heads/staging/learner-20261020'
     runs-on: ubuntu-latest
     timeout-minutes: 18
-    env:
-      VITE_MELA_STAGING: 'true'
-      VITE_SUPABASE_URL: https://tungqfmypuwzeyrtaseh.supabase.co
-      VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_GHvo0PVvPVP9oo8qaslUmA_reIC-6TT
     steps:
       - uses: actions/checkout@v4
         with:
@@ -33,10 +29,22 @@ jobs:
         run: npm test
       - name: Build isolated staging learner app
         run: npm run build
+        env:
+          VITE_MELA_STAGING: 'true'
+          VITE_SUPABASE_URL: https://tungqfmypuwzeyrtaseh.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_GHvo0PVvPVP9oo8qaslUmA_reIC-6TT
       - name: Verify staged artifacts and environment isolation
         run: node scripts/staging-learner-safety.mjs
+        env:
+          VITE_MELA_STAGING: 'true'
+          VITE_SUPABASE_URL: https://tungqfmypuwzeyrtaseh.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_GHvo0PVvPVP9oo8qaslUmA_reIC-6TT
       - name: Read-only live staging backend checks
         run: node scripts/staging-learner-readonly-smoke.mjs
+        env:
+          VITE_MELA_STAGING: 'true'
+          VITE_SUPABASE_URL: https://tungqfmypuwzeyrtaseh.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_GHvo0PVvPVP9oo8qaslUmA_reIC-6TT
       - uses: actions/upload-artifact@v4
         with:
           name: mela-learner-staging-site

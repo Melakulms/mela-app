@@ -62,17 +62,25 @@ try {
  await page.locator('#auth-language').selectOption('en')
  console.log('STAGING_PIXEL_LANGUAGES_PASS: five choices, Amharic setting survives reload')
 
- // The staging database currently has no public registration release flags.
- // Mobile UX must explain the hold instead of presenting a broken signup form.
+ // One-use invited student registration should be visible; invalid codes must not create accounts.
  await page.locator('.auth-switch button').last().click()
- await page.getByRole('heading',{name:'Staging registration is closed'}).waitFor({timeout:18000})
- await page.getByText('New staging accounts are not accepting registrations yet.',{exact:false}).waitFor({timeout:16000})
- if(await page.locator('input[type="email"],input[autocomplete="new-password"]').count()){
-   throw new Error('Staging exposed account creation inputs while registration is disabled')
- }
- await page.getByRole('button',{name:'Return to staging sign in'}).click()
+ await page.getByRole('heading',{name:'Join the adult MELA staging test'}).waitFor({timeout:18000})
+ if(await page.locator('input[type="email"]').count())throw new Error('Staging exposes email signup, not invite-only registration')
+ const roles=await page.locator('#registration-role option').evaluateAll(items=>items.map(x=>x.value))
+ if(JSON.stringify(roles)!==JSON.stringify(['','student']))throw new Error('Staging signup exposes non-student privileged roles: '+roles.join(','))
+ await page.locator('#fullName').fill('Sample Adult Tester')
+ await page.locator('#username').fill('test.invalidinvite')
+ await page.locator('#accessCode').fill('f'.repeat(64))
+ await page.locator('#password').fill('RandomStagingPassword1234')
+ await page.locator('#confirmPassword').fill('RandomStagingPassword1234')
+ await page.locator('#staging-adult-confirm').check()
+ await page.locator('form button[type="submit"]').click()
+ await page.getByRole('alert').filter({hasText:/Invitation invalid, expired or already used|Beta authentication request failed/i}).waitFor({timeout:18000})
+ if(await page.getByText('Your MELA account is ready',{exact:false}).count())
+   throw new Error('Invalid invitation incorrectly created an account')
+ console.log('STAGING_PIXEL_INVITE_NEGATIVE_PASS: adult student-only form visible and fake invitation rejected')
+ await page.getByRole('button',{name:/log in|login/i}).last().click()
  await page.locator('input[type="password"]').first().waitFor({timeout:14000})
- console.log('STAGING_PIXEL_REGISTRATION_GUARD_PASS: signup fails closed, user can return to login')
 
  const installButton = page.getByRole('button',{name:'Install MELA TEST'})
  await installButton.waitFor({timeout:12000})

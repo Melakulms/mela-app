@@ -17,7 +17,11 @@ try {
  const context=await browser.newContext({...devices['Pixel 7'],serviceWorkers:'block'})
  const page=await context.newPage()
  const errors=[]
+ const networkIssues=[]
  page.on('pageerror',error=>errors.push(error.message))
+ page.on('console',message=>{if(message.type()==='error') networkIssues.push(message.text().slice(0,200))})
+ page.on('requestfailed',request=>{networkIssues.push('failed '+new URL(request.url()).pathname+' '+(request.failure()?.errorText??''))})
+ page.on('response',response=>{if(response.status()>=400&&new URL(response.url()).origin===address) networkIssues.push('http '+response.status()+' '+new URL(response.url()).pathname)})
  const response=await page.goto(address,{waitUntil:'domcontentloaded',timeout:20000})
  if(response?.status()!==200)throw new Error('Staging learner returned unexpected HTTP status')
  await mkdir('android-staging-artifacts',{recursive:true})
@@ -28,6 +32,9 @@ try {
    const words=(await page.locator('body').innerText().catch(()=>''))?.slice(0,700)
    console.log('STAGING_DIAGNOSTIC_HEADINGS '+JSON.stringify(await page.locator('h1,h2').allTextContents().catch(()=>[])))
    console.log('STAGING_DIAGNOSTIC_BODY '+JSON.stringify(words))
+   console.log('STAGING_DIAGNOSTIC_ROOT '+JSON.stringify((await page.locator('#root').innerHTML().catch(()=>''))?.slice(0,600)))
+   console.log('STAGING_DIAGNOSTIC_SCRIPT_PATHS '+JSON.stringify(await page.locator('script[src]').evaluateAll(items=>items.map(el=>new URL(el.getAttribute('src')||'').pathname)).catch(()=>[])))
+   console.log('STAGING_DIAGNOSTIC_NETWORK '+JSON.stringify(networkIssues.slice(0,8)))
    console.log('STAGING_BROWSER_ERRORS '+JSON.stringify(errors.slice(0,3)))
    throw cause
  }

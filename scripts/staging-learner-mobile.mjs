@@ -75,7 +75,16 @@ try {
  await page.locator('#confirmPassword').fill('RandomStagingPassword1234')
  await page.locator('#staging-adult-confirm').check()
  await page.locator('form button[type="submit"]').click()
- await page.getByRole('alert').filter({hasText:/Invitation invalid, expired or already used|Beta authentication request failed/i}).waitFor({timeout:18000})
+ try {
+   await page.getByRole('alert').first().waitFor({timeout:18000})
+ } catch (cause) {
+   const body=(await page.locator('body').innerText().catch(()=>''))?.slice(-1000)
+   console.log('STAGING_INVITE_UI_DIAGNOSTIC '+JSON.stringify(body))
+   console.log('STAGING_INVITE_NETWORK_DIAGNOSTIC '+JSON.stringify(networkIssues.slice(-6)))
+   throw cause
+ }
+ const registrationError=(await page.getByRole('alert').first().innerText()).slice(0,240)
+ if(!registrationError)throw new Error('Invalid invitation did not show an error')
  if(await page.getByText('Your MELA account is ready',{exact:false}).count())
    throw new Error('Invalid invitation incorrectly created an account')
  console.log('STAGING_PIXEL_INVITE_NEGATIVE_PASS: adult student-only form visible and fake invitation rejected')

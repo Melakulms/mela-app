@@ -72,6 +72,22 @@ try {
  await page.locator('input[type="password"]').first().waitFor({timeout:14000})
  console.log('STAGING_PIXEL_REGISTRATION_GUARD_PASS: signup fails closed, user can return to login')
 
+ const manifestResponse=await page.request.get(address+'/manifest.webmanifest')
+ if(manifestResponse.status()!==200)throw new Error('Staging PWA manifest unavailable')
+ const manifest=await manifestResponse.json()
+ if(manifest.short_name!=='MELA TEST'||!manifest.name?.includes('STAGING')||manifest.id!=='./?mela_staging_learner=1'||!manifest.start_url.includes('signed_out=1')){
+   throw new Error('Staging PWA is not isolated from MELA production identity')
+ }
+ for (const size of ['192x192','512x512']) {
+   const icon=manifest.icons?.find(item=>item.sizes===size)
+   if(!icon)throw new Error('Staging app is missing '+size+' icon')
+   const iconResponse=await page.request.get(new URL(icon.src,address+'/manifest.webmanifest').toString())
+   if(iconResponse.status()!==200)throw new Error('Staging icon '+size+' unavailable')
+ }
+ const serviceWorkerControllers=await page.evaluate(()=>navigator.serviceWorker?.controller?.scriptURL??null)
+ if(serviceWorkerControllers!==null)throw new Error('Staging must not restore a service worker from the live app')
+ console.log('STAGING_PIXEL_PWA_ISOLATION_PASS: distinct MELA TEST install identity, icons available, no inherited worker')
+
  const offline=await page.goto(address+'/offline.html',{waitUntil:'domcontentloaded'})
  if(offline?.status()!==200)throw new Error('Offline public resource returned '+offline?.status())
  console.log('STAGING_OFFLINE_PASS: public offline.html opens on Pixel-sized Chromium')

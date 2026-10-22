@@ -33,7 +33,7 @@ try {
    console.log('STAGING_DIAGNOSTIC_HEADINGS '+JSON.stringify(await page.locator('h1,h2').allTextContents().catch(()=>[])))
    console.log('STAGING_DIAGNOSTIC_BODY '+JSON.stringify(words))
    console.log('STAGING_DIAGNOSTIC_ROOT '+JSON.stringify((await page.locator('#root').innerHTML().catch(()=>''))?.slice(0,600)))
-   console.log('STAGING_DIAGNOSTIC_SCRIPT_PATHS '+JSON.stringify(await page.locator('script[src]').evaluateAll(items=>items.map(el=>new URL(el.getAttribute('src')||'').pathname)).catch(()=>[])))
+   console.log('STAGING_DIAGNOSTIC_SCRIPT_PATHS '+JSON.stringify(await page.locator('script[src]').evaluateAll(items=>items.map(el=>el.getAttribute('src')||'')).catch(()=>[])))
    console.log('STAGING_DIAGNOSTIC_NETWORK '+JSON.stringify(networkIssues.slice(0,8)))
    console.log('STAGING_BROWSER_ERRORS '+JSON.stringify(errors.slice(0,3)))
    throw cause

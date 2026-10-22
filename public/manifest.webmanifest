@@ -1,8 +1,8 @@
 {
-  "name": "MELA Student Success",
-  "short_name": "MELA",
-  "description": "Learning, opportunities, mentorship and career progress for Ethiopian learners.",
-  "start_url": "./?view=dashboard",
+  "name": "MELA Learner STAGING (Test Only)",
+  "short_name": "MELA TEST",
+  "description": "Staging-only education and career platform for fictional test accounts. Not live MELA; no payments.",
+  "start_url": "./?signed_out=1",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0a0d14",
@@ -28,5 +28,5 @@
       "purpose": "any maskable"
     }
   ],
-  "id": "./"
+  "id": "./?mela_staging_learner=1"
 }

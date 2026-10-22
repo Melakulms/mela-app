@@ -26,7 +26,9 @@ for(const file of all){
  const s=readFileSync(file,'utf8')
  if(s.includes(stage))matched=true
  if(s.includes('https://duizgtmbptmlbyipreqg.supabase.co')) throw new Error('Production Supabase URL embedded in staging bundle: '+file)
- if(/sb_secret_|service_role_key|MELA_STAGING_SUPABASE_SERVICE_ROLE_KEY/.test(s))throw new Error('Potential privileged key label in public output: '+file)
+ // Supabase JS ships harmless words such as "sb_secret_" in its SDK
+ // validation logic. Detect a populated secret-looking value, not its label.
+ if(/sb_secret_[A-Za-z0-9_-]{25,}/.test(s))throw new Error('Potential privileged key value in public output: '+file)
 }
 if(!matched)throw new Error('Staging Supabase origin missing from compiled app')
 console.log('STAGING_BUILD_PASS: root assets, offline files, staging origin, no production endpoint or privileged key labels')

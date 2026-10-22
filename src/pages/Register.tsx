@@ -1,7 +1,6 @@
 import { useI18n } from '../i18n'
 import AuthLayout from '../components/AuthLayout'
 import { useEffect, useMemo, useState } from 'react'
-import { supabase } from '../lib/supabase'
 import { stagingRegistrationIsOpen } from '../lib/staging-registration'
 import { registerBetaUser, registerUser, type BetaRegisterResult, type BetaSignupRole } from '../lib/auth'
 
@@ -34,12 +33,14 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
     if (!stagingOnly) return
     let alive = true
     // Both backend feature flags must be ON; errors/absent rows fail closed.
-    void supabase.from('platform_feature_flags')
-      .select('feature_key, enabled')
-      .in('feature_key', ['platform_live', 'registrations'])
+    void import('../lib/supabase')
+      .then(({ supabase }) => supabase.from('platform_feature_flags')
+        .select('feature_key, enabled')
+        .in('feature_key', ['platform_live', 'registrations']))
       .then(({ data, error }) => {
         if (alive) setStagingGate(!error && stagingRegistrationIsOpen(data) ? 'open' : 'closed')
-      }, () => { if (alive) setStagingGate('closed') })
+      })
+      .catch(() => { if (alive) setStagingGate('closed') })
     return () => { alive = false }
   }, [stagingOnly])
 

@@ -57,6 +57,7 @@ jobs:
         run: node scripts/staging-learner-mobile.mjs
         env:
           MELA_MOBILE_STAGING: 'true'
+          VITE_MELA_STAGING: 'true'
       - uses: actions/upload-artifact@v4
         if: always()
         with:

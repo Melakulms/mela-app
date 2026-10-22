@@ -107,6 +107,9 @@ export default function Login({ onSwitchToRegister }: { onSwitchToRegister: () =
       <span className="auth-wordmark">MELA</span>
       <h1>{t('authWelcome')}</h1>
       <p className="auth-subtitle">{t('authLoginHelp')}</p>
+      {import.meta.env.VITE_MELA_STAGING === 'true' && <p className="banner banner-info" role="note">
+        <strong>STAGING TEST ONLY.</strong> Sign in only with a test account issued for the MELA staging database. Your normal MELA account will not work here. New test account registrations remain closed until the administrator authorizes them. Never use your live password.
+      </p>}
 
       {error && <div className="banner banner-error" role="alert">{error}</div>}
       {resetSent && <div className="banner banner-info" role="status">{t('authResetEmailSent')}</div>}

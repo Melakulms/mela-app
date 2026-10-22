@@ -44,6 +44,11 @@ const languages=await publicRows('platform_languages?select=language_code&enable
 const languageCodes=languages.map(x=>x.language_code).join(',')
 if(languageCodes!=='en,am,om,ti,so')throw new Error('Staging language directory incomplete or unordered: '+languageCodes)
 console.log('STAGING_PUBLIC_LANGUAGES_PASS: en,am,om,ti,so')
+const statusFlags=await publicRows('platform_feature_flags?select=feature_key,enabled&feature_key=in.(platform_live,registrations)')
+if(statusFlags.length>2||statusFlags.some(x=>x.enabled!==false)){
+  throw new Error('Staging registration release flags changed before protected Auth acceptance')
+}
+console.log('STAGING_REGISTRATION_GATE_PASS: nonsecret flag columns publicly readable; signup not open')
 const reviewQuestions=await get('/rest/v1/mela_question_bank?select=id&limit=4')
 if(reviewQuestions.ok){
  const rows=await reviewQuestions.json()

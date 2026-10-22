@@ -2,7 +2,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.2'
 
 const STAGING_URL = 'https://tungqfmypuwzeyrtaseh.supabase.co'
 const allowedOrigin = (origin: string) =>
-  /^https:\/\/mela-staging-[a-z0-9-]+\.vercel\.app$/.test(origin)
+  origin === 'https://mela-staging.vercel.app'
+  || /^https:\/\/mela-staging-[a-z0-9-]+\.vercel\.app$/.test(origin)
   || /^http:\/\/localhost(?::[0-9]+)?$/.test(origin)
 const encoder = new TextEncoder()
 async function hash(input: string) {

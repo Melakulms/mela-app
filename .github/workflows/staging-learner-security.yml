@@ -1,0 +1,44 @@
+name: MELA STAGING Learner Security and Build
+on:
+  push:
+    branches: [staging/learner-20261020]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: learner-staging-verify
+  cancel-in-progress: true
+
+jobs:
+  staging-verify:
+    if: github.ref == 'refs/heads/staging/learner-20261020'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      VITE_MELA_STAGING: 'true'
+      VITE_SUPABASE_URL: https://tungqfmypuwzeyrtaseh.supabase.co
+      VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_GHvo0PVvPVP9oo8qaslUmA_reIC-6TT
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Local learner role and navigation tests (no production network)
+        run: npm test
+      - name: Build isolated staging learner app
+        run: npm run build
+      - name: Verify staged artifacts and environment isolation
+        run: node scripts/staging-learner-safety.mjs
+      - name: Read-only live staging backend checks
+        run: node scripts/staging-learner-readonly-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mela-learner-staging-site
+          path: dist/
+          retention-days: 7

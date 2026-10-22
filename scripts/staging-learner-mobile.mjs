@@ -60,6 +60,18 @@ try {
  await page.locator('#auth-language').selectOption('en')
  console.log('STAGING_PIXEL_LANGUAGES_PASS: five choices, Amharic setting survives reload')
 
+ // The staging database currently has no public registration release flags.
+ // Mobile UX must explain the hold instead of presenting a broken signup form.
+ await page.locator('.auth-switch button').last().click()
+ await page.getByRole('heading',{name:'Staging registration is closed'}).waitFor({timeout:18000})
+ await page.getByText('New staging accounts are not accepting registrations yet.',{exact:false}).waitFor({timeout:16000})
+ if(await page.locator('input[type="email"],input[autocomplete="new-password"]').count()){
+   throw new Error('Staging exposed account creation inputs while registration is disabled')
+ }
+ await page.getByRole('button',{name:'Return to staging sign in'}).click()
+ await page.locator('input[type="password"]').first().waitFor({timeout:14000})
+ console.log('STAGING_PIXEL_REGISTRATION_GUARD_PASS: signup fails closed, user can return to login')
+
  const offline=await page.goto(address+'/offline.html',{waitUntil:'domcontentloaded'})
  if(offline?.status()!==200)throw new Error('Offline public resource returned '+offline?.status())
  console.log('STAGING_OFFLINE_PASS: public offline.html opens on Pixel-sized Chromium')

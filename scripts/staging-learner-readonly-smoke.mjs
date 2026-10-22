@@ -55,3 +55,15 @@ if(reviewQuestions.ok){
  if(!Array.isArray(rows)||rows.length!==0)throw new Error('Unapproved staging review questions leaked to anonymous users')
 }else if(![401,403,404].includes(reviewQuestions.status))throw new Error('Unexpected question security response '+reviewQuestions.status)
 console.log('STAGING_REVIEW_QUESTIONS_PRIVATE_PASS: no draft questions exposed anonymously')
+
+const betaStatus=await fetch(url+'/functions/v1/mela-beta-auth',{
+ method:'POST',
+ headers:{'Content-Type':'application/json','Origin':'http://localhost:4173','apikey':key},
+ body:JSON.stringify({action:'status'}),
+ signal:AbortSignal.timeout(14000),
+})
+if(!betaStatus.ok)throw new Error('Staging invitation Auth service not ready: HTTP '+betaStatus.status)
+const betaInfo=await betaStatus.json()
+if(betaInfo.environment!=='staging'||betaInfo.mode!=='single_use_student_invitation'||betaInfo.service_ready!==true)
+ throw new Error('Staging invitation service returned an unsafe or incomplete status')
+console.log('STAGING_INVITATION_AUTH_HEALTH_PASS: live invite-only service ready')

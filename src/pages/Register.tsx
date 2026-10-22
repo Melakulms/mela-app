@@ -1,6 +1,8 @@
 import { useI18n } from '../i18n'
 import AuthLayout from '../components/AuthLayout'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { supabase } from '../lib/supabase'
+import { stagingRegistrationIsOpen } from '../lib/staging-registration'
 import { registerBetaUser, registerUser, type BetaRegisterResult, type BetaSignupRole } from '../lib/auth'
 
 export default function Register({ onSwitchToLogin, onRegistered }: {
@@ -25,6 +27,21 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
   const [error, setError] = useState('')
   const [created, setCreated] = useState<BetaRegisterResult | null>(null)
   const [copied, setCopied] = useState(false)
+  const stagingOnly = import.meta.env.VITE_MELA_STAGING === 'true'
+  const [stagingGate, setStagingGate] = useState<'checking' | 'closed' | 'open'>(stagingOnly ? 'checking' : 'open')
+
+  useEffect(() => {
+    if (!stagingOnly) return
+    let alive = true
+    // Both backend feature flags must be ON; errors/absent rows fail closed.
+    void supabase.from('platform_feature_flags')
+      .select('feature_key, enabled')
+      .in('feature_key', ['platform_live', 'registrations'])
+      .then(({ data, error }) => {
+        if (alive) setStagingGate(!error && stagingRegistrationIsOpen(data) ? 'open' : 'closed')
+      }, () => { if (alive) setStagingGate('closed') })
+    return () => { alive = false }
+  }, [stagingOnly])
 
   const passwordChecks = useMemo(() => ({
     length: password.length >= 12,
@@ -88,6 +105,23 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
     } catch (err) {
       setError(err instanceof Error ? err.message : t('authCreateError'))
     } finally { setBusy(false) }
+  }
+
+  if (stagingGate !== 'open') {
+    return (
+      <AuthLayout>
+        <span className="auth-wordmark">MELA STAGING</span>
+        <h1>Staging registration is closed</h1>
+        <p className="auth-subtitle" role="status">
+          {stagingGate === 'checking'
+            ? 'Checking whether closed-test registration is authorized…'
+            : 'New staging accounts are not accepting registrations yet. MELA administrators must securely provision approved test accounts before sign-up is opened.'}
+        </p>
+        <p>Do not use your real MELA password on a test site. Course previews and the public offline library are available without an account.</p>
+        <div className="auth-switch"><button type="button" onClick={onSwitchToLogin}>Return to staging sign in</button></div>
+        <a className="btn btn-secondary btn-block" href={`${import.meta.env.BASE_URL}offline.html`}>Open public offline learning</a>
+      </AuthLayout>
+    )
   }
 
   if (created) {

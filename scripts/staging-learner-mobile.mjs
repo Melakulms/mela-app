@@ -72,6 +72,12 @@ try {
  await page.locator('input[type="password"]').first().waitFor({timeout:14000})
  console.log('STAGING_PIXEL_REGISTRATION_GUARD_PASS: signup fails closed, user can return to login')
 
+ const installButton = page.getByRole('button',{name:'Install MELA TEST'})
+ await installButton.waitFor({timeout:12000})
+ if (await page.getByRole('button',{name:'Install MELA',exact:true}).count()) {
+   throw new Error('Staging displays production MELA install button')
+ }
+ console.log('STAGING_PIXEL_INSTALL_LABEL_PASS: mobile install button explicitly names MELA TEST')
  const manifestResponse=await page.request.get(address+'/manifest.webmanifest')
  if(manifestResponse.status()!==200)throw new Error('Staging PWA manifest unavailable')
  const manifest=await manifestResponse.json()

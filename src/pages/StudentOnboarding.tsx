@@ -186,7 +186,7 @@ export default function StudentOnboarding({
           <select id="education-choice" value={choice} required disabled={busy || priorStageLocked}
             onChange={event => changeEducation(event.target.value as EducationChoice)}>
             <option value="" disabled>Select your education level</option>
-            <option value="school">Primary or secondary school (Grades 1–12)</option>
+            {import.meta.env.VITE_MELA_STAGING !== 'true' && <option value="school">Primary or secondary school (Grades 1–12)</option>}
             <option value="college_tvet">College or TVET</option>
             <option value="university">University</option>
           </select>

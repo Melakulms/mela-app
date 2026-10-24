@@ -64,11 +64,13 @@ export async function applyToOpportunity(opportunityId: string, coverNote: strin
   if (!auth.user) throw new Error('You need to be logged in to apply.')
   const { data: opportunity, error: opportunityError } = await supabase
     .from('opportunities')
-    .select('id, status, verified_active, deadline, application_method')
+    .select('id, status, verified_active, deadline, application_method, opportunity_type')
     .eq('id', opportunityId)
     .maybeSingle()
   if (opportunityError) throw opportunityError
   if (!opportunity) throw new Error('Opportunity not found.')
+  // STAGING ONLY: Until scholarship profile/document verification is secured in the backend, no student can submit an in-app scholarship application via this client.
+  if (import.meta.env.VITE_MELA_STAGING === 'true' && opportunity.opportunity_type === 'scholarships') throw new Error('MELA scholarship submission is not yet enabled on staging. Complete your education details and review university requirements first; a preparation checklist is not an application.')
   if (opportunity.status !== 'open' || !opportunity.verified_active) throw new Error('This opportunity is not currently open for applications.')
   if (opportunity.deadline < new Date().toISOString().slice(0, 10)) throw new Error('The application deadline has passed.')
   if (opportunity.application_method !== 'mela' && opportunity.application_method !== 'both') throw new Error('This opportunity uses an external application process.')

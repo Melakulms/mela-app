@@ -76,7 +76,7 @@ export default function ScholarshipResearchPrograms() {
     (country === 'all' || p.country === country) &&
     (!showSaved || saved.has(p.id)) &&
     (!query || (p.title+' '+p.country+' '+p.funding_summary).toLowerCase().includes(query.trim().toLowerCase()))
-  ), [programmes,level,country,query,saved,showSaved])
+  ).sort((a,b) => Number(Boolean(b.closes_on && b.closes_on >= today))-Number(Boolean(a.closes_on && a.closes_on >= today))), [programmes,level,country,query,saved,showSaved,today])
   const toggleSave = async (p: Programme) => {
     if (busy !== null) return
     setBusy(p.id); setError('')

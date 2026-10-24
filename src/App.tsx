@@ -320,7 +320,7 @@ export default function App() {
         <AccountOverview profile={profile} onBack={() => setShowAccount(false)} />
       ) : isStudent ? (
         <>
-          {studentView === 'practice' && <Practice onBack={() => setStudentView('dashboard')} onOpenQuestionBank={() => setStudentView('question-bank')} />}
+          {studentView === 'practice' && <Practice onBack={() => setStudentView('dashboard')} onOpenProfile={() => setStudentView('profile')} onOpenQuestionBank={profile.education_stage_key?.startsWith('school_') ? () => setStudentView('question-bank') : undefined} />}
           {studentView === 'question-bank' && <QuestionBank onBack={() => setStudentView('dashboard')} />}
           {studentView === 'opportunities' && <OpportunityHub onBack={() => setStudentView('dashboard')} />}
           {studentView === 'materials' && <StudyMaterials stageKey={profile.education_stage_key} gradeLevel={profile.grade_level} onBack={() => setStudentView('dashboard')} />}
@@ -339,7 +339,7 @@ export default function App() {
           {studentView === 'assessments' && <VerifiedAssessments onBack={() => setStudentView('dashboard')} />}
           {studentView === 'earn-work' && <LearnerSubsections view="earn" onBack={() => setStudentView('dashboard')} />}
           {studentView === 'safety' && <SafetyCenter onBack={() => setStudentView('dashboard')} />}
-          {studentView === 'dashboard' && <StudentDashboard onNavigate={setStudentView} />}
+          {studentView === 'dashboard' && <StudentDashboard educationStage={profile.education_stage_key} onNavigate={setStudentView} />}
         </>
       ) : profile.role === 'company' || profile.role === 'employer' ? (
         <EmployerPortal role={profile.role} />

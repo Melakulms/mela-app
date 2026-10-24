@@ -176,6 +176,7 @@ export default function StudentOnboarding({
       <h1>{editMode ? 'Your education profile' : 'Complete your education profile'}</h1>
       <p className="auth-subtitle">Required: education level, school grade where applicable, and your curriculum subjects. MELA uses these to organize lessons, practice questions and appropriate competitions.</p>
       <p className="field-hint">School children do not need to provide a date of birth, home address, phone number, or a photo to choose their school curriculum.</p>
+      {import.meta.env.VITE_MELA_STAGING === 'true' && <p className="field-hint">Closed beta: new school-age registration remains disabled until the guardian verification journey is independently tested. The staging subject choices are provisional, based on an older Ministry of Education framework, and require teacher review before publication.</p>}
       {error && <div className="banner banner-error" role="alert">
         <p>{error}</p>
         <button type="button" className="btn btn-secondary" onClick={() => void navigator.clipboard?.writeText(error).catch(() => {})}>Copy error for support</button>

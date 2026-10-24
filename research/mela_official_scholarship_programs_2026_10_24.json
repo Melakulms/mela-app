@@ -1,0 +1,418 @@
+{
+  "note": "STAGING ONLY. Independent source research, not MELA admin approval or currently-open scholarship guarantee.",
+  "as_of": "2026-10-24",
+  "records": [
+    {
+      "program_key": "dartmouth_need_aid_2027",
+      "university_id": 7,
+      "title": "Dartmouth need-blind undergraduate financial aid for international students",
+      "country": "United States",
+      "degree_level": "undergraduate",
+      "scholarship_url": "https://financialaid.dartmouth.edu/apply-aid/international-students",
+      "application_url": null,
+      "nationality_evidence": "Dartmouth confirms no citizenship restriction and 100% demonstrated need policy for admitted international undergraduates.",
+      "ethiopian_eligibility": "international_general",
+      "funding_summary": "Dartmouth provides aid meeting demonstrated need, potentially including work contribution and travel allowance; no guaranteed flat amount.",
+      "coverage": [
+        "Need-based aid",
+        "Travel allowance subject to package"
+      ],
+      "essential_requirements": [
+        "First-year admission",
+        "Financial aid application",
+        "Prove family financial circumstances",
+        "Potential work contribution"
+      ],
+      "application_steps": [
+        "Apply for undergraduate admission",
+        "Submit requested aid documentation in the chosen application round",
+        "Recheck current admissions and aid deadlines"
+      ],
+      "opens_on": null,
+      "closes_on": null,
+      "deadline_status": "unknown",
+      "cycle": "2027 entry",
+      "evidence_checked_on": "2026-10-24",
+      "notes": "Dartmouth explicitly notes expected income from term-time work; do not describe as unconditional full scholarship."
+    },
+    {
+      "program_key": "harvard_need_aid_2027",
+      "university_id": 1,
+      "title": "Harvard College need-based financial aid for international undergraduates",
+      "country": "United States",
+      "degree_level": "undergraduate",
+      "scholarship_url": "https://college.harvard.edu/financial-aid/apply-financial-aid/prospective-students",
+      "application_url": null,
+      "nationality_evidence": "International and US applicants eligible on the same basis, regardless of nationality.",
+      "ethiopian_eligibility": "international_general",
+      "funding_summary": "Harvard states it meets 100% of demonstrated family financial need; aid amount depends on financial assessment.",
+      "coverage": [
+        "Need-based Harvard grant",
+        "Possible travel allowance based on financial-aid package"
+      ],
+      "essential_requirements": [
+        "First-year admission application",
+        "Financial aid documents (CSS Profile and income documentation)",
+        "Standardized testing or approved alternative as Harvard requires"
+      ],
+      "application_steps": [
+        "Apply for first-year undergraduate admission",
+        "Submit international financial aid documents by the corresponding official round's deadline",
+        "Check entry year and CSS Profile information"
+      ],
+      "opens_on": null,
+      "closes_on": null,
+      "deadline_status": "unknown",
+      "cycle": "2027/28",
+      "evidence_checked_on": "2026-10-24",
+      "notes": "Need-based institutional aid, not a separate guaranteed scholarship competition. Check 2027–28 financial aid dates and any submission fee waivers."
+    },
+    {
+      "program_key": "manchester_equity_merit_2027",
+      "university_id": 73,
+      "title": "Manchester Equity and Merit Scholarships (2027 entry)",
+      "country": "United Kingdom",
+      "degree_level": "masters",
+      "scholarship_url": "https://www.manchester.ac.uk/study/masters/fees-and-funding/masters-student-funding/equity-merit-scholarships/",
+      "application_url": null,
+      "nationality_evidence": "Ethiopian resident citizens explicitly eligible alongside listed African nationalities.",
+      "ethiopian_eligibility": "explicit",
+      "funding_summary": "Full tuition; full-time on-campus awards also include living expenses, return flights and visa costs. Distance options differ.",
+      "coverage": [
+        "Full tuition",
+        "On-campus living expenses",
+        "On-campus return airfare",
+        "On-campus visa expenses"
+      ],
+      "essential_requirements": [
+        "Ethiopian resident citizen",
+        "Bachelor's degree awarded before September 2025",
+        "At least 2 years relevant paid professional experience",
+        "No prior study outside Africa except allowed short training",
+        "Commitment to return home",
+        "Additional academic requirements"
+      ],
+      "application_steps": [
+        "Scholarship applications for September 2027 entry ran 1–31 August 2026",
+        "Current application cycle closed; monitor official programme page for future entry"
+      ],
+      "opens_on": "2026-08-01",
+      "closes_on": "2026-08-31",
+      "deadline_status": "dated",
+      "cycle": "2027/28",
+      "evidence_checked_on": "2026-10-24",
+      "notes": "Official page explicitly confirms application period 1–31 Aug 2026 for September 2027. Do not label this as currently open."
+    },
+    {
+      "program_key": "mit_need_aid_2027",
+      "university_id": 4,
+      "title": "MIT need-based undergraduate scholarship for international students",
+      "country": "United States",
+      "degree_level": "undergraduate",
+      "scholarship_url": "https://sfs.mit.edu/undergraduate-students/apply-for-aid/international/",
+      "application_url": null,
+      "nationality_evidence": "MIT confirms international students may apply for 100% demonstrated financial need support regardless of residence.",
+      "ethiopian_eligibility": "international_general",
+      "funding_summary": "MIT meets 100% of demonstrated need via grants/scholarships and potential student work; not automatically full cost of attendance.",
+      "coverage": [
+        "Need-based MIT Scholarship",
+        "Other need-based support"
+      ],
+      "essential_requirements": [
+        "MIT undergraduate admission",
+        "CSS Profile submission",
+        "Parents' income statements, translated if needed",
+        "Meet financial aid deadlines for entry cycle"
+      ],
+      "application_steps": [
+        "Apply to MIT first-year admissions",
+        "Complete CSS Profile (MIT CSS code 3514)",
+        "Provide parental income records",
+        "Confirm entry-year deadlines with MIT"
+      ],
+      "opens_on": null,
+      "closes_on": null,
+      "deadline_status": "unknown",
+      "cycle": "2027 entry",
+      "evidence_checked_on": "2026-10-24",
+      "notes": "Not a separate named competition; need is determined after review, and scholarships can be combined with work expectations."
+    },
+    {
+      "program_key": "oxford_reach_2027",
+      "university_id": 66,
+      "title": "Reach Oxford Scholarship (2027 entry)",
+      "country": "United Kingdom",
+      "degree_level": "undergraduate",
+      "scholarship_url": "https://www.ox.ac.uk/admissions/undergraduate/fees-and-funding/oxford-bursaries-and-scholarships/reach-oxford",
+      "application_url": null,
+      "nationality_evidence": "Ethiopia explicitly listed on the university's eligible country list.",
+      "ethiopian_eligibility": "explicit",
+      "funding_summary": "Course fees, living-cost grant, and one return airfare per year, for course length.",
+      "coverage": [
+        "Course fees",
+        "Living-cost grant",
+        "One return flight per year"
+      ],
+      "essential_requirements": [
+        "Oxford offer for eligible first undergraduate degree",
+        "Exceptional academic merit",
+        "Financial need",
+        "Social commitment",
+        "Intention to return home",
+        "Medicine excluded"
+      ],
+      "application_steps": [
+        "Apply for Oxford undergraduate admission",
+        "Secure offer of place",
+        "Check official Oxford Reach page in January 2027 for scholarship instructions"
+      ],
+      "opens_on": null,
+      "closes_on": null,
+      "deadline_status": "provider_not_open",
+      "cycle": "2027 entry",
+      "evidence_checked_on": "2026-10-24",
+      "notes": "Oxford page says 2027 scholarship instructions will be provided January 2027. No future deadline inserted because Oxford official page shows potentially inconsistent 2027 information; check again."
+    },
+    {
+      "program_key": "pku_beijing_gov_2027",
+      "university_id": 132,
+      "title": "Beijing Government Scholarship at Peking University",
+      "country": "China",
+      "degree_level": "mixed",
+      "scholarship_url": "https://isd.pku.edu.cn/en/detail.php?id=765",
+      "application_url": null,
+      "nationality_evidence": "International students may be considered at PKU subject to programme, age and other published restrictions.",
+      "ethiopian_eligibility": "international_general",
+      "funding_summary": "Type A tuition, housing, living stipend, medical insurance; Types B and C cover less. Exact benefits depend on award.",
+      "coverage": [
+        "Tuition (type-dependent)",
+        "Accommodation (Type A/B)",
+        "Living stipend (Type A)",
+        "Medical insurance"
+      ],
+      "essential_requirements": [
+        "Age limit typically undergraduate 25, master's 35, doctorate 40 at enrolment",
+        "Apply to eligible PKU programme",
+        "Do not simultaneously hold other excluded awards",
+        "Meet programme-specific eligibility"
+      ],
+      "application_steps": [
+        "Read the official PKU scholarship rules",
+        "Check programme-level selection requirements",
+        "Confirm active dates and scholarships before applying"
+      ],
+      "opens_on": null,
+      "closes_on": null,
+      "deadline_status": "unknown",
+      "cycle": "2027 planned",
+      "evidence_checked_on": "2026-10-24",
+      "notes": "PKU page lists multiple funding tiers and eligibility; no validated 2027 deadline. This is a programme lead, not a live scholarship application."
+    },
+    {
+      "program_key": "pku_intl_2027",
+      "university_id": 132,
+      "title": "Peking University Scholarship for International Students",
+      "country": "China",
+      "degree_level": "mixed",
+      "scholarship_url": "https://www.isd.pku.edu.cn/en/detail.php?id=525",
+      "application_url": null,
+      "nationality_evidence": "Open to eligible international applicants to PKU including from countries such as Ethiopia, subject to admission and current funding rules.",
+      "ethiopian_eligibility": "international_general",
+      "funding_summary": "PKU says scholarship can cover full or partial tuition, living stipend and medical insurance; amounts depend on award.",
+      "coverage": [
+        "Full or partial tuition",
+        "Living stipend",
+        "Medical insurance"
+      ],
+      "essential_requirements": [
+        "Admission requirements for PKU international applicants",
+        "Application to full-time programmes",
+        "Cannot hold another scholarship",
+        "Undergraduates may be automatically considered"
+      ],
+      "application_steps": [
+        "Review admission eligibility and language rules",
+        "Apply to PKU",
+        "Check current-cycle scholarship notices; generally January–March",
+        "Do not apply through third-party agents"
+      ],
+      "opens_on": null,
+      "closes_on": null,
+      "deadline_status": "unknown",
+      "cycle": "2027 planned",
+      "evidence_checked_on": "2026-10-24",
+      "notes": "Official scheme exists. Page gives general January–March timing, not a confirmed 2027 date; do not claim a live application."
+    },
+    {
+      "program_key": "princeton_need_aid_2027",
+      "university_id": 3,
+      "title": "Princeton undergraduate grant aid for international students",
+      "country": "United States",
+      "degree_level": "undergraduate",
+      "scholarship_url": "https://admission.princeton.edu/cost-aid",
+      "application_url": null,
+      "nationality_evidence": "Princeton states international students are considered under the same financial aid policy; nationality not excluded.",
+      "ethiopian_eligibility": "international_general",
+      "funding_summary": "Princeton meets the full demonstrated financial need of admitted students with grants, subject to individual assessment.",
+      "coverage": [
+        "Need-based grant aid",
+        "Full demonstrated need"
+      ],
+      "essential_requirements": [
+        "First-year undergraduate application",
+        "Institutional financial aid application",
+        "Financial need determination"
+      ],
+      "application_steps": [
+        "Apply for Princeton admission",
+        "Submit Princeton financial aid materials",
+        "Confirm exact cohort deadlines on official website"
+      ],
+      "opens_on": null,
+      "closes_on": null,
+      "deadline_status": "unknown",
+      "cycle": "2027 entry",
+      "evidence_checked_on": "2026-10-24",
+      "notes": "Institutional need-based aid, not an automatic fixed scholarship."
+    },
+    {
+      "program_key": "toronto_pearson_2027",
+      "university_id": 166,
+      "title": "Lester B. Pearson International Scholarship (2027 entry)",
+      "country": "Canada",
+      "degree_level": "undergraduate",
+      "scholarship_url": "https://future.utoronto.ca/pearson-scholarships",
+      "application_url": null,
+      "nationality_evidence": "All non-Canadian international applicants may be considered if nominated by participating school; school nominations for 2027 entry closed 9 Oct 2026.",
+      "ethiopian_eligibility": "international_general",
+      "funding_summary": "Tuition, books, incidental fees, and full residence support for four years.",
+      "coverage": [
+        "Tuition",
+        "Books",
+        "Incidental fees",
+        "Residence for four years"
+      ],
+      "essential_requirements": [
+        "Current final-year secondary student 2026/27 or graduation not earlier than June 2026",
+        "School nomination by 9 October 2026",
+        "University admission application by 16 October 2026",
+        "First university degree beginning September 2027"
+      ],
+      "application_steps": [
+        "Only applicants previously nominated by school can use private scholarship application link",
+        "Previously nominated candidates submit before 6 November 2026",
+        "Otherwise prepare for a future admission cycle; never pay agents"
+      ],
+      "opens_on": "2026-07-06",
+      "closes_on": "2026-11-06",
+      "deadline_status": "school_nomination_closed",
+      "cycle": "September 2027",
+      "evidence_checked_on": "2026-10-24",
+      "notes": "School nomination and U of T admission deadlines have already passed (9 and 16 Oct 2026). Scholarship submission to 6 Nov 2026 is only for already-nominated applicants. U of T warns against scholarship agents."
+    },
+    {
+      "program_key": "ubc_international_scholars_2027",
+      "university_id": 167,
+      "title": "UBC International Scholars Program (2027 entry)",
+      "country": "Canada",
+      "degree_level": "undergraduate",
+      "scholarship_url": "https://you.ubc.ca/financial-planning/scholarships-awards-international-students/international-scholars",
+      "application_url": "https://undergraduatescholarships.ubc.ca/prog/2027_international_scholars_program_application/",
+      "nationality_evidence": "Programme open to international first-degree applicants; Ethiopia not listed as excluded, but requires UBC eligibility checks.",
+      "ethiopian_eligibility": "international_general",
+      "funding_summary": "Significant need-based financial assistance; amount and expenses covered depend on award and financial assessment.",
+      "coverage": [
+        "Need-based funding; check award terms"
+      ],
+      "essential_requirements": [
+        "International applicant requiring Canadian study permit",
+        "First undergraduate degree",
+        "Direct entry from accredited secondary school",
+        "Graduated no earlier than June 2026 for 2027 intake",
+        "Demonstrated leadership, academics and substantial financial need",
+        "School nominator and teacher referee"
+      ],
+      "application_steps": [
+        "Apply to UBC for September 2027",
+        "Request school nomination and teacher recommendation",
+        "Complete 2027 International Scholars application before deadline"
+      ],
+      "opens_on": "2026-10-05",
+      "closes_on": "2026-11-15",
+      "deadline_status": "dated",
+      "cycle": "September 2027",
+      "evidence_checked_on": "2026-10-24",
+      "notes": "Official UBC source says 15 Nov 2026 11:59pm Pacific Time. Not automatically fully funded. Verify full nationality, programme and country conditions."
+    },
+    {
+      "program_key": "ucl_bartlett_promise_ssa_masters_2027",
+      "university_id": 69,
+      "title": "Bartlett Promise Sub-Saharan Africa Master's Scholarship",
+      "country": "United Kingdom",
+      "degree_level": "masters",
+      "scholarship_url": "https://www.ucl.ac.uk/bartlett/study/scholarships-and-funding/bartlett-promise-scholarship/bartlett-promise-sub-saharan-africa-masters-scholarship",
+      "application_url": null,
+      "nationality_evidence": "Ethiopia explicitly listed as eligible; must be national AND resident of an eligible Sub-Saharan African country.",
+      "ethiopian_eligibility": "explicit",
+      "funding_summary": "Full overseas tuition, £18,348 stipend, round-trip travel, visa/health charges, subject to 2027 UCL conditions.",
+      "coverage": [
+        "Full tuition",
+        "Living/study stipend",
+        "Return travel",
+        "Visa and health-related costs"
+      ],
+      "essential_requirements": [
+        "Bartlett master's offer for 2027/28",
+        "Nationality and residence in eligible SSA country",
+        "No British dual citizenship",
+        "No prior undergraduate/postgraduate studies outside SSA",
+        "Household income under £42,875",
+        "Other official programme criteria"
+      ],
+      "application_steps": [
+        "Choose Bartlett master's and seek offer early",
+        "Check course application fee waiver eligibility",
+        "Apply to scholarship 15 February to 31 March 2027",
+        "Provide offer letter by scholarship deadline"
+      ],
+      "opens_on": "2027-02-15",
+      "closes_on": "2027-03-31",
+      "deadline_status": "dated",
+      "cycle": "2027/28",
+      "evidence_checked_on": "2026-10-24",
+      "notes": "Upcoming as of 24 October 2026. Official page reports 31 March 2027 at 23:45 BST; MELA stores date only. Applicant must recheck full rules."
+    },
+    {
+      "program_key": "yale_need_aid_2027",
+      "university_id": 2,
+      "title": "Yale College need-based aid for international undergraduates",
+      "country": "United States",
+      "degree_level": "undergraduate",
+      "scholarship_url": "https://admissions.yale.edu/international",
+      "application_url": null,
+      "nationality_evidence": "Yale explicitly welcomes students from every country and meets demonstrated need regardless of citizenship.",
+      "ethiopian_eligibility": "international_general",
+      "funding_summary": "Yale meets 100% of demonstrated financial need, without requiring loans; actual package is assessed individually.",
+      "coverage": [
+        "Need-based grants",
+        "Financial need funding"
+      ],
+      "essential_requirements": [
+        "Undergraduate admission",
+        "Demonstrated family financial need",
+        "Required international applicant and aid documentation"
+      ],
+      "application_steps": [
+        "Apply to Yale College",
+        "Apply for need-based financial aid using official Yale procedures",
+        "Review official admissions and aid deadlines"
+      ],
+      "opens_on": null,
+      "closes_on": null,
+      "deadline_status": "unknown",
+      "cycle": "2027 entry",
+      "evidence_checked_on": "2026-10-24",
+      "notes": "Not a separate merit scholarship; does not guarantee admission or specific costs."
+    }
+  ]
+}

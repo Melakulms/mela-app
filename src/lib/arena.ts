@@ -18,7 +18,7 @@ export interface QueueStatus {
 
 export async function fetchLeaderboard(): Promise<LeaderboardRow[]> {
   const { data, error } = await supabase.rpc('get_arena_leaderboard', {
-    p_scope: 'global', p_period: 'all_time', p_arena_type: null, p_career_path_id: null, p_season_id: null, p_limit: 20,
+    p_scope: 'global', p_period: 'all_time', p_arena_type: 'overall', p_career_path_id: null, p_season_id: null, p_limit: 20,
   })
   if (error) throw error
   return data as LeaderboardRow[]
@@ -50,6 +50,54 @@ export async function checkMyQueueStatus(): Promise<QueueStatus | null> {
   return data as QueueStatus | null
 }
 
+export interface ActiveArenaMatch {
+  id: string
+  title: string
+  status: 'open' | 'ready' | 'live'
+}
+
+/**
+ * Recover the current student's own in-progress match after Android Chrome,
+ * PWA, or browser session is interrupted. Reads only participant-visible
+ * records through Arena RLS; never stores a user's match history in the phone.
+ */
+export async function fetchMyActiveArenaMatch(): Promise<ActiveArenaMatch | null> {
+  const {data:auth,error:authError}=await supabase.auth.getUser()
+  if(authError)throw authError
+  if(!auth.user)return null
+
+  const {data:memberships,error:memberError}=await supabase.from('arena_participants')
+    .select('match_id,joined_at,status')
+    .eq('user_id',auth.user.id)
+    .in('status',['joined','active'])
+    .order('joined_at',{ascending:false})
+    .limit(15)
+  if(memberError)throw memberError
+  if(!memberships?.length)return null
+
+  const {data:matches,error:matchError}=await supabase.from('arena_matches')
+    .select('id,title,status')
+    .in('id',memberships.map(m=>m.match_id))
+    .in('status',['open','ready','live'])
+  if(matchError)throw matchError
+  const byId=new Map((matches??[]).map(m=>[m.id,m]))
+  for(const membership of memberships){
+    const match=byId.get(membership.match_id)
+    if(match){
+      return {id:match.id,title:match.title,status:match.status as ActiveArenaMatch['status']}
+    }
+  }
+  return null
+}
+
+/** Safe, match-scoped progression, including the all-players-submitted case. */
+export async function advanceMyArenaMatch(matchId:string): Promise<boolean> {
+  if (import.meta.env.VITE_MELA_STAGING !== 'true') return false
+  const { data, error } = await supabase.rpc('staging_arena_advance_my_match_v1', {p_match_id:matchId})
+  if (error) throw error
+  return Number(data) > 0
+}
+
 // Live match contracts follow the deployed Arena functions.
 
 export interface CurrentRound {
@@ -63,6 +111,7 @@ export interface CurrentRound {
 export interface MatchState {
   id: string
   title: string
+  arena_type: string
   status: string
   participant_count: number
   current_round: CurrentRound | null
@@ -93,7 +142,18 @@ export interface RoundResult {
 export async function fetchMatchState(matchId: string): Promise<MatchState> {
   const { data, error } = await supabase.rpc('get_arena_live_state', { p_match_id: matchId })
   if (error) throw error
-  return data as MatchState
+  const match = data as MatchState
+  // No database scheduler is enabled on staging. An authenticated participant
+  // may safely advance only expired rounds, without granting operator access.
+  if (import.meta.env.VITE_MELA_STAGING === 'true' && match.status === 'live'
+    && match.current_round?.ends_at && Date.parse(match.current_round.ends_at) <= Date.now()) {
+    const { error: advanceError } = await supabase.rpc('staging_arena_advance_my_match_v1', { p_match_id: matchId })
+    if (advanceError) throw advanceError
+    const { data: newer, error: reloadError } = await supabase.rpc('get_arena_live_state', { p_match_id: matchId })
+    if (reloadError) throw reloadError
+    return newer as MatchState
+  }
+  return match
 }
 
 export async function fetchScoreboard(matchId: string): Promise<ScoreboardRow[]> {
@@ -125,9 +185,16 @@ export async function fetchMatchContext(matchId: string) {
   const { data: auth, error: authError } = await supabase.auth.getUser()
   if (authError) throw authError
   if (!auth.user) throw new Error('Sign in to join your match.')
-  const { data: match, error } = await supabase.from('arena_matches').select('creator_id').eq('id', matchId).single()
+  const { data: match, error } = await supabase.from('arena_matches')
+    .select('creator_id,visibility,rated,rules').eq('id', matchId).single()
   if (error) throw error
-  return { userId: auth.user.id, isCreator: match.creator_id === auth.user.id }
+  // Either participant can start an automatically matched, unrated private
+  // staging match once *both* participants have marked themselves ready.
+  // The server validates these same constraints and never trusts this label.
+  const matchedBeta = import.meta.env.VITE_MELA_STAGING === 'true' &&
+    match.visibility === 'private' && match.rated === false &&
+    (match.rules as { matchmaking?:boolean } | null)?.matchmaking === true
+  return { userId: auth.user.id, isCreator: match.creator_id === auth.user.id || matchedBeta }
 }
 
 export async function readyForMatch(matchId: string) {

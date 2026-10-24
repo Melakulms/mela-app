@@ -37,9 +37,34 @@ export default function HostedCompetitions({ kind, onBack, onMatch, canEnter }: 
           const {data: auth, error: authError} = await supabase.auth.getUser()
           if (authError) throw authError
           if (auth.user) {
-            const {data: teams, error: teamError} = await supabase.from('arena_tournament_teams').select('id,tournament_id,join_code').eq('captain_id', auth.user.id).eq('status','active').in('tournament_id', data.map(x => x.id))
+            const tournamentIds=data.map(x=>x.id)
+            const {data: teams, error: teamError} = await supabase.from('arena_tournament_teams')
+              .select('id,tournament_id,join_code').eq('captain_id', auth.user.id)
+              .eq('status','active').in('tournament_id',tournamentIds)
             if (teamError) throw teamError
-            if (active) setCaptainTeams(current => ({...current, ...Object.fromEntries((teams ?? []).map(team => [team.tournament_id,{id:team.id,code:team.join_code,registered:false}]))}))
+            const {data: ownRegistrations,error:ownError}=await supabase.from('arena_tournament_competitors')
+              .select('tournament_id').eq('user_id',auth.user.id)
+              .in('tournament_id',tournamentIds).neq('status','withdrawn')
+            if(ownError)throw ownError
+            const teamIds=(teams??[]).map(x=>x.id)
+            const registeredTeamIds=new Set<string>()
+            if(teamIds.length){
+              const {data: teamRegistrations,error:teamError2}=await supabase.from('arena_tournament_competitors')
+                .select('tournament_team_id').in('tournament_team_id',teamIds)
+                .neq('status','withdrawn')
+              if(teamError2)throw teamError2
+              for(const registration of teamRegistrations??[]){
+                if(registration.tournament_team_id)registeredTeamIds.add(registration.tournament_team_id)
+              }
+            }
+            if(active){
+              setRegistered((ownRegistrations??[]).map(x=>x.tournament_id))
+              setCaptainTeams(current=>({...current,...Object.fromEntries(
+                (teams??[]).map(team=>[team.tournament_id,{
+                  id:team.id,code:team.join_code,registered:registeredTeamIds.has(team.id)
+                }])
+              )}))
+            }
           }
         }
       } catch (cause: any) { if (active) setError(cause.message ?? 'Could not load competitions.') }

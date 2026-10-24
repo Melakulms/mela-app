@@ -79,6 +79,9 @@ export default function Arena({ onBack }: { onBack: () => void }) {
     try {
       const cutoff=new Date()
       cutoff.setUTCFullYear(cutoff.getUTCFullYear()-18)
+      const oldest=new Date()
+      oldest.setUTCFullYear(oldest.getUTCFullYear()-120)
+      if(birthDate<oldest.toISOString().slice(0,10))throw new Error('Enter a valid adult birth date for the beta account.')
       if(birthDate>cutoff.toISOString().slice(0,10))throw new Error('Open Arena matchmaking is restricted to adults age 18 or older.')
       const {data:{user},error:authError}=await supabase.auth.getUser()
       if(authError)throw authError
@@ -186,7 +189,7 @@ export default function Arena({ onBack }: { onBack: () => void }) {
       {error && <div className="banner banner-error" role="alert">{error}</div>}
       {staging && <section className="banner banner-info" aria-label="Arena beta safety" style={{marginBottom:14}}>
         <strong>MELA ARENA · STAGING ADULT DEMO · 24 OCT 2026</strong>
-        <p>All eight experiences are visible. The five opponent-match modes are testing-only, unrated and carry no prizes. Team, employer and tournament registration remains paused while organizer and safeguarding checks are completed.</p>
+        <p>All eight experiences are visible. Two quiz modes support automatic grading with demo questions. Skill Sprint, Interview Practice and Case Sprint take written answers but require independent judges for grading. All five matchmaking modes are testing-only and unrated. Team, employer and tournament registration remains paused until organizer and safeguarding checks are complete.</p>
         <p><strong>Adult competition access:</strong> {adultAccess==='checking'?'Checking your student profile…':
           adultAccess==='eligible'?'Account passes the current staging adult-profile check (self-reported age; not independent identity verification).':
           adultAccess==='missing_dob'?'Date of birth is missing from your staging student profile.':
@@ -322,11 +325,11 @@ export function LiveMatch({ matchId, onLeave, onBack }: { matchId: string; onLea
       <button className="btn btn-primary" disabled={busy} onClick={() => void prepare(false)}>I'm ready</button>
       {context?.isCreator && <button className="btn btn-primary" disabled={busy || state.status !== 'ready'} onClick={() => void prepare(true)}>Start match</button>}
       <button className="btn btn-secondary" disabled={busy} onClick={() => void load()}>Refresh match</button>
-    </div> : state.status === 'completed' ? <div className="banner banner-info">This match has ended.</div>
+    </div> : state.status === 'completed' ? <div className="banner banner-info">This match has ended. Written answers without judge review are not verified results; any displayed placement is provisional.</div>
       : state.status === 'cancelled' ? <div className="banner banner-info">This match was cancelled.</div>
       : round && state.current_round?.state === 'open' ? <RoundPanel key={round.id} round={round} order={state.current_round.round_order} serverResult={serverResult} onSubmitted={() => void load()} />
       : <div className="banner banner-info">Waiting for the next round to open. The match refreshes automatically.</div>}
-    <div className="section-heading"><h2>Scoreboard</h2></div>
+    <div className="section-heading"><h2>{state.arena_type==='quiz_battle'||state.arena_type==='speed_quiz'?'Demo Scoreboard':'Provisional Scores — Human Judge Required'}</h2></div>
     {!scoreboard.length ? <div className="empty-panel">Scores will appear once the match is underway.</div> : <div className="list-panel">
       {scoreboard.map(row => <div className="list-row" key={row.user_id}><div className="list-row-title">#{row.rank} {row.full_name ?? 'Player'}</div><span className="pill">{row.score} pts</span></div>)}
     </div>}

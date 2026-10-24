@@ -50,6 +50,46 @@ export async function checkMyQueueStatus(): Promise<QueueStatus | null> {
   return data as QueueStatus | null
 }
 
+export interface ActiveArenaMatch {
+  id: string
+  title: string
+  status: 'open' | 'ready' | 'live'
+}
+
+/**
+ * Recover the current student's own in-progress match after Android Chrome,
+ * PWA, or browser session is interrupted. Reads only participant-visible
+ * records through Arena RLS; never stores a user's match history in the phone.
+ */
+export async function fetchMyActiveArenaMatch(): Promise<ActiveArenaMatch | null> {
+  const {data:auth,error:authError}=await supabase.auth.getUser()
+  if(authError)throw authError
+  if(!auth.user)return null
+
+  const {data:memberships,error:memberError}=await supabase.from('arena_participants')
+    .select('match_id,joined_at,status')
+    .eq('user_id',auth.user.id)
+    .in('status',['joined','active'])
+    .order('joined_at',{ascending:false})
+    .limit(15)
+  if(memberError)throw memberError
+  if(!memberships?.length)return null
+
+  const {data:matches,error:matchError}=await supabase.from('arena_matches')
+    .select('id,title,status')
+    .in('id',memberships.map(m=>m.match_id))
+    .in('status',['open','ready','live'])
+  if(matchError)throw matchError
+  const byId=new Map((matches??[]).map(m=>[m.id,m]))
+  for(const membership of memberships){
+    const match=byId.get(membership.match_id)
+    if(match){
+      return {id:match.id,title:match.title,status:match.status as ActiveArenaMatch['status']}
+    }
+  }
+  return null
+}
+
 /** Safe, match-scoped progression, including the all-players-submitted case. */
 export async function advanceMyArenaMatch(matchId:string): Promise<boolean> {
   if (import.meta.env.VITE_MELA_STAGING !== 'true') return false

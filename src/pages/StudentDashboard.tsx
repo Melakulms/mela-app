@@ -72,6 +72,11 @@ export default function StudentDashboard({ onNavigate, educationStage }: { onNav
   if (error) return <div className="dash-main">
     <h1>{t('yourDashboard')}</h1>
     <div className="banner banner-error" role="alert">{error} Your feature overview is still available below.</div>
+    {import.meta.env.VITE_MELA_STAGING === 'true' && <section className="banner banner-info" aria-label="Arena preview" style={{marginBottom:14}}>
+        <strong>NEW · Arena adult test · Five playable opponent modes, three organizer previews</strong>
+        <p>Staging-only test content. Adult self-reported profile check is required; no rated results, cash or prizes.</p>
+        <button className="btn btn-secondary" type="button" onClick={()=>onNavigate('arena')}>Test Arena competitions</button>
+      </section>}
     {import.meta.env.VITE_MELA_STAGING === 'true' && <section className="banner banner-info" aria-label="Scholarship readiness update" style={{marginBottom:16}}>
         <strong>NEW · Scholarship Readiness — 24 Oct 2026</strong>
         <p>Open the 12 researched programmes, your education readiness check, missing information and self-reported preparation. No verified application is implied.</p>
@@ -82,7 +87,7 @@ export default function StudentDashboard({ onNavigate, educationStage }: { onNav
       <div className="section-heading"><h2>{t('exploreMela')}</h2></div>
       <div className="module-grid">
         {MODULES.map(m => {
-          const basicLearningOrSafety = m.view === 'safety' || m.view === 'academy' || (import.meta.env.VITE_MELA_STAGING === 'true' && m.view === 'scholarships')
+          const basicLearningOrSafety = m.view === 'safety' || m.view === 'academy' || (import.meta.env.VITE_MELA_STAGING === 'true' && (m.view === 'scholarships' || m.view === 'arena'))
           const Icon = m.icon
           return <div key={m.key} className={`module-card ${m.cls}`}>
             <div className="module-icon"><Icon size={20}/></div>
@@ -95,7 +100,12 @@ export default function StudentDashboard({ onNavigate, educationStage }: { onNav
       </div>
     </section>
   </div>
-  if (!data) return <div className="dash-main"><div role="status"><div className="skeleton skeleton-title" /><div className="skeleton skeleton-card" /><p>{t('loadingDashboard')}</p></div>{import.meta.env.VITE_MELA_STAGING === 'true' && <section className="banner banner-info" aria-label="Scholarship readiness update" style={{marginBottom:16}}>
+  if (!data) return <div className="dash-main"><div role="status"><div className="skeleton skeleton-title" /><div className="skeleton skeleton-card" /><p>{t('loadingDashboard')}</p></div>{import.meta.env.VITE_MELA_STAGING === 'true' && <section className="banner banner-info" aria-label="Arena preview" style={{marginBottom:14}}>
+        <strong>NEW · Arena adult test · Five playable opponent modes, three organizer previews</strong>
+        <p>Staging-only test content. Adult self-reported profile check is required; no rated results, cash or prizes.</p>
+        <button className="btn btn-secondary" type="button" onClick={()=>onNavigate('arena')}>Test Arena competitions</button>
+      </section>}
+    {import.meta.env.VITE_MELA_STAGING === 'true' && <section className="banner banner-info" aria-label="Scholarship readiness update" style={{marginBottom:16}}>
         <strong>NEW · Scholarship Readiness — 24 Oct 2026</strong>
         <p>Open the 12 researched programmes, your education readiness check, missing information and self-reported preparation. No verified application is implied.</p>
         <button type="button" className="btn btn-primary" onClick={()=>onNavigate('scholarships')}>Test scholarship readiness</button>
@@ -111,7 +121,12 @@ export default function StudentDashboard({ onNavigate, educationStage }: { onNav
         <div><span className="eyebrow">{t('learningSpace')}</span><h1>{t('hello')}, {profile.full_name?.split(' ')[0] ?? t('there')} <span className="greeting-dot">.</span></h1><p>{t('dailyProgress')}</p></div>
       </div>
 
-      {import.meta.env.VITE_MELA_STAGING === 'true' && <section className="banner banner-info" aria-label="Scholarship readiness update" style={{marginBottom:16}}>
+      {import.meta.env.VITE_MELA_STAGING === 'true' && <section className="banner banner-info" aria-label="Arena preview" style={{marginBottom:14}}>
+        <strong>NEW · Arena adult test · Five playable opponent modes, three organizer previews</strong>
+        <p>Staging-only test content. Adult self-reported profile check is required; no rated results, cash or prizes.</p>
+        <button className="btn btn-secondary" type="button" onClick={()=>onNavigate('arena')}>Test Arena competitions</button>
+      </section>}
+    {import.meta.env.VITE_MELA_STAGING === 'true' && <section className="banner banner-info" aria-label="Scholarship readiness update" style={{marginBottom:16}}>
         <strong>NEW · Scholarship Readiness — 24 Oct 2026</strong>
         <p>Open the 12 researched programmes, your education readiness check, missing information and self-reported preparation. No verified application is implied.</p>
         <button type="button" className="btn btn-primary" onClick={()=>onNavigate('scholarships')}>Test scholarship readiness</button>
@@ -141,7 +156,7 @@ export default function StudentDashboard({ onNavigate, educationStage }: { onNav
       {visibleModules.length === 0 && <div className="empty-panel" role="status">{t('noToolsMatch')} “{query}”. <button className="password-toggle" onClick={() => setQuery('')}>{t('clearSearch')}</button></div>}
       <div className="module-grid">
         {visibleModules.map((m) => {
-          const enabled = (m.key === 'scholarships' && import.meta.env.VITE_MELA_STAGING === 'true') || (['study_materials','mastery','opportunity_graph','mela_next','wallet','safety_center'].includes(m.key) ? true : (feature_flags[m.key] ?? m.enabled ?? false))
+          const enabled = (['scholarships','arena'].includes(m.key) && import.meta.env.VITE_MELA_STAGING === 'true') || (['study_materials','mastery','opportunity_graph','mela_next','wallet','safety_center'].includes(m.key) ? true : (feature_flags[m.key] ?? m.enabled ?? false))
           const isBuilt = !!m.view
           const Icon = m.icon
           return (

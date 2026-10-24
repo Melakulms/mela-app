@@ -18,7 +18,7 @@ export interface QueueStatus {
 
 export async function fetchLeaderboard(): Promise<LeaderboardRow[]> {
   const { data, error } = await supabase.rpc('get_arena_leaderboard', {
-    p_scope: 'global', p_period: 'all_time', p_arena_type: null, p_career_path_id: null, p_season_id: null, p_limit: 20,
+    p_scope: 'global', p_period: 'all_time', p_arena_type: 'overall', p_career_path_id: null, p_season_id: null, p_limit: 20,
   })
   if (error) throw error
   return data as LeaderboardRow[]
@@ -93,7 +93,18 @@ export interface RoundResult {
 export async function fetchMatchState(matchId: string): Promise<MatchState> {
   const { data, error } = await supabase.rpc('get_arena_live_state', { p_match_id: matchId })
   if (error) throw error
-  return data as MatchState
+  const match = data as MatchState
+  // No database scheduler is enabled on staging. An authenticated participant
+  // may safely advance only expired rounds, without granting operator access.
+  if (import.meta.env.VITE_MELA_STAGING === 'true' && match.status === 'live'
+    && match.current_round?.ends_at && Date.parse(match.current_round.ends_at) <= Date.now()) {
+    const { error: advanceError } = await supabase.rpc('staging_arena_advance_my_match_v1', { p_match_id: matchId })
+    if (advanceError) throw advanceError
+    const { data: newer, error: reloadError } = await supabase.rpc('get_arena_live_state', { p_match_id: matchId })
+    if (reloadError) throw reloadError
+    return newer as MatchState
+  }
+  return match
 }
 
 export async function fetchScoreboard(matchId: string): Promise<ScoreboardRow[]> {

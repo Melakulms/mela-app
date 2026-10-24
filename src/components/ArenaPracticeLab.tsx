@@ -41,7 +41,7 @@ const WRITING:Partial<Record<ArenaDemoMode,{scene:string;prompt:string;rubric:st
   },
 }
 const QUIZ_MODES:ArenaDemoMode[]=['quiz_battle','speed_quiz','team_battle','tournament']
-const BOT_SCORES=[1,1,2]
+const BOT_SCORES=[0,1,1]
 
 export function computeArenaDemoScore(answers:Record<number,number>,questions:Question[]=QUESTIONS):number {
   return questions.reduce((score,q,i)=>score+(answers[i]===q.correct?10:0),0)
@@ -58,7 +58,7 @@ export default function ArenaPracticeLab({mode,onBack}:{mode:ArenaDemoMode;onBac
   const [role,setRole]=useState('Planner')
   const [eliminated,setEliminated]=useState(false)
   const [ackRounds,setAckRounds]=useState<number[]>([])
-  const questions=QUESTIONS
+  const questions=mode==='team_battle'?QUESTIONS.slice(0,4):QUESTIONS
   const isQuiz=QUIZ_MODES.includes(mode)
   const writing=WRITING[mode]
   const selected=answers[index]
@@ -101,8 +101,8 @@ export default function ArenaPracticeLab({mode,onBack}:{mode:ArenaDemoMode;onBac
     else setIndex(index+1)
   }
   const answer=selected===undefined?null:questions[index]?.correct===selected
-  const total=mode==='team_battle'?4:questions.length
-  const activeQuestions=mode==='team_battle'?questions.slice(0,4):questions
+  const total=questions.length
+  const activeQuestions=questions
   const localScore=computeArenaDemoScore(answers,activeQuestions)
   const practiceOutcome=done||eliminated
 
@@ -153,7 +153,10 @@ export default function ArenaPracticeLab({mode,onBack}:{mode:ArenaDemoMode;onBac
       <h2>Practice completed</h2>
       <p><strong>{localScore} points</strong> · {correctCount} correct of {total} questions attempted.</p>
       {mode==='team_battle'&&<p>Practice bot team: 20 points. {localScore>20?'Your practice team wins.':localScore===20?'Practice team draw.':'Practice bot team wins.'} Neither side represents real learners.</p>}
-      {mode==='tournament'&&<p>{eliminated?'The local bracket ended with a practice elimination.':'You completed the local bracket.'} The opposing teams were scripted practice bots, not real players.</p>}
+      {mode==='tournament'&&<p>{eliminated?'The local bracket ended with a practice elimination.':
+        (answers[4]===QUESTIONS[4].correct?1:0)+(answers[5]===QUESTIONS[5].correct?1:0)>BOT_SCORES[2]
+          ?'You won the simulated practice bracket.':'Your final practice round ended in a draw or a bot win.'}
+        The opposing teams were scripted practice bots, not real players.</p>}
       <button className="btn btn-primary" onClick={reset}>Practice again</button>
     </section>}
     {writing&&<section className="list-panel">

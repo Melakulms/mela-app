@@ -1,4 +1,5 @@
 import HostedCompetitions from '../components/HostedCompetitions'
+import ArenaPracticeLab, {type ArenaDemoMode} from '../components/ArenaPracticeLab'
 import { useI18n } from '../i18n'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
@@ -22,6 +23,7 @@ type QueueState = 'idle' | 'searching' | 'matched'
 export default function Arena({ onBack }: { onBack: () => void }) {
   const { t } = useI18n()
   const [hosted, setHosted] = useState<'team_battle' | 'employer_challenge' | 'tournament' | null>(null)
+  const [demoMode,setDemoMode] = useState<ArenaDemoMode|null>(null)
   const searchLock = useRef(false)
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[] | null>(null)
   const [error, setError] = useState('')
@@ -196,6 +198,8 @@ export default function Arena({ onBack }: { onBack: () => void }) {
     return <LiveMatch matchId={matchId} onLeave={() => { setMatchId(null); setQueueState('idle') }} onBack={onBack} />
   }
 
+  if (demoMode && staging) return <ArenaPracticeLab mode={demoMode} onBack={()=>setDemoMode(null)}/>
+
   if (hosted) return <HostedCompetitions kind={hosted} canEnter={!staging||adultAccess==='eligible'} onBack={() => setHosted(null)} onMatch={id => { setHosted(null); setMatchId(id); setQueueState('matched') }} />
 
   return (
@@ -207,7 +211,7 @@ export default function Arena({ onBack }: { onBack: () => void }) {
       {error && <div className="banner banner-error" role="alert">{error}</div>}
       {staging && <section className="banner banner-info" aria-label="Arena beta safety" style={{marginBottom:14}}>
         <strong>MELA ARENA · STAGING ADULT DEMO · 24 OCT 2026</strong>
-        <p>All eight experiences are visible. Two quiz modes support automatic grading with demo questions. Skill Sprint, Interview Practice and Case Sprint take written answers but require independent judges for grading. All five matchmaking modes are testing-only and unrated. Team, employer and tournament entry is available only when an approved organizer publishes a public event; the server enforces adult participation. No such event is currently published on staging.</p>
+        <p>Eight interactive, local-only practice experiences are available without another player. Real competition is different: two quiz modes support automatic grading with demo questions; Skill Sprint, Interview Practice and Case Sprint need an independent judge for verified results. All five matchmaking modes are testing-only and unrated. Team, employer and tournament entry is available only when an approved organizer publishes a public event; the server enforces adult participation. No such event is currently published on staging.</p>
         <p><strong>Adult competition access:</strong> {adultAccess==='checking'?'Checking your student profile…':
           adultAccess==='eligible'?'Account passes the current staging adult-profile check (self-reported age; not independent identity verification).':
           adultAccess==='missing_dob'?'Date of birth is missing from your staging student profile.':
@@ -249,9 +253,15 @@ export default function Arena({ onBack }: { onBack: () => void }) {
                 <h3>{m.label}</h3>
                 <p>{m.blurb}</p>
                 <button className="btn btn-primary" onClick={() => startSearching(m.value)} disabled={busy || (staging && adultAccess!=='eligible') || (['quiz_battle', 'speed_quiz'].includes(m.value) && !assessmentId)}>Search for opponent</button>
+                {staging && <button type="button" className="btn btn-secondary" onClick={()=>setDemoMode(m.value)}>
+                  Try interactive practice
+                </button>}
               </div>
             ))}
-            {([['team_battle', 'Team Battle', 'Join an organized team competition.'], ['employer_challenge', 'Employer Challenge', 'Demonstrate skills in organizer-led challenges.'], ['tournament', 'Tournaments', 'Explore multi-match competitions.']] as const).map(([kind, label, description]) => <div className="module-card" key={kind}><h3>{label}</h3><p>{description}</p><button className="btn btn-primary" disabled={busy} onClick={() => setHosted(kind)}>Browse {label}</button></div>)}
+            {([['team_battle', 'Team Battle', 'Join an organized team competition.'], ['employer_challenge', 'Employer Challenge', 'Demonstrate skills in organizer-led challenges.'], ['tournament', 'Tournaments', 'Explore multi-match competitions.']] as const).map(([kind, label, description]) => <div className="module-card" key={kind}><h3>{label}</h3><p>{description}</p><button className="btn btn-primary" disabled={busy} onClick={() => setHosted(kind)}>Browse {label}</button>
+              {staging&&<button type="button" className="btn btn-secondary" onClick={()=>setDemoMode(kind)}>
+                Try interactive practice
+              </button>}</div>)}
           </div>
           <p className="banner banner-info">Learn and compete without betting. Cash earning and payouts remain unavailable. Ratings and learning progress are not money; no prize or income is guaranteed. Written-answer modes need an organizer’s judge.</p>
         </>

@@ -325,7 +325,13 @@ export function LiveMatch({ matchId, onLeave, onBack }: { matchId: string; onLea
       <button className="btn btn-primary" disabled={busy} onClick={() => void prepare(false)}>I'm ready</button>
       {context?.isCreator && <button className="btn btn-primary" disabled={busy || state.status !== 'ready'} onClick={() => void prepare(true)}>Start match</button>}
       <button className="btn btn-secondary" disabled={busy} onClick={() => void load()}>Refresh match</button>
-    </div> : state.status === 'completed' ? <div className="banner banner-info">This match has ended. Written answers without judge review are not verified results; any displayed placement is provisional.</div>
+    </div> : state.status === 'completed' ? <div className="banner banner-info">
+          {['quiz_battle','speed_quiz'].includes(state.arena_type)
+            ? (scoreboard.length>1 && scoreboard[0].score===scoreboard[1].score
+                ? 'The demo match ended in a draw: the top players have equal points. No extra points or prizes are awarded.'
+                : 'Demo match completed. Scores are practice results only; no prizes or rated achievements.')
+            : 'This match has ended. Written answers without independent judge review are not verified results.'}
+        </div>
       : state.status === 'cancelled' ? <div className="banner banner-info">This match was cancelled.</div>
       : round && state.current_round?.state === 'open' ? <RoundPanel key={round.id} round={round} order={state.current_round.round_order} serverResult={serverResult} onSubmitted={() => {
           void advanceMyArenaMatch(matchId).then(()=>load()).catch(cause=>setError(cause instanceof Error?cause.message:'Could not advance Arena match'))

@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { loadArenaPracticeAnswer, saveArenaPracticeAnswer,
+  type ArenaPracticeReceipt, type ArenaWrittenPracticeMode } from '../lib/arena-practice-submissions'
 
 export type ArenaDemoMode =
   | 'quiz_battle' | 'speed_quiz' | 'skill_sprint' | 'interview_practice'
@@ -54,6 +56,10 @@ export default function ArenaPracticeLab({mode,onBack}:{mode:ArenaDemoMode;onBac
   const [seconds,setSeconds]=useState(15)
   const [response,setResponse]=useState('')
   const [responseSubmitted,setResponseSubmitted]=useState(false)
+  const [receipt,setReceipt]=useState<ArenaPracticeReceipt|null>(null)
+  const [practiceError,setPracticeError]=useState('')
+  const [loadingPractice,setLoadingPractice]=useState(false)
+  const [savingPractice,setSavingPractice]=useState(false)
   const [checked,setChecked]=useState<Record<number,boolean>>({})
   const [role,setRole]=useState('Planner')
   const [eliminated,setEliminated]=useState(false)
@@ -61,6 +67,35 @@ export default function ArenaPracticeLab({mode,onBack}:{mode:ArenaDemoMode;onBac
   const questions=mode==='team_battle'?QUESTIONS.slice(0,4):QUESTIONS
   const isQuiz=QUIZ_MODES.includes(mode)
   const writing=WRITING[mode]
+  useEffect(()=>{
+    if(!WRITING[mode])return
+    let active=true
+    setLoadingPractice(true);setPracticeError('')
+    void loadArenaPracticeAnswer(mode as ArenaWrittenPracticeMode).then(saved=>{
+      if(!active)return
+      if(saved){
+        setResponse(saved.response_text)
+        setReceipt(saved)
+        setResponseSubmitted(true)
+      }
+    }).catch(cause=>{
+      if(active)setPracticeError(cause instanceof Error?cause.message:'Could not retrieve your saved practice response.')
+    }).finally(()=>{if(active)setLoadingPractice(false)})
+    return()=>{active=false}
+  },[mode])
+
+  const submitWrittenPractice=async()=>{
+    if(savingPractice||responseSubmitted)return
+    setPracticeError('')
+    setSavingPractice(true)
+    try{
+      const saved=await saveArenaPracticeAnswer(mode as ArenaWrittenPracticeMode,response)
+      setReceipt(saved);setResponse(saved.response_text);setResponseSubmitted(true)
+    }catch(cause){
+      setPracticeError(cause instanceof Error?cause.message:'Your practice answer was not saved. Check the connection and try again.')
+    }finally{setSavingPractice(false)}
+  }
+
   const selected=answers[index]
   const correctCount=Object.entries(answers).filter(([n,a])=>questions[Number(n)]?.correct===a).length
   const completedScore=computeArenaDemoScore(answers)
@@ -89,6 +124,7 @@ export default function ArenaPracticeLab({mode,onBack}:{mode:ArenaDemoMode;onBac
   const reset=()=>{
     setAnswers({});setIndex(0);setDone(false);setSeconds(15)
     setResponse('');setResponseSubmitted(false);setChecked({})
+    setPracticeError('');setReceipt(null)
     setEliminated(false);setAckRounds([]);setRole('Planner')
   }
   const advance=()=>{
@@ -162,22 +198,39 @@ export default function ArenaPracticeLab({mode,onBack}:{mode:ArenaDemoMode;onBac
     {writing&&<section className="list-panel">
       <h2>{writing.scene}</h2>
       <p>{writing.prompt}</p>
+      <p className="muted">This is a private staging practice exercise, not a submission to an employer. Your answer is saved to your own student account only when you press Submit.</p>
       <label htmlFor="arena-practice-written">Your response</label>
-      <textarea id="arena-practice-written" rows={6} style={{width:'100%',maxWidth:'100%'}}
-        value={response} disabled={responseSubmitted} onChange={e=>setResponse(e.target.value)}/>
-      {!responseSubmitted?<button className="btn btn-primary"
-        disabled={response.trim().length<40} onClick={()=>setResponseSubmitted(true)}>
-        Submit practice response
-      </button>:<div role="status">
+      <textarea id="arena-practice-written" rows={6} maxLength={5000}
+        style={{width:'100%',maxWidth:'100%'}}
+        value={response} disabled={responseSubmitted||savingPractice||loadingPractice}
+        onChange={e=>{setResponse(e.target.value);setPracticeError('')}}/>
+      {!responseSubmitted ? <>
+        <p className="muted">{response.trim().length} / 5,000 characters. Write your answer, then press Submit. There is no hidden minimum word count.</p>
+        {practiceError&&<div role="alert" className="banner banner-error">{practiceError}</div>}
+        {loadingPractice&&<p role="status">Checking your saved practice answer…</p>}
+        <button type="button" className="btn btn-primary"
+          disabled={savingPractice||loadingPractice}
+          onClick={()=>void submitWrittenPractice()}>
+          {savingPractice?'Saving your answer…':'Submit practice answer'}
+        </button>
+      </> : <div role="status">
+        <div className="banner banner-info">
+          <strong>Practice answer submitted and saved to your private staging account.</strong>
+          <p>Saved: {receipt?.saved_at?new Date(receipt.saved_at).toLocaleString():'Confirmed'}.
+          Receipt: {receipt?.id?.slice(0,8)??'pending'}. This is NOT sent to an employer and earns no official result or reward.</p>
+        </div>
         <h3>Review your answer using this checklist</h3>
         <p>These are reflection checks, not verified grades. No AI or human judge reviewed this answer.</p>
         {writing.rubric.map((item,i)=><label key={i} style={{display:'block',margin:'8px 0'}}>
-          <input type="checkbox" checked={Boolean(checked[i])} onChange={e=>setChecked(old=>({...old,[i]:e.target.checked}))}/> {item}
+          <input type="checkbox" checked={Boolean(checked[i])}
+            onChange={e=>setChecked(old=>({...old,[i]:e.target.checked}))}/> {item}
         </label>)}
         <p>{Object.values(checked).filter(Boolean).length} of {writing.rubric.length} self-review criteria checked. Not a competition score.</p>
-        <button className="btn btn-primary" onClick={reset}>Try this skill again</button>
+        <button type="button" className="btn btn-secondary" onClick={()=>{
+          setResponseSubmitted(false);setPracticeError('');setChecked({})
+        }}>Edit and resubmit my answer</button>
+        <button type="button" className="btn btn-primary" onClick={reset}>Start a new practice draft</button>
       </div>}
-      {!responseSubmitted&&<p className="muted">Write at least 40 characters to practice submitting. No text is sent to the Arena server.</p>}
     </section>}
   </div>
 }

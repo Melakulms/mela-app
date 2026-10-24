@@ -37,7 +37,7 @@ describe('Learning dashboard', () => {
   })
   it('searches learning tools and keeps explicitly disabled question banks disabled', async () => {
     mocks.dashboard.mockResolvedValue({ ...data, feature_flags: { question_bank: false } })
-    render(<StudentDashboard onNavigate={vi.fn()} />)
+    render(<StudentDashboard educationStage="school_9_10" onNavigate={vi.fn()} />)
     await screen.findByText('Explore MELA')
     fireEvent.change(screen.getByLabelText('Find a learning tool'), { target: { value: 'question bank' } })
     expect((screen.getByRole('button', { name: /Question Bank/ }) as HTMLButtonElement).disabled).toBe(true)
@@ -67,4 +67,13 @@ it('clears the previous route and settings history at an authentication boundary
   expect(window.location.search).toBe('?view=dashboard')
   expect(window.location.hash).toBe('')
   expect(window.history.state).toBeNull()
+})
+
+it('opens enabled adult practice without offering the school question bank', async () => {
+  const navigate = vi.fn()
+  render(<StudentDashboard educationStage="university" onNavigate={navigate} />)
+  await screen.findByText('Explore MELA')
+  expect(screen.queryByRole('button', { name: /Question Bank/ })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: /Start practicing/i }))
+  expect(navigate).toHaveBeenCalledWith('practice')
 })

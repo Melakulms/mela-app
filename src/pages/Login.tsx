@@ -107,6 +107,9 @@ export default function Login({ onSwitchToRegister }: { onSwitchToRegister: () =
       <span className="auth-wordmark">MELA</span>
       <h1>{t('authWelcome')}</h1>
       <p className="auth-subtitle">{t('authLoginHelp')}</p>
+      {import.meta.env.VITE_MELA_STAGING === 'true' && <p className="banner banner-info" role="note">
+        <strong>STAGING TEST ONLY.</strong> Your normal MELA account will not work here. Invited adult testers can choose Create an account and use their single-use invitation. After signing in, choose Complete my profile, select University or College / TVET, and select the STAGING TEST study program. Never use your live password. Payments are disabled.
+      </p>}
 
       {error && <div className="banner banner-error" role="alert">{error}</div>}
       {resetSent && <div className="banner banner-info" role="status">{t('authResetEmailSent')}</div>}

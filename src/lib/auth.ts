@@ -27,6 +27,7 @@ export interface BetaRegisterInput {
   password: string
   fullName: string
   accessCode: string
+  adultConfirmed?: boolean
 }
 
 export interface BetaRegisterResult {
@@ -62,7 +63,7 @@ async function invokeBetaAuth<T>(body: Record<string, unknown>): Promise<T> {
   return data as T
 }
 
-export async function registerBetaUser({ username, password, fullName, accessCode, role }: BetaRegisterInput) {
+export async function registerBetaUser({ username, password, fullName, accessCode, role, adultConfirmed }: BetaRegisterInput) {
   return invokeBetaAuth<BetaRegisterResult>({
     action: 'signup',
     username: username.trim().toLowerCase(),
@@ -70,6 +71,7 @@ export async function registerBetaUser({ username, password, fullName, accessCod
     full_name: fullName.trim(),
     access_code: accessCode.trim(),
     requested_role: role,
+    adult_confirmed: adultConfirmed === true,
   })
 }
 

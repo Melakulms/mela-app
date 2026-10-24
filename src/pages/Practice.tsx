@@ -12,20 +12,25 @@ type View =
   | { stage: 'in_session'; sessionId: string; questions: PracticeQuestion[]; index: number; questionStartedAt: number; result: SubmitResult | null; selected: string | null }
   | { stage: 'complete'; summary: SessionSummary }
 
-export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () => void; onOpenQuestionBank?: () => void }) {
+export default function Practice({ onBack, onOpenQuestionBank, onOpenProfile }: { onBack: () => void; onOpenQuestionBank?: () => void; onOpenProfile?: () => void }) {
   const { t } = useI18n()
   const [topics, setTopics] = useState<PracticeTopic[] | null>(null)
   const [recommendations, setRecommendations] = useState<PracticeRecommendation[]>([])
   const [error, setError] = useState('')
+  const [revision, setRevision] = useState(0)
   const [busy, setBusy] = useState(false)
   const [textAnswer, setTextAnswer] = useState('')
   const submitting = useRef(false)
   const [view, setView] = useState<View>({ stage: 'topics' })
 
   useEffect(() => {
-    fetchTopics().then(setTopics).catch((e) => setError(e.message ?? 'Could not load topics.'))
-    fetchDashboard().then((d) => setRecommendations(d.practice.recommendations)).catch(() => {})
-  }, [])
+    let active = true
+    setError('')
+    setTopics(null)
+    fetchTopics().then(value => { if (active) setTopics(value) }).catch((e) => { if (active) setError(e.message ?? 'Could not load topics.') })
+    fetchDashboard().then((d) => { if (active) setRecommendations(d.practice?.recommendations ?? []) }).catch(() => {})
+    return () => { active = false }
+  }, [revision])
 
   const beginTopic = async (topicId: string) => {
     setError('')
@@ -87,7 +92,8 @@ export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () =>
           <button className="btn btn-secondary" onClick={onBack}>{t('back')}</button>
         </div>
         {onOpenQuestionBank && <div className="list-panel question-card"><p>School learners: practice by grade, subject, chapter, and topic in the curriculum Question Bank.</p><button className="btn btn-primary" onClick={onOpenQuestionBank}>Open curriculum Question Bank</button></div>}
-        {error && <div className="banner banner-error">{error}</div>}
+        {error && <div className="banner banner-error" role="alert">{error}</div>}
+        {error && <div className="section-heading"><button className="btn btn-secondary" onClick={() => setRevision(value => value + 1)}>Retry topics</button>{onOpenProfile && <button className="btn btn-secondary" onClick={onOpenProfile}>Complete education profile</button>}</div>}
 
         {recommendations.filter(r => topics?.some(t => t.id === r.topic_id)).length > 0 && (
           <>
@@ -108,7 +114,7 @@ export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () =>
 
         <div className="section-heading"><h2>All topics</h2></div>
         {!topics && !error && <p className="muted">Loading topics…</p>}
-        {topics && topics.length === 0 && <div className="empty-panel">No additional practice topics are available for your education level. School curriculum practice is available in the Question Bank.</div>}
+        {topics && topics.length === 0 && <div className="empty-panel">No additional practice topics are available for your education level. {onOpenQuestionBank ? 'School curriculum practice is available in the Question Bank.' : 'Check back as more topics are added.'}</div>}
         {topics && topics.length > 0 && (
           <div className="list-panel">
             {topics.map((t) => (

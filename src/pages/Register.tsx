@@ -1,6 +1,7 @@
 import { useI18n } from '../i18n'
 import AuthLayout from '../components/AuthLayout'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { stagingRegistrationIsOpen } from '../lib/staging-registration'
 import { registerBetaUser, registerUser, type BetaRegisterResult, type BetaSignupRole } from '../lib/auth'
 
 export default function Register({ onSwitchToLogin, onRegistered }: {
@@ -9,7 +10,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
 }) {
   const { t } = useI18n()
   const [mode, setMode] = useState<'email' | 'invite'>(() =>
-    new URLSearchParams(window.location.search).get('signup') === 'invite' ? 'invite' : 'email')
+    import.meta.env.VITE_MELA_STAGING === 'true' || new URLSearchParams(window.location.search).get('signup') === 'invite' ? 'invite' : 'email')
   const [emailDeliveryBlocked, setEmailDeliveryBlocked] = useState(false)
   const [email, setEmail] = useState('')
   const [emailRole, setEmailRole] = useState<BetaSignupRole>('student')
@@ -17,7 +18,8 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
   const [fullName, setFullName] = useState('')
   const [username, setUsername] = useState('')
   const [accessCode, setAccessCode] = useState('')
-  const [role, setRole] = useState<BetaSignupRole | ''>('')
+  const [role, setRole] = useState<BetaSignupRole | ''>(import.meta.env.VITE_MELA_STAGING === 'true' ? 'student' : '')
+  const [adultConfirmed, setAdultConfirmed] = useState(false)
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -25,6 +27,23 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
   const [error, setError] = useState('')
   const [created, setCreated] = useState<BetaRegisterResult | null>(null)
   const [copied, setCopied] = useState(false)
+  const stagingOnly = import.meta.env.VITE_MELA_STAGING === 'true'
+  const [stagingGate, setStagingGate] = useState<'checking' | 'closed' | 'open'>(stagingOnly ? 'checking' : 'open')
+
+  useEffect(() => {
+    if (!stagingOnly) return
+    let alive = true
+    // Dedicated staging invite-only switch; normal registration remains disabled.
+    void import('../lib/supabase')
+      .then(({ supabase }) => supabase.from('platform_feature_flags')
+        .select('feature_key, enabled')
+        .eq('feature_key', 'staging_beta_invites'))
+      .then(({ data, error }) => {
+        if (alive) setStagingGate(!error && stagingRegistrationIsOpen(data) ? 'open' : 'closed')
+      })
+      .catch(() => { if (alive) setStagingGate('closed') })
+    return () => { alive = false }
+  }, [stagingOnly])
 
   const passwordChecks = useMemo(() => ({
     length: password.length >= 12,
@@ -39,7 +58,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
     const name = fullName.trim()
     const handle = username.trim().toLowerCase()
 
-    if (mode === 'email') {
+    if (mode === 'email' && !stagingOnly) {
       const normalizedEmail = email.trim().toLowerCase()
       if (name.length < 2) { setError(t('authNameRequired')); return }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) { setError(t('authEmailInvalid')); return }
@@ -66,6 +85,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
     }
 
     if (!role) { setError('Select your account type before creating your MELA account.'); return }
+    if (stagingOnly && (role !== 'student' || !adultConfirmed)) {setError('Adult student testers must confirm they are 18 or older.');return}
     if (name.length < 2) { setError(t('authNameRequired')); return }
     if (!/^[a-z0-9][a-z0-9._-]{2,31}$/.test(handle)) {
       setError(t('authUsernameRule'))
@@ -76,11 +96,11 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
       return
     }
     if (password !== confirmPassword) { setError(t('authMismatch')); return }
-    if (accessCode.trim().length < 16) { setError(t('authEnterCode')); return }
+    if (accessCode.trim().length < (stagingOnly ? 32 : 16)) { setError(t('authEnterCode')); return }
 
     setBusy(true)
     try {
-      const result = await registerBetaUser({ username: handle, password, fullName: name, accessCode, role })
+      const result = await registerBetaUser({ username: handle, password, fullName: name, accessCode, role, adultConfirmed })
       setCreated(result)
       setPassword('')
       setConfirmPassword('')
@@ -88,6 +108,23 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
     } catch (err) {
       setError(err instanceof Error ? err.message : t('authCreateError'))
     } finally { setBusy(false) }
+  }
+
+  if (stagingGate !== 'open') {
+    return (
+      <AuthLayout>
+        <span className="auth-wordmark">MELA STAGING</span>
+        <h1>Staging registration is closed</h1>
+        <p className="auth-subtitle" role="status">
+          {stagingGate === 'checking'
+            ? 'Checking whether closed-test registration is authorized…'
+            : 'New staging accounts are not accepting registrations yet. MELA administrators must securely provision approved test accounts before sign-up is opened.'}
+        </p>
+        <p>Do not use your real MELA password on a test site. Course previews and the public offline library are available without an account.</p>
+        <div className="auth-switch"><button type="button" onClick={onSwitchToLogin}>Return to staging sign in</button></div>
+        <a className="btn btn-secondary btn-block" href={`${import.meta.env.BASE_URL}offline.html`}>Open public offline learning</a>
+      </AuthLayout>
+    )
   }
 
   if (created) {
@@ -168,9 +205,9 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
   return (
     <AuthLayout>
       <span className="auth-wordmark">MELA</span>
-      <h1>{t('authJoin')}</h1>
-      <p className="auth-subtitle">{t('authJoinHelp')}</p>
-      <div className="auth-switch"><button type="button" disabled={busy} onClick={() => { setMode('email'); setError('') }}>{t('authSwitchEmail')}</button></div>
+      <h1>{stagingOnly ? 'Join the adult MELA staging test' : t('authJoin')}</h1>
+      <p className="auth-subtitle">{stagingOnly ? 'Use a single-use invitation code. You will create a TEST username and password; no email confirmation is needed. This account is not for children or real MELA users.' : t('authJoinHelp')}</p>
+      {!stagingOnly && <div className="auth-switch"><button type="button" disabled={busy} onClick={() => { setMode('email'); setError('') }}>{t('authSwitchEmail')}</button></div>}
 
       {error && <div className="banner banner-error" role="alert">{error}</div>}
 
@@ -191,11 +228,13 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
           <select id="registration-role" required value={role} onChange={event => {setRole(event.target.value as BetaSignupRole);setError('')}} disabled={busy}>
             <option value="" disabled>Select an account type</option>
             <option value="student">Student / learner</option>
+            {!stagingOnly && <>
             <option value="parent">Parent / family or guardian</option>
             <option value="teacher">Teacher / educator</option>
             <option value="company">Employer / organization</option>
+            </>}
           </select>
-          <span className="field-hint">Your administrator must issue an invitation for this same account type. A mismatch is rejected without using your code. Teacher and employer privileges require independent verification.</span>
+          <span className="field-hint">{stagingOnly ? 'Adult students only in the first test. Teacher, parent and employer accounts will be enabled after separate security checks.' : 'Your administrator must issue an invitation for this same account type. A mismatch is rejected without using your code. Teacher and employer privileges require independent verification.'}</span>
         </div>
 
         <div className="field">
@@ -216,6 +255,9 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
           <input id="confirmPassword" type={showPassword ? 'text' : 'password'} required minLength={12} autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={busy} />
         </div>
 
+        {stagingOnly && <label className="field" htmlFor="staging-adult-confirm">
+          <span><input id="staging-adult-confirm" type="checkbox" checked={adultConfirmed} onChange={e=>setAdultConfirmed(e.target.checked)} disabled={busy} required /> I confirm I am at least 18, this is a test-only account and I will not enter real personal records or use payment services.</span>
+        </label>}
         <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
           {busy ? t('authCreating') : t('authCreate')}
         </button>

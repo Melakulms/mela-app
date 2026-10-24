@@ -43,7 +43,7 @@ const MODULES: DashboardModule[] = [
   { key: 'earn_work', labelKey: 'earnWork', blurbKey: 'earnWorkBlurb', view: 'earn-work', icon: DollarSign, cls: 'mc-earn_work' },
 ]
 
-export default function StudentDashboard({ onNavigate }: { onNavigate: (view: StudentView) => void }) {
+export default function StudentDashboard({ onNavigate, educationStage }: { onNavigate: (view: StudentView) => void; educationStage?: string | null }) {
   const { t } = useI18n()
   const [data, setData] = useState<MelaDashboard | null>(null)
   const [badges, setBadges] = useState<EarnedBadge[]>([])
@@ -94,7 +94,7 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
 
   const { profile, passport, practice, arena, feature_flags } = data
   const normalizedQuery = query.trim().toLocaleLowerCase()
-  const visibleModules = MODULES.filter(m => visibleInFocusMode(m.key, focusMode, showAllTools) && `${t(m.labelKey)} ${t(m.blurbKey)}`.toLocaleLowerCase().includes(normalizedQuery))
+  const visibleModules = MODULES.filter(m => (m.key !== 'question_bank' || educationStage?.startsWith('school_')) && visibleInFocusMode(m.key, focusMode, showAllTools) && `${t(m.labelKey)} ${t(m.blurbKey)}`.toLocaleLowerCase().includes(normalizedQuery))
 
   return (
     <div className="dash-main dashboard-main">

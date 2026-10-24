@@ -63,7 +63,7 @@ export default function App() {
   const observedUserId = useRef<string | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<MelaProfile | null>(null)
-  const [authView, setAuthView] = useState<AuthView>(() => new URLSearchParams(window.location.search).has('signed_out') ? 'login' : 'register')
+  const [authView, setAuthView] = useState<AuthView>(() => (import.meta.env.VITE_MELA_STAGING === 'true' || new URLSearchParams(window.location.search).has('signed_out')) ? 'login' : 'register')
   const [pendingEmail, setPendingEmail] = useState('')
   const [studentView, setStudentView] = useStudentNavigation()
   const [online, setOnline] = useState(navigator.onLine)
@@ -320,7 +320,7 @@ export default function App() {
         <AccountOverview profile={profile} onBack={() => setShowAccount(false)} />
       ) : isStudent ? (
         <>
-          {studentView === 'practice' && <Practice onBack={() => setStudentView('dashboard')} onOpenQuestionBank={() => setStudentView('question-bank')} />}
+          {studentView === 'practice' && <Practice onBack={() => setStudentView('dashboard')} onOpenProfile={() => setStudentView('profile')} onOpenQuestionBank={profile.education_stage_key?.startsWith('school_') ? () => setStudentView('question-bank') : undefined} />}
           {studentView === 'question-bank' && <QuestionBank onBack={() => setStudentView('dashboard')} />}
           {studentView === 'opportunities' && <OpportunityHub onBack={() => setStudentView('dashboard')} />}
           {studentView === 'materials' && <StudyMaterials stageKey={profile.education_stage_key} gradeLevel={profile.grade_level} onBack={() => setStudentView('dashboard')} />}
@@ -339,7 +339,7 @@ export default function App() {
           {studentView === 'assessments' && <VerifiedAssessments onBack={() => setStudentView('dashboard')} />}
           {studentView === 'earn-work' && <LearnerSubsections view="earn" onBack={() => setStudentView('dashboard')} />}
           {studentView === 'safety' && <SafetyCenter onBack={() => setStudentView('dashboard')} />}
-          {studentView === 'dashboard' && <StudentDashboard onNavigate={setStudentView} />}
+          {studentView === 'dashboard' && <StudentDashboard educationStage={profile.education_stage_key} onNavigate={setStudentView} />}
         </>
       ) : profile.role === 'company' || profile.role === 'employer' ? (
         <EmployerPortal role={profile.role} />

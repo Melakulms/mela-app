@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase'
 import {
   fetchLeaderboard, joinMatchmaking, cancelMatchmaking, checkMyQueueStatus,
   fetchMatchState, fetchScoreboard, fetchCurrentRoundDetail, submitRound,
-  fetchMatchContext, readyForMatch, startMatch, fetchMyRoundResult, advanceMyArenaMatch,
+  fetchMatchContext, readyForMatch, startMatch, fetchMyRoundResult, advanceMyArenaMatch, fetchMyActiveArenaMatch, type ActiveArenaMatch,
   type LeaderboardRow, type ArenaMode, type MatchState, type ScoreboardRow, type RoundDetail, type RoundResult,
 } from '../lib/arena'
 
@@ -29,6 +29,9 @@ export default function Arena({ onBack }: { onBack: () => void }) {
   const [error, setError] = useState('')
   const [queueState, setQueueState] = useState<QueueState>('idle')
   const [matchId, setMatchId] = useState<string | null>(null)
+  const [resumableMatch,setResumableMatch] = useState<ActiveArenaMatch|null>(null)
+  const [resumeLoading,setResumeLoading] = useState(false)
+  const [resumeError,setResumeError] = useState('')
   const [busy, setBusy] = useState(false)
   const [assessments, setAssessments] = useState<{ id: string; title: string; question_count: number }[]>([])
   const [assessmentId, setAssessmentId] = useState('')
@@ -150,6 +153,26 @@ export default function Arena({ onBack }: { onBack: () => void }) {
       setInviteNotice('Share from your browser address bar: '+url.toString())
     }
   }
+  const reloadResumeMatch = async () => {
+    setResumeLoading(true);setResumeError('')
+    try {
+      const current=await fetchMyActiveArenaMatch()
+      setResumableMatch(current)
+    }catch(cause){
+      setResumeError(cause instanceof Error?cause.message:'Could not retrieve your ongoing Arena match.')
+    }finally{setResumeLoading(false)}
+  }
+  useEffect(()=>{
+    if(queueState!=='idle')return
+    let active=true
+    void fetchMyActiveArenaMatch().then(match=>{
+      if(active)setResumableMatch(match)
+    }).catch(cause=>{
+      if(active)setResumeError(cause instanceof Error?cause.message:'Could not load your ongoing match.')
+    })
+    return()=>{active=false}
+  },[queueState])
+
   const startSearching = async (mode: ArenaMode) => {
     if (searchLock.current) return
     searchLock.current = true
@@ -195,7 +218,7 @@ export default function Arena({ onBack }: { onBack: () => void }) {
   }
 
   if (queueState === 'matched' && matchId) {
-    return <LiveMatch matchId={matchId} onLeave={() => { setMatchId(null); setQueueState('idle') }} onBack={onBack} />
+    return <LiveMatch matchId={matchId} onLeave={() => { setMatchId(null); setQueueState('idle');void reloadResumeMatch() }} onBack={onBack} />
   }
 
   if (demoMode && staging) return <ArenaPracticeLab mode={demoMode} onBack={()=>setDemoMode(null)}/>
@@ -231,6 +254,19 @@ export default function Arena({ onBack }: { onBack: () => void }) {
 
       {queueState === 'idle' && (
         <>
+          <section className="list-panel" aria-label="Resume own competition">
+            <h2>Your ongoing Arena match</h2>
+            {resumableMatch ? <>
+              <p><strong>{resumableMatch.title}</strong> · {resumableMatch.status}</p>
+              <button className="btn btn-primary" onClick={()=>{
+                setMatchId(resumableMatch.id);setQueueState('matched')
+              }}>Resume my match</button>
+            </> : <p className="muted">No active competition found in your account. You can join one below or try any of the eight practice activities.</p>}
+            <button className="btn btn-secondary" onClick={()=>void reloadResumeMatch()} disabled={resumeLoading}>
+              {resumeLoading?'Checking…':'Refresh my matches'}
+            </button>
+            {resumeError&&<p role="alert" className="banner banner-error">{resumeError}</p>}
+          </section>
           <div className="section-heading"><h2>Eight ways to compete</h2></div>
           {staging&&<section className="banner banner-info" aria-label="Arena opponent testing">
             <strong>How to start a real two-player beta match</strong>
@@ -357,7 +393,7 @@ export function LiveMatch({ matchId, onLeave, onBack }: { matchId: string; onLea
     {error && <div className="banner banner-error" role="alert">{error}</div>}
     <p className="muted">{state.participant_count} players · status: {state.status}</p>
     {['open', 'ready'].includes(state.status) ? <div className="banner banner-info">
-      <p>Required participants must be ready before the match creator can start.</p>
+      <p>All participants must press Ready first. In private, unrated staging matchmaking, either player can start once both are ready.</p>
       <button className="btn btn-primary" disabled={busy} onClick={() => void prepare(false)}>I'm ready</button>
       {context?.isCreator && <button className="btn btn-primary" disabled={busy || state.status !== 'ready'} onClick={() => void prepare(true)}>Start match</button>}
       <button className="btn btn-secondary" disabled={busy} onClick={() => void load()}>Refresh match</button>

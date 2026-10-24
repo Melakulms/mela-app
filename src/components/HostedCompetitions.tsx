@@ -27,12 +27,17 @@ export default function HostedCompetitions({ kind, onBack, onMatch, canEnter }: 
     setLoading(true); setError(''); setItems([])
     void (async () => {
       try {
-        let query = kind === 'tournament'
-          ? supabase.from('arena_tournaments').select('id,title,description,status,team_mode,starts_at,registration_deadline').in('status', ['registration','in_progress'])
-          : supabase.from('arena_matches').select('id,title,description,status,team_mode').eq('arena_type', kind).in('status', ['open','ready'])
-        const { data, error } = await query.eq('visibility', 'public').order('id').range(page * 20, page * 20 + 20)
-        if (error) throw error
-        if (active) { setItems((data ?? []).slice(0,20)); setHasMore((data ?? []).length > 20) }
+        const {data,error} = HOSTED_ENTRY_VERIFIED
+          ? await supabase.rpc('staging_arena_public_hosted_list_v1',{
+              p_kind:kind,p_limit:21,p_offset:page*20,
+            })
+          : await (kind === 'tournament'
+              ? supabase.from('arena_tournaments').select('id,title,description,status,team_mode,starts_at,registration_deadline').in('status',['registration','in_progress'])
+              : supabase.from('arena_matches').select('id,title,description,status,team_mode').eq('arena_type',kind).in('status',['open','ready']))
+            .eq('visibility','public').order('id').range(page*20,page*20+20)
+        if(error)throw error
+        const visibleRows=(data??[]) as Competition[]
+        if(active){setItems(visibleRows.slice(0,20));setHasMore(visibleRows.length>20)}
         if (kind === 'tournament' && data?.length) {
           const {data: auth, error: authError} = await supabase.auth.getUser()
           if (authError) throw authError

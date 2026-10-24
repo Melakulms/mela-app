@@ -41,7 +41,7 @@ describe('MELA staging Arena eight-mode practice coverage',()=>{
   })
   it('makes tournament opponents explicitly simulated rather than real people',()=>{
     render(<ArenaPracticeLab mode="tournament" onBack={()=>{}}/>)
-    expect(screen.getByText(/no real opponents, judges, employers, prizes/i)).toBeTruthy()
+    expect(screen.getByText(/no real opponents, judges, employers, prizes/ii)).toBeTruthy()
     expect(screen.getByText(/Practice bracket round 1 of 3/i)).toBeTruthy()
   })
 })

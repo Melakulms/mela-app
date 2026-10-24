@@ -7,7 +7,10 @@ const HOSTED_ENTRY_VERIFIED = import.meta.env.VITE_MELA_STAGING === 'true'
 type Kind = 'team_battle' | 'employer_challenge' | 'tournament'
 type Competition = { id: string; title: string; description: string | null; status: string; team_mode: boolean; starts_at?: string | null; registration_deadline?: string | null }
 const labels = { team_battle: 'Team Battle', employer_challenge: 'Employer Challenge', tournament: 'Tournaments' }
-export default function HostedCompetitions({ kind, onBack, onMatch, canEnter }: { kind: Kind; onBack: () => void; onMatch: (id: string) => void; canEnter: boolean }) {
+export default function HostedCompetitions({ kind, onBack, onMatch, onPractice, canEnter }: {
+  kind: Kind; onBack: () => void; onMatch: (id: string) => void;
+  onPractice?: () => void; canEnter: boolean
+}) {
   const entryAllowed=HOSTED_ENTRY_VERIFIED && canEnter
   const [items, setItems] = useState<Competition[]>([])
   const [page, setPage] = useState(0)
@@ -129,12 +132,19 @@ export default function HostedCompetitions({ kind, onBack, onMatch, canEnter }: 
     {!canEnter&&<p className="notice">Complete the adult student eligibility information in Arena before entering a competition.</p>}
     {error && <p role="alert" className="banner banner-error">{error}<button className="btn btn-secondary" disabled={busy || loading} onClick={() => setRevision(x => x + 1)}>Retry list</button></p>}
     {notice && <p role="status">{notice}</p>}
-    {<div className="list-panel">
+    {(kind!=='employer_challenge' || items.some(x=>x.team_mode))&&<div className="list-panel">
       <label>Team name<input value={teamName} maxLength={80} disabled={busy} onChange={e => setTeamName(e.target.value)} /></label>
       <label>Team join code<input value={code} maxLength={64} autoComplete="off" disabled={busy} onChange={e => setCode(e.target.value)} /></label>
       <button className="btn btn-secondary" disabled={!entryAllowed || busy || !code.trim()} onClick={() => void act('code')}>Join team by code</button>
     </div>}
-    {loading ? <p role="status">Loading competitions…</p> : !items.length ? <p className="empty-panel">No public competitions from approved organizers are available in this category yet.</p> : items.map(item => <article className="list-panel" key={item.id}>
+    {loading ? <p role="status">Loading competitions…</p> : !items.length ? <section className="empty-panel">
+      <p>No public competitions from approved organizers are available in this category yet.</p>
+      {kind==='employer_challenge'&&onPractice&&<div className="list-panel">
+        <h2>Practice an employer-style challenge now</h2>
+        <p>You can write your response and save it privately to your staging student account. This is not an application, it is not sent to a company, and it earns no official result.</p>
+        <button type="button" className="btn btn-primary" onClick={onPractice}>Write and submit practice answer</button>
+      </div>}
+    </section> : items.map(item => <article className="list-panel" key={item.id}>
       <h2>{item.title}</h2><p>{item.description}</p><p>{item.status} · {item.team_mode ? 'Team' : 'Individual'}</p>
       {item.starts_at && <p>Starts: {new Date(item.starts_at).toLocaleString()}</p>}
       {item.registration_deadline && <p>Registration closes: {new Date(item.registration_deadline).toLocaleString()}</p>}

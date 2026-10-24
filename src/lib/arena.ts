@@ -145,9 +145,16 @@ export async function fetchMatchContext(matchId: string) {
   const { data: auth, error: authError } = await supabase.auth.getUser()
   if (authError) throw authError
   if (!auth.user) throw new Error('Sign in to join your match.')
-  const { data: match, error } = await supabase.from('arena_matches').select('creator_id').eq('id', matchId).single()
+  const { data: match, error } = await supabase.from('arena_matches')
+    .select('creator_id,visibility,rated,rules').eq('id', matchId).single()
   if (error) throw error
-  return { userId: auth.user.id, isCreator: match.creator_id === auth.user.id }
+  // Either participant can start an automatically matched, unrated private
+  // staging match once *both* participants have marked themselves ready.
+  // The server validates these same constraints and never trusts this label.
+  const matchedBeta = import.meta.env.VITE_MELA_STAGING === 'true' &&
+    match.visibility === 'private' && match.rated === false &&
+    (match.rules as { matchmaking?:boolean } | null)?.matchmaking === true
+  return { userId: auth.user.id, isCreator: match.creator_id === auth.user.id || matchedBeta }
 }
 
 export async function readyForMatch(matchId: string) {

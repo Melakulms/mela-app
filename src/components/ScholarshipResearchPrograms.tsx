@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { safeExternalUrl } from '../lib/external-url'
+import { educationReadiness, preliminaryScholarshipMatch, type ScholarshipAcademicProfile } from '../lib/scholarship-readiness'
 
 type Programme = {
   id: number
@@ -42,6 +43,9 @@ export default function ScholarshipResearchPrograms() {
   const [programmes, setProgrammes] = useState<Programme[]>([])
   const [saved, setSaved] = useState<Set<number>>(new Set())
   const [progress, setProgress] = useState<Record<number,string[]>>({})
+  const [academicProfile,setAcademicProfile] = useState<ScholarshipAcademicProfile|null>(null)
+  const [academicDocuments,setAcademicDocuments] = useState(0)
+  const [readinessError,setReadinessError] = useState('')
   const [level, setLevel] = useState('all')
   const [country, setCountry] = useState('all')
   const [query, setQuery] = useState('')
@@ -64,8 +68,22 @@ export default function ScholarshipResearchPrograms() {
         const { data: auth, error: authError } = await supabase.auth.getUser()
         if (authError) throw authError
         let favouriteIds: number[] = []
+        let localAcademicProfile: ScholarshipAcademicProfile|null=null
+        let verifiedAcademicEvidence=0
+        let localReadinessError=''
         const progressByProgramme: Record<number,string[]> = {}
         if (auth.user) {
+          const {data: basic,error:basicError}=await supabase.from('profiles')
+            .select('role,full_name,education_stage_key,education_onboarding_completed,grade_level,major,graduation_year,email_verified,phone_verified')
+            .eq('id',auth.user.id).maybeSingle()
+          if(basicError)localReadinessError='Education profile unavailable for matching. Browsing is still allowed.'
+          else localAcademicProfile=(basic??null) as ScholarshipAcademicProfile|null
+          const {data: evidence,error:evidenceError}=await supabase.from('profile_documents')
+            .select('document_type,verified').eq('user_id',auth.user.id).eq('verified',true)
+          if(evidenceError)localReadinessError='Academic documents could not be checked; no verified evidence is assumed.'
+          else verifiedAcademicEvidence=(evidence??[]).filter(d=>
+            ['academic_transcript','transcript','degree_certificate','degree','school_result','academic_record','grade_report'].includes(String(d.document_type).toLowerCase())
+          ).length
           const { data: favourites, error: favouriteError } = await supabase.from('mela_scholarship_research_saved')
             .select('program_id').eq('user_id', auth.user.id)
           if (favouriteError) throw favouriteError
@@ -78,13 +96,14 @@ export default function ScholarshipResearchPrograms() {
             progressByProgramme[id]=[...(progressByProgramme[id]??[]),String(task.step_key)]
           }
         }
-        if (active) { setProgrammes((data ?? []) as Programme[]); setSaved(new Set(favouriteIds));setProgress(progressByProgramme) }
+        if (active) { setProgrammes((data ?? []) as Programme[]); setSaved(new Set(favouriteIds));setProgress(progressByProgramme);setAcademicProfile(localAcademicProfile);setAcademicDocuments(verifiedAcademicEvidence);setReadinessError(localReadinessError) }
       } catch (cause) {
         if (active) setError(cause instanceof Error ? cause.message : 'Scholarship research is currently unavailable.')
       } finally { if (active) setLoading(false) }
     })()
     return () => { active = false }
   }, [version])
+  const readiness = educationReadiness(academicProfile)
   const countries = useMemo(() => [...new Set(programmes.map(p => p.country))].sort(),[programmes])
   const filtered = useMemo(() => programmes.filter(p =>
     (level === 'all' || p.degree_level === level || p.degree_level === 'mixed') &&
@@ -142,6 +161,19 @@ export default function ScholarshipResearchPrograms() {
       <p>Official sources have been checked by MELA research. A listed programme is not necessarily open today, does not guarantee you qualify, and has not been approved as an application by MELA administration. Check every current requirement on the university website. MELA does not charge scholarship application or agent fees.</p>
     </div>
     {error && <div className="banner banner-error" role="alert">{error} <button className="btn btn-secondary" onClick={() => setVersion(v=>v+1)}>Reload</button></div>}
+    <section className="list-panel" aria-label="Your scholarship information readiness" style={{marginBottom:16}}>
+      <h3>Your scholarship readiness — information provided, NOT approval</h3>
+      <p><strong>{readiness.completed} of {readiness.total}</strong> general profile checks completed.
+        <strong> {academicDocuments}</strong> independently verified academic document{academicDocuments===1?'':'s'} recorded.</p>
+      <progress value={readiness.completed} max={readiness.total} aria-label="Basic profile completeness" style={{width:'100%'}}/>
+      {readinessError&&<p role="alert">{readinessError}</p>}
+      {readiness.checks.filter(x=>!x.complete).length>0 ? <>
+        <p className="muted">Before personalized matching, finish these items in your MELA profile:</p>
+        <ul>{readiness.checks.filter(x=>!x.complete).map(x=><li key={x.key}>{x.label}</li>)}</ul>
+      </> : <p className="muted">Your basic education information is present. MELA still cannot confirm your scholarship eligibility.</p>}
+      <p className="muted">Nationality/residency, exact entry requirements, English-language evidence and applicable academic records require separate checking. Existing MELA registration does not establish them. A document-upload service is not currently configured on staging: do not submit passports, transcripts or ID images through unofficial links.</p>
+      <p className="muted">A recommendation cannot be called an eligible match until these checks are complete. For now, this page provides scholarship research suggestions, not assured matches.</p>
+    </section>
     <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:14}}>
       <input aria-label="Search source-checked programmes" placeholder="Programme, country or funding" value={query} onChange={e=>setQuery(e.target.value)} />
       <select aria-label="Degree level" value={level} onChange={e=>setLevel(e.target.value)}>
@@ -158,12 +190,17 @@ export default function ScholarshipResearchPrograms() {
         {filtered.map(p=><article key={p.id} className="list-row" style={{display:'block'}}>
           <h3 className="list-row-title">{p.title}</h3>
           <p className="list-row-meta">{p.country} · {titleForLevel[p.degree_level] || p.degree_level} · {p.cycle}</p>
+          <p><strong>Preliminary fit:</strong> {preliminaryScholarshipMatch(academicProfile,p.degree_level,academicDocuments).label}</p>
+          <details><summary>What MELA still needs before recommending this to you</summary>
+            <ul>{preliminaryScholarshipMatch(academicProfile,p.degree_level,academicDocuments).reasons.map(x=><li key={x}>{x}</li>)}</ul>
+            <p className="muted">Do not assume that an official university link or this preliminary comparison confirms scholarship eligibility.</p>
+          </details>
           <p><strong>{deadlineText(p,today)}</strong></p>
           <p><strong>Funding:</strong> {p.funding_summary}</p>
           <p><strong>Ethiopian applicants:</strong> {p.nationality_evidence}</p>
           <p className="muted">{p.ethiopian_eligibility === 'explicit'?'Ethiopia explicitly named by provider':'International eligibility indicated — confirm country-specific details'}</p>
-          <details><summary>My preparation checklist ({Math.round(((progress[p.id]??[]).length/PREPARATION_STEPS.length)*100)}% completed)</summary>
-            <p className="muted">Your own preparation only. MELA has not submitted an application or verified its status with a university. No personal documents are stored here.</p>
+          <details><summary>My self-reported preparation ({(progress[p.id]??[]).length}/{PREPARATION_STEPS.length} steps)</summary>
+            <p className="muted">This checklist records only what you say you have prepared. Even all boxes checked means ZERO verified application or award progress. MELA has not submitted an application or verified any status with a university. No personal documents are stored here.</p>
             <progress aria-label="Preparation complete" value={(progress[p.id]??[]).length} max={PREPARATION_STEPS.length} style={{width:'100%'}}/>
             {PREPARATION_STEPS.map(step=><label key={step.key} style={{display:'flex',gap:8,alignItems:'center',marginTop:10}}>
               <input type="checkbox" disabled={busy!==null} checked={(progress[p.id]??[]).includes(step.key)}

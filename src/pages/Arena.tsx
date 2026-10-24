@@ -403,7 +403,12 @@ function RoundPanel({ round, order, serverResult, onSubmitted }: { round: RoundD
     {error && <div className="banner banner-error" role="alert">{error}</div>}
     {round.config?.choices?.length ? <div className="list-panel">
       {round.config.choices.map(choice => <button key={choice.id} className="list-row" style={{ width: '100%', textAlign: 'left', background: answer === choice.id ? 'var(--gold-soft)' : 'transparent' }} disabled={busy || !!submitted} onClick={() => setAnswer(choice.id)}>{choice.text}</button>)}
-    </div> : <div className="field"><label htmlFor="arena-answer">Your answer</label><input id="arena-answer" value={answer} onChange={e => setAnswer(e.target.value)} disabled={busy || !!submitted} /></div>}
+    </div> : <div className="field"><label htmlFor="arena-answer">Your written response</label>
+      <textarea id="arena-answer" rows={6} style={{width:'100%',maxWidth:'100%'}}
+        placeholder="Give a structured answer with your reasoning, steps and conclusion."
+        value={answer} onChange={e => setAnswer(e.target.value)} disabled={busy || !!submitted} />
+      <p className="muted">Written answers are reviewed by an independent judge. They are not automatically graded and do not produce verified scores until review.</p>
+    </div>}
     {submitted ? <div className="banner banner-info" role="status">
       {submitted.score == null ? 'Answer submitted. Awaiting review.' : `Answer submitted. Score: ${submitted.score} / ${round.max_points}.`} {submitted.feedback}
       <p>The next round will appear automatically.</p>

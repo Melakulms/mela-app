@@ -23,6 +23,12 @@ type Programme = {
   admin_approved_at: string | null
   notes: string | null
 }
+const PREPARATION_STEPS = [
+  { key:'check_eligibility',label:'I checked the university’s current eligibility rules' },
+  { key:'review_admission',label:'I reviewed admission and nomination requirements' },
+  { key:'prepare_documents',label:'I prepared the required documents privately' },
+  { key:'review_official_portal',label:'I visited the official university application instructions' },
+] as const
 const titleForLevel: Record<string,string> = { undergraduate: "Bachelor's / Grade 12 leavers", masters: "Master's (after bachelor's)", phd: 'PhD', mixed: 'Multiple degree levels' }
 function deadlineText(p: Programme, today: string): string {
   if (p.deadline_status === 'school_nomination_closed') return 'School nomination closed — only previously nominated students can continue'
@@ -35,6 +41,7 @@ function deadlineText(p: Programme, today: string): string {
 export default function ScholarshipResearchPrograms() {
   const [programmes, setProgrammes] = useState<Programme[]>([])
   const [saved, setSaved] = useState<Set<number>>(new Set())
+  const [progress, setProgress] = useState<Record<number,string[]>>({})
   const [level, setLevel] = useState('all')
   const [country, setCountry] = useState('all')
   const [query, setQuery] = useState('')
@@ -57,13 +64,21 @@ export default function ScholarshipResearchPrograms() {
         const { data: auth, error: authError } = await supabase.auth.getUser()
         if (authError) throw authError
         let favouriteIds: number[] = []
+        const progressByProgramme: Record<number,string[]> = {}
         if (auth.user) {
           const { data: favourites, error: favouriteError } = await supabase.from('mela_scholarship_research_saved')
             .select('program_id').eq('user_id', auth.user.id)
           if (favouriteError) throw favouriteError
           favouriteIds = (favourites ?? []).map(p => Number(p.program_id))
+          const { data: preparation, error: progressError } = await supabase.from('mela_scholarship_research_progress')
+            .select('program_id,step_key,completed').eq('user_id',auth.user.id).eq('completed',true)
+          if (progressError) throw progressError
+          for (const task of preparation ?? []) {
+            const id=Number(task.program_id)
+            progressByProgramme[id]=[...(progressByProgramme[id]??[]),String(task.step_key)]
+          }
         }
-        if (active) { setProgrammes((data ?? []) as Programme[]); setSaved(new Set(favouriteIds)) }
+        if (active) { setProgrammes((data ?? []) as Programme[]); setSaved(new Set(favouriteIds));setProgress(progressByProgramme) }
       } catch (cause) {
         if (active) setError(cause instanceof Error ? cause.message : 'Scholarship research is currently unavailable.')
       } finally { if (active) setLoading(false) }
@@ -97,6 +112,27 @@ export default function ScholarshipResearchPrograms() {
     } catch (cause) {setError(cause instanceof Error ? cause.message : 'Unable to save scholarship')}
     finally { setBusy(null) }
   }
+  const togglePreparation = async(programmeId:number,stepKey:string,completed:boolean) => {
+    if (busy !== null) return
+    setBusy(programmeId);setError('')
+    try {
+      const { data: auth,error:authError } = await supabase.auth.getUser()
+      if(authError) throw authError
+      if(!auth.user) throw new Error('Sign in to save your preparation progress')
+      const { error:saveError } = await supabase.from('mela_scholarship_research_progress').upsert({
+        user_id:auth.user.id,program_id:programmeId,step_key:stepKey,completed,
+        updated_at:new Date().toISOString(),
+      },{onConflict:'user_id,program_id,step_key'})
+      if(saveError) throw saveError
+      setProgress(old=>{
+        const next=new Set(old[programmeId]??[])
+        if(completed)next.add(stepKey)
+        else next.delete(stepKey)
+        return {...old,[programmeId]:[...next]}
+      })
+    }catch(cause){setError(cause instanceof Error?cause.message:'Could not save preparation checklist')}
+    finally{setBusy(null)}
+  }
   return <section className="list-panel" aria-label="Source-checked scholarship programmes">
     <div className="section-heading"><div>
       <h2>Scholarship programmes researched for Ethiopian applicants</h2>
@@ -126,6 +162,14 @@ export default function ScholarshipResearchPrograms() {
           <p><strong>Funding:</strong> {p.funding_summary}</p>
           <p><strong>Ethiopian applicants:</strong> {p.nationality_evidence}</p>
           <p className="muted">{p.ethiopian_eligibility === 'explicit'?'Ethiopia explicitly named by provider':'International eligibility indicated — confirm country-specific details'}</p>
+          <details><summary>My preparation checklist ({Math.round(((progress[p.id]??[]).length/PREPARATION_STEPS.length)*100)}% completed)</summary>
+            <p className="muted">Your own preparation only. MELA has not submitted an application or verified its status with a university. No personal documents are stored here.</p>
+            <progress aria-label="Preparation complete" value={(progress[p.id]??[]).length} max={PREPARATION_STEPS.length} style={{width:'100%'}}/>
+            {PREPARATION_STEPS.map(step=><label key={step.key} style={{display:'flex',gap:8,alignItems:'center',marginTop:10}}>
+              <input type="checkbox" disabled={busy!==null} checked={(progress[p.id]??[]).includes(step.key)}
+                onChange={e=>void togglePreparation(p.id,step.key,e.target.checked)}/>{step.label}
+            </label>)}
+          </details>
           <details><summary>Entry requirements, costs and application steps</summary>
             <p><strong>Coverage</strong></p><ul>{p.coverage.map(x=><li key={x}>{x}</li>)}</ul>
             <p><strong>Requirements</strong></p><ul>{p.essential_requirements.map(x=><li key={x}>{x}</li>)}</ul>

@@ -338,6 +338,7 @@ export default function Arena({ onBack }: { onBack: () => void }) {
 export function LiveMatch({ matchId, onLeave, onBack }: { matchId: string; onLeave: () => void; onBack: () => void }) {
   const { t } = useI18n()
   const [state, setState] = useState<MatchState | null>(null)
+  const [remainingSecondsNow,setRemainingSecondsNow]=useState(()=>Date.now())
   const [round, setRound] = useState<RoundDetail | null>(null)
   const [scoreboard, setScoreboard] = useState<ScoreboardRow[]>([])
   const [context, setContext] = useState<{ userId: string; isCreator: boolean } | null>(null)
@@ -368,7 +369,8 @@ export function LiveMatch({ matchId, onLeave, onBack }: { matchId: string; onLea
     active.current = true
     void load()
     const timer = window.setInterval(() => void load(), 5000)
-    return () => { active.current = false; window.clearInterval(timer) }
+    const clock = window.setInterval(() => setRemainingSecondsNow(Date.now()),1000)
+    return () => { active.current = false; window.clearInterval(timer); window.clearInterval(clock) }
   }, [load])
 
   const prepare = async (start: boolean) => {
@@ -382,6 +384,9 @@ export function LiveMatch({ matchId, onLeave, onBack }: { matchId: string; onLea
     finally { setBusy(false) }
   }
 
+  const deadline=state?.current_round?.ends_at
+  const secondsLeft=deadline?Math.max(0,Math.ceil((Date.parse(deadline)-remainingSecondsNow)/1000)):null
+
   if (!state) return <div className="dash-main">
     <h1>Arena match</h1>
     {error ? <><div className="banner banner-error" role="alert">{error}</div><button className="btn btn-primary" onClick={() => void load()}>Retry</button></> : <p role="status">Loading match…</p>}
@@ -392,6 +397,11 @@ export function LiveMatch({ matchId, onLeave, onBack }: { matchId: string; onLea
     <div className="section-heading"><h1>{state.title}</h1><button className="btn btn-secondary" onClick={onBack}>{t('back')}</button></div>
     {error && <div className="banner banner-error" role="alert">{error}</div>}
     <p className="muted">{state.participant_count} players · status: {state.status}</p>
+    {state.status==='live'&&state.current_round?.state==='open'&&secondsLeft!==null&&
+      <p role="timer" className="banner banner-info">
+        <strong>Round {state.current_round.round_order} · {secondsLeft} seconds remaining</strong>
+        {secondsLeft===0&&' — deadline reached; syncing the next round with the server.'}
+      </p>}
     {['open', 'ready'].includes(state.status) ? <div className="banner banner-info">
       <p>All participants must press Ready first. In private, unrated staging matchmaking, either player can start once both are ready.</p>
       <button className="btn btn-primary" disabled={busy} onClick={() => void prepare(false)}>I'm ready</button>

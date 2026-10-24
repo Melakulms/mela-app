@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import {
   fetchLeaderboard, joinMatchmaking, cancelMatchmaking, checkMyQueueStatus,
   fetchMatchState, fetchScoreboard, fetchCurrentRoundDetail, submitRound,
-  fetchMatchContext, readyForMatch, startMatch, fetchMyRoundResult,
+  fetchMatchContext, readyForMatch, startMatch, fetchMyRoundResult, advanceMyArenaMatch,
   type LeaderboardRow, type ArenaMode, type MatchState, type ScoreboardRow, type RoundDetail, type RoundResult,
 } from '../lib/arena'
 
@@ -327,7 +327,12 @@ export function LiveMatch({ matchId, onLeave, onBack }: { matchId: string; onLea
       <button className="btn btn-secondary" disabled={busy} onClick={() => void load()}>Refresh match</button>
     </div> : state.status === 'completed' ? <div className="banner banner-info">This match has ended. Written answers without judge review are not verified results; any displayed placement is provisional.</div>
       : state.status === 'cancelled' ? <div className="banner banner-info">This match was cancelled.</div>
-      : round && state.current_round?.state === 'open' ? <RoundPanel key={round.id} round={round} order={state.current_round.round_order} serverResult={serverResult} onSubmitted={() => void load()} />
+      : round && state.current_round?.state === 'open' ? <RoundPanel key={round.id} round={round} order={state.current_round.round_order} serverResult={serverResult} onSubmitted={() => {
+          void advanceMyArenaMatch(matchId).then(()=>load()).catch(cause=>setError(cause instanceof Error?cause.message:'Could not advance Arena match'))
+        }} />
+      : state.current_round?.state === 'closed' ? <div className="banner banner-info">
+          All rounds are closed. Written answers awaiting authorized human judging do not yet have final results. Match and scores refresh automatically.
+        </div>
       : <div className="banner banner-info">Waiting for the next round to open. The match refreshes automatically.</div>}
     <div className="section-heading"><h2>{state.arena_type==='quiz_battle'||state.arena_type==='speed_quiz'?'Demo Scoreboard':'Provisional Scores — Human Judge Required'}</h2></div>
     {!scoreboard.length ? <div className="empty-panel">Scores will appear once the match is underway.</div> : <div className="list-panel">

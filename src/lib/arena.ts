@@ -63,6 +63,7 @@ export interface CurrentRound {
 export interface MatchState {
   id: string
   title: string
+  arena_type: string
   status: string
   participant_count: number
   current_round: CurrentRound | null

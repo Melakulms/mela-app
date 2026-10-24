@@ -223,7 +223,7 @@ export default function Arena({ onBack }: { onBack: () => void }) {
 
   if (demoMode && staging) return <ArenaPracticeLab mode={demoMode} onBack={()=>setDemoMode(null)}/>
 
-  if (hosted) return <HostedCompetitions kind={hosted} canEnter={!staging||adultAccess==='eligible'} onBack={() => setHosted(null)} onMatch={id => { setHosted(null); setMatchId(id); setQueueState('matched') }} />
+  if (hosted) return <HostedCompetitions kind={hosted} canEnter={!staging||adultAccess==='eligible'} onBack={() => setHosted(null)} onPractice={() => {setHosted(null);setDemoMode('employer_challenge')}} onMatch={id => { setHosted(null); setMatchId(id); setQueueState('matched') }} />
 
   return (
     <div className="dash-main">

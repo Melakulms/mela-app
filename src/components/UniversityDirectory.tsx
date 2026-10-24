@@ -3,9 +3,11 @@ import { supabase } from '../lib/supabase'
 import { safeExternalUrl } from '../lib/external-url'
 
 type University = { id: number; name: string; country: string; website_url: string }
+type FundingSource = { university_id: number; funding_url: string; education_levels: string | null }
 
 export default function UniversityDirectory() {
   const [rows, setRows] = useState<University[]>([])
+  const [funding, setFunding] = useState<FundingSource[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
@@ -23,6 +25,10 @@ export default function UniversityDirectory() {
         const { data: universityRows, error: queryError } = await supabase.from('universities')
           .select('id,name,country,website_url').eq('is_active', true).order('name').range(0, 499)
         if (queryError) throw queryError
+        const { data: fundingRows, error: fundingError } = await supabase.from('university_funding_sources')
+          .select('university_id,funding_url,education_levels').limit(100)
+        if (fundingError) throw fundingError
+        if (active) setFunding((fundingRows ?? []) as FundingSource[])
         const { data: auth } = await supabase.auth.getUser()
         if (auth.user) {
           const { data: learner } = await supabase.from('profiles')
@@ -69,7 +75,11 @@ export default function UniversityDirectory() {
         !error && filtered.length === 0 ? <div className="empty-panel">No universities match this filter.</div> :
         <><p className="muted">{filtered.length} universities listed; official websites only</p>
           {visible.map(u => <div className="list-row" key={u.id}>
-            <div style={{ flex: 1 }}><div className="list-row-title">{u.name}</div><div className="list-row-meta">{u.country} · Scholarship details not yet individually verified</div></div>
+            <div style={{ flex: 1 }}><div className="list-row-title">{u.name}</div><div className="list-row-meta">{u.country} · Scholarship details not yet individually verified</div>
+              {funding.filter(f => f.university_id === u.id).map(f => safeExternalUrl(f.funding_url) &&
+                <a key={f.funding_url} className="list-row-meta" target="_blank" rel="noopener noreferrer" href={safeExternalUrl(f.funding_url)!}>
+                  Official funding information ({f.education_levels || 'study level varies'}) — eligibility and deadlines require checking
+                </a>)}</div>
             {safeExternalUrl(u.website_url) ? <a className="btn btn-secondary" href={safeExternalUrl(u.website_url)!} rel="noopener noreferrer" target="_blank">University website</a> : <span>Link unavailable</span>}
           </div>)}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 16 }}>

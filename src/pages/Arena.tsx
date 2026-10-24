@@ -178,7 +178,7 @@ export default function Arena({ onBack }: { onBack: () => void }) {
     return <LiveMatch matchId={matchId} onLeave={() => { setMatchId(null); setQueueState('idle') }} onBack={onBack} />
   }
 
-  if (hosted) return <HostedCompetitions kind={hosted} onBack={() => setHosted(null)} onMatch={id => { setHosted(null); setMatchId(id); setQueueState('matched') }} />
+  if (hosted) return <HostedCompetitions kind={hosted} canEnter={!staging||adultAccess==='eligible'} onBack={() => setHosted(null)} onMatch={id => { setHosted(null); setMatchId(id); setQueueState('matched') }} />
 
   return (
     <div className="dash-main">
@@ -189,7 +189,7 @@ export default function Arena({ onBack }: { onBack: () => void }) {
       {error && <div className="banner banner-error" role="alert">{error}</div>}
       {staging && <section className="banner banner-info" aria-label="Arena beta safety" style={{marginBottom:14}}>
         <strong>MELA ARENA · STAGING ADULT DEMO · 24 OCT 2026</strong>
-        <p>All eight experiences are visible. Two quiz modes support automatic grading with demo questions. Skill Sprint, Interview Practice and Case Sprint take written answers but require independent judges for grading. All five matchmaking modes are testing-only and unrated. Team, employer and tournament registration remains paused until organizer and safeguarding checks are complete.</p>
+        <p>All eight experiences are visible. Two quiz modes support automatic grading with demo questions. Skill Sprint, Interview Practice and Case Sprint take written answers but require independent judges for grading. All five matchmaking modes are testing-only and unrated. Team, employer and tournament entry is available only when an approved organizer publishes a public event; the server enforces adult participation. No such event is currently published on staging.</p>
         <p><strong>Adult competition access:</strong> {adultAccess==='checking'?'Checking your student profile…':
           adultAccess==='eligible'?'Account passes the current staging adult-profile check (self-reported age; not independent identity verification).':
           adultAccess==='missing_dob'?'Date of birth is missing from your staging student profile.':

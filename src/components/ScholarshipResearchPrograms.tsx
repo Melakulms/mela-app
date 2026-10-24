@@ -72,7 +72,7 @@ export default function ScholarshipResearchPrograms() {
   }, [version])
   const countries = useMemo(() => [...new Set(programmes.map(p => p.country))].sort(),[programmes])
   const filtered = useMemo(() => programmes.filter(p =>
-    (level === 'all' || p.degree_level === level) &&
+    (level === 'all' || p.degree_level === level || p.degree_level === 'mixed') &&
     (country === 'all' || p.country === country) &&
     (!showSaved || saved.has(p.id)) &&
     (!query || (p.title+' '+p.country+' '+p.funding_summary).toLowerCase().includes(query.trim().toLowerCase()))
@@ -109,7 +109,7 @@ export default function ScholarshipResearchPrograms() {
     <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:14}}>
       <input aria-label="Search source-checked programmes" placeholder="Programme, country or funding" value={query} onChange={e=>setQuery(e.target.value)} />
       <select aria-label="Degree level" value={level} onChange={e=>setLevel(e.target.value)}>
-        <option value="all">Every study level</option><option value="undergraduate">Bachelor's</option><option value="masters">Master's</option><option value="phd">PhD</option>
+        <option value="all">Every study level</option><option value="undergraduate">Bachelor's</option><option value="masters">Master's</option><option value="phd">PhD</option><option value="mixed">Multiple levels</option>
       </select>
       <select aria-label="Scholarship country" value={country} onChange={e=>setCountry(e.target.value)}>
         <option value="all">All countries</option>{countries.map(c=><option key={c} value={c}>{c}</option>)}

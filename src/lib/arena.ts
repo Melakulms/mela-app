@@ -50,6 +50,14 @@ export async function checkMyQueueStatus(): Promise<QueueStatus | null> {
   return data as QueueStatus | null
 }
 
+/** Safe, match-scoped progression, including the all-players-submitted case. */
+export async function advanceMyArenaMatch(matchId:string): Promise<boolean> {
+  if (import.meta.env.VITE_MELA_STAGING !== 'true') return false
+  const { data, error } = await supabase.rpc('staging_arena_advance_my_match_v1', {p_match_id:matchId})
+  if (error) throw error
+  return Number(data) > 0
+}
+
 // Live match contracts follow the deployed Arena functions.
 
 export interface CurrentRound {

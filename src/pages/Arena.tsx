@@ -30,7 +30,67 @@ export default function Arena({ onBack }: { onBack: () => void }) {
   const [busy, setBusy] = useState(false)
   const [assessments, setAssessments] = useState<{ id: string; title: string; question_count: number }[]>([])
   const [assessmentId, setAssessmentId] = useState('')
+  const [adultAccess,setAdultAccess] = useState<'checking'|'eligible'|'missing_dob'|'underage'|'school'|'unauthorized'>('checking')
+  const [birthDate,setBirthDate] = useState('')
+  const [ageSaving,setAgeSaving] = useState(false)
+  const [ageError,setAgeError] = useState('')
+  const staging = import.meta.env.VITE_MELA_STAGING === 'true'
 
+  useEffect(() => {
+    if (!staging) {setAdultAccess('eligible');return}
+    let active=true
+    void (async()=>{
+      try {
+        const {data:{user},error:authError}=await supabase.auth.getUser()
+        if(authError)throw authError
+        if(!user) {if(active)setAdultAccess('unauthorized');return}
+        const {data:profile,error:profileError}=await supabase.from('profiles')
+          .select('role,education_stage_key,account_status,education_onboarding_completed')
+          .eq('id',user.id).maybeSingle()
+        if(profileError)throw profileError
+        if(profile?.role!=='student'||profile.account_status!=='active'||!profile.education_onboarding_completed) {
+          if(active)setAdultAccess('unauthorized');return
+        }
+        if(!['university','college_tvet'].includes(profile.education_stage_key??'')) {
+          if(active)setAdultAccess('school');return
+        }
+        const {data:details,error:detailsError}=await supabase.from('student_profiles')
+          .select('date_of_birth').eq('user_id',user.id).maybeSingle()
+        if(detailsError)throw detailsError
+        if(active){
+          const dob=details?.date_of_birth??null
+          const cutoff=new Date()
+          cutoff.setUTCFullYear(cutoff.getUTCFullYear()-18)
+          const cutoffStr=cutoff.toISOString().slice(0,10)
+          const century=new Date()
+          century.setUTCFullYear(century.getUTCFullYear()-120)
+          setAdultAccess(!dob?'missing_dob':dob>cutoffStr||dob<century.toISOString().slice(0,10)?'underage':'eligible')
+        }
+      } catch(cause){
+        if(active){setAdultAccess('unauthorized');setAgeError(cause instanceof Error?cause.message:'Unable to verify your staging account')}
+      }
+    })()
+    return()=>{active=false}
+  },[staging])
+
+  const saveAdultBetaDate=async()=>{
+    if(ageSaving || !birthDate)return
+    setAgeSaving(true);setAgeError('')
+    try {
+      const cutoff=new Date()
+      cutoff.setUTCFullYear(cutoff.getUTCFullYear()-18)
+      if(birthDate>cutoff.toISOString().slice(0,10))throw new Error('Open Arena matchmaking is restricted to adults age 18 or older.')
+      const {data:{user},error:authError}=await supabase.auth.getUser()
+      if(authError)throw authError
+      if(!user)throw new Error('Sign in first')
+      const {error:saveError}=await supabase.from('student_profiles').upsert(
+        {user_id:user.id,date_of_birth:birthDate},{onConflict:'user_id'})
+      if(saveError)throw saveError
+      setAdultAccess('eligible')
+      setBirthDate('')
+    } catch(cause){setAgeError(cause instanceof Error?cause.message:'Could not save staging date of birth')}
+    finally{setAgeSaving(false)}
+  }
   useEffect(() => {
     supabase.from('skill_assessments').select('id,title,question_count').eq('status','published').gte('question_count',8).order('title').then(({ data, error }) => {
       if (error) { setError(error.message); return }
@@ -73,6 +133,7 @@ export default function Arena({ onBack }: { onBack: () => void }) {
     setBusy(true)
     setError('')
     try {
+      if(staging && adultAccess!=='eligible')throw new Error('Complete adult beta eligibility before entering matchmaking.')
       if (['quiz_battle', 'speed_quiz'].includes(mode) && !assessmentId) throw new Error('Select a quiz assessment first.')
       await joinMatchmaking(mode, ['quiz_battle', 'speed_quiz'].includes(mode) ? assessmentId : null)
       setQueueState('searching')
@@ -122,13 +183,33 @@ export default function Arena({ onBack }: { onBack: () => void }) {
         <h1>{t('arena')}</h1>
         <button className="btn btn-secondary" onClick={onBack}>{t('back')}</button>
       </div>
-      {error && <div className="banner banner-error">{error}</div>}
+      {error && <div className="banner banner-error" role="alert">{error}</div>}
+      {staging && <section className="banner banner-info" aria-label="Arena beta safety" style={{marginBottom:14}}>
+        <strong>MELA ARENA · STAGING ADULT DEMO · 24 OCT 2026</strong>
+        <p>All eight experiences are visible. The five opponent-match modes are testing-only, unrated and carry no prizes. Team, employer and tournament registration remains paused while organizer and safeguarding checks are completed.</p>
+        <p><strong>Adult competition access:</strong> {adultAccess==='checking'?'Checking your student profile…':
+          adultAccess==='eligible'?'Account passes the current staging adult-profile check (self-reported age; not independent identity verification).':
+          adultAccess==='missing_dob'?'Date of birth is missing from your staging student profile.':
+          adultAccess==='underage'?'Your current date of birth does not pass the 18+ check.':
+          adultAccess==='school'?'Open opponent matchmaking is unavailable for school-stage learners.':
+          'Your staging student account could not be verified.'}</p>
+        {adultAccess==='missing_dob' && <div className="field" style={{maxWidth:420}}>
+          <label htmlFor="arena-dob">Date of birth for adult beta test account (do not enter a real child's information)</label>
+          <input id="arena-dob" type="date" value={birthDate} onChange={e=>setBirthDate(e.target.value)}/>
+          <p className="muted">A self-reported date establishes test eligibility only, not verified identity or eligibility for money prizes.</p>
+          <button className="btn btn-primary" disabled={!birthDate||ageSaving} onClick={()=>void saveAdultBetaDate()}>
+            {ageSaving?'Saving…':'Save beta age information'}
+          </button>
+        </div>}
+        {ageError && <p role="alert">{ageError}</p>}
+      </section>}
 
       {queueState === 'idle' && (
         <>
           <div className="section-heading"><h2>Eight ways to compete</h2></div>
           <div className="field" style={{ maxWidth: 520 }}>
             <label htmlFor="arena-assessment">Assessment for quiz competitions</label>
+            {!assessments.length&&<p className="muted">No Arena demo assessment is published or available to your account.</p>}
             <select id="arena-assessment" value={assessmentId} onChange={e => setAssessmentId(e.target.value)}>
               {assessments.map(a => <option key={a.id} value={a.id}>{a.title} · {a.question_count} questions</option>)}
             </select>
@@ -138,7 +219,7 @@ export default function Arena({ onBack }: { onBack: () => void }) {
               <div className="module-card" key={m.value}>
                 <h3>{m.label}</h3>
                 <p>{m.blurb}</p>
-                <button className="btn btn-primary" onClick={() => startSearching(m.value)} disabled={busy || (['quiz_battle', 'speed_quiz'].includes(m.value) && !assessmentId)}>Search for opponent</button>
+                <button className="btn btn-primary" onClick={() => startSearching(m.value)} disabled={busy || (staging && adultAccess!=='eligible') || (['quiz_battle', 'speed_quiz'].includes(m.value) && !assessmentId)}>Search for opponent</button>
               </div>
             ))}
             {([['team_battle', 'Team Battle', 'Join an organized team competition.'], ['employer_challenge', 'Employer Challenge', 'Demonstrate skills in organizer-led challenges.'], ['tournament', 'Tournaments', 'Explore multi-match competitions.']] as const).map(([kind, label, description]) => <div className="module-card" key={kind}><h3>{label}</h3><p>{description}</p><button className="btn btn-primary" disabled={busy} onClick={() => setHosted(kind)}>Browse {label}</button></div>)}

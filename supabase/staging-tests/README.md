@@ -17,20 +17,31 @@
 ## Verified staging snapshot
 
 - Six education stages; 12 stage/opportunity rules; 55 provisional subject/track options.
-- 200 university website records, 43 official funding research leads; **zero verified published scholarship opportunity records**.
+- 200 university website records, 43 university funding-page leads; **12 individual source-checked programme and financial-aid schemes**, with date, nationality, funding and level evidence.
+- Zero administrator-approved programmes, zero published MELA scholarship opportunity records. Distinguish official institutional financial aid from a separately competed scholarship.
 - Three current staging Auth profiles; no registered staging super-admin, no verified guardian relationships, no guardian decisions.
 - No staging learner has date-of-birth or adult eligibility attestation. The `adult_work_eligibility` policy document is not present; do not bypass consent/age requirements.
 - New child registration is deliberately **disabled** in the adult-only staging learner preview until real guardian approval and safeguarding tests succeed.
 
+## Source-checked scholarship research catalogue
+
+- `staging_source_checked_scholarship_program_catalog_v1`: dedicated read-only source-check table and user-owned saved-programmes RLS.
+- `staging_mfa_scholarship_research_review_and_private_audit_v1`: MFA-only administrative review, withdrawal and private decision audit.
+- `staging_remove_scholarship_eligibility_paywall_and_false_guarantees_v2`: eliminates premium requirement and replaces misleading GPA-only `eligible:true` claims with explicit preliminary criteria explanations.
+- [Versioned public research entries](../../research/mela_official_scholarship_programs_2026_10_24.json) include five UK/Canada programme examples, five US need-based aid opportunities and two PKU international scholarship programmes.
+- Only source-checked research appears in the initial staging learner view; university-only links remain a separate directory and must not imply a verified award.
+- Admissions, school nomination and scholarship deadlines are distinct. Toronto Pearson is **not open to new nominations** as of Oct 24, 2026 even though already nominated candidates have a November submission deadline.
+- A change in institution funding rules must trigger re-verification and a new version of the research record. This is ongoing operational work; scholarships cannot be accurately verified once for all time.
+
 ## Test instructions
 
-Run `supabase/staging-tests/guardian_scholarship_security_smoke.sql` on staging only. It verifies catalog, restrictive application gate, anonymous permissions, private audit privilege, and simulated ordinary-user denial. The SQL is transactional and ends with ROLLBACK.
+Run `supabase/staging-tests/guardian_scholarship_security_smoke.sql` and `supabase/staging-tests/scholarship_catalog_security_smoke.sql` on staging only. It verifies catalog, restrictive application gate, anonymous permissions, private audit privilege, and simulated ordinary-user denial. The SQL is transactional and ends with ROLLBACK.
 
-The smoke test does **not** prove actual MFA sign-in, guardian identity verification, real student application submission, or individual Ethiopian scholarship eligibility. Those require authorized staging accounts and monitored E2E testing.
+The smoke tests include role-simulated negative RLS and fake cross-account save denial. They do **not** prove successful real-account bookmarking or Android rendering. There is no registered staging administrator, so MELA source approvals cannot be executed until a real authorized MFA admin joins staging. The smoke tests do **not** prove actual MFA sign-in, guardian identity verification, real student application submission, or individual Ethiopian scholarship eligibility. Those require authorized staging accounts and monitored E2E testing.
 
 ## Review
 
 - Learner: https://github.com/Melakulms/mela-app/pull/59
 - Guardian reviewer: https://github.com/Melakulms/Mela-central-dashboard-/pull/62
 
-Do not publish 43 official funding research pages as 43 verified scholarships. Review every national eligibility rule, current application link, funding coverage, and deadline before promoting an individual award.
+Do not publish 43 official funding research pages as 43 verified scholarships. The 12 research programmes must be checked again before academic-year changes or a real application. Review every national eligibility rule, current application link, funding coverage, and deadline before promoting an individual award.

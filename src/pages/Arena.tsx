@@ -34,6 +34,7 @@ export default function Arena({ onBack }: { onBack: () => void }) {
   const [birthDate,setBirthDate] = useState('')
   const [ageSaving,setAgeSaving] = useState(false)
   const [ageError,setAgeError] = useState('')
+  const [inviteNotice,setInviteNotice] = useState('')
   const staging = import.meta.env.VITE_MELA_STAGING === 'true'
 
   useEffect(() => {
@@ -130,6 +131,23 @@ export default function Arena({ onBack }: { onBack: () => void }) {
     return () => { active = false; window.clearInterval(timer) }
   }, [queueState])
 
+  const shareArenaTest = async () => {
+    const url=new URL(window.location.href)
+    url.pathname='/';url.search='?view=arena';url.hash=''
+    const message='Join me in MELA Arena adult staging. Sign into your own eligible beta account, open Quiz Battle, select the same MELA STAGING DEMO assessment, and tap Search for opponent. This is an unrated test, with no prizes.'
+    try {
+      if(navigator.share) {
+        await navigator.share({title:'MELA Arena staging competition',text:message,url:url.toString()})
+        setInviteNotice('Testing instructions shared. Each player needs their own eligible account.')
+      }else if(navigator.clipboard?.writeText){
+        await navigator.clipboard.writeText(message+' '+url.toString())
+        setInviteNotice('Testing instructions copied. Send them to another adult beta tester.')
+      }else setInviteNotice('Share this staging Arena link with the other adult beta tester: '+url.toString())
+    }catch(cause){
+      if(cause instanceof Error && cause.name==='AbortError')return
+      setInviteNotice('Share from your browser address bar: '+url.toString())
+    }
+  }
   const startSearching = async (mode: ArenaMode) => {
     if (searchLock.current) return
     searchLock.current = true
@@ -210,6 +228,14 @@ export default function Arena({ onBack }: { onBack: () => void }) {
       {queueState === 'idle' && (
         <>
           <div className="section-heading"><h2>Eight ways to compete</h2></div>
+          {staging&&<section className="banner banner-info" aria-label="Arena opponent testing">
+            <strong>How to start a real two-player beta match</strong>
+            <p>Two different adult student accounts must sign in from separate phone/browser sessions. Both select the same demo assessment and Quiz Battle or Speed Quiz, then search for an opponent. Both tap I'm ready once matched. Either can start after both are ready.</p>
+            <button type="button" className="btn btn-secondary" onClick={()=>void shareArenaTest()}>
+              Share Arena beta testing instructions
+            </button>
+            {inviteNotice&&<p role="status">{inviteNotice}</p>}
+          </section>}
           <div className="field" style={{ maxWidth: 520 }}>
             <label htmlFor="arena-assessment">Assessment for quiz competitions</label>
             {!assessments.length&&<p className="muted">No Arena demo assessment is published or available to your account.</p>}

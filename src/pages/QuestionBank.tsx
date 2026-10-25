@@ -44,6 +44,7 @@ export default function QuestionBank({ onBack }: { onBack: () => void }) {
   const [loading, setLoading] = useState(true)
   const [revision, setRevision] = useState(0)
   const answeredCount = questions.filter(q => answers[q.id]?.trim()).length
+  const noAccessibleQuestions = error.startsWith('This selection has fewer than five accessible mastery questions.')
 
   useEffect(() => {
     let active = true
@@ -101,7 +102,10 @@ export default function QuestionBank({ onBack }: { onBack: () => void }) {
       setSessionId(data.session_id)
       setQuestions((data.questions ?? []) as Question[])
     } catch (e: any) {
-      setError(e.message ?? 'Could not start the question session.')
+      const message = e instanceof Error ? e.message : String(e?.message ?? 'Could not start the question session.')
+      setError(/mastery rebuild in progress|not enough accessible supplemental questions/i.test(message)
+        ? 'This selection has fewer than five accessible mastery questions. Clear the optional filters and retry, or choose a different subject. Other questions may still require a teacher review or entitlement.'
+        : message)
     } finally { requestLock.current = false; setBusy(false) }
   }
 
@@ -139,6 +143,11 @@ export default function QuestionBank({ onBack }: { onBack: () => void }) {
       <div className="section-heading"><h1>{t('questionBank')}</h1><button className="btn btn-secondary" onClick={onBack}>{t('back')}</button></div>
       <p className="muted">Practice at your own pace with questions matched to your {grade ? `Grade ${grade}` : "education"} curriculum.</p>
       {error && <div className="banner banner-error" role="alert">{error}</div>}
+      {noAccessibleQuestions && (chapter || topic || difficulty) && !sessionId && (
+        <button className="btn btn-secondary" onClick={() => { setChapter(''); setTopic(''); setDifficulty(''); setError('') }}>
+          Clear chapter, topic and difficulty filters
+        </button>
+      )}
 
       {loading && <p role="status">Loading your subjects…</p>}
       {!loading && !sessionId && error && <button className="btn btn-secondary" onClick={() => setRevision(value => value + 1)}>Reload subjects</button>}
@@ -154,7 +163,7 @@ export default function QuestionBank({ onBack }: { onBack: () => void }) {
           </div>
           {detailLoading && <p role="status">Loading chapters…</p>}
           {detailError && <div role="alert">{detailError}<button className="btn btn-secondary" onClick={() => setRevision(v => v + 1)}>Reload subjects</button></div>}
-          {inventory && <p className="muted">{inventory.mastery_count} validated questions; {inventory.review_required_count} awaiting review. Availability depends on language and access.</p>}
+          {inventory && <p className="muted">{inventory.mastery_count} automatically validated or educator-verified candidates; {inventory.review_required_count} awaiting review. Some questions require an entitlement, and automated validation is not professional teacher approval.</p>}
           <div className="field"><label htmlFor="chapter">Chapter</label><select id="chapter" disabled={busy || detailLoading} value={chapter} onChange={e => { setChapter(e.target.value); setTopic('') }}><option value="">All chapters</option>{chapters.map(c => <option key={c.chapter_id} value={c.chapter_id}>{c.chapter_title} ({c.mastery_count} validated)</option>)}</select></div>
           <div className="field"><label htmlFor="topic">Topic</label><select id="topic" disabled={busy || !chapter} value={topic} onChange={e => setTopic(e.target.value)}><option value="">All topics</option>{(chapters.find(c => c.chapter_id === chapter)?.topics ?? []).map(t => <option key={t.topic_id} value={t.topic_id}>{t.topic_title} ({t.mastery_count} validated)</option>)}</select></div>
           <div className="field"><label htmlFor="difficulty">Difficulty</label><select id="difficulty" disabled={busy} value={difficulty} onChange={e => setDifficulty(e.target.value)}><option value="">All levels</option>{[1,2,3,4,5].map(n => <option key={n} value={n}>Level {n}</option>)}</select></div>

@@ -15,6 +15,7 @@ type View =
 export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () => void; onOpenQuestionBank?: () => void }) {
   const { t } = useI18n()
   const [topics, setTopics] = useState<PracticeTopic[] | null>(null)
+  const [revision, setRevision] = useState(0)
   const [recommendations, setRecommendations] = useState<PracticeRecommendation[]>([])
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -23,9 +24,15 @@ export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () =>
   const [view, setView] = useState<View>({ stage: 'topics' })
 
   useEffect(() => {
-    fetchTopics().then(setTopics).catch((e) => setError(e.message ?? 'Could not load topics.'))
-    fetchDashboard().then((d) => setRecommendations(d.practice.recommendations)).catch(() => {})
-  }, [])
+    let active = true
+    setTopics(null)
+    setError('')
+    fetchTopics().then(value => { if (active) setTopics(value) }).catch((e) => {
+      if (active) setError(e.message ?? 'Could not load topics.')
+    })
+    fetchDashboard().then((d) => { if (active) setRecommendations(d.practice.recommendations) }).catch(() => {})
+    return () => { active = false }
+  }, [revision])
 
   const beginTopic = async (topicId: string) => {
     setError('')
@@ -87,7 +94,8 @@ export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () =>
           <button className="btn btn-secondary" onClick={onBack}>{t('back')}</button>
         </div>
         {onOpenQuestionBank && <div className="list-panel question-card"><p>School learners: practice by grade, subject, chapter, and topic in the curriculum Question Bank.</p><button className="btn btn-primary" onClick={onOpenQuestionBank}>Open curriculum Question Bank</button></div>}
-        {error && <div className="banner banner-error">{error}</div>}
+        {error && <div className="banner banner-error" role="alert">{error}</div>}
+        {error && <button className="btn btn-secondary" onClick={() => setRevision(n => n + 1)}>Retry loading practice topics</button>}
 
         {recommendations.filter(r => topics?.some(t => t.id === r.topic_id)).length > 0 && (
           <>
@@ -184,7 +192,8 @@ export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () =>
         <div><span className="stat-value">{view.summary.correct}/{view.summary.answered}</span><span className="stat-label">Correct</span></div>
         <div><span className="stat-value">{view.summary.topic_mastery[0]?.mastery_level ?? '—'}</span><span className="stat-label">Mastery</span></div>
       </div>
-      <button className="btn btn-primary" onClick={onBack}>{t('back')}</button>
+      <button className="btn btn-primary" onClick={() => { setView({ stage: 'topics' }); setRevision(n => n + 1) }}>Practice another topic</button>
+      <button className="btn btn-secondary" onClick={onBack}>Back to Home</button>
     </div>
   )
 }

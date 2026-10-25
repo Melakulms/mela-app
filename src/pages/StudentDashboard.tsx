@@ -127,7 +127,7 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
       {visibleModules.length === 0 && <div className="empty-panel" role="status">{t('noToolsMatch')} “{query}”. <button className="password-toggle" onClick={() => setQuery('')}>{t('clearSearch')}</button></div>}
       <div className="module-grid">
         {visibleModules.map((m) => {
-          const enabled = ['study_materials','mastery','opportunity_graph','mela_next','wallet','safety_center'].includes(m.key) ? true : (feature_flags[m.key] ?? m.enabled ?? false)
+          const enabled = ['arena','scholarships','study_materials','mastery','opportunity_graph','mela_next','wallet','safety_center'].includes(m.key) ? true : (feature_flags[m.key] ?? m.enabled ?? false)
           const isBuilt = !!m.view
           const Icon = m.icon
           return (

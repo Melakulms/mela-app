@@ -4,6 +4,7 @@ import { normalizeLanguageCode } from '../i18n'
 type SaveEducationInput = {
   stageKey: string
   grade: number | null
+  trackKey?: string | null
   school: string
   subjects: string[]
   interests: string[]
@@ -19,7 +20,7 @@ type PostgrestLikeError = {
   hint?: unknown
 }
 
-type SaveStep = 'loading account' | 'setting education level' | 'completing profile' | 'verifying saved profile'
+type SaveStep = 'loading account' | 'setting education level' | 'saving academic stream' | 'completing profile' | 'verifying saved profile'
 
 /** A PostgREST failure is often a plain object, not a JavaScript Error. */
 export function explainEducationSaveError(cause: unknown, step: SaveStep): string {
@@ -100,6 +101,18 @@ export async function saveMyEducationProfile(input: SaveEducationInput): Promise
       if (stageError) throw stageError
     }
 
+    // Senior-school streams are saved by a restricted server RPC before subject completion.
+    if (input.stageKey === 'school_11_12') {
+      if (!['natural_sciences', 'social_sciences'].includes(input.trackKey ?? '')) {
+        throw new Error('Choose your actual Grades 11–12 academic stream.')
+      }
+      step = 'saving academic stream'
+      const { error: streamError } = await supabase.rpc('set_my_academic_stream_v38', {
+        p_track_key: input.trackKey,
+      })
+      if (streamError) throw streamError
+    }
+
     step = 'completing profile'
     const fullName = String(current.full_name ?? '').trim()
     if (fullName.length < 2) throw new Error('Your account is missing a full name. Ask MELA support to correct the account before retrying.')
@@ -126,8 +139,11 @@ export async function saveMyEducationProfile(input: SaveEducationInput): Promise
       throw new Error('The server could not confirm that your education level and grade were saved.')
     }
     const { data: savedSubjects, error: subjectsError } = await supabase.from('student_profiles')
-      .select('subjects').eq('user_id', id).maybeSingle()
+      .select('subjects,academic_track_key').eq('user_id', id).maybeSingle()
     if (subjectsError) throw subjectsError
+    if (input.stageKey === 'school_11_12' && savedSubjects?.academic_track_key !== input.trackKey) {
+      throw new Error('MELA could not verify your saved academic stream.')
+    }
     if (!Array.isArray(savedSubjects?.subjects) ||
         !input.subjects.every(subject => savedSubjects.subjects.includes(subject))) {
       throw new Error('The server did not save every selected subject.')

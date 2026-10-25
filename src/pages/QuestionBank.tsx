@@ -51,7 +51,7 @@ export default function QuestionBank({ onBack, onOpenProfile }: { onBack: () => 
   useEffect(() => {
     let active = true
     const load = async () => {
-      setLoading(true); setError('')
+      setLoading(true); setError(''); setGrade(null); setPrograms([]); setProgram('')
       try {
         const { data: auth, error: authError } = await supabase.auth.getUser()
         if (authError) throw authError

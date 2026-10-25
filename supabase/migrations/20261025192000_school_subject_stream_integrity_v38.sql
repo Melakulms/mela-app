@@ -9,58 +9,70 @@ CREATE OR REPLACE FUNCTION private.validate_school_enrollment_v38()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO ''
 AS $guard$
 DECLARE
-  v_role text; v_stage text; v_grade integer; v_track text;
+ v_role text; v_stage text; v_grade integer; v_track text; v_expected_stage text;
+ v_invalid integer; v_missing integer; v_distinct integer;
 BEGIN
- SELECT p.role::text,p.education_stage_key,p.grade_level
- INTO v_role,v_stage,v_grade FROM public.profiles p WHERE p.id=NEW.user_id;
+ SELECT role::text,education_stage_key,grade_level INTO v_role,v_stage,v_grade
+ FROM public.profiles WHERE id=NEW.user_id;
  IF v_role IS DISTINCT FROM 'student' THEN
-   RAISE EXCEPTION 'student profile must belong to a registered learner';
+   RAISE EXCEPTION 'registered student profile required';
  END IF;
- IF TG_OP='UPDATE' AND OLD.academic_track_key IS NOT NULL
-     AND OLD.academic_track_key IS DISTINCT FROM NEW.academic_track_key
-     AND NOT private.is_admin_user() THEN
-   RAISE EXCEPTION 'academic stream change requires verified administrator review';
+ IF TG_OP='UPDATE' THEN
+   IF OLD.academic_track_key IS NOT NULL AND
+      OLD.academic_track_key IS DISTINCT FROM NEW.academic_track_key AND NOT private.is_admin_user() THEN
+      RAISE EXCEPTION 'academic stream is locked; administrator review required';
+   END IF;
  END IF;
  IF v_stage IN ('school_1_6','school_7_8','school_9_10','school_11_12') THEN
-   IF v_grade IS NULL OR v_grade NOT BETWEEN 1 AND 12 OR
-      v_stage IS DISTINCT FROM CASE
-        WHEN v_grade BETWEEN 1 AND 6 THEN 'school_1_6'
-        WHEN v_grade BETWEEN 7 AND 8 THEN 'school_7_8'
-        WHEN v_grade BETWEEN 9 AND 10 THEN 'school_9_10'
-        ELSE 'school_11_12' END THEN
-     RAISE EXCEPTION 'saved school grade and stage are inconsistent';
+   IF v_grade IS NULL OR v_grade NOT BETWEEN 1 AND 12 THEN
+     RAISE EXCEPTION 'valid school grade required';
    END IF;
-   v_track:=CASE WHEN v_grade>=11 THEN NEW.academic_track_key ELSE 'common' END;
-   IF v_grade>=11 AND v_track NOT IN ('natural_sciences','social_sciences') OR
-      (v_grade>=11 AND v_track IS NULL) THEN
-     RAISE EXCEPTION 'select a valid Grades 11–12 academic stream before subjects';
+   v_expected_stage:=CASE WHEN v_grade<=6 THEN 'school_1_6'
+     WHEN v_grade<=8 THEN 'school_7_8'
+     WHEN v_grade<=10 THEN 'school_9_10'
+     ELSE 'school_11_12' END;
+   IF v_stage<>v_expected_stage THEN
+     RAISE EXCEPTION 'school grade and stage do not match';
    END IF;
-   IF v_grade<11 AND NEW.academic_track_key IS NOT NULL AND NEW.academic_track_key<>'common' THEN
-     RAISE EXCEPTION 'Grades 1–10 must use the common curriculum';
+   IF v_grade>=11 THEN
+     v_track:=NEW.academic_track_key;
+     IF v_track IS NULL OR v_track NOT IN ('natural_sciences','social_sciences') THEN
+       RAISE EXCEPTION 'select valid senior school stream first';
+     END IF;
+   ELSE
+     IF NEW.academic_track_key IS NOT NULL AND NEW.academic_track_key<>'common' THEN
+       RAISE EXCEPTION 'school Grades 1–10 use common curriculum';
+     END IF;
+     NEW.academic_track_key:='common';
+     v_track:='common';
    END IF;
-   IF v_grade<11 THEN NEW.academic_track_key:='common'; END IF;
    IF cardinality(NEW.subjects)>0 THEN
-     IF EXISTS(SELECT 1 FROM unnest(NEW.subjects) key
-       WHERE NOT EXISTS(SELECT 1 FROM public.mela_national_subject_catalog cat
-         WHERE cat.active AND cat.stage_key=v_stage AND cat.track_key=v_track AND cat.subject_key=key)) THEN
-       RAISE EXCEPTION 'subject is not part of the registered grade and academic stream';
+     SELECT count(*) INTO v_invalid FROM unnest(NEW.subjects) AS selected(subject_key)
+     WHERE NOT EXISTS(
+       SELECT 1 FROM public.mela_national_subject_catalog c
+       WHERE c.active AND c.stage_key=v_stage AND c.track_key=v_track AND c.subject_key=selected.subject_key);
+     IF v_invalid>0 THEN
+       RAISE EXCEPTION 'subject is outside saved grade or academic stream';
      END IF;
-     IF EXISTS(SELECT 1 FROM public.mela_national_subject_catalog cat
-       WHERE cat.active AND cat.stage_key=v_stage AND cat.track_key=v_track AND cat.optional=false
-         AND NOT(cat.subject_key=ANY(NEW.subjects))) THEN
-       RAISE EXCEPTION 'required school curriculum subjects cannot be removed';
+     SELECT count(*) INTO v_missing FROM public.mela_national_subject_catalog c
+     WHERE c.active AND c.stage_key=v_stage AND c.track_key=v_track AND c.optional=false
+       AND NOT (c.subject_key=ANY(NEW.subjects));
+     IF v_missing>0 THEN
+       RAISE EXCEPTION 'mandatory school subjects cannot be removed';
      END IF;
-     IF cardinality(NEW.subjects) <> (SELECT count(DISTINCT key)::integer FROM unnest(NEW.subjects) key) THEN
-       RAISE EXCEPTION 'duplicate school curriculum subject';
+     SELECT count(DISTINCT selected.subject_key) INTO v_distinct
+     FROM unnest(NEW.subjects) AS selected(subject_key);
+     IF v_distinct<>cardinality(NEW.subjects) THEN
+       RAISE EXCEPTION 'duplicate curriculum subject';
      END IF;
    END IF;
- ELSIF v_stage IN ('college_tvet','university') THEN
+ ELSIF v_stage IN ('university','college_tvet') THEN
    IF NEW.academic_track_key IS NOT NULL THEN
-     RAISE EXCEPTION 'academic school stream is not applicable at this education stage';
+     RAISE EXCEPTION 'school academic stream is not applicable';
    END IF;
  ELSE
    IF cardinality(NEW.subjects)>0 OR NEW.academic_track_key IS NOT NULL THEN
-     RAISE EXCEPTION 'choose an education stage before saving subject enrollment';
+     RAISE EXCEPTION 'education stage must be saved first';
    END IF;
  END IF;
  RETURN NEW;

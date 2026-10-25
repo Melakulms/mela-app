@@ -62,7 +62,7 @@ export async function startSession(topicId: string, questionCount = 5): Promise<
     p_topic_id: topicId,
     p_mode: 'weak_skill',
     p_question_count: questionCount,
-    p_difficulty: 1,
+    p_difficulty: null,
   })
   if (error) throw error
   return data as string

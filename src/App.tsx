@@ -36,6 +36,7 @@ const VerifiedAssessments = lazy(() => import('./pages/VerifiedAssessments'))
 const StudentOnboarding = lazy(() => import('./pages/StudentOnboarding'))
 const ProfileAccessHub = lazy(() => import('./pages/ProfileAccessHub'))
 const QuestionBank = lazy(() => import('./pages/QuestionBank'))
+const ManualPayments = lazy(() => import('./pages/ManualPayments'))
 const SafetyCenter = lazy(() => import('./pages/SafetyCenter'))
 
 import ErrorBoundary from './components/ErrorBoundary'
@@ -80,6 +81,8 @@ export default function App() {
   const [employerRegistration, setEmployerRegistration] = useState<{ status: string; company_name: string | null } | null>(null)
   const [editingEmployerProfile, setEditingEmployerProfile] = useState(false)
   const [showAccount, setShowAccount] = useState(false)
+  const [showPayments, setShowPayments] = useState(false)
+  const manualPaymentsEnabled = import.meta.env.VITE_MANUAL_PAYMENTS_ENABLED === 'true'
 
   useEffect(() => {
     setLoading(true)
@@ -96,7 +99,7 @@ export default function App() {
         !window.location.hash.includes('access_token')
       if (event === 'SIGNED_OUT' || ordinaryRestore || (event === 'SIGNED_IN' && nextUserId !== observedUserId.current)) {
         clearCoachHistories()
-        setProfile(null); setEmployerRegistration(null); setShowAccount(false); setEditingEmployerProfile(false)
+        setShowPayments(false); setProfile(null); setEmployerRegistration(null); setShowAccount(false); setEditingEmployerProfile(false)
         setActionError(''); setPendingEmail('')
         window.dispatchEvent(new Event('mela:session-boundary'))
       }
@@ -137,7 +140,7 @@ export default function App() {
   // Settings lives outside App. Returning home must also reset student section
   // navigation, rather than merely hiding the global settings disclosure.
   useEffect(() => {
-    const onHome = () => { setStudentView('dashboard'); setShowAccount(false) }
+    const onHome = () => { setShowPayments(false); setStudentView('dashboard'); setShowAccount(false) }
     window.addEventListener('mela:go-home', onHome)
     return () => window.removeEventListener('mela:go-home', onHome)
   }, [setStudentView])
@@ -331,7 +334,8 @@ export default function App() {
           </select>
           <span className="pill-stat coins">🪙 {profile.coin_balance}</span>
           <span className={`pill-stat ${online ? 'online' : 'offline'}`} role="status">{online ? <Wifi size={13} /> : <WifiOff size={13} />}{online ? t('connected') : t('offline')}</span>
-          <button type="button" className="btn btn-secondary" onClick={() => { if (isStudent) setStudentView('profile'); else setShowAccount(true) }} aria-label="Open my MELA account"><UserRound size={16} aria-hidden="true" /> My account</button>
+          <button type="button" className="btn btn-secondary" onClick={() => { setShowPayments(false); if (isStudent) setStudentView('profile'); else setShowAccount(true) }} aria-label="Open my MELA account"><UserRound size={16} aria-hidden="true" /> My account</button>
+          {manualPaymentsEnabled && <button type="button" className="btn btn-secondary" onClick={() => setShowPayments(true)}>Payments</button>}
           <button type="button" className="btn btn-secondary app-settings-button" onClick={() => window.dispatchEvent(new Event('mela:open-settings'))} aria-label="Open MELA settings"><SettingsIcon size={16} aria-hidden="true" /> Settings</button>
           <button className="icon-btn" onClick={signOut} disabled={signingOut} aria-label={t('logout')}><LogOut size={18} /></button>
         </div>
@@ -341,7 +345,9 @@ export default function App() {
       {actionError && <div className="banner banner-error shell-message" role="alert">{actionError}</div>}
       <main id="main-content" tabIndex={-1}>
       <ErrorBoundary key={studentView}><Suspense fallback={<div className="page-loading" role="status">{t('loadingPage')}</div>}>
-      {!isStudent && showAccount ? (
+      {manualPaymentsEnabled && showPayments ? (
+        <div className="dash-main"><button className="btn btn-secondary" onClick={() => setShowPayments(false)}>Back to MELA Home</button><ManualPayments key={profile.id} client={supabase} /></div>
+      ) : !isStudent && showAccount ? (
         <AccountOverview profile={profile} onBack={() => setShowAccount(false)} />
       ) : isStudent ? (
         <>
@@ -382,7 +388,7 @@ export default function App() {
                 key={item.view}
                 className={studentView === item.view ? 'active' : ''}
                 aria-current={studentView === item.view ? 'page' : undefined}
-                onClick={() => setStudentView(item.view)}
+                onClick={() => { setShowPayments(false); setStudentView(item.view) }}
               >
                 <item.icon size={20} aria-hidden="true" />{t(item.labelKey)}
               </button>

@@ -14,3 +14,10 @@ it('filters off-grade and off-catalog subjects', () => {
   const result=eligibleSchoolPrograms(programs,subjects,1,'school_1_6',['mathematics'])
   expect(result.map(row=>row.program_key)).toEqual(['grade1_math'])
 })
+
+it('requires enrolled senior-stream subjects',()=>{
+  const programs=[{program_key:'natural',grade_level:11,stage_key:'school_11_12',track_key:'natural_sciences',subject_key:'biology',subject_title:'Biology'}]
+  const catalog=[{stage_key:'school_11_12',track_key:'natural_sciences',subject_key:'biology',optional:false}]
+  expect(eligibleSchoolPrograms(programs,catalog,11,'school_11_12',['biology'])).toHaveLength(1)
+  expect(eligibleSchoolPrograms(programs,catalog,11,'school_11_12',['mathematics'])).toHaveLength(0)
+})

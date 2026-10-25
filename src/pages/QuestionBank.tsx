@@ -176,7 +176,7 @@ export default function QuestionBank({ onBack, onOpenProfile }: { onBack: () => 
       {!loading && !error && programs.length === 0 && <div className="empty-panel">No subjects are available for your curriculum yet. Check back soon or update your education details in Profile.</div>}
       {!sessionId ? (
         <>
-          {grade && grade >= 11 && <div className="field"><label htmlFor="track">Enrolled academic stream</label><select id="track" disabled={true} value={track}>{[...new Set(programs.map(p => p.track_key))].map(key => <option key={key} value={key}>{key.replaceAll('_', ' ')}</option>)}</select><p className="field-hint">Your enrolled subjects determine your stream. A stream correction needs verified MELA support.</p></div>
+          {grade && grade >= 11 && <div className="field"><label htmlFor="track">Enrolled academic stream</label><select id="track" disabled={true} value={track}>{[...new Set(programs.map(p => p.track_key))].map(key => <option key={key} value={key}>{key.replaceAll('_', ' ')}</option>)}</select><p className="field-hint">Your enrolled subjects determine your stream. A stream correction needs verified MELA support.</p></div>}
           <div className="field">
             <label htmlFor="program">Subject</label>
             <select disabled={loading || busy || !programs.length} id="program" value={program} onChange={e => { setProgram(e.target.value); setError('') }}>

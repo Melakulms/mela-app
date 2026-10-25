@@ -17,7 +17,7 @@ export function educationChoiceFromStage(stage: string | null | undefined): Educ
 }
 
 export function effectiveSchoolTrack(grade: number | null, track: string): string {
-  return grade !== null && grade >= 11 ? (track === 'social_sciences' ? 'social_sciences' : 'natural_sciences') : 'common'
+  return grade !== null && grade >= 11 ? (track === 'natural_sciences' || track === 'social_sciences' ? track : '') : 'common'
 }
 
 export function validateSubjectSelection(subjects: ProfileSubject[], selected: string[]): string | null {

@@ -68,3 +68,24 @@ it('clears the previous route and settings history at an authentication boundary
   expect(window.location.hash).toBe('')
   expect(window.history.state).toBeNull()
 })
+
+it('opens only explicitly requested Arena and Scholarships links after session restore', () => {
+  for(const view of ['arena','scholarships'] as const) {
+    cleanup()
+    window.history.replaceState(null,'',`/mela-app/?view=${view}&mela_open=1&code=private#access_token=redacted`)
+    render(<Navigation/>)
+    act(() => window.dispatchEvent(new Event('mela:session-boundary')))
+    expect(screen.getByText(view)).toBeTruthy()
+    expect(window.location.search).toBe(`?view=${view}`)
+    expect(window.location.hash).toBe('')
+    expect(window.history.state).toBeNull()
+  }
+})
+
+it('does not reopen arbitrary private sections even when a link asks for it',()=>{
+  window.history.replaceState(null,'','/mela-app/?view=profile&mela_open=1')
+  render(<Navigation/>)
+  act(()=>window.dispatchEvent(new Event('mela:session-boundary')))
+  expect(screen.getByText('dashboard')).toBeTruthy()
+  expect(window.location.search).toBe('?view=dashboard')
+})

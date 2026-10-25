@@ -146,7 +146,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
               <option value="company">{t('authEmailCompany')}</option>
             </select>
             {(emailRole === 'teacher' || emailRole === 'company') && <span className="field-hint" role="status">{t('authProfessionalVerification')}</span>}
-            {emailRole === 'student' && <span className="field-hint" role="status">After confirming your account and signing in, select your actual school grade (1–12) or college/university level in the required education-profile form. MELA saves it and shows questions only for your registered grade.</span>
+            {emailRole === 'student' && <span className="field-hint" role="status">After confirming your account and signing in, select your actual school grade (1–12) or college/university level in the required education-profile form. MELA saves it and shows questions only for your registered grade.</span>}
           </div>
           <div className="field">
             <label htmlFor="password">{t('authPassword')}</label>
@@ -197,7 +197,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
             <option value="company">Employer / organization</option>
           </select>
           <span className="field-hint">Your administrator must issue an invitation for this same account type. A mismatch is rejected without using your code. Teacher and employer privileges require independent verification.</span>
-          {role === 'student' && <span className="field-hint" role="status">After signing in, complete mandatory registration setup by selecting your school grade (1–12) or college/university level. Practice uses the saved grade, not a separate grade picker.</span>
+          {role === 'student' && <span className="field-hint" role="status">After signing in, complete mandatory registration setup by selecting your school grade (1–12) or college/university level. Practice uses the saved grade, not a separate grade picker.</span>}
         </div>
 
         <div className="field">

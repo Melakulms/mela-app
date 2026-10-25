@@ -22,17 +22,17 @@ const LABELS:Record<ArenaDemoMode,string>={
 }
 const WRITING:Partial<Record<ArenaDemoMode,{scene:string;prompt:string;rubric:string[]}>>={
   skill_sprint:{
-    scene:'Staging skill drill — practical planning',
+    scene:'Example skill drill — practical planning',
     prompt:'You have only 45 minutes to prepare a 10-minute learning activity for a group of students with different skill levels. Write three concrete steps and one way to measure their learning.',
     rubric:['Three practical steps are present','Supports learners with different needs','Contains a measurable learning check','Can be done within 45 minutes'],
   },
   interview_practice:{
-    scene:'Staging interview rehearsal — not a real employer interview',
+    scene:'Example interview rehearsal — not a real employer interview',
     prompt:'An interviewer asks: “Tell us about a time you solved a problem as part of a team.” Answer using the situation, your actions and the result. Use a hypothetical example if necessary.',
     rubric:['Describes the situation clearly','Explains your own specific action','Describes a measurable or realistic result','Uses respectful, professional language'],
   },
   case_sprint:{
-    scene:'Staging case-study drill — no real client',
+    scene:'Example case-study drill — no real client',
     prompt:'A rural learning centre has 30 students but only 5 computers and limited internet access. Design an affordable two-week digital skills plan that gives everyone meaningful practice.',
     rubric:['Defines the main constraint','Proposes an achievable schedule','Provides equitable access for all 30 students','Explains how progress will be checked'],
   },
@@ -198,7 +198,7 @@ export default function ArenaPracticeLab({mode,onBack}:{mode:ArenaDemoMode;onBac
     {writing&&<section className="list-panel">
       <h2>{writing.scene}</h2>
       <p>{writing.prompt}</p>
-      <p className="muted">This is private practice, NOT a submission to an employer. Your answer is saved to your own student account only when you press Submit.</p>
+      <p className="muted">This is private practice, NOT a submission to an employer. Adult-stage student answers can be saved privately after you press Submit. For school learners and visitors, writing stays on this screen only.</p>
       <label htmlFor="arena-practice-written">Your response</label>
       <textarea id="arena-practice-written" rows={6} maxLength={5000}
         style={{width:'100%',maxWidth:'100%'}}
@@ -215,9 +215,15 @@ export default function ArenaPracticeLab({mode,onBack}:{mode:ArenaDemoMode;onBac
         </button>
       </> : <div role="status">
         <div className="banner banner-info">
-          <strong>Practice answer submitted and saved to your private MELA account.</strong>
-          <p>Saved: {receipt?.saved_at?new Date(receipt.saved_at).toLocaleString():'Confirmed'}.
-          Receipt: {receipt?.id?.slice(0,8)??'pending'}. This is NOT sent to an employer and earns no official result or reward.</p>
+          {receipt?.id==='local-only'?<>
+            <strong>Practice answer submitted for self-review on this screen.</strong>
+            <p>This answer was NOT uploaded or saved to your account. It disappears when the page is reloaded or closed.</p>
+          </>:<>
+            <strong>Practice answer saved privately to your MELA account.</strong>
+            <p>Saved: {receipt?.saved_at?new Date(receipt.saved_at).toLocaleString():'Confirmed'}.
+            Receipt: {receipt?.id?.slice(0,8)??'pending'}.</p>
+          </>}
+          <p>This is NOT sent to an employer and earns no official result or reward.</p>
         </div>
         <h3>Review your answer using this checklist</h3>
         <p>These are reflection checks, not verified grades. No AI or human judge reviewed this answer.</p>

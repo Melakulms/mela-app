@@ -27,14 +27,17 @@ export function eligibleSchoolPrograms(
   grade: number | null,
   stage: string | null,
   enrolledSubjects: string[],
+  savedAcademicTrack: string | null = null,
 ): CurriculumProgram[] {
   const validStage = educationStageFor('school', grade)
   if (!validStage || stage !== validStage || !Array.isArray(enrolledSubjects) || !enrolledSubjects.length) return []
+  if (grade !== null && grade >= 11 && !['natural_sciences','social_sciences'].includes(savedAcademicTrack ?? '')) return []
   const enrolled = new Set(enrolledSubjects.filter(s => typeof s === 'string'))
   const relevantCatalog = subjects.filter(s => s.stage_key === validStage)
   const tracks = new Set<string>()
   for (const track of new Set(relevantCatalog.map(s => s.track_key))) {
     if (grade! < 11 && track !== 'common') continue
+    if (grade! >= 11 && track !== savedAcademicTrack) continue
     // A senior school stream is available only when ALL required subjects
     // of that stream are enrolled, not because one subject overlaps.
     const rows = relevantCatalog.filter(s => s.track_key === track)

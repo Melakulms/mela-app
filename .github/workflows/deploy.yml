@@ -26,6 +26,7 @@ jobs:
       - run: npm test
       - run: npm run build
         env:
+          VITE_MELA_BUILD_SHA: ${{ github.sha }}
           VITE_SUPABASE_URL: https://duizgtmbptmlbyipreqg.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_flQNx6AE3_dbPDHfYGNwWQ_7cMSsAng
       - name: Verify new Home and role selector are in the compiled release
@@ -37,6 +38,9 @@ jobs:
           grep -R -F -q "Account type (required)" dist/assets
           grep -R -F -q "Create your MELA account" dist/assets
           grep -R -F -q "No invitation code?" dist/assets
+          grep -R -F -q "Try interactive practice" dist/assets
+          grep -R -F -q "Scholarship research is not an offer" dist/assets
+          grep -R -F -q "Installed app version" dist/assets
           printf '{"commit":"%s","published_from":"github-actions"}\n' "$GITHUB_SHA" > dist/mela-release.json
           test -s dist/mela-release.json
       - run: cp dist/index.html dist/404.html

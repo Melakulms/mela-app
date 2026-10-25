@@ -10,6 +10,7 @@ import { clearLegacyAdminSession } from './lib/security-boundary'
 import { AUTH_STORAGE_KEY } from './lib/supabase'
 import './styles.css'
 import './phase6.css'
+import './pwa-update.css'
 
 // Historical admin deployments shared this origin and persisted a privileged
 // Supabase session. Remove that legacy credential before rendering any MELA UI.
@@ -23,9 +24,51 @@ window.addEventListener('storage', event => {
 })
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  let hadController = Boolean(navigator.serviceWorker.controller)
+  let updateAvailable = false
+
+  const offerInstalledAppRefresh = () => {
+    if (!updateAvailable || document.getElementById('mela-pwa-update-notice')) return
+    const notice = document.createElement('aside')
+    notice.id = 'mela-pwa-update-notice'
+    notice.setAttribute('role', 'status')
+    notice.className = 'mela-pwa-update-notice'
+    const heading = document.createElement('strong')
+    heading.textContent = 'A newer MELA version is available.'
+    const help = document.createElement('p')
+    help.textContent = 'Save unfinished answers first. Update MELA without deleting your account, progress or preferences.'
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.textContent = 'Open latest MELA'
+    button.onclick = () => {
+      const destination = new URL(window.location.href)
+      destination.searchParams.set('mela_refresh', String(Date.now()))
+      window.location.replace(destination.toString())
+    }
+    const dismiss = document.createElement('button')
+    dismiss.type = 'button'
+    dismiss.textContent = 'Later'
+    dismiss.onclick = () => notice.remove()
+    notice.append(heading, help, button, dismiss)
+    document.body.append(notice)
+  }
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController) {
+      updateAvailable = true
+      if (document.visibilityState === 'visible') offerInstalledAppRefresh()
+    }
+    hadController = true
+  })
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') offerInstalledAppRefresh()
+  })
   window.addEventListener('load', () => {
     const serviceWorkerUrl = new URL('sw.js', document.baseURI).toString()
-    void navigator.serviceWorker.register(serviceWorkerUrl, { scope: new URL('.', document.baseURI).pathname }).catch(() => {})
+    const scope = new URL('.', document.baseURI).pathname
+    void navigator.serviceWorker.register(serviceWorkerUrl, {
+      scope, updateViaCache: 'none',
+    }).then(registration => registration.update()).catch(() => {})
   })
 }
 

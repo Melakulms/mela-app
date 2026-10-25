@@ -19,6 +19,8 @@ export default function DeviceSettings() {
   const [notice, setNotice] = useState('')
   const [checkingUpdate, setCheckingUpdate] = useState(false)
   const [releaseVersion, setReleaseVersion] = useState('')
+  const installedVersion = String(import.meta.env.VITE_MELA_BUILD_SHA ?? '').slice(0,8)
+  const newerPublishedVersion = Boolean(installedVersion && releaseVersion && installedVersion !== releaseVersion)
   const [updateNotice, setUpdateNotice] = useState('')
   const [showResetConfirmation, setShowResetConfirmation] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
@@ -286,7 +288,11 @@ export default function DeviceSettings() {
       <section id="settings-updates" className="settings-group" aria-labelledby="settings-updates-heading">
         <h2 id="settings-updates-heading">Installed app updates</h2>
         <p><strong>MELA release</strong> · {releaseVersion ? `Verified online build ${releaseVersion}` : 'Release not verified on this device'}</p>
-        <p className="settings-hint">If the release is not verified or the new account selector is missing, your installed app may still be running an older publication.</p>
+        <p><strong>Installed app version</strong> · {installedVersion || 'unknown (older app)'}</p>
+        {newerPublishedVersion&&<div className="banner banner-info" role="status">
+          <strong>A newer MELA version is available.</strong> Save any unsent answers, then choose Check and refresh installed MELA below.
+        </div>}
+        <p className="settings-hint">The version shown here distinguishes the code running on this phone from the published website. If the installed version is unknown, refresh while online.</p>
         <p>Save unfinished answers before refreshing. Reloading checks the currently published website; it does not install unreleased development features.</p>
         <button type="button" className="btn btn-primary" onClick={() => void refreshInstalledApp()} disabled={checkingUpdate}>
           {checkingUpdate ? 'Checking published version…' : 'Check and refresh installed MELA'}

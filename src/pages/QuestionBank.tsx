@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useI18n } from '../i18n'
 import { educationStageFor } from '../lib/education-profile'
+import { eligibleSchoolPrograms, type CurriculumSubject } from '../lib/curriculum-access'
 import { explainQuestionSessionError, isQuestionAvailabilityError } from '../lib/question-practice-ui'
 
 type Program = {
   program_key: string
   subject_title: string
+  subject_key: string
   grade_level: number | null
   track_key: string
   stage_key: string
@@ -64,8 +66,17 @@ export default function QuestionBank({ onBack, onOpenProfile }: { onBack: () => 
         if (!stageForGrade || stageForGrade !== profile.education_stage_key) {
           throw new Error('Your saved school grade and education stage are missing or inconsistent. Complete or correct your education profile before using the curriculum Question Bank.')
         }
+        const { data: learner, error: learnerError } = await supabase.from('student_profiles')
+          .select('subjects').eq('user_id', auth.user.id).maybeSingle()
+        if (learnerError) throw learnerError
+        const enrolled = Array.isArray(learner?.subjects) ? learner.subjects as string[] : []
+        if (enrolled.length === 0) throw new Error('Complete your curriculum subject enrollment in your education profile before practicing.')
+        const { data: catalog, error: catalogError } = await supabase.from('mela_national_subject_catalog')
+          .select('stage_key,track_key,subject_key,optional')
+          .eq('stage_key', stageForGrade).eq('active', true)
+        if (catalogError) throw catalogError
         let query = supabase.from('mela_learning_programs')
-          .select('program_key,subject_title,grade_level,track_key,stage_key')
+          .select('program_key,subject_key,subject_title,grade_level,track_key,stage_key')
           .eq('active', true).eq('stage_key', stageForGrade)
           .eq('grade_level', gradeFromProfile)
         const { data, error } = await query.order('subject_title')
@@ -75,7 +86,9 @@ export default function QuestionBank({ onBack, onOpenProfile }: { onBack: () => 
         if (rows.some(row => row.stage_key !== stageForGrade || row.grade_level !== gradeFromProfile)) {
           throw new Error('MELA received a curriculum outside your saved grade. No questions were loaded; contact support.')
         }
-        setGrade(gradeFromProfile); setPrograms(rows); setTrack(rows[0]?.track_key ?? 'common'); setProgram(rows[0]?.program_key ?? '')
+        const eligible = eligibleSchoolPrograms(rows, (catalog ?? []) as CurriculumSubject[], gradeFromProfile, stageForGrade, enrolled)
+        if (!eligible.length) throw new Error('None of your Grade ' + gradeFromProfile + ' curriculum subjects are available for your enrolled subjects or academic stream. Review your education profile or ask verified MELA support to correct it.')
+        setGrade(gradeFromProfile); setPrograms(eligible); setTrack(eligible[0]?.track_key ?? 'common'); setProgram(eligible[0]?.program_key ?? '')
       } catch (error) {
         if (active) setError(error instanceof Error ? error.message : 'Could not load your subjects. Please try again.')
       } finally { if (active) setLoading(false) }
@@ -99,7 +112,7 @@ export default function QuestionBank({ onBack, onOpenProfile }: { onBack: () => 
   }, [program, revision])
 
   const start = async () => {
-    if (!program || requestLock.current || detailLoading || detailError) return
+    if (!program || !programs.some(p => p.program_key === program && p.track_key === track) || requestLock.current || detailLoading || detailError) return
     requestLock.current = true
     setBusy(true); setError(''); setResult(null); setAnswers({})
     try {
@@ -148,7 +161,7 @@ export default function QuestionBank({ onBack, onOpenProfile }: { onBack: () => 
   return (
     <div className="dash-main">
       <div className="section-heading"><h1>{t('questionBank')}</h1><button className="btn btn-secondary" onClick={onBack}>{t('back')}</button></div>
-      {grade !== null ? <p role="status" className="banner banner-info"><strong>Grade {grade} curriculum.</strong> MELA loaded your grade from your saved education profile. Only your own grade's subjects and questions are available; changing grade requires a verified correction.</p> :
+      {grade !== null ? <p role="status" className="banner banner-info"><strong>Grade {grade} curriculum.</strong> MELA loaded your saved grade and enrolled subjects. Only subjects from your registered grade and academic stream are shown; grade changes require verified correction.</p> :
         <p className="muted">Your school grade must be saved in your education profile before curriculum questions are available.</p>}
       {error && <div className="banner banner-error" role="alert">{error}</div>}
       {!loading && grade === null && onOpenProfile && <button className="btn btn-primary" type="button" onClick={onOpenProfile}>Complete or correct my education profile</button>}
@@ -163,7 +176,7 @@ export default function QuestionBank({ onBack, onOpenProfile }: { onBack: () => 
       {!loading && !error && programs.length === 0 && <div className="empty-panel">No subjects are available for your curriculum yet. Check back soon or update your education details in Profile.</div>}
       {!sessionId ? (
         <>
-          {grade && grade >= 11 && <div className="field"><label htmlFor="track">Academic track</label><select id="track" disabled={busy} value={track} onChange={e => { const next = e.target.value; setTrack(next); setProgram(programs.find(p => p.track_key === next)?.program_key ?? ''); setError('') }}>{[...new Set(programs.map(p => p.track_key))].map(key => <option key={key} value={key}>{key.replaceAll('_', ' ')}</option>)}</select></div>}
+          {grade && grade >= 11 && <div className="field"><label htmlFor="track">Enrolled academic stream</label><select id="track" disabled={true} value={track}>{[...new Set(programs.map(p => p.track_key))].map(key => <option key={key} value={key}>{key.replaceAll('_', ' ')}</option>)}</select><p className="field-hint">Your enrolled subjects determine your stream. A stream correction needs verified MELA support.</p></div>}
           <div className="field">
             <label htmlFor="program">Subject</label>
             <select disabled={loading || busy || !programs.length} id="program" value={program} onChange={e => { setProgram(e.target.value); setError('') }}>

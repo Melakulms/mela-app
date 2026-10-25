@@ -1,17 +1,19 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import QuestionBank from '../src/pages/QuestionBank'
-const mocks = vi.hoisted(() => ({ getUser: vi.fn(), profile: vi.fn(), programs: vi.fn(), rpc: vi.fn(), eq: vi.fn() }))
+const mocks = vi.hoisted(() => ({ getUser: vi.fn(), profile: vi.fn(), programs: vi.fn(), student: vi.fn(), catalog: vi.fn(), rpc: vi.fn(), eq: vi.fn() }))
 vi.mock('../src/lib/supabase', () => ({ supabase: {
   auth: { getUser: mocks.getUser }, rpc: mocks.rpc,
-  from: () => { const query: any = { select: () => query, eq: (field: string, value: unknown) => { mocks.eq(field, value); return query }, maybeSingle: mocks.profile, order: mocks.programs }; return query },
+  from: (table: string) => { const query: any = { select: () => query, eq: (field: string, value: unknown) => { mocks.eq(field, value); return query }, maybeSingle: table === 'student_profiles' ? mocks.student : mocks.profile, order: mocks.programs, then: (done: any, failed: any) => mocks.catalog().then(done, failed) }; return query },
 } }))
 const detail = { program: { mastery_count: 20, review_required_count: 10 }, chapters: [{ chapter_id: 'c1', chapter_title: 'Algebra', mastery_count: 20, topics: [{ topic_id: 't1', topic_title: 'Equations', mastery_count: 20 }] }] }
 beforeEach(() => {
   vi.resetAllMocks()
   mocks.getUser.mockResolvedValue({ data: { user: { id: 'learner' } } })
   mocks.profile.mockResolvedValue({ data: { education_stage_key: 'school_7_8', grade_level: 8 } })
-  mocks.programs.mockResolvedValue({ data: [{ program_key: 'math', subject_title: 'Math', track_key: 'common', stage_key: 'school_7_8', grade_level: 8 }] })
+  mocks.student.mockResolvedValue({ data: { subjects: ['mathematics'] } })
+  mocks.catalog.mockResolvedValue({ data: [{ subject_key: 'mathematics', stage_key: 'school_7_8', track_key: 'common', optional: false }], error: null })
+  mocks.programs.mockResolvedValue({ data: [{ program_key: 'math', subject_key: 'mathematics', subject_title: 'Math', track_key: 'common', stage_key: 'school_7_8', grade_level: 8 }] })
   mocks.rpc.mockImplementation(async (name: string) => name === 'get_question_subject_detail_v18' ? { data: detail } : { data: { session_id: 'session', questions: [{ id: 'q1', prompt: 'Calculate', choices: [], question_type: 'numeric' }, { id: 'q2', prompt: 'Choose one', choices: [{ id: 'A', text: 'First choice' }, { id: 'B', text: 'Second choice' }], question_type: 'single_choice' }] } })
 })
 afterEach(cleanup)

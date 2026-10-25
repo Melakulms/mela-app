@@ -102,6 +102,12 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
         <div><span className="eyebrow">{t('learningSpace')}</span><h1>{t('hello')}, {profile.full_name?.split(' ')[0] ?? t('there')} <span className="greeting-dot">.</span></h1><p>{t('dailyProgress')}</p></div>
       </div>
 
+      <section className="list-panel" aria-label="Grades 1–12 practice update">
+        <strong>New: Grades 1–12 curriculum preview</strong>
+        <p>Check every grade in Practice without changing your saved school grade. Your real questions remain restricted to your registered grade.</p>
+        <button className="btn btn-secondary" type="button" onClick={() => onNavigate('practice')}>Test Grades 1–12 in Practice</button>
+      </section>
+
       <section className="settings-group" aria-label="My study target">
         <h2>My daily study target</h2>
         <p><strong>{dailyStudyMinutes} minutes</strong> of study per day. Change it in MELA Settings on this device.</p>

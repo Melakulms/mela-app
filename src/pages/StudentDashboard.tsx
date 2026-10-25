@@ -103,9 +103,9 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
       </div>
 
       <section className="list-panel" aria-label="Grades 1–12 practice update">
-        <strong>New: Grades 1–12 curriculum preview</strong>
-        <p>Check every grade in Practice without changing your saved school grade. Your real questions remain restricted to your registered grade.</p>
-        <button className="btn btn-secondary" type="button" onClick={() => onNavigate('practice')}>Test Grades 1–12 in Practice</button>
+        <strong>My registered grade &amp; subjects</strong>
+        <p>See your real saved grade and enrolled curriculum subjects before practicing. The Grades 1–12 test preview is separate and does not change your enrollment.</p>
+        <button className="btn btn-primary" type="button" onClick={() => onNavigate('practice')}>View my registered curriculum</button>
       </section>
 
       <section className="settings-group" aria-label="My study target">

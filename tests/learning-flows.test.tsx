@@ -6,6 +6,8 @@ const mocks = vi.hoisted(() => ({ fetchLearningLibrary: vi.fn(), fetchLearningMa
 vi.mock('../src/lib/materials', () => mocks)
 vi.mock('../src/lib/practice', () => mocks)
 vi.mock('../src/lib/dashboard', () => mocks)
+// The visible real-grade summary has its own authenticated tests.
+vi.mock('../src/components/EnrolledCurriculumSummary', () => ({default: () => 'My registered curriculum'}))
 beforeEach(() => {
   vi.resetAllMocks()
   mocks.fetchLearningLibrary.mockResolvedValue({ programs: [{ program_key: 'program', title: 'Mathematics', subject_title: 'Math', units: [{ id: 'unit', unit_number: 1, title: 'Numbers', materials: [{ material_key: 'notes', title: 'Notes', can_access: true }] }] }] })
@@ -66,7 +68,7 @@ it('prevents another practice answer while a submission is pending', async () =>
 
 it('shows the Grades 1–12 tester directly inside Practice without changing a learner grade', async () => {
   render(<Practice onBack={vi.fn()} onOpenQuestionBank={vi.fn()} />)
-  const preview = screen.getByText(/Test grade selection: Grades 1–12/)
+  const preview = screen.getByText(/Demo only: Preview Grades 1–12/)
   fireEvent.click(preview)
   const selector = screen.getByLabelText('Preview school grade (1–12)') as HTMLSelectElement
   expect(selector.value).toBe('')

@@ -1,0 +1,6 @@
+.mela-pwa-update-notice{position:fixed;z-index:10000;bottom:calc(1rem + env(safe-area-inset-bottom,0px));left:1rem;right:1rem;max-width:36rem;margin:0 auto;background:#142334;color:#fff;border:2px solid #e0c77a;border-radius:14px;box-shadow:0 14px 48px rgba(0,0,0,.4);padding:1rem;line-height:1.45}
+.mela-pwa-update-notice strong{display:block;font-size:1.05rem}
+.mela-pwa-update-notice p{margin:.45rem 0 .8rem}
+.mela-pwa-update-notice button{min-height:44px;border-radius:8px;border:1px solid #e0c77a;padding:.6rem .9rem;margin:.2rem .55rem .2rem 0;color:#101928;background:#e0c77a;font:inherit;font-weight:700;cursor:pointer}
+.mela-pwa-update-notice button:last-child{background:transparent;color:#fff}
+.mela-pwa-update-notice button:focus-visible{outline:3px solid #fff;outline-offset:2px}

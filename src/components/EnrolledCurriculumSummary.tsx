@@ -35,7 +35,7 @@ export default function EnrolledCurriculumSummary({ onOpenQuestionBank }: { onOp
           return
         }
         const { data: learner, error: learnerError } = await supabase.from('student_profiles')
-          .select('subjects').eq('user_id', auth.user.id).maybeSingle()
+          .select('subjects,academic_track_key').eq('user_id', auth.user.id).maybeSingle()
         if (learnerError) throw learnerError
         const enrolled = Array.isArray(learner?.subjects) ? learner.subjects as string[] : []
         if (!enrolled.length) { if (active) setSummary({kind:'incomplete'}); return }
@@ -50,7 +50,7 @@ export default function EnrolledCurriculumSummary({ onOpenQuestionBank }: { onOp
         if (programsError) throw programsError
         const eligible = eligibleSchoolPrograms(
           (programs ?? []) as CurriculumProgram[], (catalog ?? []) as CurriculumSubject[],
-          grade, stage, enrolled,
+          grade, stage, enrolled, learner?.academic_track_key ?? null,
         )
         const titles = [...new Set(eligible.map(p => p.subject_title))].sort((a,b) => a.localeCompare(b))
         const streams = [...new Set(eligible.map(p => p.track_key))]

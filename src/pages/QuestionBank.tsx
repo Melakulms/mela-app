@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useI18n } from '../i18n'
+import { educationStageFor } from '../lib/education-profile'
 import { explainQuestionSessionError, isQuestionAvailabilityError } from '../lib/question-practice-ui'
 
 type Program = {
@@ -19,7 +20,7 @@ type Question = {
   question_type: string
 }
 
-export default function QuestionBank({ onBack }: { onBack: () => void }) {
+export default function QuestionBank({ onBack, onOpenProfile }: { onBack: () => void; onOpenProfile?: () => void }) {
   const { t } = useI18n()
   const [programs, setPrograms] = useState<Program[]>([])
   const [grade, setGrade] = useState<number | null>(null)
@@ -50,7 +51,7 @@ export default function QuestionBank({ onBack }: { onBack: () => void }) {
   useEffect(() => {
     let active = true
     const load = async () => {
-      setLoading(true); setError('')
+      setLoading(true); setError(''); setGrade(null); setPrograms([]); setProgram('')
       try {
         const { data: auth, error: authError } = await supabase.auth.getUser()
         if (authError) throw authError
@@ -58,16 +59,23 @@ export default function QuestionBank({ onBack }: { onBack: () => void }) {
         const { data: profile, error: profileError } = await supabase.from('profiles').select('education_stage_key,grade_level').eq('id', auth.user.id).maybeSingle()
         if (profileError) throw profileError
         if (!profile?.education_stage_key) throw new Error('Complete your education profile to see your subjects.')
-        if (!Number.isInteger(profile.grade_level) || profile.grade_level < 1 || profile.grade_level > 12 || !String(profile.education_stage_key).startsWith('school_')) throw new Error('Complete your school grade in Profile to access the curriculum Question Bank.')
+        const gradeFromProfile = profile.grade_level
+        const stageForGrade = educationStageFor('school', gradeFromProfile)
+        if (!stageForGrade || stageForGrade !== profile.education_stage_key) {
+          throw new Error('Your saved school grade and education stage are missing or inconsistent. Complete or correct your education profile before using the curriculum Question Bank.')
+        }
         let query = supabase.from('mela_learning_programs')
           .select('program_key,subject_title,grade_level,track_key,stage_key')
-          .eq('active', true).eq('stage_key', profile.education_stage_key)
-        if (profile.grade_level) query = query.eq('grade_level', profile.grade_level)
+          .eq('active', true).eq('stage_key', stageForGrade)
+          .eq('grade_level', gradeFromProfile)
         const { data, error } = await query.order('subject_title')
         if (error) throw error
         if (!active) return
         const rows = (data ?? []) as Program[]
-        setGrade(profile.grade_level); setPrograms(rows); setTrack(rows[0]?.track_key ?? 'common'); setProgram(rows[0]?.program_key ?? '')
+        if (rows.some(row => row.stage_key !== stageForGrade || row.grade_level !== gradeFromProfile)) {
+          throw new Error('MELA received a curriculum outside your saved grade. No questions were loaded; contact support.')
+        }
+        setGrade(gradeFromProfile); setPrograms(rows); setTrack(rows[0]?.track_key ?? 'common'); setProgram(rows[0]?.program_key ?? '')
       } catch (error) {
         if (active) setError(error instanceof Error ? error.message : 'Could not load your subjects. Please try again.')
       } finally { if (active) setLoading(false) }
@@ -140,8 +148,10 @@ export default function QuestionBank({ onBack }: { onBack: () => void }) {
   return (
     <div className="dash-main">
       <div className="section-heading"><h1>{t('questionBank')}</h1><button className="btn btn-secondary" onClick={onBack}>{t('back')}</button></div>
-      <p className="muted">Practice at your own pace with questions matched to your {grade ? `Grade ${grade}` : "education"} curriculum.</p>
+      {grade !== null ? <p role="status" className="banner banner-info"><strong>Grade {grade} curriculum.</strong> MELA loaded your grade from your saved education profile. Only your own grade's subjects and questions are available; changing grade requires a verified correction.</p> :
+        <p className="muted">Your school grade must be saved in your education profile before curriculum questions are available.</p>}
       {error && <div className="banner banner-error" role="alert">{error}</div>}
+      {!loading && grade === null && onOpenProfile && <button className="btn btn-primary" type="button" onClick={onOpenProfile}>Complete or correct my education profile</button>}
       {noAccessibleQuestions && (chapter || topic || difficulty) && !sessionId && (
         <button className="btn btn-secondary" type="button" onClick={() => { setChapter(''); setTopic(''); setDifficulty(''); setError('') }}>
           Clear chapter, topic and difficulty filters

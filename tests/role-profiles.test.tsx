@@ -59,6 +59,7 @@ it('restricts selectable grades to the saved stage; permits unfinished but not c
   expect(allowedSchoolGrades(null)).toHaveLength(12)
   expect(canChooseSchoolGrade(false)).toBe(true)
   expect(canChooseSchoolGrade(true)).toBe(false)
+  expect(canChooseSchoolGrade(false, true)).toBe(false)
 })
 
 it('shows canonical curriculum subject suggestions without granting teacher review privileges',async()=>{

@@ -49,6 +49,6 @@ export function allowedSchoolGrades(stage: string | null | undefined): number[] 
   return Array.from({ length: max - min + 1 }, (_, i) => min + i)
 }
 
-export function canChooseSchoolGrade(isEditingCompletedProfile: boolean): boolean {
-  return !isEditingCompletedProfile
+export function canChooseSchoolGrade(isEditingCompletedProfile: boolean, hasSavedGrade = false): boolean {
+  return !isEditingCompletedProfile && !hasSavedGrade
 }

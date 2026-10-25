@@ -149,7 +149,7 @@ export default function QuestionBank({ onBack, onOpenProfile }: { onBack: () => 
     <div className="dash-main">
       <div className="section-heading"><h1>{t('questionBank')}</h1><button className="btn btn-secondary" onClick={onBack}>{t('back')}</button></div>
       {grade !== null ? <p role="status" className="banner banner-info"><strong>Grade {grade} curriculum.</strong> MELA loaded your grade from your saved education profile. Only your own grade's subjects and questions are available; changing grade requires a verified correction.</p> :
-        <p className="muted">Your school grade must be saved in your education profile before curriculum questions are available.</p>
+        <p className="muted">Your school grade must be saved in your education profile before curriculum questions are available.</p>}
       {error && <div className="banner banner-error" role="alert">{error}</div>}
       {!loading && grade === null && onOpenProfile && <button className="btn btn-primary" type="button" onClick={onOpenProfile}>Complete or correct my education profile</button>}
       {noAccessibleQuestions && (chapter || topic || difficulty) && !sessionId && (

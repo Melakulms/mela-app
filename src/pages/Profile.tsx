@@ -1,4 +1,5 @@
 import JoinClassroom from '../components/JoinClassroom'
+import GradeSelectionPreview from '../components/GradeSelectionPreview'
 import StudentOnboarding from './StudentOnboarding'
 import { supabase } from '../lib/supabase'
 import { useEffect, useState } from 'react'
@@ -105,6 +106,8 @@ export default function Profile({ profile, onProfileUpdated }: { profile: MelaPr
         </button>
         <p className="field-hint">A school grade or education-stage change needs verified correction by MELA support so competitions and child-safety controls remain accurate.</p>
       </section>}
+
+      {profile.role === 'student' && <GradeSelectionPreview />}
 
       <div className="section-heading"><h2>{t('language')}</h2></div>
       <div className="field">

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   educationChoiceFromStage, educationStageFor, effectiveSchoolTrack,
-  isValidSchoolGrade, validateSubjectSelection,
+  isValidSchoolGrade, validateSubjectSelection, allowedSchoolGrades,
 } from '../src/lib/education-profile'
 
 describe('mandatory MELA education profile', () => {
@@ -16,6 +16,18 @@ describe('mandatory MELA education profile', () => {
       expect(isValidSchoolGrade(bad)).toBe(false)
       expect(educationStageFor('school',bad)).toBe(null)
     }
+  })
+
+  it('offers every grade 1 through 12 and maps each deterministically to its curriculum band', () => {
+    const allGrades = Array.from({ length: 12 }, (_, index) => index + 1)
+    expect(allowedSchoolGrades(null)).toEqual(allGrades)
+    const mapping: Record<number, string> = {}
+    for (const grade of allGrades) {
+      const expectedStage = grade <= 6 ? 'school_1_6' : grade <= 8 ? 'school_7_8' : grade <= 10 ? 'school_9_10' : 'school_11_12'
+      expect(educationStageFor('school', grade)).toBe(expectedStage)
+      mapping[grade] = expectedStage
+    }
+    expect(Object.keys(mapping)).toHaveLength(12)
   })
 
   it('supports existing college/TVET and university education stages without inventing a school grade', () => {

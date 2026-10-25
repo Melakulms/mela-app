@@ -49,7 +49,7 @@ afterEach(() => {cleanup();vi.clearAllMocks()})
 it('shows the actual Grade 1 curriculum and never advertises Biology',async()=>{
   const open=vi.fn()
   render(<EnrolledCurriculumSummary onOpenQuestionBank={open}/>)
-  expect((await screen.findByRole('status',{name:''})).textContent).toContain('Grade 1')
+  expect(await screen.findByText(/Grade 1 · 2 eligible subjects/)).toBeTruthy()
   expect(screen.getByText('Mathematics')).toBeTruthy()
   expect(screen.getByText('Environmental Science')).toBeTruthy()
   expect(screen.queryByText('Biology')).toBeNull()

@@ -13,19 +13,33 @@ export default function StudyMaterials({ stageKey, gradeLevel, onBack, onOpenQue
   const [openProgram, setOpenProgram] = useState<string | null>(null)
 
   useEffect(() => {
+    let active = true
+    setPrograms(null); setMaterial(null); setOpenProgram(null); setError('')
     if (!stageKey) {
       setError("We don't know your education stage yet, so we can't load the right materials for you.")
       return
     }
     fetchLearningLibrary(stageKey, gradeLevel)
-      .then((lib) => setPrograms(lib.programs))
-      .catch((e) => setError(e.message ?? 'Could not load study materials.'))
+      .then(lib => {if(active)setPrograms(lib.programs)})
+      .catch(e => {if(active)setError(e.message ?? 'Could not load study materials.')})
+    return () => {active=false}
   }, [stageKey, gradeLevel])
 
-  const openMaterial = async (key: string) => {
+  const openMaterial = async (key: string, owner: LearningProgram) => {
     if (busy) return
     setBusy(true); setError('')
-    try { setMaterial(await fetchLearningMaterial(key)) }
+    try {
+      if (!programs?.some(p => p.program_key === owner.program_key &&
+        p.units.some(u => u.materials.some(m => m.material_key === key)))) {
+        throw new Error('This material is not among your registered curriculum subjects.')
+      }
+      const result = await fetchLearningMaterial(key)
+      if (stageKey?.startsWith('school_') && (
+        result.grade_level !== gradeLevel || result.stage_key !== stageKey ||
+        result.subject_title !== owner.subject_title || result.track_key !== owner.track_key
+      )) throw new Error('This material does not match your enrolled grade and subject.')
+      setMaterial(result)
+    }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not open this material.') }
     finally { setBusy(false) }
   }
@@ -47,7 +61,7 @@ export default function StudyMaterials({ stageKey, gradeLevel, onBack, onOpenQue
       {error && <div role="alert" className="banner banner-error">{error}</div>}
       {!programs && !error && <p className="muted">Loading…</p>}
       {gradeLevel !== null && stageKey !== null && educationStageFor('school', gradeLevel) === stageKey && <p className="banner banner-info"><strong>Grade {gradeLevel} learning materials.</strong> Open a subject to see chapter lessons, guided practice, and checkpoints. Materials are supplemental and are not teacher-certified textbooks.</p>}
-      {programs && programs.length === 0 && <div className="empty-panel">No materials published for your stage yet.</div>}
+      {programs && programs.length === 0 && <div className="empty-panel">No materials are available for your saved grade and enrolled subjects. Check your education profile.</div>}
 
       {programs?.map((p) => (
         <div key={p.program_key} className="list-panel">
@@ -81,7 +95,7 @@ export default function StudyMaterials({ stageKey, gradeLevel, onBack, onOpenQue
                   <div key={m.material_key} className="list-row" style={{ padding: '0.6rem 0' }}>
                     <div className="list-row-title" style={{ fontSize: '0.9rem' }}>{m.title}</div>
                     {m.can_access ? (
-                      <button className="btn btn-secondary" disabled={busy} onClick={() => void openMaterial(m.material_key)}>Open material</button>
+                      <button className="btn btn-secondary" disabled={busy} onClick={() => void openMaterial(m.material_key,p)}>Open material</button>
                     ) : (
                       <span className="pill">{m.access_tier === 'subscription' ? 'Needs subscription' : 'Needs purchase'}</span>
                     )}

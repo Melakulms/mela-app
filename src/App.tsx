@@ -345,7 +345,7 @@ export default function App() {
         <AccountOverview profile={profile} onBack={() => setShowAccount(false)} />
       ) : isStudent ? (
         <>
-          {studentView === 'practice' && <Practice onBack={() => setStudentView('dashboard')} onOpenQuestionBank={() => setStudentView('question-bank')} />}
+          {studentView === 'practice' && <Practice onBack={() => setStudentView('dashboard')} onOpenQuestionBank={() => setStudentView('question-bank')} stageKey={profile.education_stage_key} />}
           {studentView === 'question-bank' && <QuestionBank onBack={() => setStudentView('dashboard')} onOpenProfile={() => setStudentView('profile')} />}
           {studentView === 'opportunities' && <OpportunityHub onBack={() => setStudentView('dashboard')} />}
           {studentView === 'materials' && <StudyMaterials stageKey={profile.education_stage_key} gradeLevel={profile.grade_level} onBack={() => setStudentView('dashboard')} onOpenQuestionBank={() => setStudentView('question-bank')} />}

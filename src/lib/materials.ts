@@ -75,7 +75,8 @@ export async function fetchLearningLibrary(stageKey: string, gradeLevel: number 
     (library.programs ?? []).map(p=>({...p,stage_key:stageKey})),
     (catalog ?? []) as CurriculumSubject[],savedGrade,stageKey,enrolled,
   )
-  return {...library,programs:eligible}
+  const allowedKeys = new Set(eligible.map(p => p.program_key))
+  return {...library,programs:library.programs.filter(p => allowedKeys.has(p.program_key))}
 }
 
 export interface MaterialContent {

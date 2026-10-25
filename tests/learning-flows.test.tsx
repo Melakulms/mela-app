@@ -66,7 +66,7 @@ it('prevents another practice answer while a submission is pending', async () =>
 
 it('shows the Grades 1–12 tester directly inside Practice without changing a learner grade', async () => {
   render(<Practice onBack={vi.fn()} onOpenQuestionBank={vi.fn()} />)
-  const preview = screen.getByText(/Test grade selection: Grades 1–12/)
+  const preview = screen.getByText(/Demo only: Preview Grades 1–12/)
   fireEvent.click(preview)
   const selector = screen.getByLabelText('Preview school grade (1–12)') as HTMLSelectElement
   expect(selector.value).toBe('')

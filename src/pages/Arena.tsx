@@ -1,4 +1,5 @@
 import HostedCompetitions from '../components/HostedCompetitions'
+import ArenaPracticeLab, {type ArenaDemoMode} from '../components/ArenaPracticeLab'
 import { useI18n } from '../i18n'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
@@ -22,6 +23,7 @@ type QueueState = 'idle' | 'searching' | 'matched'
 export default function Arena({ onBack }: { onBack: () => void }) {
   const { t } = useI18n()
   const [hosted, setHosted] = useState<'team_battle' | 'employer_challenge' | 'tournament' | null>(null)
+  const [practiceMode,setPracticeMode]=useState<ArenaDemoMode|null>(null)
   const searchLock = useRef(false)
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[] | null>(null)
   const [error, setError] = useState('')
@@ -114,6 +116,7 @@ export default function Arena({ onBack }: { onBack: () => void }) {
     return <LiveMatch matchId={matchId} onLeave={() => { setMatchId(null); setQueueState('idle') }} onBack={onBack} />
   }
 
+  if (practiceMode) return <ArenaPracticeLab mode={practiceMode} onBack={()=>setPracticeMode(null)} />
   if (hosted) return <HostedCompetitions kind={hosted} onBack={() => setHosted(null)} onMatch={id => { setHosted(null); setMatchId(id); setQueueState('matched') }} />
 
   return (
@@ -126,6 +129,10 @@ export default function Arena({ onBack }: { onBack: () => void }) {
 
       {queueState === 'idle' && (
         <>
+          <section className="banner banner-info" aria-label="Arena practice and real competition status">
+            <strong>Eight practice activities available · Real competitions have separate requirements</strong>
+            <p>Practice is a learning simulation without real opponents, verified employers, prizes or rankings. Official employer, team and tournament registration stays paused until organizer safeguarding is verified.</p>
+          </section>
           <div className="section-heading"><h2>Eight ways to compete</h2></div>
           <div className="field" style={{ maxWidth: 520 }}>
             <label htmlFor="arena-assessment">Assessment for quiz competitions</label>
@@ -139,9 +146,10 @@ export default function Arena({ onBack }: { onBack: () => void }) {
                 <h3>{m.label}</h3>
                 <p>{m.blurb}</p>
                 <button className="btn btn-primary" onClick={() => startSearching(m.value)} disabled={busy || (['quiz_battle', 'speed_quiz'].includes(m.value) && !assessmentId)}>Search for opponent</button>
+                <button type="button" className="btn btn-secondary" onClick={()=>setPracticeMode(m.value)}>Try interactive practice</button>
               </div>
             ))}
-            {([['team_battle', 'Team Battle', 'Join an organized team competition.'], ['employer_challenge', 'Employer Challenge', 'Demonstrate skills in organizer-led challenges.'], ['tournament', 'Tournaments', 'Explore multi-match competitions.']] as const).map(([kind, label, description]) => <div className="module-card" key={kind}><h3>{label}</h3><p>{description}</p><button className="btn btn-primary" disabled={busy} onClick={() => setHosted(kind)}>Browse {label}</button></div>)}
+            {([['team_battle', 'Team Battle', 'Join an organized team competition.'], ['employer_challenge', 'Employer Challenge', 'Demonstrate skills in organizer-led challenges.'], ['tournament', 'Tournaments', 'Explore multi-match competitions.']] as const).map(([kind, label, description]) => <div className="module-card" key={kind}><h3>{label}</h3><p>{description}</p><button className="btn btn-primary" disabled={busy} onClick={() => setHosted(kind)}>Browse {label}</button><button type="button" className="btn btn-secondary" onClick={()=>setPracticeMode(kind)}>Try interactive practice</button></div>)}
           </div>
           <p className="banner banner-info">Learn and compete without betting. Cash earning and payouts remain unavailable. Ratings and learning progress are not money; no prize or income is guaranteed. Written-answer modes need an organizer’s judge.</p>
         </>

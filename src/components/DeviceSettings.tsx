@@ -287,8 +287,8 @@ export default function DeviceSettings() {
 
       <section id="settings-updates" className="settings-group" aria-labelledby="settings-updates-heading">
         <h2 id="settings-updates-heading">Installed app updates</h2>
+        <p><strong>MELA release</strong> · {releaseVersion ? `Verified online build ${releaseVersion}` : 'Release not verified on this device'}</p>
         <p><strong>Installed app version</strong> · {installedVersion || 'unknown (older app)'}</p>
-        <p><strong>Latest published version</strong> · {releaseVersion || 'Could not check online'}</p>
         {newerPublishedVersion&&<div className="banner banner-info" role="status">
           <strong>A newer MELA version is available.</strong> Save any unsent answers, then choose Check and refresh installed MELA below.
         </div>}

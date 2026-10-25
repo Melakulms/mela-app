@@ -31,7 +31,7 @@ it('blocks learning until a real education level, grade and subject catalog are 
 it('shows all 12 grades with no default for brand-new school learners', () => {
   render(<StudentOnboarding onComplete={() => {}} />)
   fireEvent.change(screen.getByLabelText('Education level (required)'), { target: { value: 'school' } })
-  const picker = screen.getByLabelText(/School grade \\(required/) as HTMLSelectElement
+  const picker = screen.getByLabelText(/School grade/) as HTMLSelectElement
   expect(picker.value).toBe('')
   expect(Array.from(picker.options).map(option => option.value)).toEqual(['', ...Array.from({ length: 12 }, (_, i) => String(i + 1))])
   expect(picker.disabled).toBe(false)
@@ -41,7 +41,7 @@ it('shows all 12 grades with no default for brand-new school learners', () => {
 
 it('locks verified profile edits but lets unfinished learners choose their grade', () => {
   render(<StudentOnboarding initialStage="school_9_10" initialGrade={9} editMode onComplete={() => {}} />)
-  const grade=screen.getByLabelText(/School grade \\(required/) as HTMLSelectElement
+  const grade=screen.getByLabelText(/School grade/) as HTMLSelectElement
   const level=screen.getByLabelText('Education level (required)') as HTMLSelectElement
   expect(grade.value).toBe('9')
   expect(grade.disabled).toBe(true)
@@ -51,7 +51,7 @@ it('locks verified profile edits but lets unfinished learners choose their grade
 
 it('does not offer a different grade when an incomplete school profile has already saved its grade', () => {
   render(<StudentOnboarding initialStage="school_9_10" initialGrade={9} onComplete={() => {}} />)
-  const grade = screen.getByLabelText(/School grade \\(required/) as HTMLSelectElement
+  const grade = screen.getByLabelText(/School grade/) as HTMLSelectElement
   expect(grade.value).toBe('9')
   expect(grade.disabled).toBe(true)
   expect(screen.getByText(/Grade 9 is already saved/)).toBeTruthy()
@@ -59,7 +59,7 @@ it('does not offer a different grade when an incomplete school profile has alrea
 
 it('allows grade selection in an incomplete profile even when an education stage is present', () => {
   render(<StudentOnboarding initialStage="school_9_10" initialGrade={null} onComplete={() => {}} />)
-  const grade=screen.getByLabelText(/School grade \\(required/) as HTMLSelectElement
+  const grade=screen.getByLabelText(/School grade/) as HTMLSelectElement
   const stage=screen.getByLabelText('Education level (required)') as HTMLSelectElement
   expect(stage.disabled).toBe(true)
   expect(grade.disabled).toBe(false)

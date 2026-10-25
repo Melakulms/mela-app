@@ -190,17 +190,17 @@ export default function StudentOnboarding({
             <option value="college_tvet">College or TVET</option>
             <option value="university">University</option>
           </select>
-          {priorStageLocked && <p className="field-hint">Your education stage is already recorded. Grade changes within the same stage are allowed until setup is complete. Moving to a different education stage needs verified support.</p>}
+          {priorStageLocked && <p className="field-hint">Your education stage is already saved. You may select a grade only if your grade has not been saved before. Any correction or promotion of an existing grade requires verified MELA support.</p>}
         </div>
         {isSchool && <div className="field">
-          <label htmlFor="grade">School grade (required)</label>
+          <label htmlFor="grade">School grade (required — Grades 1–12)</label>
           <select id="grade" required value={grade ?? ''} disabled={busy || !canChooseSchoolGrade(editMode, initialGrade !== null)}
             onChange={event => {
               const nextGrade = Number(event.target.value)
               setGrade(nextGrade)
               setTrack(nextGrade >= 11 ? 'natural_sciences' : 'common')
             }}>
-            <option value="" disabled>Select your actual grade</option>
+            <option value="" disabled>Choose your actual grade (no default)</option>
             {permittedGrades.map(value =>
               <option key={value} value={value}>Grade {value}</option>
             )}

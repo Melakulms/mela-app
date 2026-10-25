@@ -1,5 +1,6 @@
 import { useI18n } from '../i18n'
 import AuthLayout from '../components/AuthLayout'
+import GradeSelectionPreview from '../components/GradeSelectionPreview'
 import { useMemo, useState } from 'react'
 import { registerBetaUser, registerUser, type BetaRegisterResult, type BetaSignupRole } from '../lib/auth'
 
@@ -146,7 +147,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
               <option value="company">{t('authEmailCompany')}</option>
             </select>
             {(emailRole === 'teacher' || emailRole === 'company') && <span className="field-hint" role="status">{t('authProfessionalVerification')}</span>}
-            {emailRole === 'student' && <span className="field-hint" role="status">After confirming your account and signing in, select your actual school grade (1–12) or college/university level in the required education-profile form. MELA saves it and shows questions only for your registered grade.</span>}
+            {emailRole === 'student' && <span className="field-hint" role="status">After confirming your account and signing in, choose your actual school grade (1–12) or college/university level in mandatory education setup. There is no random or preselected grade. Question Bank uses only your saved grade.</span>}
           </div>
           <div className="field">
             <label htmlFor="password">{t('authPassword')}</label>
@@ -158,6 +159,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
             <label htmlFor="confirmPassword">{t('authConfirm')}</label>
             <input id="confirmPassword" type={showPassword ? 'text' : 'password'} required minLength={12} autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} disabled={busy} />
           </div>
+          {emailRole === 'student' && <GradeSelectionPreview />}
           <button className="btn btn-primary btn-block" type="submit" disabled={busy}>{busy ? t('authCreating') : t('authEmailSubmit')}</button>
         </form>
         <div className="auth-switch">{t('authExisting')} <button type="button" onClick={onSwitchToLogin}>{t('authLogin')}</button></div>
@@ -218,6 +220,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
           <input id="confirmPassword" type={showPassword ? 'text' : 'password'} required minLength={12} autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={busy} />
         </div>
 
+        {role === 'student' && <GradeSelectionPreview />}
         <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
           {busy ? t('authCreating') : t('authCreate')}
         </button>

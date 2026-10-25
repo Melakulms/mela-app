@@ -68,7 +68,7 @@ export default function QuestionBank({ onBack, onOpenProfile }: { onBack: () => 
           throw new Error('Your saved school grade and education stage are missing or inconsistent. Complete or correct your education profile before using the curriculum Question Bank.')
         }
         const { data: learner, error: learnerError } = await supabase.from('student_profiles')
-          .select('subjects').eq('user_id', auth.user.id).maybeSingle()
+          .select('subjects,academic_track_key').eq('user_id', auth.user.id).maybeSingle()
         if (learnerError) throw learnerError
         const enrolled = Array.isArray(learner?.subjects) ? learner.subjects as string[] : []
         if (enrolled.length === 0) throw new Error('Complete your curriculum subject enrollment in your education profile before practicing.')
@@ -87,7 +87,7 @@ export default function QuestionBank({ onBack, onOpenProfile }: { onBack: () => 
         if (rows.some(row => row.stage_key !== stageForGrade || row.grade_level !== gradeFromProfile)) {
           throw new Error('MELA received a curriculum outside your saved grade. No questions were loaded; contact support.')
         }
-        const eligible = eligibleSchoolPrograms(rows, (catalog ?? []) as CurriculumSubject[], gradeFromProfile, stageForGrade, enrolled)
+        const eligible = eligibleSchoolPrograms(rows, (catalog ?? []) as CurriculumSubject[], gradeFromProfile, stageForGrade, enrolled, learner?.academic_track_key ?? null)
         if (!eligible.length) throw new Error('None of your Grade ' + gradeFromProfile + ' curriculum subjects are available for your enrolled subjects or academic stream. Review your education profile or ask verified MELA support to correct it.')
         setGrade(gradeFromProfile); setPrograms(eligible); setTrack(eligible[0]?.track_key ?? 'common'); setProgram(eligible[0]?.program_key ?? '')
       } catch (error) {

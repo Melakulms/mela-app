@@ -89,3 +89,20 @@ it('does not reopen arbitrary private sections even when a link asks for it',()=
   expect(screen.getByText('dashboard')).toBeTruthy()
   expect(window.location.search).toBe('?view=dashboard')
 })
+
+it('shows safe Arena and Scholarship learner pages even if dashboard omits feature flags',async()=>{
+  mocks.dashboard.mockResolvedValue({
+    ...data,feature_flags:{practice:true,arena:false,scholarships:false}
+  })
+  const navigate=vi.fn()
+  render(<StudentDashboard onNavigate={navigate}/>)
+  await screen.findByText('Explore MELA')
+  const arena=screen.getByRole('button',{name:/Arena.*Join the arena/i}) as HTMLButtonElement
+  expect(arena.disabled).toBe(false)
+  fireEvent.click(arena)
+  expect(navigate).toHaveBeenCalledWith('arena')
+  const scholarship=screen.getByRole('button',{name:/EthioScholar Connect/i}) as HTMLButtonElement
+  expect(scholarship.disabled).toBe(false)
+  fireEvent.click(scholarship)
+  expect(navigate).toHaveBeenCalledWith('scholarships')
+})

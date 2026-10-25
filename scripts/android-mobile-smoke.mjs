@@ -156,6 +156,14 @@ try {
 
       await signedPage.locator('.bottom-nav button').nth(3).click()
       await signedPage.getByText('Scholarship research is not an offer, award or admission decision').waitFor({timeout:30000})
+      await signedPage.getByRole('button',{name:'My readiness'}).waitFor()
+      await signedPage.getByRole('heading',{name:'My scholarship readiness'}).waitFor({timeout:20000})
+      await signedPage.getByText(/profile checks complete/).waitFor()
+      await signedPage.getByRole('button',{name:'Verified offers'}).click()
+      await signedPage.getByRole('button',{name:/My preparation/}).click()
+      await signedPage.getByText('No preparation tasks yet. Open Verified offers and choose Prepare checklist to begin.').waitFor()
+      await signedPage.getByRole('button',{name:'My readiness'}).click()
+
       await signedPage.locator('.bottom-nav button').first().click()
       await signedPage.getByRole('heading',{name:'Explore MELA',exact:true}).waitFor({timeout:30000})
 

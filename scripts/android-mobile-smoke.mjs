@@ -81,6 +81,25 @@ try {
     report.push('RELEASE ' + marker.commit)
   })
 
+  await step('Android app notices a newer published release after opening (isolated release fixture)', async () => {
+    // Does not change the real release marker, account state, or caches.
+    // The fixture simulates a newer release while loading the real published UI.
+    const updateContext = await browser.newContext({ ...pixel, serviceWorkers: 'block' })
+    try {
+      const updatePage = await updateContext.newPage()
+      await updatePage.route('**/mela-release.json?**', route => route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({commit: 'ffffffffffffffffffffffffffffffffffffffff'}),
+      }))
+      await updatePage.goto(baseUrl + '?view=dashboard', {waitUntil:'load',timeout:60000})
+      await updatePage.getByText('A newer MELA version is available.').waitFor({timeout:30000})
+      assert.equal(await updatePage.getByRole('button',{name:'Open latest MELA'}).isVisible(),true)
+      await updatePage.getByRole('button',{name:'Later'}).click()
+      assert.equal(await updatePage.locator('#mela-pwa-update-notice').count(),0)
+    } finally { await updateContext.close() }
+  })
+
   await step('Signed-in Settings closes through logout, login and Home (isolated API fixtures)', async () => {
     // Exercise the published UI without creating accounts or sending test tokens
     // to production. Every Supabase request in this isolated context is fulfilled.

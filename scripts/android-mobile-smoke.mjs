@@ -120,7 +120,10 @@ try {
 
       // Verify the exact production features requested by the owner, using
       // isolated mock authentication rather than real production accounts.
-      await signedPage.goto(baseUrl+'?view=arena&mela_open=1',{waitUntil:'domcontentloaded'})
+      const dashboardArena=signedPage.locator('button.module-card.mc-arena')
+      await dashboardArena.waitFor({timeout:30000})
+      assert.equal(await dashboardArena.isEnabled(),true,'Arena student dashboard card must be enabled')
+      await dashboardArena.click()
       await signedPage.getByRole('heading',{name:'Arena',exact:true}).waitFor({timeout:30000})
       const livePracticeButtons=signedPage.getByRole('button',{name:'Try interactive practice'})
       await livePracticeButtons.first().waitFor({timeout:20000}).catch(async cause => {
@@ -132,9 +135,9 @@ try {
       await signedPage.getByRole('heading',{name:/Tournaments.*Interactive demo/i}).waitFor()
       assert.equal(await signedPage.getByText(/Practice simulation, NOT an official match/i).count()>0,true)
 
-      await signedPage.goto(baseUrl+'?view=scholarships&mela_open=1',{waitUntil:'domcontentloaded'})
+      await signedPage.locator('.bottom-nav button').nth(3).click()
       await signedPage.getByText('Scholarship research is not an offer, award or admission decision').waitFor({timeout:30000})
-      await signedPage.goto(baseUrl+'?view=dashboard',{waitUntil:'domcontentloaded'})
+      await signedPage.locator('.bottom-nav button').first().click()
       await signedPage.getByRole('heading',{name:'Explore MELA',exact:true}).waitFor({timeout:30000})
 
       await signedPage.getByRole('button',{name:'Open MELA settings'}).click()

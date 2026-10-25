@@ -67,16 +67,12 @@ it('prevents another practice answer while a submission is pending', async () =>
   expect(mocks.submitResponse).toHaveBeenCalledOnce()
 })
 
-it('shows the Grades 1–12 tester directly inside Practice without changing a learner grade', async () => {
-  render(<Practice onBack={vi.fn()} onOpenQuestionBank={vi.fn()} />)
-  const preview = screen.getByText(/Demo only: Preview Grades 1–12/)
-  fireEvent.click(preview)
-  const selector = screen.getByLabelText('Preview school grade (1–12)') as HTMLSelectElement
-  expect(selector.value).toBe('')
-  expect(Array.from(selector.options).map(option => option.value)).toEqual([
-    '', ...Array.from({ length: 12 }, (_, index) => String(index + 1)),
-  ])
-  fireEvent.change(selector, { target: { value: '12' } })
-  expect(screen.getByRole('status').textContent).toContain('Grade 12')
+it('shows only registered grade practice to school learners and excludes generic topics', async () => {
+  render(<Practice onBack={vi.fn()} onOpenQuestionBank={vi.fn()} stageKey="school_1_6" />)
+  expect(screen.getByText('My school practice')).toBeTruthy()
+  expect(screen.getByText('My registered curriculum')).toBeTruthy()
+  expect(screen.queryByText('Demo only: Preview Grades 1–12')).toBeNull()
+  expect(screen.queryByText('All topics')).toBeNull()
+  expect(mocks.fetchTopics).not.toHaveBeenCalled()
   expect(mocks.startSession).not.toHaveBeenCalled()
 })

@@ -38,6 +38,14 @@ it('locks verified profile edits but lets unfinished learners choose their grade
   expect(screen.getByText(/verified grade corrections are handled by support/)).toBeTruthy()
 })
 
+it('does not offer a different grade when an incomplete school profile has already saved its grade', () => {
+  render(<StudentOnboarding initialStage="school_9_10" initialGrade={9} onComplete={() => {}} />)
+  const grade = screen.getByLabelText('School grade (required)') as HTMLSelectElement
+  expect(grade.value).toBe('9')
+  expect(grade.disabled).toBe(true)
+  expect(screen.getByText(/Grade 9 is already saved/)).toBeTruthy()
+})
+
 it('allows grade selection in an incomplete profile even when an education stage is present', () => {
   render(<StudentOnboarding initialStage="school_9_10" initialGrade={null} onComplete={() => {}} />)
   const grade=screen.getByLabelText('School grade (required)') as HTMLSelectElement

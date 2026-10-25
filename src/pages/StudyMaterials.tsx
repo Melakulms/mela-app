@@ -46,7 +46,7 @@ export default function StudyMaterials({ stageKey, gradeLevel, onBack, onOpenQue
       </div>
       {error && <div role="alert" className="banner banner-error">{error}</div>}
       {!programs && !error && <p className="muted">Loading…</p>}
-      {gradeLevel !== null && educationStageFor('school', gradeLevel) === stageKey && <p className="banner banner-info"><strong>Grade {gradeLevel} learning materials.</strong> Open a subject to see chapter lessons, guided practice, and checkpoints. Materials are supplemental and are not teacher-certified textbooks.</p>}
+      {gradeLevel !== null && stageKey !== null && educationStageFor('school', gradeLevel) === stageKey && <p className="banner banner-info"><strong>Grade {gradeLevel} learning materials.</strong> Open a subject to see chapter lessons, guided practice, and checkpoints. Materials are supplemental and are not teacher-certified textbooks.</p>}
       {programs && programs.length === 0 && <div className="empty-panel">No materials published for your stage yet.</div>}
 
       {programs?.map((p) => (
@@ -70,7 +70,7 @@ export default function StudyMaterials({ stageKey, gradeLevel, onBack, onOpenQue
             </div>
           )}
 
-          {openProgram === p.program_key && gradeLevel !== null && educationStageFor('school', gradeLevel) === stageKey && <SchoolChapterLibrary programKey={p.program_key} grade={gradeLevel} stageKey={stageKey} onOpenPractice={onOpenQuestionBank} />}
+          {openProgram === p.program_key && gradeLevel !== null && stageKey !== null && educationStageFor('school', gradeLevel) === stageKey && <SchoolChapterLibrary programKey={p.program_key} grade={gradeLevel} stageKey={stageKey} onOpenPractice={onOpenQuestionBank} />}
           {openProgram === p.program_key && p.units.map((u) => (
             <div key={u.id} style={{ borderTop: '1px solid var(--line)', padding: '0.8rem 1.1rem' }}>
               <div className="list-row-title" style={{ marginBottom: '0.5rem' }}>Unit {u.unit_number}: {u.title}</div>

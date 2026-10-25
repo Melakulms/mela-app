@@ -15,11 +15,10 @@ export type ArenaPracticeReceipt = {
 const EXERCISE_KEY = 'arena-written-demo-v1'
 const TABLE = 'arena_practice_submissions'
 
-async function signedInStudentId(): Promise<string> {
+async function signedInStudentId(): Promise<string | null> {
   const { data, error } = await supabase.auth.getUser()
   if (error) throw error
-  if (!data.user) throw new Error('Sign in with your student account to save this practice answer.')
-  return data.user.id
+  return data.user?.id ?? null
 }
 
 /**
@@ -28,6 +27,7 @@ async function signedInStudentId(): Promise<string> {
  */
 export async function loadArenaPracticeAnswer(mode:ArenaWrittenPracticeMode):Promise<ArenaPracticeReceipt|null> {
   const userId=await signedInStudentId()
+  if(!userId) return null
   const {data,error}=await supabase.from(TABLE)
     .select('id,response_text,saved_at')
     .eq('user_id',userId).eq('practice_kind',mode).eq('exercise_key',EXERCISE_KEY)
@@ -48,6 +48,20 @@ export async function saveArenaPracticeAnswer(
   if (!response) throw new Error('Write an answer before tapping Submit.')
   if (response.length>5000) throw new Error('Please shorten your answer to 5,000 characters.')
   const userId=await signedInStudentId()
+  // School learners and visitors can practice without their writing being
+  // collected on the server. Only adult-stage university/TVET students receive
+  // an account-persisted practice record.
+  const sessionOnly=():ArenaPracticeReceipt=>({
+    id:'local-only',response_text:response,saved_at:new Date().toISOString(),
+  })
+  if(!userId)return sessionOnly()
+  const {data:profile,error:profileError}=await supabase.from('profiles')
+    .select('role,account_status,education_stage_key').eq('id',userId).maybeSingle()
+  if(profileError)throw profileError
+  if(profile?.role!=='student'||profile.account_status!=='active'||
+    !['university','college_tvet'].includes(profile.education_stage_key??'')){
+    return sessionOnly()
+  }
   const {data,error}=await supabase.from(TABLE)
     .upsert({
       user_id:userId,practice_kind:mode,exercise_key:EXERCISE_KEY,

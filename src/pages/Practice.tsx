@@ -1,5 +1,4 @@
 import { useI18n } from '../i18n'
-import GradeSelectionPreview from '../components/GradeSelectionPreview'
 import EnrolledCurriculumSummary from '../components/EnrolledCurriculumSummary'
 import { useEffect, useRef, useState } from 'react'
 import {
@@ -14,7 +13,8 @@ type View =
   | { stage: 'in_session'; sessionId: string; questions: PracticeQuestion[]; index: number; questionStartedAt: number; result: SubmitResult | null; selected: string | null }
   | { stage: 'complete'; summary: SessionSummary }
 
-export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () => void; onOpenQuestionBank?: () => void }) {
+export default function Practice({ onBack, onOpenQuestionBank, stageKey }: { onBack: () => void; onOpenQuestionBank?: () => void; stageKey?: string | null }) {
+  const schoolLearner = stageKey?.startsWith('school_') ?? false
   const { t } = useI18n()
   const [topics, setTopics] = useState<PracticeTopic[] | null>(null)
   const [revision, setRevision] = useState(0)
@@ -28,6 +28,7 @@ export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () =>
 
   useEffect(() => {
     let active = true
+    if (schoolLearner) { setTopics([]); setRecommendations([]); setError(''); return () => { active = false } }
     setTopics(null)
     setError('')
     fetchTopics().then(value => { if (active) setTopics(value) }).catch((e) => {
@@ -35,10 +36,10 @@ export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () =>
     })
     fetchDashboard().then((d) => { if (active) setRecommendations(d.practice.recommendations) }).catch(() => {})
     return () => { active = false }
-  }, [revision])
+  }, [revision, schoolLearner])
 
   const beginTopic = async (topicId: string) => {
-    if (starting.current) return
+    if (schoolLearner || starting.current) return
     starting.current = true
     setError('')
     setView({ stage: 'loading_session' })
@@ -93,6 +94,17 @@ export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () =>
     setView({ ...view, index: view.index + 1, questionStartedAt: Date.now(), result: null, selected: null })
   }
 
+  if (view.stage === 'topics' && schoolLearner) {
+    return <div className="dash-main">
+      <div className="section-heading"><h1>My school practice</h1><button className="btn btn-secondary" onClick={onBack}>{t('back')}</button></div>
+      {onOpenQuestionBank
+        ? <EnrolledCurriculumSummary onOpenQuestionBank={onOpenQuestionBank} />
+        : <p role="alert">The curriculum Question Bank is not available. Please contact MELA support.</p>}
+      <p className="field-hint">Only your registered grade and enrolled subjects are available for school question practice. No other grades, career topics, or demo grade selectors are used here.</p>
+      <p className="muted">MELA app build: {String(import.meta.env.VITE_MELA_BUILD_SHA ?? 'unknown').slice(0,8)}</p>
+    </div>
+  }
+
   if (view.stage === 'topics') {
     return (
       <div className="dash-main">
@@ -100,9 +112,7 @@ export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () =>
           <h1>{t('practice')}</h1>
           <button className="btn btn-secondary" onClick={onBack}>{t('back')}</button>
         </div>
-        {onOpenQuestionBank && <EnrolledCurriculumSummary onOpenQuestionBank={onOpenQuestionBank} />}
-        <p className="field-hint">The grade preview below is for testing the interface only. For your real questions, use your registered curriculum above.</p>
-        <GradeSelectionPreview />
+
         <p className="muted">MELA app build: {String(import.meta.env.VITE_MELA_BUILD_SHA ?? 'unknown').slice(0,8)}</p>
         {error && <div className="banner banner-error" role="alert">{error}</div>}
         {error && <button className="btn btn-secondary" onClick={() => setRevision(n => n + 1)}>Retry loading practice topics</button>}

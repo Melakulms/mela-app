@@ -348,7 +348,7 @@ export default function App() {
           {studentView === 'practice' && <Practice onBack={() => setStudentView('dashboard')} onOpenQuestionBank={() => setStudentView('question-bank')} />}
           {studentView === 'question-bank' && <QuestionBank onBack={() => setStudentView('dashboard')} onOpenProfile={() => setStudentView('profile')} />}
           {studentView === 'opportunities' && <OpportunityHub onBack={() => setStudentView('dashboard')} />}
-          {studentView === 'materials' && <StudyMaterials stageKey={profile.education_stage_key} gradeLevel={profile.grade_level} onBack={() => setStudentView('dashboard')} />}
+          {studentView === 'materials' && <StudyMaterials stageKey={profile.education_stage_key} gradeLevel={profile.grade_level} onBack={() => setStudentView('dashboard')} onOpenQuestionBank={() => setStudentView('question-bank')} />}
           {studentView === 'academy' && <SkillAcademy onBack={() => setStudentView('dashboard')} />}
           {studentView === 'mentorship' && <Mentorship onBack={() => setStudentView('dashboard')} />}
           {studentView === 'passport' && <CareerPassport onBack={() => setStudentView('dashboard')} />}

@@ -6,6 +6,7 @@ vi.mock('../src/lib/supabase', () => ({ supabase: {
   auth: { getUser: mocks.getUser }, rpc: mocks.rpc,
   from: (table: string) => { const query: any = { select: () => query, eq: (field: string, value: unknown) => { mocks.eq(field, value); return query }, maybeSingle: table === 'student_profiles' ? mocks.student : mocks.profile, order: mocks.programs, then: (done: any, failed: any) => mocks.catalog().then(done, failed) }; return query },
 } }))
+vi.mock('../src/components/SchoolChapterLibrary', () => ({default: () => null, ChapterStudyResources: () => null}))
 const detail = { program: { mastery_count: 20, review_required_count: 10 }, chapters: [{ chapter_id: 'c1', chapter_title: 'Algebra', mastery_count: 20, topics: [{ topic_id: 't1', topic_title: 'Equations', mastery_count: 20 }] }] }
 beforeEach(() => {
   vi.resetAllMocks()

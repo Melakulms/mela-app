@@ -5,6 +5,7 @@ import Practice from '../src/pages/Practice'
 const mocks = vi.hoisted(() => ({ fetchLearningLibrary: vi.fn(), fetchLearningMaterial: vi.fn(), fetchTopics: vi.fn(), startSession: vi.fn(), fetchSessionQuestions: vi.fn(), submitResponse: vi.fn(), completeSession: vi.fn(), fetchDashboard: vi.fn() }))
 vi.mock('../src/lib/materials', () => mocks)
 vi.mock('../src/lib/practice', () => mocks)
+vi.mock('../src/components/SchoolChapterLibrary', () => ({default: () => null, ChapterStudyResources: () => null}))
 vi.mock('../src/lib/dashboard', () => mocks)
 // The visible real-grade summary has its own authenticated tests.
 vi.mock('../src/components/EnrolledCurriculumSummary', () => ({default: () => 'My registered curriculum'}))

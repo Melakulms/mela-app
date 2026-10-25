@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useI18n } from '../i18n'
+import { explainQuestionSessionError, isQuestionAvailabilityError } from '../lib/question-practice-ui'
 
 type Program = {
   program_key: string
@@ -44,7 +45,7 @@ export default function QuestionBank({ onBack }: { onBack: () => void }) {
   const [loading, setLoading] = useState(true)
   const [revision, setRevision] = useState(0)
   const answeredCount = questions.filter(q => answers[q.id]?.trim()).length
-  const noAccessibleQuestions = error.startsWith('This selection has fewer than five accessible mastery questions.')
+  const noAccessibleQuestions = isQuestionAvailabilityError(error)
 
   useEffect(() => {
     let active = true
@@ -103,9 +104,7 @@ export default function QuestionBank({ onBack }: { onBack: () => void }) {
       setQuestions((data.questions ?? []) as Question[])
     } catch (e: any) {
       const message = e instanceof Error ? e.message : String(e?.message ?? 'Could not start the question session.')
-      setError(/mastery rebuild in progress|not enough accessible supplemental questions/i.test(message)
-        ? 'This selection has fewer than five accessible mastery questions. Clear the optional filters and retry, or choose a different subject. Other questions may still require a teacher review or entitlement.'
-        : message)
+      setError(explainQuestionSessionError(message))
     } finally { requestLock.current = false; setBusy(false) }
   }
 
@@ -144,7 +143,7 @@ export default function QuestionBank({ onBack }: { onBack: () => void }) {
       <p className="muted">Practice at your own pace with questions matched to your {grade ? `Grade ${grade}` : "education"} curriculum.</p>
       {error && <div className="banner banner-error" role="alert">{error}</div>}
       {noAccessibleQuestions && (chapter || topic || difficulty) && !sessionId && (
-        <button className="btn btn-secondary" onClick={() => { setChapter(''); setTopic(''); setDifficulty(''); setError('') }}>
+        <button className="btn btn-secondary" type="button" onClick={() => { setChapter(''); setTopic(''); setDifficulty(''); setError('') }}>
           Clear chapter, topic and difficulty filters
         </button>
       )}
@@ -154,19 +153,19 @@ export default function QuestionBank({ onBack }: { onBack: () => void }) {
       {!loading && !error && programs.length === 0 && <div className="empty-panel">No subjects are available for your curriculum yet. Check back soon or update your education details in Profile.</div>}
       {!sessionId ? (
         <>
-          {grade && grade >= 11 && <div className="field"><label htmlFor="track">Academic track</label><select id="track" disabled={busy} value={track} onChange={e => { const next = e.target.value; setTrack(next); setProgram(programs.find(p => p.track_key === next)?.program_key ?? '') }}>{[...new Set(programs.map(p => p.track_key))].map(key => <option key={key} value={key}>{key.replaceAll('_', ' ')}</option>)}</select></div>}
+          {grade && grade >= 11 && <div className="field"><label htmlFor="track">Academic track</label><select id="track" disabled={busy} value={track} onChange={e => { const next = e.target.value; setTrack(next); setProgram(programs.find(p => p.track_key === next)?.program_key ?? ''); setError('') }}>{[...new Set(programs.map(p => p.track_key))].map(key => <option key={key} value={key}>{key.replaceAll('_', ' ')}</option>)}</select></div>}
           <div className="field">
             <label htmlFor="program">Subject</label>
-            <select disabled={loading || busy || !programs.length} id="program" value={program} onChange={e => setProgram(e.target.value)}>
+            <select disabled={loading || busy || !programs.length} id="program" value={program} onChange={e => { setProgram(e.target.value); setError('') }}>
               {visiblePrograms.map(p => <option key={p.program_key} value={p.program_key}>{p.subject_title}</option>)}
             </select>
           </div>
           {detailLoading && <p role="status">Loading chapters…</p>}
           {detailError && <div role="alert">{detailError}<button className="btn btn-secondary" onClick={() => setRevision(v => v + 1)}>Reload subjects</button></div>}
           {inventory && <p className="muted">{inventory.mastery_count} automatically validated or educator-verified candidates; {inventory.review_required_count} awaiting review. Some questions require an entitlement, and automated validation is not professional teacher approval.</p>}
-          <div className="field"><label htmlFor="chapter">Chapter</label><select id="chapter" disabled={busy || detailLoading} value={chapter} onChange={e => { setChapter(e.target.value); setTopic('') }}><option value="">All chapters</option>{chapters.map(c => <option key={c.chapter_id} value={c.chapter_id}>{c.chapter_title} ({c.mastery_count} validated)</option>)}</select></div>
-          <div className="field"><label htmlFor="topic">Topic</label><select id="topic" disabled={busy || !chapter} value={topic} onChange={e => setTopic(e.target.value)}><option value="">All topics</option>{(chapters.find(c => c.chapter_id === chapter)?.topics ?? []).map(t => <option key={t.topic_id} value={t.topic_id}>{t.topic_title} ({t.mastery_count} validated)</option>)}</select></div>
-          <div className="field"><label htmlFor="difficulty">Difficulty</label><select id="difficulty" disabled={busy} value={difficulty} onChange={e => setDifficulty(e.target.value)}><option value="">All levels</option>{[1,2,3,4,5].map(n => <option key={n} value={n}>Level {n}</option>)}</select></div>
+          <div className="field"><label htmlFor="chapter">Chapter</label><select id="chapter" disabled={busy || detailLoading} value={chapter} onChange={e => { setChapter(e.target.value); setTopic(''); setError('') }}><option value="">All chapters</option>{chapters.map(c => <option key={c.chapter_id} value={c.chapter_id}>{c.chapter_title} ({c.mastery_count} validated)</option>)}</select></div>
+          <div className="field"><label htmlFor="topic">Topic</label><select id="topic" disabled={busy || !chapter} value={topic} onChange={e => { setTopic(e.target.value); setError('') }}><option value="">All topics</option>{(chapters.find(c => c.chapter_id === chapter)?.topics ?? []).map(t => <option key={t.topic_id} value={t.topic_id}>{t.topic_title} ({t.mastery_count} validated)</option>)}</select></div>
+          <div className="field"><label htmlFor="difficulty">Difficulty</label><select id="difficulty" disabled={busy} value={difficulty} onChange={e => { setDifficulty(e.target.value); setError('') }}><option value="">All levels</option>{[1,2,3,4,5].map(n => <option key={n} value={n}>Level {n}</option>)}</select></div>
           <div className="field">
             <label htmlFor="count">Questions per session</label>
             <select disabled={busy} id="count" value={count} onChange={e => setCount(Number(e.target.value))}>
@@ -178,6 +177,8 @@ export default function QuestionBank({ onBack }: { onBack: () => void }) {
       ) : (
         <>
           <div className="section-heading"><h2>{questions.length} Questions</h2><span role="status">{answeredCount} of {questions.length} answered</span></div><progress className="answer-progress" value={answeredCount} max={questions.length} aria-label="Questions answered" />
+          <p className="muted">A score is saved only after you submit all answers. Leaving now will discard unsubmitted answers.</p>
+          <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => { if (window.confirm('Leave this practice session? Unsubmitted answers will be lost.')) { setSessionId(null); setQuestions([]); setAnswers({}); setError('') } }}>Leave session</button>
           {questions.map((q, i) => (
             <div className="list-panel question-card" key={q.id} style={{ marginBottom: '1rem' }}>
               <div className="list-row-title">Question {i + 1}</div>

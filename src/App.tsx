@@ -61,6 +61,12 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [sessionRevision, setSessionRevision] = useState(0)
   const observedUserId = useRef<string | null>(null)
+  const requestedLearningSection = useRef<StudentView | null>((() => {
+    const p = new URLSearchParams(window.location.search)
+    const target = p.get('view')
+    return p.get('mela_open') === '1' && (target === 'arena' || target === 'scholarships')
+      ? target : null
+  })())
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<MelaProfile | null>(null)
   const [authView, setAuthView] = useState<AuthView>(() => new URLSearchParams(window.location.search).has('signed_out') ? 'login' : 'register')
@@ -98,7 +104,7 @@ export default function App() {
       if (event === 'PASSWORD_RECOVERY') setRecovering(true)
       if (event === 'USER_UPDATED' || event === 'SIGNED_IN') setProfileRevision(value => value + 1)
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') setPendingEmail('')
-      if (event === 'SIGNED_OUT') {setRecovering(false);setAuthView('login');clearCoachHistories()}
+      if (event === 'SIGNED_OUT') {requestedLearningSection.current=null;setRecovering(false);setAuthView('login');clearCoachHistories()}
       if (event !== 'TOKEN_REFRESHED') setAccountError('')
       setSession(newSession)
       setLoading(false)
@@ -107,6 +113,24 @@ export default function App() {
       setLoading(false)
     })
   }, [sessionRevision, t])
+
+  // A deliberate external Arena/Scholarship link may be opened in an already
+  // installed app. Apply it only once the authenticated student profile is
+  // fully loaded, *after* session-restoration callbacks have completed.
+  // Ordinary reloads still start at Dashboard and private sections are never
+  // restored automatically.
+  useEffect(() => {
+    const target = requestedLearningSection.current
+    if (!target || !session?.user.id || profile?.role !== 'student' ||
+      !profile.education_onboarding_completed) return
+    requestedLearningSection.current = null
+    const url = new URL(window.location.href)
+    url.searchParams.delete('mela_open')
+    url.searchParams.set('view', target)
+    url.hash = ''
+    window.history.replaceState(null, '', url)
+    window.dispatchEvent(new PopStateEvent('popstate'))
+  }, [session?.user.id, profile?.id, profile?.role, profile?.education_onboarding_completed])
 
   useEffect(() => { setEditingEmployerProfile(false); setShowAccount(false) }, [session?.user.id])
 

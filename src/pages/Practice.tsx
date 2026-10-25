@@ -1,5 +1,6 @@
 import { useI18n } from '../i18n'
 import GradeSelectionPreview from '../components/GradeSelectionPreview'
+import EnrolledCurriculumSummary from '../components/EnrolledCurriculumSummary'
 import { useEffect, useRef, useState } from 'react'
 import {
   fetchTopics, startSession, fetchSessionQuestions, submitResponse, completeSession,
@@ -99,8 +100,10 @@ export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () =>
           <h1>{t('practice')}</h1>
           <button className="btn btn-secondary" onClick={onBack}>{t('back')}</button>
         </div>
-        {onOpenQuestionBank && <div className="list-panel question-card"><p>School learners: practice by grade, subject, chapter, and topic in the curriculum Question Bank. Your real grade comes from your saved education profile.</p><button className="btn btn-primary" onClick={onOpenQuestionBank}>Open curriculum Question Bank</button></div>}
+        {onOpenQuestionBank && <EnrolledCurriculumSummary onOpenQuestionBank={onOpenQuestionBank} />}
+        <p className="field-hint">The grade preview below is for testing the interface only. For your real questions, use your registered curriculum above.</p>
         <GradeSelectionPreview />
+        <p className="muted">MELA app build: {String(import.meta.env.VITE_MELA_BUILD_SHA ?? 'unknown').slice(0,8)}</p>
         {error && <div className="banner banner-error" role="alert">{error}</div>}
         {error && <button className="btn btn-secondary" onClick={() => setRevision(n => n + 1)}>Retry loading practice topics</button>}
 

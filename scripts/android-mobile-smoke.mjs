@@ -117,6 +117,22 @@ try {
         assert.equal(await signedPage.locator('#mela-settings-content').count(),0)
       }
       await login()
+
+      // Verify the exact production features requested by the owner, using
+      // isolated mock authentication rather than real production accounts.
+      await signedPage.goto(baseUrl+'?view=arena',{waitUntil:'domcontentloaded'})
+      await signedPage.getByRole('heading',{name:'Arena',exact:true}).waitFor({timeout:30000})
+      const livePracticeButtons=signedPage.getByRole('button',{name:'Try interactive practice'})
+      assert.equal(await livePracticeButtons.count(),8,'All eight Arena practice entries must be on published mobile UI')
+      await livePracticeButtons.last().click()
+      await signedPage.getByRole('heading',{name:/Tournaments.*Interactive demo/i}).waitFor()
+      assert.equal(await signedPage.getByText(/Practice simulation, NOT an official match/i).count()>0,true)
+
+      await signedPage.goto(baseUrl+'?view=scholarships',{waitUntil:'domcontentloaded'})
+      await signedPage.getByText('Scholarship research is not an offer, award or admission decision').waitFor({timeout:30000})
+      await signedPage.goto(baseUrl+'?view=dashboard',{waitUntil:'domcontentloaded'})
+      await signedPage.getByRole('heading',{name:'Explore MELA',exact:true}).waitFor({timeout:30000})
+
       await signedPage.getByRole('button',{name:'Open MELA settings'}).click()
       await signedPage.getByRole('heading',{name:'Settings',exact:true}).waitFor()
       await signedPage.getByRole('button',{name:'Log out',exact:true}).click()

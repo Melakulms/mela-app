@@ -132,7 +132,7 @@ try {
       })
       assert.equal(await livePracticeButtons.count(),8,'All eight Arena practice entries must be on published mobile UI')
       await livePracticeButtons.last().click()
-      await signedPage.getByRole('heading',{name:/Tournaments.*Interactive demo/i}).waitFor()
+      await signedPage.getByRole('heading',{name:/Tournament.*Interactive demo/i}).waitFor()
       assert.equal(await signedPage.getByText(/Practice simulation, NOT an official match/i).count()>0,true)
 
       await signedPage.locator('.bottom-nav button').nth(3).click()

@@ -21,3 +21,16 @@ it('requires enrolled senior-stream subjects',()=>{
   expect(eligibleSchoolPrograms(programs,catalog,11,'school_11_12',['biology'])).toHaveLength(1)
   expect(eligibleSchoolPrograms(programs,catalog,11,'school_11_12',['mathematics'])).toHaveLength(0)
 })
+
+it('prevents mixing questions between grades 1–12',()=>{
+  for(let grade=1;grade<=12;grade++){
+    const stage=grade<=6?'school_1_6':grade<=8?'school_7_8':grade<=10?'school_9_10':'school_11_12'
+    const track=grade>=11?'natural_sciences':'common'
+    const programs=[1,2,3,4,5,6,7,8,9,10,11,12].map(g=>({
+      program_key:String(g),grade_level:g,stage_key:g<=6?'school_1_6':g<=8?'school_7_8':g<=10?'school_9_10':'school_11_12',
+      track_key:g>=11?'natural_sciences':'common',subject_key:'mathematics',subject_title:'Mathematics',
+    }))
+    const catalog=[{stage_key:stage,track_key:track,subject_key:'mathematics',optional:false}]
+    expect(eligibleSchoolPrograms(programs,catalog,grade,stage,['mathematics']).map(p=>p.grade_level)).toEqual([grade])
+  }
+})

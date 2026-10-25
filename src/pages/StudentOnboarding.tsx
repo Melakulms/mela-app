@@ -24,7 +24,8 @@ export default function StudentOnboarding({
 }: Props) {
   const [choice, setChoice] = useState<EducationChoice>(() => educationChoiceFromStage(initialStage))
   const [grade, setGrade] = useState<number | null>(initialGrade)
-  const [track, setTrack] = useState('natural_sciences')
+  const [track, setTrack] = useState('')
+  const [savedTrackLocked, setSavedTrackLocked] = useState(false)
   const [subjects, setSubjects] = useState<ProfileSubject[]>([])
   const [selected, setSelected] = useState<string[]>([])
   const [school, setSchool] = useState('')
@@ -43,7 +44,9 @@ export default function StudentOnboarding({
   const priorStageLocked = Boolean(initialStage)
   const permittedGrades = allowedSchoolGrades(initialStage)
   const requiredSubjects = subjects.filter(subject => !subject.optional)
-  const selectionError = validateSubjectSelection(subjects, selected)
+  const selectionError = isSchool && grade !== null && grade >= 11 && !trackKey
+    ? 'Choose your academic stream before selecting subjects.'
+    : validateSubjectSelection(subjects, selected)
 
   useEffect(() => {
     let active = true
@@ -51,7 +54,7 @@ export default function StudentOnboarding({
     setCatalogError('')
     setSubjects([])
     setSelected([])
-    if (!stageKey) { setLoadingCatalog(false); return () => { active = false } }
+    if (!stageKey || (isSchool && grade !== null && grade >= 11 && !trackKey)) { setLoadingCatalog(false); return () => { active = false } }
     setLoadingCatalog(true)
 
     const load = async () => {
@@ -84,7 +87,7 @@ export default function StudentOnboarding({
           })
         // Some live deployments have per-grade learning programs but no stage-wide
         // subject catalog rows. Use those programs as a grounded second source.
-        if (isSchool && grade !== null) {
+        if (!isSchool && grade !== null) {
           const {data: gradePrograms, error: programsError} = await supabase.from('mela_learning_programs')
             .select('program_key,subject_title,grade_level,track_key')
             .eq('active', true).eq('stage_key', stageKey).eq('grade_level', grade)
@@ -136,7 +139,7 @@ export default function StudentOnboarding({
   const changeEducation = (value: EducationChoice) => {
     setChoice(value)
     setGrade(null)
-    setTrack('natural_sciences')
+    setTrack('')
     setSchool('')
     setError('')
   }
@@ -147,6 +150,7 @@ export default function StudentOnboarding({
     if (!stageKey) return setError('Choose your education level and a school grade where required.')
     if (catalogError) return setError('Could not verify your subjects. Reload the page and try again.')
     if (selectionError) return setError(selectionError)
+    if (isSchool && grade !== null && grade >= 11 && !trackKey) return setError('Select a registered academic stream first.')
     setBusy(true)
     setError('')
 
@@ -154,6 +158,7 @@ export default function StudentOnboarding({
       await saveMyEducationProfile({
         stageKey,
         grade: isSchool ? grade : null,
+        trackKey: isSchool && grade !== null && grade >= 11 ? trackKey : null,
         school,
         subjects: selected,
         interests,
@@ -198,7 +203,7 @@ export default function StudentOnboarding({
             onChange={event => {
               const nextGrade = Number(event.target.value)
               setGrade(nextGrade)
-              setTrack(nextGrade >= 11 ? 'natural_sciences' : 'common')
+              setTrack(nextGrade >= 11 ? '' : 'common')
             }}>
             <option value="" disabled>Choose your actual grade (no default)</option>
             {permittedGrades.map(value =>
@@ -211,11 +216,13 @@ export default function StudentOnboarding({
         </div>}
         {isSchool && grade !== null && grade >= 11 && <div className="field">
           <label htmlFor="school-track">Grade 11–12 academic stream</label>
-          <select id="school-track" value={trackKey} disabled={busy}
+          <select id="school-track" value={trackKey} required disabled={busy || savedTrackLocked}
             onChange={event => setTrack(event.target.value)}>
+            <option value="" disabled>Choose your academic stream</option>
             <option value="natural_sciences">Natural Sciences</option>
             <option value="social_sciences">Social Sciences</option>
           </select>
+          {savedTrackLocked && <p className="field-hint">Saved academic stream is locked. Request verified MELA support to correct it.</p>}
         </div>}
         {stageKey && <div className="field">
           <label htmlFor="school">School or institution (optional)</label>
@@ -227,7 +234,7 @@ export default function StudentOnboarding({
           <label id="subject-heading">{isSchool ? 'Curriculum subjects' : 'Study programs'} (required)</label>
           {loadingCatalog && <p role="status">Loading verified subjects for your education level…</p>}
           {catalogError && <p className="banner banner-error" role="alert">{catalogError}</p>}
-          {!loadingCatalog && !catalogError && subjects.length === 0 &&
+          {!loadingCatalog && !catalogError && subjects.length === 0 && !(isSchool && grade !== null && grade >= 11 && !trackKey) &&
             <p className="banner banner-error" role="alert">No verified subjects or programs are available for this education stage yet. Contact MELA support.</p>}
           {!loadingCatalog && !catalogError && subjects.length > 0 && <>
             <p className="field-hint">{isSchool

@@ -101,3 +101,4 @@ export default function ScholarshipReadinessPanel({ verifiedOfferCount }: { veri
         : verifiedOfferCount + ' currently approved, open and source-checked scholarship listing(s) are available in Verified offers. Research them individually; this count is not personalized eligibility.'}</p>
     </div>
   </section>
+}

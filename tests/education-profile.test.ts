@@ -55,7 +55,7 @@ describe('mandatory MELA education profile', () => {
   it('only offers senior academic streams for grades 11–12', () => {
     expect(effectiveSchoolTrack(7,'natural_sciences')).toBe('common')
     expect(effectiveSchoolTrack(11,'social_sciences')).toBe('social_sciences')
-    expect(effectiveSchoolTrack(12,'not-a-track')).toBe('natural_sciences')
+    expect(effectiveSchoolTrack(12,'not-a-track')).toBe('')
     expect(effectiveSchoolTrack(null,'social_sciences')).toBe('common')
   })
 })

@@ -18,7 +18,7 @@ export default function GradeSelectionPreview() {
   const stage = educationStageFor('school', grade)
   return (
     <details className="list-panel" aria-label="Try all school grades without changing your profile">
-      <summary style={{ cursor: 'pointer', fontWeight: 650 }}>Test grade selection: Grades 1–12 (preview only)</summary>
+      <summary style={{ cursor: 'pointer', fontWeight: 650 }}>Demo only: Preview Grades 1–12 (does not change your grade)</summary>
       <p className="field-hint">Choose any grade to check how MELA recognizes it. This preview does not save a grade, change an existing student's profile, unlock questions, or enroll anyone.</p>
       <div className="field">
         <label htmlFor={id}>Preview school grade (1–12)</label>

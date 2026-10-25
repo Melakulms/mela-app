@@ -174,7 +174,7 @@ export default function StudentOnboarding({
     <div className="auth-card" style={{maxWidth:720}}>
       <span className="auth-wordmark">MELA</span>
       <h1>{editMode ? 'Your education profile' : 'Complete your education profile'}</h1>
-      <p className="auth-subtitle">Required: education level, school grade where applicable, and your curriculum subjects. MELA uses these to organize lessons, practice questions and appropriate competitions.</p>
+      <p className="auth-subtitle">Required registration setup: choose your education level, your actual school grade (if in Grades 1–12), and your curriculum subjects. MELA saves your grade and automatically restricts Practice and Question Bank to that grade.</p>
       <p className="field-hint">School children do not need to provide a date of birth, home address, phone number, or a photo to choose their school curriculum.</p>
       {error && <div className="banner banner-error" role="alert">
         <p>{error}</p>
@@ -194,7 +194,7 @@ export default function StudentOnboarding({
         </div>
         {isSchool && <div className="field">
           <label htmlFor="grade">School grade (required)</label>
-          <select id="grade" required value={grade ?? ''} disabled={busy || !canChooseSchoolGrade(editMode)}
+          <select id="grade" required value={grade ?? ''} disabled={busy || !canChooseSchoolGrade(editMode, initialGrade !== null)}
             onChange={event => {
               const nextGrade = Number(event.target.value)
               setGrade(nextGrade)
@@ -205,8 +205,9 @@ export default function StudentOnboarding({
               <option key={value} value={value}>Grade {value}</option>
             )}
           </select>
-          {priorStageLocked && !editMode && <p className="field-hint">Select the correct grade for your existing school stage to finish your profile.</p>}
-          {priorStageLocked && editMode && <p className="field-hint">After setup, verified grade corrections are handled by support so age and competition rules stay correct.</p>}
+          {priorStageLocked && initialGrade === null && !editMode && <p className="field-hint">Select your actual grade once to finish registration setup. MELA will save it for your practice questions.</p>}
+          {initialGrade !== null && <p className="field-hint">Grade {initialGrade} is already saved. Only verified MELA support can authorize a promotion or grade correction. Practice cannot change your grade.</p>}
+          {priorStageLocked && editMode && initialGrade === null && <p className="field-hint">A saved grade will be locked for learner safety and curriculum accuracy.</p>}
         </div>}
         {isSchool && grade !== null && grade >= 11 && <div className="field">
           <label htmlFor="school-track">Grade 11–12 academic stream</label>

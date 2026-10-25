@@ -64,7 +64,7 @@ BEGIN
    END IF;
  END IF;
  RETURN NEW;
-END
+END;
 $guard$;
 DROP TRIGGER IF EXISTS trg_validate_school_enrollment_v38 ON public.student_profiles;
 CREATE TRIGGER trg_validate_school_enrollment_v38
@@ -105,7 +105,7 @@ BEGIN
  VALUES(v_uid,p_track_key)
  ON CONFLICT(user_id) DO UPDATE SET academic_track_key=EXCLUDED.academic_track_key,updated_at=now();
  RETURN p_track_key;
-END
+END;
 $select_stream$;
 REVOKE ALL ON FUNCTION public.set_my_academic_stream_v38(text) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.set_my_academic_stream_v38(text) TO authenticated;
@@ -174,7 +174,7 @@ begin
     and v_program.grade_level is distinct from v_profile.grade_level then
       raise exception 'program is not available for your grade';
   end if;
-end $function$;;;
+end $function$;
 CREATE OR REPLACE FUNCTION private.mela_school_enrolled_program_allowed(p_program_key text)
  RETURNS boolean
  LANGUAGE sql

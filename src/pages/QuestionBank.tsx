@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useI18n } from '../i18n'
 import { educationStageFor } from '../lib/education-profile'
+import { ChapterStudyResources } from '../components/SchoolChapterLibrary'
 import { eligibleSchoolPrograms, type CurriculumSubject } from '../lib/curriculum-access'
 import { explainQuestionSessionError, isQuestionAvailabilityError } from '../lib/question-practice-ui'
 
@@ -187,6 +188,12 @@ export default function QuestionBank({ onBack, onOpenProfile }: { onBack: () => 
           {detailError && <div role="alert">{detailError}<button className="btn btn-secondary" onClick={() => setRevision(v => v + 1)}>Reload subjects</button></div>}
           {inventory && <p className="muted">{inventory.mastery_count} automatically validated or educator-verified candidates; {inventory.review_required_count} awaiting review. Some questions require an entitlement, and automated validation is not professional teacher approval.</p>}
           <div className="field"><label htmlFor="chapter">Chapter</label><select id="chapter" disabled={busy || detailLoading} value={chapter} onChange={e => { setChapter(e.target.value); setTopic(''); setError('') }}><option value="">All chapters</option>{chapters.map(c => <option key={c.chapter_id} value={c.chapter_id}>{c.chapter_title} ({c.mastery_count} validated)</option>)}</select></div>
+          {chapter && grade !== null && chapters.some(c => c.chapter_id === chapter) && <ChapterStudyResources
+            chapterId={chapter}
+            chapterTitle={chapters.find(c => c.chapter_id === chapter)!.chapter_title}
+            grade={grade}
+            stageKey={educationStageFor('school', grade)!}
+          />}
           <div className="field"><label htmlFor="topic">Topic</label><select id="topic" disabled={busy || !chapter} value={topic} onChange={e => { setTopic(e.target.value); setError('') }}><option value="">All topics</option>{(chapters.find(c => c.chapter_id === chapter)?.topics ?? []).map(t => <option key={t.topic_id} value={t.topic_id}>{t.topic_title} ({t.mastery_count} validated)</option>)}</select></div>
           <div className="field"><label htmlFor="difficulty">Difficulty</label><select id="difficulty" disabled={busy} value={difficulty} onChange={e => { setDifficulty(e.target.value); setError('') }}><option value="">All levels</option>{[1,2,3,4,5].map(n => <option key={n} value={n}>Level {n}</option>)}</select></div>
           <div className="field">
@@ -195,6 +202,7 @@ export default function QuestionBank({ onBack, onOpenProfile }: { onBack: () => 
               {[5,8,10,15,20,30].map(n => <option key={n} value={n}>{n} questions</option>)}
             </select>
           </div>
+          {chapter && <p className="field-hint">This practice session uses the selected chapter. Read the free lesson and guided practice first. Question availability and entitlements remain checked by the server.</p>}
           <button className="btn btn-primary" onClick={start} disabled={busy || !program || detailLoading || !!detailError || loading}>{busy ? 'Loading questions…' : 'Start practice'}</button>
         </>
       ) : (

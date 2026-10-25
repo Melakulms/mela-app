@@ -35,7 +35,7 @@ it('locks verified profile edits but lets unfinished learners choose their grade
   expect(grade.value).toBe('9')
   expect(grade.disabled).toBe(true)
   expect(level.disabled).toBe(true)
-  expect(screen.getByText(/verified grade corrections are handled by support/)).toBeTruthy()
+  expect(screen.getByText(/Grade 9 is already saved/)).toBeTruthy()
 })
 
 it('does not offer a different grade when an incomplete school profile has already saved its grade', () => {

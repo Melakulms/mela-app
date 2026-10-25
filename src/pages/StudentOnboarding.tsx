@@ -48,6 +48,33 @@ export default function StudentOnboarding({
     ? 'Choose your academic stream before selecting subjects.'
     : validateSubjectSelection(subjects, selected)
 
+  // A previously saved senior-school stream must be displayed, not guessed from subjects.
+  useEffect(() => {
+    if (!initialStage || initialGrade === null || initialGrade < 11) return
+    let active = true
+    const load = async () => {
+      try {
+        const { data: auth, error: authError } = await supabase.auth.getUser()
+        if (authError) throw authError
+        if (!auth.user) throw new Error('Sign in to check your academic stream.')
+        const { data, error: readError } = await supabase.from('student_profiles')
+          .select('academic_track_key').eq('user_id', auth.user.id).maybeSingle()
+        if (readError) throw readError
+        if (!active) return
+        if (data?.academic_track_key === 'natural_sciences' || data?.academic_track_key === 'social_sciences') {
+          setTrack(data.academic_track_key)
+          setSavedTrackLocked(true)
+        } else {
+          setError('Your senior-school academic stream is not verified. Ask MELA support before editing enrolled subjects.')
+        }
+      } catch (cause) {
+        if (active) setError(cause instanceof Error ? cause.message : 'Could not read your saved academic stream.')
+      }
+    }
+    void load()
+    return () => { active = false }
+  }, [initialStage, initialGrade])
+
   useEffect(() => {
     let active = true
     setError('')

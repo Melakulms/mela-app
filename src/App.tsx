@@ -85,6 +85,7 @@ export default function App() {
       // Password recovery/callback links must keep their own flow intact.
       const params = new URLSearchParams(window.location.search)
       const ordinaryRestore = event === 'INITIAL_SESSION' && !!nextUserId &&
+        nextUserId !== observedUserId.current &&
         !params.has('recovery') && !params.has('code') && !params.has('error') &&
         !window.location.hash.includes('access_token')
       if (event === 'SIGNED_OUT' || ordinaryRestore || (event === 'SIGNED_IN' && nextUserId !== observedUserId.current)) {

@@ -21,6 +21,7 @@ export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () =>
   const [busy, setBusy] = useState(false)
   const [textAnswer, setTextAnswer] = useState('')
   const submitting = useRef(false)
+  const starting = useRef(false)
   const [view, setView] = useState<View>({ stage: 'topics' })
 
   useEffect(() => {
@@ -35,6 +36,8 @@ export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () =>
   }, [revision])
 
   const beginTopic = async (topicId: string) => {
+    if (starting.current) return
+    starting.current = true
     setError('')
     setView({ stage: 'loading_session' })
     try {
@@ -49,6 +52,8 @@ export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () =>
     } catch (e: any) {
       setError(e.message ?? 'Could not start a practice session.')
       setView({ stage: 'topics' })
+    } finally {
+      starting.current = false
     }
   }
 
@@ -144,6 +149,13 @@ export default function Practice({ onBack, onOpenQuestionBank }: { onBack: () =>
       <div className="dash-main">
         <div className="section-heading">
           <h2>Question {view.index + 1} of {view.questions.length}</h2>
+          <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => {
+            if (window.confirm('Exit this practice session? Your incomplete session will not earn a score.')) {
+              setTextAnswer('')
+              setView({ stage: 'topics' })
+              setError('')
+            }
+          }}>Exit practice</button>
         </div>
         {error && <div className="banner banner-error">{error}</div>}
         <p style={{ fontSize: '1.1rem', fontWeight: 600 }}>{q.question}</p>

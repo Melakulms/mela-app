@@ -61,7 +61,7 @@ it('explains unavailable mastery selections and lets the learner clear restricti
   fireEvent.change(screen.getByLabelText('Difficulty'), { target: { value: '5' } })
   mocks.rpc.mockResolvedValueOnce({ error: { message: 'mastery rebuild in progress for this filter: only 0 accessible mastery questions are currently available' } })
   fireEvent.click(screen.getByRole('button', { name: 'Start practice' }))
-  await screen.findByText(/This selection has fewer than five accessible mastery questions/)
+  await screen.findByText(/Only 0 accessible mastery questions match this selection/)
   expect(screen.queryByText('mastery rebuild in progress')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Clear chapter, topic and difficulty filters' }))
   expect((screen.getByLabelText('Chapter') as HTMLSelectElement).value).toBe('')

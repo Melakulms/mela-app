@@ -81,6 +81,10 @@ export async function fetchLearningLibrary(stageKey: string, gradeLevel: number 
 export interface MaterialContent {
   material_key: string
   title: string
+  grade_level?: number | null
+  stage_key?: string
+  track_key?: string
+  subject_title?: string
   summary: string | null
   content_markdown?: string | null
   locked: boolean

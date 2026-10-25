@@ -1,0 +1,1622 @@
+{
+  "as_of": "2026-10-24",
+  "kind": "research_directory_not_scholarship_awards",
+  "source": "MELA staging public university research catalog",
+  "universities": [
+    {
+      "id": 120,
+      "name": "Aalto University",
+      "country": "Finland",
+      "website_url": "https://www.aalto.fi",
+      "funding": []
+    },
+    {
+      "id": 130,
+      "name": "Aarhus University",
+      "country": "Denmark",
+      "website_url": "https://international.au.dk",
+      "funding": []
+    },
+    {
+      "id": 182,
+      "name": "Adelaide University",
+      "country": "Australia",
+      "website_url": "https://adelaide.edu.au",
+      "funding": [
+        {
+          "url": "https://adelaide.edu.au/study/scholarships/",
+          "levels": "Undergraduate / Postgraduate"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "name": "Amherst",
+      "country": "United States",
+      "website_url": "https://www.amherst.edu",
+      "funding": []
+    },
+    {
+      "id": 179,
+      "name": "Australian National University",
+      "country": "Australia",
+      "website_url": "https://www.anu.edu.au",
+      "funding": []
+    },
+    {
+      "id": 30,
+      "name": "Bates",
+      "country": "United States",
+      "website_url": "https://www.bates.edu",
+      "funding": []
+    },
+    {
+      "id": 90,
+      "name": "Bath",
+      "country": "United Kingdom",
+      "website_url": "https://www.bath.ac.uk",
+      "funding": []
+    },
+    {
+      "id": 143,
+      "name": "Beihang",
+      "country": "China",
+      "website_url": "https://ev.buaa.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 161,
+      "name": "Beijing Foreign Studies",
+      "country": "China",
+      "website_url": "https://www.bfsu.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 142,
+      "name": "Beijing Institute of Technology",
+      "country": "China",
+      "website_url": "https://english.bit.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 152,
+      "name": "Beijing Normal",
+      "country": "China",
+      "website_url": "https://english.bnu.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 77,
+      "name": "Birmingham",
+      "country": "United Kingdom",
+      "website_url": "https://www.birmingham.ac.uk",
+      "funding": []
+    },
+    {
+      "id": 98,
+      "name": "Bonn",
+      "country": "Germany",
+      "website_url": "https://www.uni-bonn.de",
+      "funding": []
+    },
+    {
+      "id": 48,
+      "name": "Boston College",
+      "country": "United States",
+      "website_url": "https://www.bc.edu",
+      "funding": []
+    },
+    {
+      "id": 47,
+      "name": "Boston University",
+      "country": "United States",
+      "website_url": "https://www.bu.edu",
+      "funding": []
+    },
+    {
+      "id": 9,
+      "name": "Bowdoin",
+      "country": "United States",
+      "website_url": "https://www.bowdoin.edu",
+      "funding": [
+        {
+          "url": "https://www.bowdoin.edu/student-aid/apply-for-aid/international-students.html",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 51,
+      "name": "Brandeis",
+      "country": "United States",
+      "website_url": "https://www.brandeis.edu",
+      "funding": []
+    },
+    {
+      "id": 75,
+      "name": "Bristol",
+      "country": "United Kingdom",
+      "website_url": "https://www.bristol.ac.uk",
+      "funding": [
+        {
+          "url": "https://www.bristol.ac.uk/international/fees-finance/scholarships/",
+          "levels": "Undergraduate and Postgraduate"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Brown",
+      "country": "United States",
+      "website_url": "https://www.brown.edu",
+      "funding": [
+        {
+          "url": "https://admission.brown.edu/international/financial-aid",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 36,
+      "name": "Bryn Mawr",
+      "country": "United States",
+      "website_url": "https://www.brynmawr.edu",
+      "funding": []
+    },
+    {
+      "id": 67,
+      "name": "Cambridge",
+      "country": "United Kingdom",
+      "website_url": "https://www.cam.ac.uk",
+      "funding": [
+        {
+          "url": "https://www.student-funding.cam.ac.uk/",
+          "levels": "Postgraduate"
+        }
+      ]
+    },
+    {
+      "id": 89,
+      "name": "Cardiff",
+      "country": "United Kingdom",
+      "website_url": "https://www.cardiff.ac.uk",
+      "funding": []
+    },
+    {
+      "id": 31,
+      "name": "Carleton",
+      "country": "United States",
+      "website_url": "https://www.carleton.edu",
+      "funding": []
+    },
+    {
+      "id": 42,
+      "name": "Case Western Reserve",
+      "country": "United States",
+      "website_url": "https://case.edu",
+      "funding": []
+    },
+    {
+      "id": 155,
+      "name": "Central South",
+      "country": "China",
+      "website_url": "https://en.csu.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 118,
+      "name": "Chalmers",
+      "country": "Sweden",
+      "website_url": "https://www.chalmers.se",
+      "funding": []
+    },
+    {
+      "id": 160,
+      "name": "China Agricultural",
+      "country": "China",
+      "website_url": "https://en.cau.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 165,
+      "name": "Chongqing",
+      "country": "China",
+      "website_url": "https://english.cqu.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 27,
+      "name": "Claremont McKenna",
+      "country": "United States",
+      "website_url": "https://www.cmc.edu",
+      "funding": []
+    },
+    {
+      "id": 29,
+      "name": "Colby",
+      "country": "United States",
+      "website_url": "https://www.colby.edu",
+      "funding": []
+    },
+    {
+      "id": 12,
+      "name": "Columbia",
+      "country": "United States",
+      "website_url": "https://www.columbia.edu",
+      "funding": []
+    },
+    {
+      "id": 13,
+      "name": "Cornell",
+      "country": "United States",
+      "website_url": "https://www.cornell.edu",
+      "funding": []
+    },
+    {
+      "id": 157,
+      "name": "Dalian University of Technology",
+      "country": "China",
+      "website_url": "https://en.dlut.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 7,
+      "name": "Dartmouth",
+      "country": "United States",
+      "website_url": "https://home.dartmouth.edu",
+      "funding": [
+        {
+          "url": "https://admissions.dartmouth.edu/estimate-your-cost/apply-financial-aid",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 39,
+      "name": "Davidson",
+      "country": "United States",
+      "website_url": "https://www.davidson.edu",
+      "funding": []
+    },
+    {
+      "id": 106,
+      "name": "Delft University of Technology",
+      "country": "Netherlands",
+      "website_url": "https://www.tudelft.nl",
+      "funding": []
+    },
+    {
+      "id": 11,
+      "name": "Duke",
+      "country": "United States",
+      "website_url": "https://duke.edu",
+      "funding": []
+    },
+    {
+      "id": 83,
+      "name": "Durham",
+      "country": "United Kingdom",
+      "website_url": "https://www.durham.ac.uk",
+      "funding": []
+    },
+    {
+      "id": 153,
+      "name": "East China Normal",
+      "country": "China",
+      "website_url": "https://english.ecnu.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 72,
+      "name": "Edinburgh",
+      "country": "United Kingdom",
+      "website_url": "https://www.ed.ac.uk",
+      "funding": []
+    },
+    {
+      "id": 44,
+      "name": "Emory",
+      "country": "United States",
+      "website_url": "https://www.emory.edu",
+      "funding": [
+        {
+          "url": "https://apply.emory.edu/financial-aid/scholar-program",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 112,
+      "name": "EPFL",
+      "country": "Switzerland",
+      "website_url": "https://www.epfl.ch",
+      "funding": []
+    },
+    {
+      "id": 111,
+      "name": "ETH Zurich",
+      "country": "Switzerland",
+      "website_url": "https://ethz.ch",
+      "funding": [
+        {
+          "url": "https://ethz.ch/students/en/studies/financial/scholarships/excellencescholarship.html",
+          "levels": "Masters"
+        }
+      ]
+    },
+    {
+      "id": 82,
+      "name": "Exeter",
+      "country": "United Kingdom",
+      "website_url": "https://www.exeter.ac.uk",
+      "funding": []
+    },
+    {
+      "id": 96,
+      "name": "Freiburg",
+      "country": "Germany",
+      "website_url": "https://uni-freiburg.de",
+      "funding": []
+    },
+    {
+      "id": 133,
+      "name": "Fudan",
+      "country": "China",
+      "website_url": "https://www.fudan.edu.cn",
+      "funding": [
+        {
+          "url": "https://www.fudan.edu.cn/en/Scholarships/list.htm",
+          "levels": "Undergraduate and Postgraduate"
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "name": "Georgetown",
+      "country": "United States",
+      "website_url": "https://www.georgetown.edu",
+      "funding": []
+    },
+    {
+      "id": 126,
+      "name": "Ghent University",
+      "country": "Belgium",
+      "website_url": "https://www.ugent.be",
+      "funding": []
+    },
+    {
+      "id": 76,
+      "name": "Glasgow",
+      "country": "United Kingdom",
+      "website_url": "https://www.gla.ac.uk",
+      "funding": []
+    },
+    {
+      "id": 99,
+      "name": "Göttingen",
+      "country": "Germany",
+      "website_url": "https://www.uni-goettingen.de",
+      "funding": []
+    },
+    {
+      "id": 32,
+      "name": "Grinnell",
+      "country": "United States",
+      "website_url": "https://www.grinnell.edu",
+      "funding": []
+    },
+    {
+      "id": 100,
+      "name": "Hamburg",
+      "country": "Germany",
+      "website_url": "https://www.uni-hamburg.de",
+      "funding": []
+    },
+    {
+      "id": 28,
+      "name": "Hamilton College",
+      "country": "United States",
+      "website_url": "https://www.hamilton.edu",
+      "funding": []
+    },
+    {
+      "id": 141,
+      "name": "Harbin Institute of Technology",
+      "country": "China",
+      "website_url": "https://www.hit.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 1,
+      "name": "Harvard",
+      "country": "United States",
+      "website_url": "https://www.harvard.edu",
+      "funding": [
+        {
+          "url": "https://college.harvard.edu/financial-aid",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 41,
+      "name": "Haverford",
+      "country": "United States",
+      "website_url": "https://www.haverford.edu",
+      "funding": []
+    },
+    {
+      "id": 93,
+      "name": "Heidelberg",
+      "country": "Germany",
+      "website_url": "https://www.uni-heidelberg.de",
+      "funding": []
+    },
+    {
+      "id": 198,
+      "name": "Hong Kong University of Science and Technology",
+      "country": "Hong Kong",
+      "website_url": "https://hkust.edu.hk",
+      "funding": [
+        {
+          "url": "https://join.hkust.edu.hk/intlscholarships",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 139,
+      "name": "Huazhong University of Science and Technology",
+      "country": "China",
+      "website_url": "https://www.hust.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 97,
+      "name": "Humboldt Berlin",
+      "country": "Germany",
+      "website_url": "https://www.hu-berlin.de",
+      "funding": []
+    },
+    {
+      "id": 68,
+      "name": "Imperial College London",
+      "country": "United Kingdom",
+      "website_url": "https://www.imperial.ac.uk",
+      "funding": [
+        {
+          "url": "https://www.imperial.ac.uk/study/fees-and-funding/scholarships-search/",
+          "levels": "Undergraduate and Postgraduate"
+        }
+      ]
+    },
+    {
+      "id": 104,
+      "name": "Institut Polytechnique de Paris",
+      "country": "France",
+      "website_url": "https://www.ip-paris.fr",
+      "funding": []
+    },
+    {
+      "id": 64,
+      "name": "Iowa State",
+      "country": "United States",
+      "website_url": "https://www.iastate.edu",
+      "funding": []
+    },
+    {
+      "id": 149,
+      "name": "Jilin",
+      "country": "China",
+      "website_url": "https://global.jlu.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 20,
+      "name": "Johns Hopkins",
+      "country": "United States",
+      "website_url": "https://www.jhu.edu",
+      "funding": []
+    },
+    {
+      "id": 192,
+      "name": "KAIST",
+      "country": "South Korea",
+      "website_url": "https://www.kaist.ac.kr",
+      "funding": [
+        {
+          "url": "https://admission.kaist.ac.kr/intl-undergraduate/support/scholarships/kaist",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 70,
+      "name": "King's College London",
+      "country": "United Kingdom",
+      "website_url": "https://www.kcl.ac.uk",
+      "funding": []
+    },
+    {
+      "id": 199,
+      "name": "Koç University",
+      "country": "Türkiye",
+      "website_url": "https://www.ku.edu.tr",
+      "funding": []
+    },
+    {
+      "id": 117,
+      "name": "KTH Royal Institute of Technology",
+      "country": "Sweden",
+      "website_url": "https://www.kth.se",
+      "funding": [
+        {
+          "url": "https://www.kth.se/en/studies/master/admissions/scholarships/kth-scholarship-1.72827",
+          "levels": "Masters"
+        }
+      ]
+    },
+    {
+      "id": 125,
+      "name": "KU Leuven",
+      "country": "Belgium",
+      "website_url": "https://www.kuleuven.be",
+      "funding": []
+    },
+    {
+      "id": 187,
+      "name": "Kyoto University",
+      "country": "Japan",
+      "website_url": "https://www.kyoto-u.ac.jp",
+      "funding": [
+        {
+          "url": "https://www.kyoto-u.ac.jp/en/education-campus/procedures/scholarships",
+          "levels": "Undergraduate and Postgraduate"
+        }
+      ]
+    },
+    {
+      "id": 80,
+      "name": "Leeds",
+      "country": "United Kingdom",
+      "website_url": "https://www.leeds.ac.uk",
+      "funding": [
+        {
+          "url": "https://www.leeds.ac.uk/scholarship/12/masters-international-excellence-scholarships",
+          "levels": "Masters"
+        }
+      ]
+    },
+    {
+      "id": 52,
+      "name": "Lehigh",
+      "country": "United States",
+      "website_url": "https://www.lehigh.edu",
+      "funding": []
+    },
+    {
+      "id": 109,
+      "name": "Leiden",
+      "country": "Netherlands",
+      "website_url": "https://www.universiteitleiden.nl",
+      "funding": []
+    },
+    {
+      "id": 88,
+      "name": "Liverpool",
+      "country": "United Kingdom",
+      "website_url": "https://www.liverpool.ac.uk",
+      "funding": []
+    },
+    {
+      "id": 92,
+      "name": "LMU Munich",
+      "country": "Germany",
+      "website_url": "https://www.lmu.de",
+      "funding": []
+    },
+    {
+      "id": 71,
+      "name": "London School of Economics",
+      "country": "United Kingdom",
+      "website_url": "https://www.lse.ac.uk",
+      "funding": [
+        {
+          "url": "https://www.lse.ac.uk/study-at-lse/graduate/fees-and-funding/secure/graduate-support-scheme",
+          "levels": "Masters"
+        }
+      ]
+    },
+    {
+      "id": 115,
+      "name": "Lund",
+      "country": "Sweden",
+      "website_url": "https://www.lu.se",
+      "funding": []
+    },
+    {
+      "id": 110,
+      "name": "Maastricht",
+      "country": "Netherlands",
+      "website_url": "https://www.maastrichtuniversity.nl",
+      "funding": []
+    },
+    {
+      "id": 37,
+      "name": "Macalester",
+      "country": "United States",
+      "website_url": "https://www.macalester.edu",
+      "funding": []
+    },
+    {
+      "id": 73,
+      "name": "Manchester",
+      "country": "United Kingdom",
+      "website_url": "https://www.manchester.ac.uk",
+      "funding": [
+        {
+          "url": "https://www.manchester.ac.uk/study/masters/fees-and-funding/masters-student-funding/equity-merit-scholarships/",
+          "levels": "Masters"
+        }
+      ]
+    },
+    {
+      "id": 168,
+      "name": "McGill",
+      "country": "Canada",
+      "website_url": "https://www.mcgill.ca",
+      "funding": []
+    },
+    {
+      "id": 171,
+      "name": "McMaster",
+      "country": "Canada",
+      "website_url": "https://www.mcmaster.ca",
+      "funding": []
+    },
+    {
+      "id": 63,
+      "name": "Michigan State",
+      "country": "United States",
+      "website_url": "https://msu.edu",
+      "funding": []
+    },
+    {
+      "id": 4,
+      "name": "MIT",
+      "country": "United States",
+      "website_url": "https://www.mit.edu",
+      "funding": [
+        {
+          "url": "https://sfs.mit.edu/undergraduate-students/apply-for-aid/international/",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 180,
+      "name": "Monash",
+      "country": "Australia",
+      "website_url": "https://www.monash.edu",
+      "funding": []
+    },
+    {
+      "id": 35,
+      "name": "Mount Holyoke",
+      "country": "United States",
+      "website_url": "https://www.mtholyoke.edu",
+      "funding": []
+    },
+    {
+      "id": 137,
+      "name": "Nanjing",
+      "country": "China",
+      "website_url": "https://www.nju.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 151,
+      "name": "Nankai",
+      "country": "China",
+      "website_url": "https://en.nankai.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 196,
+      "name": "Nanyang Technological University",
+      "country": "Singapore",
+      "website_url": "https://www.ntu.edu.sg",
+      "funding": [
+        {
+          "url": "https://www.ntu.edu.sg/admissions/undergraduate/scholarships-and-awards/scholarship-opportunities/detail/nanyang-scholarship",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 195,
+      "name": "National University of Singapore",
+      "country": "Singapore",
+      "website_url": "https://www.nus.edu.sg",
+      "funding": [
+        {
+          "url": "https://nus.edu.sg/oam/scholarships/scholarships-for-freshmen-singapore-permanent-residents/nus-international-undergraduate-scholarship",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 46,
+      "name": "New York University",
+      "country": "United States",
+      "website_url": "https://www.nyu.edu",
+      "funding": []
+    },
+    {
+      "id": 86,
+      "name": "Newcastle",
+      "country": "United Kingdom",
+      "website_url": "https://www.ncl.ac.uk",
+      "funding": []
+    },
+    {
+      "id": 49,
+      "name": "Northeastern",
+      "country": "United States",
+      "website_url": "https://www.northeastern.edu",
+      "funding": []
+    },
+    {
+      "id": 15,
+      "name": "Northwestern",
+      "country": "United States",
+      "website_url": "https://www.northwestern.edu",
+      "funding": []
+    },
+    {
+      "id": 159,
+      "name": "Northwestern Polytechnical",
+      "country": "China",
+      "website_url": "https://en.nwpu.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 10,
+      "name": "Notre Dame",
+      "country": "United States",
+      "website_url": "https://www.nd.edu",
+      "funding": [
+        {
+          "url": "https://admissions.nd.edu/information-for/international-applicants/international-faqs/",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 79,
+      "name": "Nottingham",
+      "country": "United Kingdom",
+      "website_url": "https://www.nottingham.ac.uk",
+      "funding": []
+    },
+    {
+      "id": 38,
+      "name": "Oberlin",
+      "country": "United States",
+      "website_url": "https://www.oberlin.edu",
+      "funding": []
+    },
+    {
+      "id": 188,
+      "name": "Osaka University",
+      "country": "Japan",
+      "website_url": "https://www.osaka-u.ac.jp",
+      "funding": []
+    },
+    {
+      "id": 66,
+      "name": "Oxford",
+      "country": "United Kingdom",
+      "website_url": "https://www.ox.ac.uk",
+      "funding": [
+        {
+          "url": "https://www.ox.ac.uk/admissions/graduate/fees-and-funding/funding/scholarships",
+          "levels": "Postgraduate"
+        }
+      ]
+    },
+    {
+      "id": 132,
+      "name": "Peking University",
+      "country": "China",
+      "website_url": "https://www.pku.edu.cn",
+      "funding": [
+        {
+          "url": "https://www.isd.pku.edu.cn/en/scholarship.php",
+          "levels": "Undergraduate and Postgraduate"
+        }
+      ]
+    },
+    {
+      "id": 123,
+      "name": "Politecnico di Milano",
+      "country": "Italy",
+      "website_url": "https://www.polimi.it",
+      "funding": []
+    },
+    {
+      "id": 26,
+      "name": "Pomona",
+      "country": "United States",
+      "website_url": "https://www.pomona.edu",
+      "funding": []
+    },
+    {
+      "id": 194,
+      "name": "POSTECH",
+      "country": "South Korea",
+      "website_url": "https://www.postech.ac.kr",
+      "funding": []
+    },
+    {
+      "id": 3,
+      "name": "Princeton",
+      "country": "United States",
+      "website_url": "https://www.princeton.edu",
+      "funding": [
+        {
+          "url": "https://admission.princeton.edu/cost-aid",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 101,
+      "name": "PSL University",
+      "country": "France",
+      "website_url": "https://psl.eu",
+      "funding": []
+    },
+    {
+      "id": 87,
+      "name": "Queen Mary University of London",
+      "country": "United Kingdom",
+      "website_url": "https://www.qmul.ac.uk",
+      "funding": []
+    },
+    {
+      "id": 154,
+      "name": "Renmin",
+      "country": "China",
+      "website_url": "https://en.ruc.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 18,
+      "name": "Rice",
+      "country": "United States",
+      "website_url": "https://www.rice.edu",
+      "funding": []
+    },
+    {
+      "id": 94,
+      "name": "RWTH Aachen",
+      "country": "Germany",
+      "website_url": "https://www.rwth-aachen.de",
+      "funding": []
+    },
+    {
+      "id": 200,
+      "name": "Sabancı University",
+      "country": "Türkiye",
+      "website_url": "https://www.sabanciuniv.edu",
+      "funding": []
+    },
+    {
+      "id": 124,
+      "name": "Sapienza University of Rome",
+      "country": "Italy",
+      "website_url": "https://www.uniroma1.it",
+      "funding": []
+    },
+    {
+      "id": 105,
+      "name": "Sciences Po",
+      "country": "France",
+      "website_url": "https://www.sciencespo.fr",
+      "funding": [
+        {
+          "url": "https://www.sciencespo.fr/students/en/fees-funding/bursaries-financial-aid/emile-boutmy-scholarship/",
+          "levels": "Undergraduate and Masters"
+        }
+      ]
+    },
+    {
+      "id": 191,
+      "name": "Seoul National University",
+      "country": "South Korea",
+      "website_url": "https://www.snu.ac.kr",
+      "funding": []
+    },
+    {
+      "id": 147,
+      "name": "Shandong",
+      "country": "China",
+      "website_url": "https://www.sdu.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 135,
+      "name": "Shanghai Jiao Tong",
+      "country": "China",
+      "website_url": "https://www.sjtu.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 78,
+      "name": "Sheffield",
+      "country": "United Kingdom",
+      "website_url": "https://www.sheffield.ac.uk",
+      "funding": [
+        {
+          "url": "https://sheffield.ac.uk/international/fees-and-funding/scholarships/undergraduate",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 146,
+      "name": "Sichuan",
+      "country": "China",
+      "website_url": "https://www.scu.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 34,
+      "name": "Smith",
+      "country": "United States",
+      "website_url": "https://www.smith.edu",
+      "funding": []
+    },
+    {
+      "id": 164,
+      "name": "Soochow",
+      "country": "China",
+      "website_url": "https://www.suda.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 103,
+      "name": "Sorbonne",
+      "country": "France",
+      "website_url": "https://www.sorbonne-universite.fr",
+      "funding": []
+    },
+    {
+      "id": 156,
+      "name": "South China University of Technology",
+      "country": "China",
+      "website_url": "https://www.scut.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 81,
+      "name": "Southampton",
+      "country": "United Kingdom",
+      "website_url": "https://www.southampton.ac.uk",
+      "funding": [
+        {
+          "url": "https://www.southampton.ac.uk/study/fees-funding/undergraduate/scholarships",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 158,
+      "name": "Southeast University",
+      "country": "China",
+      "website_url": "https://www.seu.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 84,
+      "name": "St Andrews",
+      "country": "United Kingdom",
+      "website_url": "https://www.st-andrews.ac.uk",
+      "funding": []
+    },
+    {
+      "id": 5,
+      "name": "Stanford",
+      "country": "United States",
+      "website_url": "https://www.stanford.edu",
+      "funding": [
+        {
+          "url": "https://financialaid.stanford.edu/undergrad/",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 145,
+      "name": "Sun Yat-sen",
+      "country": "China",
+      "website_url": "https://www.sysu.edu.cn",
+      "funding": [
+        {
+          "url": "https://iso.sysu.edu.cn/en/application/scholarship/index.htm",
+          "levels": "Undergraduate and Postgraduate"
+        }
+      ]
+    },
+    {
+      "id": 85,
+      "name": "Sussex",
+      "country": "United Kingdom",
+      "website_url": "https://www.sussex.ac.uk",
+      "funding": []
+    },
+    {
+      "id": 25,
+      "name": "Swarthmore",
+      "country": "United States",
+      "website_url": "https://www.swarthmore.edu",
+      "funding": []
+    },
+    {
+      "id": 121,
+      "name": "Tampere University",
+      "country": "Finland",
+      "website_url": "https://www.tuni.fi",
+      "funding": []
+    },
+    {
+      "id": 91,
+      "name": "Technical University of Munich",
+      "country": "Germany",
+      "website_url": "https://www.tum.de",
+      "funding": []
+    },
+    {
+      "id": 150,
+      "name": "Tianjin",
+      "country": "China",
+      "website_url": "https://www.tju.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 189,
+      "name": "Tohoku University",
+      "country": "Japan",
+      "website_url": "https://www.tohoku.ac.jp",
+      "funding": []
+    },
+    {
+      "id": 144,
+      "name": "Tongji",
+      "country": "China",
+      "website_url": "https://www.tongji.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 127,
+      "name": "Trinity College Dublin",
+      "country": "Ireland",
+      "website_url": "https://www.tcd.ie",
+      "funding": []
+    },
+    {
+      "id": 131,
+      "name": "Tsinghua",
+      "country": "China",
+      "website_url": "https://www.tsinghua.edu.cn",
+      "funding": [
+        {
+          "url": "https://www.tsinghua.edu.cn/en/Admissions/International_Students1/Financial_Aid.htm",
+          "levels": "Undergraduate and Postgraduate"
+        }
+      ]
+    },
+    {
+      "id": 95,
+      "name": "TU Berlin",
+      "country": "Germany",
+      "website_url": "https://www.tu.berlin",
+      "funding": []
+    },
+    {
+      "id": 22,
+      "name": "Tufts",
+      "country": "United States",
+      "website_url": "https://www.tufts.edu",
+      "funding": []
+    },
+    {
+      "id": 50,
+      "name": "Tulane",
+      "country": "United States",
+      "website_url": "https://tulane.edu",
+      "funding": []
+    },
+    {
+      "id": 57,
+      "name": "UC Berkeley",
+      "country": "United States",
+      "website_url": "https://www.berkeley.edu",
+      "funding": []
+    },
+    {
+      "id": 59,
+      "name": "UC San Diego",
+      "country": "United States",
+      "website_url": "https://ucsd.edu",
+      "funding": []
+    },
+    {
+      "id": 58,
+      "name": "UCLA",
+      "country": "United States",
+      "website_url": "https://www.ucla.edu",
+      "funding": []
+    },
+    {
+      "id": 61,
+      "name": "UNC Chapel Hill",
+      "country": "United States",
+      "website_url": "https://www.unc.edu",
+      "funding": []
+    },
+    {
+      "id": 102,
+      "name": "Université Paris-Saclay",
+      "country": "France",
+      "website_url": "https://www.universite-paris-saclay.fr",
+      "funding": []
+    },
+    {
+      "id": 128,
+      "name": "University College Dublin",
+      "country": "Ireland",
+      "website_url": "https://www.ucd.ie",
+      "funding": []
+    },
+    {
+      "id": 69,
+      "name": "University College London",
+      "country": "United Kingdom",
+      "website_url": "https://www.ucl.ac.uk",
+      "funding": [
+        {
+          "url": "https://www.ucl.ac.uk/bartlett/study/scholarships-and-funding/bartlett-promise-scholarship/bartlett-promise-sub-saharan-africa-masters-scholarship",
+          "levels": "Masters"
+        }
+      ]
+    },
+    {
+      "id": 169,
+      "name": "University of Alberta",
+      "country": "Canada",
+      "website_url": "https://www.ualberta.ca",
+      "funding": [
+        {
+          "url": "https://www.ualberta.ca/en/admissions/tuition-and-scholarships/international-entrance-scholarships/index.html",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 107,
+      "name": "University of Amsterdam",
+      "country": "Netherlands",
+      "website_url": "https://www.uva.nl",
+      "funding": []
+    },
+    {
+      "id": 65,
+      "name": "University of Arizona",
+      "country": "United States",
+      "website_url": "https://www.arizona.edu",
+      "funding": []
+    },
+    {
+      "id": 184,
+      "name": "University of Auckland",
+      "country": "New Zealand",
+      "website_url": "https://www.auckland.ac.nz",
+      "funding": [
+        {
+          "url": "https://www.auckland.ac.nz/en/study/international-students/scholarships-loans-and-funding/extensive-range-of-scholarships-available.html",
+          "levels": "Undergraduate and Postgraduate"
+        }
+      ]
+    },
+    {
+      "id": 122,
+      "name": "University of Bologna",
+      "country": "Italy",
+      "website_url": "https://www.unibo.it",
+      "funding": []
+    },
+    {
+      "id": 167,
+      "name": "University of British Columbia",
+      "country": "Canada",
+      "website_url": "https://www.ubc.ca",
+      "funding": [
+        {
+          "url": "https://you.ubc.ca/financial-planning/scholarships-awards-international-students/international-scholars",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 173,
+      "name": "University of Calgary",
+      "country": "Canada",
+      "website_url": "https://www.ucalgary.ca",
+      "funding": []
+    },
+    {
+      "id": 16,
+      "name": "University of Chicago",
+      "country": "United States",
+      "website_url": "https://www.uchicago.edu",
+      "funding": []
+    },
+    {
+      "id": 129,
+      "name": "University of Copenhagen",
+      "country": "Denmark",
+      "website_url": "https://www.ku.dk",
+      "funding": []
+    },
+    {
+      "id": 62,
+      "name": "University of Florida",
+      "country": "United States",
+      "website_url": "https://www.ufl.edu",
+      "funding": []
+    },
+    {
+      "id": 114,
+      "name": "University of Geneva",
+      "country": "Switzerland",
+      "website_url": "https://www.unige.ch",
+      "funding": []
+    },
+    {
+      "id": 119,
+      "name": "University of Helsinki",
+      "country": "Finland",
+      "website_url": "https://www.helsinki.fi",
+      "funding": []
+    },
+    {
+      "id": 197,
+      "name": "University of Hong Kong",
+      "country": "Hong Kong",
+      "website_url": "https://www.hku.hk",
+      "funding": []
+    },
+    {
+      "id": 162,
+      "name": "University of International Business and Economics",
+      "country": "China",
+      "website_url": "https://english.uibe.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 176,
+      "name": "University of Melbourne",
+      "country": "Australia",
+      "website_url": "https://www.unimelb.edu.au",
+      "funding": [
+        {
+          "url": "https://fbe.unimelb.edu.au/scholarships/opportunities",
+          "levels": "Undergraduate and Postgraduate"
+        }
+      ]
+    },
+    {
+      "id": 53,
+      "name": "University of Miami",
+      "country": "United States",
+      "website_url": "https://welcome.miami.edu",
+      "funding": []
+    },
+    {
+      "id": 56,
+      "name": "University of Michigan",
+      "country": "United States",
+      "website_url": "https://umich.edu",
+      "funding": []
+    },
+    {
+      "id": 185,
+      "name": "University of Otago",
+      "country": "New Zealand",
+      "website_url": "https://www.otago.ac.nz",
+      "funding": []
+    },
+    {
+      "id": 172,
+      "name": "University of Ottawa",
+      "country": "Canada",
+      "website_url": "https://www.uottawa.ca",
+      "funding": []
+    },
+    {
+      "id": 14,
+      "name": "University of Pennsylvania",
+      "country": "United States",
+      "website_url": "https://www.upenn.edu",
+      "funding": [
+        {
+          "url": "https://admissions.upenn.edu/affording-penn/financial-aid",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 181,
+      "name": "University of Queensland",
+      "country": "Australia",
+      "website_url": "https://www.uq.edu.au",
+      "funding": []
+    },
+    {
+      "id": 54,
+      "name": "University of Richmond",
+      "country": "United States",
+      "website_url": "https://www.richmond.edu",
+      "funding": [
+        {
+          "url": "https://financialaid.richmond.edu/applying/international.html",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 43,
+      "name": "University of Rochester",
+      "country": "United States",
+      "website_url": "https://www.rochester.edu",
+      "funding": []
+    },
+    {
+      "id": 136,
+      "name": "University of Science and Technology of China",
+      "country": "China",
+      "website_url": "https://en.ustc.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 45,
+      "name": "University of Southern California",
+      "country": "United States",
+      "website_url": "https://www.usc.edu",
+      "funding": []
+    },
+    {
+      "id": 177,
+      "name": "University of Sydney",
+      "country": "Australia",
+      "website_url": "https://www.sydney.edu.au",
+      "funding": []
+    },
+    {
+      "id": 186,
+      "name": "University of Tokyo",
+      "country": "Japan",
+      "website_url": "https://www.u-tokyo.ac.jp",
+      "funding": []
+    },
+    {
+      "id": 166,
+      "name": "University of Toronto",
+      "country": "Canada",
+      "website_url": "https://www.utoronto.ca",
+      "funding": [
+        {
+          "url": "https://future.utoronto.ca/pearson-scholarships",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 190,
+      "name": "University of Tsukuba",
+      "country": "Japan",
+      "website_url": "https://www.tsukuba.ac.jp",
+      "funding": []
+    },
+    {
+      "id": 60,
+      "name": "University of Virginia",
+      "country": "United States",
+      "website_url": "https://www.virginia.edu",
+      "funding": []
+    },
+    {
+      "id": 170,
+      "name": "University of Waterloo",
+      "country": "Canada",
+      "website_url": "https://uwaterloo.ca",
+      "funding": []
+    },
+    {
+      "id": 183,
+      "name": "University of Western Australia",
+      "country": "Australia",
+      "website_url": "https://www.uwa.edu.au",
+      "funding": []
+    },
+    {
+      "id": 113,
+      "name": "University of Zurich",
+      "country": "Switzerland",
+      "website_url": "https://www.uzh.ch",
+      "funding": []
+    },
+    {
+      "id": 178,
+      "name": "UNSW Sydney",
+      "country": "Australia",
+      "website_url": "https://www.unsw.edu.au",
+      "funding": []
+    },
+    {
+      "id": 116,
+      "name": "Uppsala",
+      "country": "Sweden",
+      "website_url": "https://www.uu.se",
+      "funding": []
+    },
+    {
+      "id": 108,
+      "name": "Utrecht",
+      "country": "Netherlands",
+      "website_url": "https://www.uu.nl",
+      "funding": []
+    },
+    {
+      "id": 17,
+      "name": "Vanderbilt",
+      "country": "United States",
+      "website_url": "https://www.vanderbilt.edu",
+      "funding": [
+        {
+          "url": "https://admissions.vanderbilt.edu/international-profile/",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 55,
+      "name": "Wake Forest",
+      "country": "United States",
+      "website_url": "https://www.wfu.edu",
+      "funding": []
+    },
+    {
+      "id": 74,
+      "name": "Warwick",
+      "country": "United Kingdom",
+      "website_url": "https://warwick.ac.uk",
+      "funding": []
+    },
+    {
+      "id": 40,
+      "name": "Washington and Lee",
+      "country": "United States",
+      "website_url": "https://www.wlu.edu",
+      "funding": []
+    },
+    {
+      "id": 19,
+      "name": "Washington University in St. Louis",
+      "country": "United States",
+      "website_url": "https://wustl.edu",
+      "funding": []
+    },
+    {
+      "id": 33,
+      "name": "Wellesley",
+      "country": "United States",
+      "website_url": "https://www.wellesley.edu",
+      "funding": [
+        {
+          "url": "https://www.wellesley.edu/admission-aid/apply/first-year-applicants/international-applicants",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "name": "Wesleyan",
+      "country": "United States",
+      "website_url": "https://www.wesleyan.edu",
+      "funding": []
+    },
+    {
+      "id": 174,
+      "name": "Western University",
+      "country": "Canada",
+      "website_url": "https://www.uwo.ca",
+      "funding": []
+    },
+    {
+      "id": 24,
+      "name": "Williams College",
+      "country": "United States",
+      "website_url": "https://www.williams.edu",
+      "funding": []
+    },
+    {
+      "id": 138,
+      "name": "Wuhan",
+      "country": "China",
+      "website_url": "https://www.whu.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 140,
+      "name": "Xi'an Jiaotong",
+      "country": "China",
+      "website_url": "https://www.xjtu.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 148,
+      "name": "Xiamen",
+      "country": "China",
+      "website_url": "https://en.xmu.edu.cn",
+      "funding": []
+    },
+    {
+      "id": 2,
+      "name": "Yale",
+      "country": "United States",
+      "website_url": "https://www.yale.edu",
+      "funding": [
+        {
+          "url": "https://admissions.yale.edu/international",
+          "levels": "Undergraduate"
+        }
+      ]
+    },
+    {
+      "id": 193,
+      "name": "Yonsei",
+      "country": "South Korea",
+      "website_url": "https://www.yonsei.ac.kr",
+      "funding": []
+    },
+    {
+      "id": 175,
+      "name": "York University",
+      "country": "Canada",
+      "website_url": "https://www.yorku.ca",
+      "funding": []
+    },
+    {
+      "id": 134,
+      "name": "Zhejiang",
+      "country": "China",
+      "website_url": "https://www.zju.edu.cn",
+      "funding": [
+        {
+          "url": "https://iczu.zju.edu.cn/admissionsen/www/list.htm",
+          "levels": "Undergraduate and Postgraduate"
+        }
+      ]
+    },
+    {
+      "id": 163,
+      "name": "Zhongnan University of Economics and Law",
+      "country": "China",
+      "website_url": "https://english.zuel.edu.cn",
+      "funding": []
+    }
+  ]
+}

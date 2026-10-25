@@ -1,0 +1,28 @@
+name: Practice change validation
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://tungqfmypuwzeyrtaseh.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
+      - run: |
+          test -s dist/index.html
+          grep -R -F -q "Clear chapter, topic and difficulty filters" dist/assets
+          grep -R -F -q "Practice another topic" dist/assets

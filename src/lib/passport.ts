@@ -37,8 +37,9 @@ export interface VerifiedCourseCertificate {
 }
 
 export async function fetchMyAchievements(): Promise<PassportAchievement[]> {
-  const { data: auth } = await supabase.auth.getUser()
-  if (!auth.user) return []
+  const { data: auth, error: authError } = await supabase.auth.getUser()
+  if (authError) throw authError
+  if (!auth.user) throw new Error('Please sign in again to load your career passport.')
   const { data, error } = await supabase
     .from('career_passport_achievements')
     .select('id, title, achievement_type, issuer, verified, is_public')
@@ -49,8 +50,9 @@ export async function fetchMyAchievements(): Promise<PassportAchievement[]> {
 }
 
 export async function fetchMyVerifiedSkills(): Promise<VerifiedSkill[]> {
-  const { data: auth } = await supabase.auth.getUser()
-  if (!auth.user) return []
+  const { data: auth, error: authError } = await supabase.auth.getUser()
+  if (authError) throw authError
+  if (!auth.user) throw new Error('Please sign in again to load your career passport.')
   const { data, error } = await supabase
     .from('verified_skills')
     .select('id, skill_name, level, score, verified')
@@ -62,7 +64,7 @@ export async function fetchMyVerifiedSkills(): Promise<VerifiedSkill[]> {
 export async function fetchMyCourseCertificates(): Promise<CourseCertificate[]> {
   const { data: auth, error: authError } = await supabase.auth.getUser()
   if (authError) throw authError
-  if (!auth.user) return []
+  if (!auth.user) throw new Error('Please sign in again to load your career passport.')
   const { data: certificates, error } = await supabase
     .from('course_certificates')
     .select('id,course_id,certificate_code,credential_type,issued_at,revoked_at')

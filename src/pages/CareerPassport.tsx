@@ -1,3 +1,4 @@
+import PassportRecords from '../components/PassportRecords'
 import { useEffect, useState } from 'react'
 import { fetchMyAchievements, fetchMyCourseCertificates, fetchMyVerifiedSkills, type CourseCertificate, type PassportAchievement, type VerifiedSkill } from '../lib/passport'
 import { fetchDashboard, type MelaDashboard } from '../lib/dashboard'
@@ -73,6 +74,7 @@ export default function CareerPassport({ onBack }: { onBack: () => void }) {
       {score && <section className="list-panel question-card" aria-label="Passport record overview"><h2>Your passport records</h2><dl style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(130px,1fr))',gap:16}}>{[
         ['Education',score.education_count],['Experience',score.experience_count],['Projects',score.project_count],['Languages',score.language_count],['Documents',score.document_count],['Verified documents',score.verified_document_count],
       ].map(([label,count]) => <div key={String(label)}><dt>{label}</dt><dd style={{margin:0,fontWeight:700}}>{typeof count === 'number' ? count : 'Unavailable'}</dd></div>)}</dl><p className="field-hint">These counts reflect saved records. Having a record does not mean it has been verified.</p></section>}
+      <PassportRecords onSaved={() => setRevision(v => v + 1)} />
       <div className="section-heading"><h2>Course credentials</h2></div>
       <p className="field-hint">Only issued credentials appear here. Before sharing a verification link, open it to review the learner name and credential information it reveals. Revoked credentials are not valid.</p>
       {certificates && certificates.length === 0 && <div className="empty-panel">Complete every lesson in a credential-bearing MELA course to earn a verifiable credential.</div>}

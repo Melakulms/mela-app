@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import CareerPassport from '../src/pages/CareerPassport'
 const mocks = vi.hoisted(() => ({ fetchMyAchievements:vi.fn(), fetchMyVerifiedSkills:vi.fn(), fetchMyCourseCertificates:vi.fn(), fetchDashboard:vi.fn() }))
+vi.mock('../src/components/PassportRecords',()=>({default:()=>null}))
 vi.mock('../src/lib/passport',()=>mocks)
 vi.mock('../src/lib/dashboard',()=>mocks)
 beforeEach(()=>{

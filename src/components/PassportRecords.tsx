@@ -36,7 +36,7 @@ export default function PassportRecords({ onSaved }: { onSaved: () => void }) {
     catch(e){setError(e instanceof Error ? e.message : 'Could not load more records.')}
     finally{lock.current=false;setLoading(false)}
   }
-  return <section className="list-panel question-card" aria-label="My portfolio records">
+  return <section id="passport-records" className="list-panel question-card" aria-label="My portfolio records">
     <h2>My portfolio records</h2>
     <div className="field"><label htmlFor="passport-record-kind">Record type</label><select id="passport-record-kind" value={kind} disabled={loading || saving || !!draft} onChange={e=>{setKind(e.target.value as RecordKind);setMessage('')}}><option value="projects">Projects</option><option value="education">Education</option><option value="experience">Experience</option></select></div>
     {message && <p role="status">{message}</p>}

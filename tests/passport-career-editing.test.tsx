@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import PassportRecords from '../src/components/PassportRecords'
-import { educationPayload, experiencePayload, savePassportCareerRecord } from '../src/lib/passport-records'
+import { educationPayload, experiencePayload } from '../src/lib/passport-records'
 
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(), insert: vi.fn(), update: vi.fn(), eq: vi.fn(), single: vi.fn(),
@@ -61,6 +61,7 @@ it('keeps education and experience payloads private without accepting authority 
 })
 
 it('derives owner on insert and filters both user id and record id on update', async () => {
+  const { savePassportCareerRecord } = await vi.importActual<typeof import('../src/lib/passport-records')>('../src/lib/passport-records')
   await savePassportCareerRecord('education', { ...education, verified: true } as any)
   expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({ user_id: 'owner', is_public: false }))
   expect(mocks.insert.mock.calls[0][0]).not.toHaveProperty('verified')

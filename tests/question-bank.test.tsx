@@ -149,3 +149,26 @@ it('does not invent a successful result when submission returns no result', asyn
   expect(screen.queryByText('Question Bank Result')).toBeNull()
   expect((screen.getByLabelText('Calculate') as HTMLInputElement).value).toBe('42')
 })
+
+it('broadens a sparse selection only within the same authorized subject', async () => {
+  render(<QuestionBank onBack={vi.fn()} />)
+  await screen.findByText('Study and practise')
+  fireEvent.change(screen.getByLabelText('Chapter'), {target:{value:'c1'}})
+  fireEvent.change(screen.getByLabelText('Topic'), {target:{value:'t1'}})
+  fireEvent.change(screen.getByLabelText('Difficulty'), {target:{value:'5'}})
+  mocks.rpc.mockResolvedValueOnce({error:{message:'mastery rebuild in progress for this filter: only 2 accessible mastery questions are currently available'}})
+  fireEvent.click(screen.getByText('Start practice'))
+  fireEvent.click(await screen.findByText('Practise across this subject instead'))
+  await screen.findByLabelText('Calculate')
+  expect(mocks.rpc).toHaveBeenLastCalledWith('start_mela_filtered_question_session_v18', {p_program_key:'math',p_chapter_id:null,p_topic_id:null,p_count:10,p_difficulty:null,p_practice_mode:'mastery'})
+})
+
+it('shows actual accessible session size and valid server expiry', async () => {
+  render(<QuestionBank onBack={vi.fn()} />)
+  await screen.findByText('Study and practise')
+  mocks.rpc.mockResolvedValueOnce({data:{session_id:'s',available_count:7,expires_at:'2026-12-01T12:00:00Z',questions:[{id:'q',prompt:'Answer',choices:[],question_type:'numeric'}]}})
+  fireEvent.click(screen.getByText('Start practice'))
+  expect(await screen.findByText('1 questions selected from 7 accessible questions matching your selection.')).toBeTruthy()
+  expect(screen.getByText(/You requested 10; this round/)).toBeTruthy()
+  expect(screen.getByText(/The server checks session expiry/)).toBeTruthy()
+})

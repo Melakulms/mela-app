@@ -60,6 +60,13 @@ export default function QuestionBank({ onBack, onOpenProfile, workspace = false 
   const [revision, setRevision] = useState(0)
   const answeredCount = questions.filter(q => answers[q.id]?.trim()).length
   const noAccessibleQuestions = isQuestionAvailabilityError(error)
+  const selectedChapter = chapters.find(c => c.chapter_id === chapter)
+  const selectedTopic = selectedChapter?.topics.find(t => t.topic_id === topic)
+  const candidateCount = topic ? selectedTopic?.mastery_count : chapter ? selectedChapter?.mastery_count : inventory?.mastery_count
+  const hasOptionalFilters = Boolean(chapter || topic || difficulty)
+  const [availableCount, setAvailableCount] = useState<number | null>(null)
+  const [expiresAt, setExpiresAt] = useState<string | null>(null)
+
 
   useEffect(() => {
     let active = true
@@ -122,16 +129,19 @@ export default function QuestionBank({ onBack, onOpenProfile, workspace = false 
     return () => { active = false }
   }, [program, revision])
 
-  const start = async () => {
+  const start = async (wholeSubject = false) => {
     if (!program || !programs.some(p => p.program_key === program && p.track_key === track) || requestLock.current || detailLoading || detailError) return
     requestLock.current = true
-    setBusy(true); setError(''); setResult(null); setAnswers({}); setFlagged([]); setActiveQuestion(0); setReviewOnly(false)
+    setBusy(true); setError(''); setResult(null); setAnswers({}); setFlagged([]); setActiveQuestion(0); setReviewOnly(false); setAvailableCount(null); setExpiresAt(null)
+    if (wholeSubject) { setChapter(''); setTopic(''); setDifficulty('') }
     try {
       const { data, error } = await supabase.rpc('start_mela_filtered_question_session_v18', {
-        p_program_key: program, p_chapter_id: chapter || null, p_topic_id: topic || null, p_count: count, p_difficulty: difficulty ? Number(difficulty) : null, p_practice_mode: 'mastery',
+        p_program_key: program, p_chapter_id: wholeSubject ? null : chapter || null, p_topic_id: wholeSubject ? null : topic || null, p_count: count, p_difficulty: wholeSubject ? null : difficulty ? Number(difficulty) : null, p_practice_mode: 'mastery',
       })
       if (error) throw error
       if (!data?.session_id || !data.questions?.length) throw new Error('No questions are available for this subject yet. Choose another subject.')
+      setAvailableCount(typeof data.available_count === 'number' ? data.available_count : null)
+      setExpiresAt(typeof data.expires_at === 'string' && Number.isFinite(Date.parse(data.expires_at)) ? data.expires_at : null)
       setSessionId(data.session_id)
       setQuestions((data.questions ?? []) as Question[])
     } catch (e: any) {
@@ -183,6 +193,8 @@ export default function QuestionBank({ onBack, onOpenProfile, workspace = false 
         <p className="muted">Your school grade must be saved in your education profile before curriculum questions are available.</p>}
       {error && <div className="banner banner-error" role="alert">{error}</div>}
       {!loading && grade === null && onOpenProfile && <button className="btn btn-primary" type="button" onClick={onOpenProfile}>Complete or correct my education profile</button>}
+      {noAccessibleQuestions && !sessionId && hasOptionalFilters && <button type="button" className="btn btn-primary" disabled={busy || detailLoading || !!detailError} onClick={() => void start(true)}>Practise across this subject instead</button>}
+      {noAccessibleQuestions && !sessionId && chapter && <p className="field-hint">You can still read this chapter's published study resources below while more questions are reviewed.</p>}
       {noAccessibleQuestions && (chapter || topic || difficulty) && !sessionId && (
         <button className="btn btn-secondary" type="button" onClick={() => { setChapter(''); setTopic(''); setDifficulty(''); setError('') }}>
           Clear chapter, topic and difficulty filters
@@ -222,9 +234,11 @@ export default function QuestionBank({ onBack, onOpenProfile, workspace = false 
               {[5,8,10,15,20,30].map(n => <option key={n} value={n}>{n} questions</option>)}
             </select>
           </div>
+          {candidateCount != null && <p role="status" className="banner banner-info">{candidateCount} validated question candidates in {topic ? 'this topic' : chapter ? 'this chapter' : 'this subject'} before language, difficulty and access checks.{candidateCount < 5 ? ' A scored session needs at least five accessible questions. Try the whole subject or read the chapter resources.' : ' The session will use up to your requested number of accessible questions.'}</p>}
+          {hasOptionalFilters && <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => { setChapter(''); setTopic(''); setDifficulty(''); setError('') }}>Use all chapters, topics and difficulties</button>}
           <p className="field-hint">Sessions contain up to 30 questions. Continue with another round after reviewing your results to practise for longer.</p>
           {chapter && <p className="field-hint">This practice session uses the selected chapter. Read the free lesson and guided practice first. Question availability and entitlements remain checked by the server.</p>}
-          <button className="btn btn-primary" onClick={start} disabled={busy || !program || detailLoading || !!detailError || loading}>{busy ? 'Loading questions…' : 'Start practice'}</button>
+          <button className="btn btn-primary" onClick={() => void start()} disabled={busy || !program || detailLoading || !!detailError || loading}>{busy ? 'Loading questions…' : 'Start practice'}</button>
           {chapters.length > 0 && <section aria-label="Explore chapters" className="list-panel question-card">
             <h2>Explore every chapter</h2><div className="field"><label htmlFor="chapter-search">Find a chapter</label><input type="search" id="chapter-search" value={chapterSearch} onChange={e => setChapterSearch(e.target.value)} /></div>
             {chapters.filter(c => c.chapter_title.toLowerCase().includes(chapterSearch.toLowerCase().trim())).map(c => <div key={c.chapter_id} className="list-row"><div><strong>{c.chapter_title}</strong><p>{c.topics.length} topics · {c.mastery_count} validated candidates</p></div><button type="button" className="btn btn-secondary" disabled={busy} aria-pressed={chapter === c.chapter_id} onClick={() => { setChapter(c.chapter_id); setTopic(''); setError(''); document.getElementById('chapter')?.focus() }}>Study and practise</button></div>)}
@@ -234,6 +248,9 @@ export default function QuestionBank({ onBack, onOpenProfile, workspace = false 
       ) : (
         <>
           <div className="section-heading"><h2>{questions.length} Questions</h2><span role="status">{answeredCount} of {questions.length} answered</span></div><progress className="answer-progress" value={answeredCount} max={questions.length} aria-label="Questions answered" />
+          {availableCount !== null && <p role="status">{questions.length} questions selected from {availableCount} accessible questions matching your selection.</p>}
+          {questions.length < count && <p className="field-hint">You requested {count}; this round contains the {questions.length} questions available for this selection.</p>}
+          {expiresAt && <p className="field-hint">Submit before {new Date(expiresAt).toLocaleString()} (your device time zone). The server checks session expiry.</p>}
           <p className="muted">A score is saved only after you submit all answers. Leaving now will discard unsubmitted answers.</p>
           <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => { if (window.confirm('Leave this practice session? Unsubmitted answers will be lost.')) { resetSession() } }}>Leave session</button>
           <nav aria-label="Question navigator" style={{display:'flex',flexWrap:'wrap',gap:8,margin:'16px 0'}}>{questions.map((q,i) => <button type="button" className="btn btn-secondary" key={q.id} disabled={busy} aria-current={activeQuestion === i ? 'step' : undefined} aria-label={`Question ${i+1}${answers[q.id]?.trim() ? ', answered' : ', unanswered'}${flagged.includes(q.id) ? ', flagged' : ''}`} onClick={() => { setActiveQuestion(i); if (layout === 'worksheet') document.getElementById(`card-${q.id}`)?.scrollIntoView?.({block:'center'}) }}>{i+1}{flagged.includes(q.id) ? ' ★' : answers[q.id]?.trim() ? ' ✓' : ''}</button>)}</nav>

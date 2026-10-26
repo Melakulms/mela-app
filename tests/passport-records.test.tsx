@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { cleanup,fireEvent,render,screen,waitFor } from '@testing-library/react'
 import PassportRecords from '../src/components/PassportRecords'
+vi.mock('../src/components/PassportVerificationPanel',()=>({default:()=>null}))
 const mocks=vi.hoisted(()=>({fetchPassportRecords:vi.fn(),savePassportProject:vi.fn()}))
 vi.mock('../src/lib/passport-records',()=>mocks)
 beforeEach(()=>{vi.resetAllMocks();mocks.fetchPassportRecords.mockResolvedValue([]);mocks.savePassportProject.mockResolvedValue({id:'p'})})

@@ -60,26 +60,38 @@ alter table public.profile_education alter column is_public set default false;
 alter table public.profile_experience alter column is_public set default false;
 alter table public.profile_projects alter column is_public set default false;
 
--- Do not let underage or school-stage students make newly edited records public.
--- This is defense in depth: external opportunity eligibility is enforced separately.
+-- A record is shareable only for a confirmed adult learner who is no longer
+-- in a Grade 1-12 profile. Missing birth dates fail closed, including TVET/university.
+create or replace function private.passport_is_adult(p_user_id uuid)
+returns boolean language sql stable security definer set search_path = ''
+as $function$
+  select exists (
+    select 1 from public.profiles p
+    join public.student_profiles s on s.user_id = p.id
+    where p.id = p_user_id and p.role::text = 'student'
+      and coalesce(p.education_stage_key::text, '') in ('university','college_tvet')
+      and (p.grade_level is null or p.grade_level not between 1 and 12)
+      and s.date_of_birth is not null
+      and s.date_of_birth <= (current_date - interval '18 years')::date
+  )
+$function$;
+revoke all on function private.passport_is_adult(uuid) from public, anon, authenticated;
+grant execute on function private.passport_is_adult(uuid) to authenticated;
+
 create or replace function private.prevent_school_passport_publication()
 returns trigger language plpgsql security definer set search_path = ''
 as $function$
 begin
-  if tg_table_schema <> 'public' or tg_table_name not in ('profile_education','profile_experience','profile_projects') then
+  if tg_table_schema <> 'public' or tg_table_name not in
+      ('profile_education','profile_experience','profile_projects') then
     raise exception 'unsupported portfolio record';
   end if;
   if new.is_public and exists (
     select 1 from public.profiles p
-    left join public.student_profiles s on s.user_id = p.id
     where p.id = new.user_id and p.role::text = 'student'
-      and (
-        (p.grade_level between 1 and 12) or
-        coalesce(p.education_stage_key::text, '') not in ('university','college_tvet') or
-        (s.date_of_birth is not null and s.date_of_birth > current_date - interval '18 years')
-      )
+      and not private.passport_is_adult(new.user_id)
   ) then
-    raise exception 'School-age learners cannot publish Career Passport records to employers'
+    raise exception 'Age-unconfirmed and school learners cannot publish Career Passport records'
       using errcode = '42501';
   end if;
   return new;
@@ -96,6 +108,47 @@ create trigger trg_passport_school_privacy before insert or update on public.pro
 drop trigger if exists trg_passport_school_privacy on public.profile_projects;
 create trigger trg_passport_school_privacy before insert or update on public.profile_projects
   for each row execute function private.prevent_school_passport_publication();
+
+-- Existing public legacy rows for children must also be hidden from employers.
+-- Keep owner access, and retain the previously permitted admin public review path.
+drop policy if exists "Education readable by owner or employer" on public.profile_education;
+create policy "Education readable by owner or employer" on public.profile_education
+for select to authenticated
+using (
+  user_id = (select auth.uid())
+  or (is_public and exists (
+    select 1 from public.profiles viewer
+    where viewer.id = (select auth.uid()) and
+      (viewer.role::text = 'admin' or
+       (viewer.role::text = 'employer' and private.passport_is_adult(profile_education.user_id)))
+  ))
+);
+
+drop policy if exists "Experience readable by owner or employer" on public.profile_experience;
+create policy "Experience readable by owner or employer" on public.profile_experience
+for select to authenticated
+using (
+  user_id = (select auth.uid())
+  or (is_public and exists (
+    select 1 from public.profiles viewer
+    where viewer.id = (select auth.uid()) and
+      (viewer.role::text = 'admin' or
+       (viewer.role::text = 'employer' and private.passport_is_adult(profile_experience.user_id)))
+  ))
+);
+
+drop policy if exists "Projects readable by owner or employer" on public.profile_projects;
+create policy "Projects readable by owner or employer" on public.profile_projects
+for select to authenticated
+using (
+  user_id = (select auth.uid())
+  or (is_public and exists (
+    select 1 from public.profiles viewer
+    where viewer.id = (select auth.uid()) and
+      (viewer.role::text = 'admin' or
+       (viewer.role::text = 'employer' and private.passport_is_adult(profile_projects.user_id)))
+  ))
+);
 
 -- UPDATE is needed for the owner editor, with verification columns still protected by triggers.
 -- Existing SELECT/UPDATE RLS restricts both the old and new user_id to auth.uid().

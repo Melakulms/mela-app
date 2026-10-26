@@ -39,7 +39,7 @@ export async function savePassportProject(draft: ProjectDraft, id?: string): Pro
   const { data, error } = await query.select(columns.projects).single()
   if (error) throw error
   if (!data) throw new Error('The project was not saved. Please retry.')
-  return data as PassportRecord
+  return data as unknown as PassportRecord
 }
 
 export type CareerRecordKind = Exclude<RecordKind, 'projects'>
@@ -116,5 +116,5 @@ export async function savePassportCareerRecord(kind: CareerRecordKind, draft: Ed
   const { data, error } = await query.select(columns[kind]).single()
   if (error) throw error
   if (!data) throw new Error('Your record was not saved. Please check your connection.')
-  return data as PassportRecord
+  return data as unknown as PassportRecord
 }

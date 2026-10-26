@@ -23,7 +23,7 @@ type Question = {
   question_type: string
 }
 
-export default function QuestionBank({ onBack, onOpenProfile }: { onBack: () => void; onOpenProfile?: () => void }) {
+export default function QuestionBank({ onBack, onOpenProfile, workspace = false }: { onBack: () => void; onOpenProfile?: () => void; workspace?: boolean }) {
   const { t } = useI18n()
   const [programs, setPrograms] = useState<Program[]>([])
   const [grade, setGrade] = useState<number | null>(null)
@@ -44,6 +44,16 @@ export default function QuestionBank({ onBack, onOpenProfile }: { onBack: () => 
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [result, setResult] = useState<any>(null)
   const [count, setCount] = useState(10)
+  const [layout, setLayout] = useState<'worksheet' | 'focus'>('worksheet')
+  const [activeQuestion, setActiveQuestion] = useState(0)
+  const [flagged, setFlagged] = useState<string[]>([])
+  const [reviewOnly, setReviewOnly] = useState(false)
+  const [chapterSearch, setChapterSearch] = useState('')
+  const [completedRounds, setCompletedRounds] = useState(0)
+  const [completedQuestions, setCompletedQuestions] = useState(0)
+  const resetSession = () => { setResult(null); setSessionId(null); setQuestions([]); setAnswers({}); setFlagged([]); setActiveQuestion(0); setReviewOnly(false); setError('') }
+  const leave = () => { if (!busy && (!sessionId || result || window.confirm('Leave this practice session? Unsubmitted answers will be lost.'))) onBack() }
+
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -115,7 +125,7 @@ export default function QuestionBank({ onBack, onOpenProfile }: { onBack: () => 
   const start = async () => {
     if (!program || !programs.some(p => p.program_key === program && p.track_key === track) || requestLock.current || detailLoading || detailError) return
     requestLock.current = true
-    setBusy(true); setError(''); setResult(null); setAnswers({})
+    setBusy(true); setError(''); setResult(null); setAnswers({}); setFlagged([]); setActiveQuestion(0); setReviewOnly(false)
     try {
       const { data, error } = await supabase.rpc('start_mela_filtered_question_session_v18', {
         p_program_key: program, p_chapter_id: chapter || null, p_topic_id: topic || null, p_count: count, p_difficulty: difficulty ? Number(difficulty) : null, p_practice_mode: 'mastery',
@@ -139,7 +149,10 @@ export default function QuestionBank({ onBack, onOpenProfile }: { onBack: () => 
         p_session_id: sessionId, p_answers: questions.map(q => ({ question_id: q.id, response: answers[q.id] })),
       })
       if (error) throw error
+      if (!data || typeof data !== 'object' || (!('score_percent' in data) && !('score' in data))) throw new Error('The server did not confirm your result. Please retry submitting.')
       setResult(data)
+      setCompletedRounds(n => n + 1)
+      setCompletedQuestions(n => n + questions.length)
     } catch (e: any) {
       setError(e.message ?? 'Could not submit the session.')
     } finally { requestLock.current = false; setBusy(false) }
@@ -148,20 +161,24 @@ export default function QuestionBank({ onBack, onOpenProfile }: { onBack: () => 
   if (result) {
     return (
       <div className="dash-main">
-        <div className="section-heading"><h1>Question Bank Result</h1><button className="btn btn-secondary" onClick={onBack}>{t('back')}</button></div>
+        <div className="section-heading"><h1>Question Bank Result</h1><button className="btn btn-secondary" onClick={leave}>{t('back')}</button></div>
         <div className="stat-strip">
           <div><span className="stat-value">{result.score_percent ?? result.score ?? '—'}</span><span className="stat-label">Score (%)</span></div>
           <div><span className="stat-value">{result.correct_count ?? '—'}</span><span className="stat-label">Correct</span></div>
         </div>
-        {(result.details ?? []).map((detail: { question_id: string; correct: boolean; rationale: string }, index: number) => <div className="list-panel question-card" key={detail.question_id}><h2>Question {index + 1}: {detail.correct ? 'Correct' : 'Review'}</h2><p>{detail.rationale}</p></div>)}
-        <button className="btn btn-primary" onClick={() => { setResult(null); setSessionId(null); setQuestions([]); setAnswers({}) }}>Start another session</button>
+        <p role="status">{completedRounds} completed session{completedRounds === 1 ? '' : 's'} · {completedQuestions} questions submitted during this visit</p>
+        <label><input type="checkbox" checked={reviewOnly} onChange={e => setReviewOnly(e.target.checked)} /> Show mistakes and flagged questions only</label>
+        {(result.details ?? []).filter((detail: { question_id: string; correct: boolean }) => !reviewOnly || !detail.correct || flagged.includes(detail.question_id)).map((detail: { question_id: string; correct: boolean; rationale: string }, index: number) => <div className="list-panel question-card" key={detail.question_id}><h2>Question {questions.findIndex(q => q.id === detail.question_id) + 1 || index + 1}: {detail.correct ? 'Correct' : 'Review'}</h2><p>{questions.find(q => q.id === detail.question_id)?.prompt}</p><p>Your answer: {answers[detail.question_id]}</p><p>{detail.rationale}</p></div>)}
+        <button className="btn btn-primary" onClick={resetSession}>Start another session</button>
+        <button className="btn btn-secondary" disabled={busy} onClick={() => { setSessionId(null); setQuestions([]); void start() }}>Continue with the same subject and filters</button>
+        <p className="field-hint">Each round is scored separately. New rounds may include questions you have seen before.</p>
       </div>
     )
   }
 
   return (
     <div className="dash-main">
-      <div className="section-heading"><h1>{t('questionBank')}</h1><button className="btn btn-secondary" onClick={onBack}>{t('back')}</button></div>
+      <div className="section-heading"><h1>{workspace ? 'Practice workspace' : t('questionBank')}</h1><button className="btn btn-secondary" onClick={leave}>{t('back')}</button></div>
       {grade !== null ? <p role="status" className="banner banner-info"><strong>Grade {grade} curriculum.</strong> MELA loaded your saved grade and enrolled subjects. Only subjects from your registered grade and academic stream are shown; grade changes require verified correction.</p> :
         <p className="muted">Your school grade must be saved in your education profile before curriculum questions are available.</p>}
       {error && <div className="banner banner-error" role="alert">{error}</div>}
@@ -177,13 +194,15 @@ export default function QuestionBank({ onBack, onOpenProfile }: { onBack: () => 
       {!loading && !error && programs.length === 0 && <div className="empty-panel">No subjects are available for your curriculum yet. Check back soon or update your education details in Profile.</div>}
       {!sessionId ? (
         <>
-          {grade && grade >= 11 && <div className="field"><label htmlFor="track">Enrolled academic stream</label><select id="track" disabled={true} value={track}>{[...new Set(programs.map(p => p.track_key))].map(key => <option key={key} value={key}>{key.replaceAll('_', ' ')}</option>)}</select><p className="field-hint">Your enrolled subjects determine your stream. A stream correction needs verified MELA support.</p></div>}
+          <section className="list-panel question-card" aria-label="Practice guide"><h2>Learn, practise, review, repeat</h2><p>Explore your subjects and chapters, read the lesson, then practise at any available difficulty. Use focused questions or a full worksheet, flag questions to revisit, and review explanations after submission.</p><p>{programs.length} enrolled subject programs · {chapters.length} chapters in this subject</p></section>
+          {grade && grade >= 11 && <div className="field"><label htmlFor="track">Enrolled academic stream</label><select id="track" disabled={busy} value={track} onChange={e => { const next = e.target.value; setTrack(next); setProgram(programs.find(p => p.track_key === next)?.program_key ?? ''); setError('') }}>{[...new Set(programs.map(p => p.track_key))].map(key => <option key={key} value={key}>{key.replaceAll('_', ' ')}</option>)}</select><p className="field-hint">Your enrolled subjects determine your stream. A stream correction needs verified MELA support.</p></div>}
           <div className="field">
             <label htmlFor="program">Subject</label>
             <select disabled={loading || busy || !programs.length} id="program" value={program} onChange={e => { setProgram(e.target.value); setError('') }}>
               {visiblePrograms.map(p => <option key={p.program_key} value={p.program_key}>{p.subject_title}</option>)}
             </select>
           </div>
+          {visiblePrograms.length > 1 && <div aria-label="Explore subjects" style={{display:'flex', flexWrap:'wrap', gap:8, marginBottom:16}}>{visiblePrograms.map(p => <button type="button" key={p.program_key} className="btn btn-secondary" disabled={busy} aria-pressed={program === p.program_key} onClick={() => { setProgram(p.program_key); setError('') }}>{p.subject_title}</button>)}</div>}
           {detailLoading && <p role="status">Loading chapters…</p>}
           {detailError && <div role="alert">{detailError}<button className="btn btn-secondary" onClick={() => setRevision(v => v + 1)}>Reload subjects</button></div>}
           {inventory && <p className="muted">{inventory.mastery_count} automatically validated or educator-verified candidates; {inventory.review_required_count} awaiting review. Some questions require an entitlement, and automated validation is not professional teacher approval.</p>}
@@ -196,23 +215,34 @@ export default function QuestionBank({ onBack, onOpenProfile }: { onBack: () => 
           />}
           <div className="field"><label htmlFor="topic">Topic</label><select id="topic" disabled={busy || !chapter} value={topic} onChange={e => { setTopic(e.target.value); setError('') }}><option value="">All topics</option>{(chapters.find(c => c.chapter_id === chapter)?.topics ?? []).map(t => <option key={t.topic_id} value={t.topic_id}>{t.topic_title} ({t.mastery_count} validated)</option>)}</select></div>
           <div className="field"><label htmlFor="difficulty">Difficulty</label><select id="difficulty" disabled={busy} value={difficulty} onChange={e => { setDifficulty(e.target.value); setError('') }}><option value="">All levels</option>{[1,2,3,4,5].map(n => <option key={n} value={n}>Level {n}</option>)}</select></div>
+          <div className="field"><label htmlFor="practice-layout">Practice layout</label><select id="practice-layout" value={layout} onChange={e => setLayout(e.target.value as 'worksheet' | 'focus')} disabled={busy}><option value="worksheet">Full worksheet — all questions</option><option value="focus">Focus — one question at a time</option></select></div>
           <div className="field">
             <label htmlFor="count">Questions per session</label>
             <select disabled={busy} id="count" value={count} onChange={e => setCount(Number(e.target.value))}>
               {[5,8,10,15,20,30].map(n => <option key={n} value={n}>{n} questions</option>)}
             </select>
           </div>
+          <p className="field-hint">Sessions contain up to 30 questions. Continue with another round after reviewing your results to practise for longer.</p>
           {chapter && <p className="field-hint">This practice session uses the selected chapter. Read the free lesson and guided practice first. Question availability and entitlements remain checked by the server.</p>}
           <button className="btn btn-primary" onClick={start} disabled={busy || !program || detailLoading || !!detailError || loading}>{busy ? 'Loading questions…' : 'Start practice'}</button>
+          {chapters.length > 0 && <section aria-label="Explore chapters" className="list-panel question-card">
+            <h2>Explore every chapter</h2><div className="field"><label htmlFor="chapter-search">Find a chapter</label><input type="search" id="chapter-search" value={chapterSearch} onChange={e => setChapterSearch(e.target.value)} /></div>
+            {chapters.filter(c => c.chapter_title.toLowerCase().includes(chapterSearch.toLowerCase().trim())).map(c => <div key={c.chapter_id} className="list-row"><div><strong>{c.chapter_title}</strong><p>{c.topics.length} topics · {c.mastery_count} validated candidates</p></div><button type="button" className="btn btn-secondary" disabled={busy} aria-pressed={chapter === c.chapter_id} onClick={() => { setChapter(c.chapter_id); setTopic(''); setError(''); document.getElementById('chapter')?.focus() }}>Study and practise</button></div>)}
+            {!chapters.some(c => c.chapter_title.toLowerCase().includes(chapterSearch.toLowerCase().trim())) && <p role="status">No chapters match your search.</p>}
+          </section>}
         </>
       ) : (
         <>
           <div className="section-heading"><h2>{questions.length} Questions</h2><span role="status">{answeredCount} of {questions.length} answered</span></div><progress className="answer-progress" value={answeredCount} max={questions.length} aria-label="Questions answered" />
           <p className="muted">A score is saved only after you submit all answers. Leaving now will discard unsubmitted answers.</p>
-          <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => { if (window.confirm('Leave this practice session? Unsubmitted answers will be lost.')) { setSessionId(null); setQuestions([]); setAnswers({}); setError('') } }}>Leave session</button>
-          {questions.map((q, i) => (
-            <div className="list-panel question-card" key={q.id} style={{ marginBottom: '1rem' }}>
+          <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => { if (window.confirm('Leave this practice session? Unsubmitted answers will be lost.')) { resetSession() } }}>Leave session</button>
+          <nav aria-label="Question navigator" style={{display:'flex',flexWrap:'wrap',gap:8,margin:'16px 0'}}>{questions.map((q,i) => <button type="button" className="btn btn-secondary" key={q.id} disabled={busy} aria-current={activeQuestion === i ? 'step' : undefined} aria-label={`Question ${i+1}${answers[q.id]?.trim() ? ', answered' : ', unanswered'}${flagged.includes(q.id) ? ', flagged' : ''}`} onClick={() => { setActiveQuestion(i); if (layout === 'worksheet') document.getElementById(`card-${q.id}`)?.scrollIntoView?.({block:'center'}) }}>{i+1}{flagged.includes(q.id) ? ' ★' : answers[q.id]?.trim() ? ' ✓' : ''}</button>)}</nav>
+          <button type="button" className="btn btn-secondary" disabled={busy || answeredCount === questions.length} onClick={() => { const i = questions.findIndex(q => !answers[q.id]?.trim()); if (i >= 0) { setActiveQuestion(i); if (layout === 'worksheet') document.getElementById(`card-${questions[i].id}`)?.scrollIntoView?.({block:'center'}) } }}>Go to first unanswered</button>
+          {questions.map((q, i) => layout === 'focus' && i !== activeQuestion ? null : (
+
+            <div className="list-panel question-card" id={`card-${q.id}`} key={q.id} style={{ marginBottom: '1rem' }}>
               <div className="list-row-title">Question {i + 1}</div>
+              <button type="button" className="btn btn-secondary" disabled={busy} aria-pressed={flagged.includes(q.id)} onClick={() => setFlagged(ids => ids.includes(q.id) ? ids.filter(id => id !== q.id) : [...ids,q.id])}>{flagged.includes(q.id) ? 'Unflag question' : 'Flag for review'}</button>
               <p className="question-prompt" id={`question-${q.id}`}>{q.prompt}</p>
               {(q.choices ?? []).map(rawChoice => { const choice = typeof rawChoice === 'string' ? rawChoice : rawChoice.id; const label = typeof rawChoice === 'string' ? rawChoice : rawChoice.text; return (
                 <button
@@ -228,6 +258,8 @@ export default function QuestionBank({ onBack, onOpenProfile }: { onBack: () => 
               )}
             </div>
           ))}
+          {layout === 'focus' && <div className="section-heading"><button type="button" className="btn btn-secondary" disabled={busy || activeQuestion === 0} onClick={() => setActiveQuestion(i => i-1)}>Previous question</button><button type="button" className="btn btn-secondary" disabled={busy || activeQuestion >= questions.length-1} onClick={() => setActiveQuestion(i => i+1)}>Next question</button></div>}
+          <p role="status">{flagged.length} flagged for review. You can change any answer before submitting.</p>
           <button className="btn btn-primary" onClick={submit} disabled={busy || answeredCount < questions.length}>
             {busy ? 'Submitting…' : 'Submit session'}
           </button>

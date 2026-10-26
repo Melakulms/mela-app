@@ -77,7 +77,7 @@ export default function CareerPassport({ onBack, onNavigate, stageKey, gradeLeve
         ['Education',score.education_count],['Experience',score.experience_count],['Projects',score.project_count],['Languages',score.language_count],['Documents',score.document_count],['Verified documents',score.verified_document_count],
       ].map(([label,count]) => <div key={String(label)}><dt>{label}</dt><dd style={{margin:0,fontWeight:700}}>{typeof count === 'number' ? count : 'Unavailable'}</dd></div>)}</dl><p className="field-hint">These counts reflect saved records. Having a record does not mean it has been verified.</p></section>}
       <PassportGuidance passport={score} skills={skills} certificates={certificates} stageKey={stageKey} gradeLevel={gradeLevel} onNavigate={onNavigate} />
-      <PassportRecords onSaved={() => setRevision(v => v + 1)} />
+      <PassportRecords onSaved={() => setRevision(v => v + 1)} allowCareerEditing={(import.meta.env.VITE_SUPABASE_URL || '').includes('tungqfmypuwzeyrtaseh.supabase.co')} allowProjectVisibility={false} />
       <div className="section-heading"><h2>Course credentials</h2></div>
       <p className="field-hint">Only issued credentials appear here. Before sharing a verification link, open it to review the learner name and credential information it reveals. Revoked credentials are not valid.</p>
       {certificates && certificates.length === 0 && <div className="empty-panel">Complete every lesson in a credential-bearing MELA course to earn a verifiable credential.</div>}

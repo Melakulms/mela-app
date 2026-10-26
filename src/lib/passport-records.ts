@@ -2,9 +2,9 @@ import { supabase } from './supabase'
 import { safeExternalUrl } from './external-url'
 
 export type RecordKind = 'education' | 'experience' | 'projects'
-export type PassportRecord = { id: string; institution?: string; qualification?: string | null; field_of_study?: string | null; organization?: string; title?: string; description?: string | null; project_url?: string | null; repository_url?: string | null; verified?: boolean; is_public: boolean }
+export type PassportRecord = { id: string; institution?: string; qualification?: string | null; field_of_study?: string | null; organization?: string; title?: string; description?: string | null; project_url?: string | null; repository_url?: string | null; verified?: boolean; is_public: boolean; start_year?: number | null; end_year?: number | null; grade?: string | null; is_current?: boolean; experience_type?: string | null; start_date?: string | null; end_date?: string | null }
 const tables = { education: 'profile_education', experience: 'profile_experience', projects: 'profile_projects' } as const
-const columns = { education: 'id,institution,qualification,field_of_study,description,verified,is_public', experience: 'id,organization,title,description,verified,is_public', projects: 'id,title,description,project_url,repository_url,is_public' } as const
+const columns = { education: 'id,institution,qualification,field_of_study,start_year,end_year,grade,is_current,description,verified,is_public', experience: 'id,organization,title,experience_type,start_date,end_date,is_current,description,verified,is_public', projects: 'id,title,description,project_url,repository_url,is_public' } as const
 async function owner() {
   const { data, error } = await supabase.auth.getUser()
   if (error) throw error
@@ -68,7 +68,7 @@ function year(value: string) {
 }
 function date(value: string) {
   if (!value.trim()) return null
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || Number.isNaN(Date.parse(value))) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || Number.isNaN(Date.parse(value)) || new Date(value + 'T00:00:00Z').toISOString().slice(0,10) !== value) {
     throw new Error('Use a valid date.')
   }
   return value

@@ -8,6 +8,7 @@ vi.mock('../src/lib/practice', () => mocks)
 vi.mock('../src/components/SchoolChapterLibrary', () => ({default: () => null, ChapterStudyResources: () => null}))
 vi.mock('../src/lib/dashboard', () => mocks)
 // The visible real-grade summary has its own authenticated tests.
+vi.mock('../src/pages/QuestionBank', () => ({default: () => 'Practice workspace'}))
 vi.mock('../src/components/EnrolledCurriculumSummary', () => ({default: () => 'My registered curriculum'}))
 beforeEach(() => {
   vi.resetAllMocks()
@@ -69,10 +70,23 @@ it('prevents another practice answer while a submission is pending', async () =>
 
 it('shows only registered grade practice to school learners and excludes generic topics', async () => {
   render(<Practice onBack={vi.fn()} onOpenQuestionBank={vi.fn()} stageKey="school_1_6" />)
-  expect(screen.getByText('My school practice')).toBeTruthy()
-  expect(screen.getByText('My registered curriculum')).toBeTruthy()
+  expect(screen.getByText('Practice workspace')).toBeTruthy()
   expect(screen.queryByText('Demo only: Preview Grades 1–12')).toBeNull()
   expect(screen.queryByText('All topics')).toBeNull()
   expect(mocks.fetchTopics).not.toHaveBeenCalled()
   expect(mocks.startSession).not.toHaveBeenCalled()
+})
+
+
+it('searches career topics and uses the chosen session length', async () => {
+  mocks.fetchTopics.mockResolvedValue([{id:'topic', subject:'Career', topic:'Communication', description:'Listen carefully'}, {id:'other',subject:'Technology',topic:'Spreadsheets'}])
+  mocks.fetchSessionQuestions.mockResolvedValue([{question_id:'q',question:'Explain',choices:null}])
+  render(<Practice onBack={vi.fn()} />)
+  await screen.findByText('Communication')
+  fireEvent.change(screen.getByLabelText('Search topics'),{target:{value:'listen'}})
+  expect(screen.queryByText('Spreadsheets')).toBeNull()
+  fireEvent.change(screen.getByLabelText('Questions per session'),{target:{value:'30'}})
+  fireEvent.click(screen.getByRole('button',{name:'Start'}))
+  await screen.findByLabelText('Your answer')
+  expect(mocks.startSession).toHaveBeenCalledWith('topic',30)
 })

@@ -1,5 +1,5 @@
 import { useI18n } from '../i18n'
-import EnrolledCurriculumSummary from '../components/EnrolledCurriculumSummary'
+import QuestionBank from './QuestionBank'
 import { useEffect, useRef, useState } from 'react'
 import {
   fetchTopics, startSession, fetchSessionQuestions, submitResponse, completeSession,
@@ -13,11 +13,15 @@ type View =
   | { stage: 'in_session'; sessionId: string; questions: PracticeQuestion[]; index: number; questionStartedAt: number; result: SubmitResult | null; selected: string | null }
   | { stage: 'complete'; summary: SessionSummary }
 
-export default function Practice({ onBack, onOpenQuestionBank, stageKey }: { onBack: () => void; onOpenQuestionBank?: () => void; stageKey?: string | null }) {
+export default function Practice({ onBack, onOpenQuestionBank, stageKey, onOpenProfile }: { onBack: () => void; onOpenQuestionBank?: () => void; stageKey?: string | null; onOpenProfile?: () => void }) {
   const schoolLearner = stageKey?.startsWith('school_') ?? false
   const { t } = useI18n()
   const [topics, setTopics] = useState<PracticeTopic[] | null>(null)
   const [revision, setRevision] = useState(0)
+  const [search, setSearch] = useState('')
+  const [subject, setSubject] = useState('')
+  const [questionCount, setQuestionCount] = useState(5)
+  const visibleTopics = (topics ?? []).filter(topic => (!subject || topic.subject === subject) && `${topic.subject} ${topic.topic} ${topic.description ?? ''}`.toLowerCase().includes(search.toLowerCase().trim()))
   const [recommendations, setRecommendations] = useState<PracticeRecommendation[]>([])
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -44,7 +48,7 @@ export default function Practice({ onBack, onOpenQuestionBank, stageKey }: { onB
     setError('')
     setView({ stage: 'loading_session' })
     try {
-      const sessionId = await startSession(topicId)
+      const sessionId = await startSession(topicId, questionCount)
       const questions = await fetchSessionQuestions(sessionId)
       if (questions.length === 0) {
         setError('No questions are available for this topic yet.')
@@ -94,16 +98,7 @@ export default function Practice({ onBack, onOpenQuestionBank, stageKey }: { onB
     setView({ ...view, index: view.index + 1, questionStartedAt: Date.now(), result: null, selected: null })
   }
 
-  if (view.stage === 'topics' && schoolLearner) {
-    return <div className="dash-main">
-      <div className="section-heading"><h1>My school practice</h1><button className="btn btn-secondary" onClick={onBack}>{t('back')}</button></div>
-      {onOpenQuestionBank
-        ? <EnrolledCurriculumSummary onOpenQuestionBank={onOpenQuestionBank} />
-        : <p role="alert">The curriculum Question Bank is not available. Please contact MELA support.</p>}
-      <p className="field-hint">Only your registered grade and enrolled subjects are available for school question practice. No other grades, career topics, or demo grade selectors are used here.</p>
-      <p className="muted">MELA app build: {String(import.meta.env.VITE_MELA_BUILD_SHA ?? 'unknown').slice(0,8)}</p>
-    </div>
-  }
+  if (schoolLearner) return <QuestionBank onBack={onBack} onOpenProfile={onOpenProfile} workspace />
 
   if (view.stage === 'topics') {
     return (
@@ -134,15 +129,24 @@ export default function Practice({ onBack, onOpenQuestionBank, stageKey }: { onB
           </>
         )}
 
-        <div className="section-heading"><h2>All topics</h2></div>
+        <section className="list-panel question-card" aria-label="Practice options">
+          <h2>Build your practice session</h2>
+          <div className="field"><label htmlFor="practice-search">Search topics</label><input id="practice-search" type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search a skill, subject or topic" /></div>
+          <div className="field"><label htmlFor="practice-subject">Subject</label><select id="practice-subject" value={subject} onChange={e => setSubject(e.target.value)}><option value="">All subjects</option>{[...new Set((topics ?? []).map(t => t.subject))].sort().map(s => <option key={s}>{s}</option>)}</select></div>
+          <div className="field"><label htmlFor="practice-count">Questions per session</label><select id="practice-count" value={questionCount} onChange={e => setQuestionCount(Number(e.target.value))}>{[5,10,15,20,30].map(n => <option key={n} value={n}>{n} questions</option>)}</select></div>
+          <p className="field-hint">Choose a short warm-up or a longer practice session. The server supplies available published questions, up to your chosen length.</p>
+        </section>
+        <div className="section-heading"><h2>All topics</h2><span>{visibleTopics.length} matching topics</span></div>
+        {topics && topics.length > 0 && visibleTopics.length === 0 && <p role="status">No topics match. Try another search or choose all subjects.</p>}
         {!topics && !error && <p className="muted">Loading topics…</p>}
         {topics && topics.length === 0 && <div className="empty-panel">No additional practice topics are available for your education level. School curriculum practice is available in the Question Bank.</div>}
         {topics && topics.length > 0 && (
           <div className="list-panel">
-            {topics.map((t) => (
+            {visibleTopics.map((t) => (
               <div className="list-row" key={t.id}>
                 <div>
                   <div className="list-row-title">{t.topic}</div>
+                  {t.description && <p>{t.description}</p>}
                   <div className="list-row-meta">{t.subject}{t.grade_level === 'career' ? ' · Career skills' : t.grade_level ? ` · Grade ${t.grade_level}` : ''}</div>
                 </div>
                 <button className="btn btn-primary" onClick={() => beginTopic(t.id)}>Start</button>

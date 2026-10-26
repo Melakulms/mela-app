@@ -1,0 +1,35 @@
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { cleanup,fireEvent,render,screen,waitFor } from '@testing-library/react'
+import PassportRecords from '../src/components/PassportRecords'
+const mocks=vi.hoisted(()=>({fetchPassportRecords:vi.fn(),savePassportProject:vi.fn()}))
+vi.mock('../src/lib/passport-records',()=>mocks)
+beforeEach(()=>{vi.resetAllMocks();mocks.fetchPassportRecords.mockResolvedValue([]);mocks.savePassportProject.mockResolvedValue({id:'p'})})
+afterEach(cleanup)
+it('keeps projects private and preserves the draft on failed save',async()=>{
+ const saved=vi.fn();render(<PassportRecords onSaved={saved}/>);await screen.findByText('No projects records saved yet.')
+ fireEvent.click(screen.getByText('Add project'));fireEvent.change(screen.getByLabelText('Project title'),{target:{value:'Water filter'}})
+ expect((screen.getByRole('checkbox') as HTMLInputElement).checked).toBe(false)
+ mocks.savePassportProject.mockRejectedValueOnce(new Error('Network interrupted'))
+ fireEvent.click(screen.getByText('Save project'));await screen.findByText('Network interrupted')
+ expect((screen.getByLabelText('Project title') as HTMLInputElement).value).toBe('Water filter')
+ expect(saved).not.toHaveBeenCalled()
+ fireEvent.click(screen.getByText('Save project'));await screen.findByText(/Project saved/)
+ expect(mocks.savePassportProject).toHaveBeenLastCalledWith(expect.objectContaining({title:'Water filter',is_public:false}),undefined)
+ expect(saved).toHaveBeenCalledOnce()
+})
+it('edits an existing project without changing its privacy choice',async()=>{
+ mocks.fetchPassportRecords.mockResolvedValue([{id:'p',title:'Existing',description:'Built this',is_public:true}])
+ render(<PassportRecords onSaved={vi.fn()}/>);fireEvent.click(await screen.findByText('Edit project'))
+ expect((screen.getByRole('checkbox') as HTMLInputElement).checked).toBe(true)
+ fireEvent.change(screen.getByLabelText('Project title'),{target:{value:'Updated'}})
+ fireEvent.click(screen.getByText('Save project'))
+ await waitFor(()=>expect(mocks.savePassportProject).toHaveBeenCalledWith(expect.objectContaining({title:'Updated',is_public:true}),'p'))
+})
+it('reads education without offering unverified editing or exposing unsafe links',async()=>{
+ mocks.fetchPassportRecords.mockResolvedValueOnce([{id:'p',title:'Unsafe link',project_url:'javascript:alert(1)',is_public:false}]).mockResolvedValueOnce([{id:'e',institution:'School',verified:true,is_public:false}])
+ render(<PassportRecords onSaved={vi.fn()}/>);await screen.findByText('Unsafe link')
+ expect(screen.queryByRole('link')).toBeNull()
+ fireEvent.change(screen.getByLabelText('Record type'),{target:{value:'education'}})
+ await screen.findByText('School');expect(screen.queryByText('Add project')).toBeNull()
+ expect(screen.getByText('Verified · Private')).toBeTruthy()
+})

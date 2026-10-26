@@ -1,0 +1,43 @@
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import CareerPassport from '../src/pages/CareerPassport'
+const mocks = vi.hoisted(() => ({ fetchMyAchievements:vi.fn(), fetchMyVerifiedSkills:vi.fn(), fetchMyCourseCertificates:vi.fn(), fetchDashboard:vi.fn() }))
+vi.mock('../src/lib/passport',()=>mocks)
+vi.mock('../src/lib/dashboard',()=>mocks)
+beforeEach(()=>{
+  vi.resetAllMocks()
+  mocks.fetchMyAchievements.mockResolvedValue([{id:'a',title:'Project award',verified:false,is_public:false}])
+  mocks.fetchMyVerifiedSkills.mockResolvedValue([{id:'s',skill_name:'Writing',level:'Advanced',verified:false},{id:'v',skill_name:'Math',level:'Beginner',verified:true}])
+  mocks.fetchMyCourseCertificates.mockResolvedValue([])
+  mocks.fetchDashboard.mockResolvedValue({passport:{profile_score:50,badge_count:1,education_count:2}})
+})
+afterEach(cleanup)
+it('keeps available records visible when one section fails and recovers on retry',async()=>{
+  mocks.fetchMyCourseCertificates.mockRejectedValueOnce(new Error('Offline'))
+  render(<CareerPassport onBack={vi.fn()} />)
+  expect(screen.getByText('Loading your career passport…')).toBeTruthy()
+  expect(await screen.findByText('Writing')).toBeTruthy()
+  expect(screen.getByRole('alert').textContent).toContain('Credentials could not load')
+  expect(screen.getByText('Project award')).toBeTruthy()
+  fireEvent.click(screen.getByText('Retry unavailable sections'))
+  await screen.findByText(/Complete every lesson/)
+  expect(screen.queryByRole('alert')).toBeNull()
+})
+it('distinguishes verification and visibility without inventing missing counts',async()=>{
+  render(<CareerPassport onBack={vi.fn()} />)
+  await screen.findByText('Writing')
+  expect(screen.getByText('Awaiting verification')).toBeTruthy()
+  expect(screen.queryByText('Advanced')).toBeNull()
+  expect(screen.getByText('Verified · Beginner')).toBeTruthy()
+  expect(screen.getByText('Unverified')).toBeTruthy()
+  expect(screen.getByText('Private')).toBeTruthy()
+  expect(screen.getAllByText('Unavailable').length).toBe(5)
+})
+it('marks revoked credentials and does not offer to copy them',async()=>{
+  mocks.fetchMyCourseCertificates.mockResolvedValue([{id:'c',course_title:'Career skills',certificate_code:'CODE',credential_type:'Course',issued_at:'2026-10-01',revoked_at:'2026-10-02'}])
+  render(<CareerPassport onBack={vi.fn()} />)
+  await screen.findByText('Career skills')
+  expect(screen.getByText('Revoked')).toBeTruthy()
+  expect(screen.queryByRole('button',{name:'Copy verification link'})).toBeNull()
+  expect(screen.getByRole('link',{name:'View credential'}).getAttribute('href')).toContain('certificate=CODE')
+})

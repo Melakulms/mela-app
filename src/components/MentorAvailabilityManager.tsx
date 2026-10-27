@@ -96,7 +96,7 @@ export default function MentorAvailabilityManager() {
 
   return <section className="empty-panel" style={{ textAlign: 'left' }}>
     <h2>My mentoring availability</h2>
-    <p>Publish weekly time windows so learners know when to request a session. Times use the zone selected below; a request is not a confirmed booking.</p>
+    <p>Publish weekly time windows before booking sessions. Appointments must fit entirely inside an active weekly window in its selected time zone; overlapping appointments are rejected. A request is not a confirmed booking.</p>
     {error && <div role="alert" className="banner banner-error">{error}</div>}
     {notice && <p role="status" className="banner banner-info">{notice}</p>}
     {loading ? <p role="status">Loading your availability…</p> : slots.length === 0

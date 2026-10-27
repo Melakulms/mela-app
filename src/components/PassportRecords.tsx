@@ -4,7 +4,7 @@ import { safeExternalUrl } from '../lib/external-url'
 import PassportCareerEditor from './PassportCareerEditor'
 import PassportVerificationPanel from './PassportVerificationPanel'
 const emptyProject = (): ProjectDraft => ({ title:'', description:'', project_url:'', repository_url:'', is_public:false })
-export default function PassportRecords({ onSaved, allowCareerEditing = false, allowProjectVisibility = true, preferredKind = 'education' }: { onSaved: () => void; allowCareerEditing?: boolean; allowProjectVisibility?: boolean; preferredKind?: RecordKind }) {
+export default function PassportRecords({ onSaved, allowCareerEditing = false, allowProjectVisibility = true, preferredKind = 'projects' }: { onSaved: () => void; allowCareerEditing?: boolean; allowProjectVisibility?: boolean; preferredKind?: RecordKind }) {
   const [kind,setKind] = useState<RecordKind>(preferredKind)
   const [records,setRecords] = useState<PassportRecord[]>([])
   const [loading,setLoading] = useState(true)

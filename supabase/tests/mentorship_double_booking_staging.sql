@@ -57,7 +57,8 @@ begin
     );
   exception when others then
     if sqlerrm like '%verified mentor or MFA administrator required%'
-        or sqlerrm like '%row-level security%' then blocked:=true;
+        or sqlerrm like '%row-level security%'
+        or sqlerrm like '%permission denied for table mentorship_sessions%' then blocked:=true;
     else raise exception 'unexpected scheduling rejection: %',sqlerrm;
     end if;
   end;

@@ -91,7 +91,7 @@ export default function MentorLifecycle({ onChanged }: { onChanged: () => void }
           <div>
             <b>{request.topic ?? 'Mentorship request'}</b>
             {request.message && <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{request.message}</p>}
-            {request.preferred_at && <p>Preferred time: {new Date(request.preferred_at).toLocaleString()}. Accepting schedules a 30-minute session at this time.</p>}
+            {request.preferred_at && <p>Preferred time: {new Date(request.preferred_at).toLocaleString()}. This is the learner's preferred time. Accept the request first, then schedule a separate session.</p>}
             <div className="list-row-meta">{request.status}{session ? ` · session ${session.status}` : ''}</div>
             {session && <div className="list-row-meta">{new Date(session.scheduled_at).toLocaleString()} · {session.duration_min ?? 30} minutes</div>}
             {session?.notes && <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}><strong>Follow-up notes: </strong>{session.notes}</p>}

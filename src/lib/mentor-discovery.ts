@@ -18,7 +18,7 @@ const normalize = (text: string): string => text.toLocaleLowerCase().trim()
 
 export function mentorCategoryText(mentor: Pick<Mentor, 'headline' | 'bio' | 'expertise'>): string {
   // Categories describe self-reported profile text; they are not a verified credential.
-  return normalize([mentor.headline, mentor.bio, ...mentor.expertise].filter(Boolean).join(' '))
+  return normalize([mentor.headline, mentor.bio, ...(mentor.expertise ?? [])].filter(Boolean).join(' '))
 }
 
 export function mentorMatchesCategory(mentor: Mentor, category: MentorshipCategory): boolean {
@@ -34,7 +34,7 @@ export function mentorMatchesCategory(mentor: Mentor, category: MentorshipCatego
 }
 
 export function getMentorLanguages(mentors: Mentor[]): string[] {
-  return Array.from(new Set(mentors.flatMap((mentor) => mentor.languages.map((language) => language.trim()).filter(Boolean))))
+  return Array.from(new Set(mentors.flatMap((mentor) => (mentor.languages ?? []).map((language) => language.trim()).filter(Boolean))))
     .sort((a, b) => a.localeCompare(b))
 }
 
@@ -43,16 +43,16 @@ export function discoverMentors(mentors: Mentor[], filters: MentorDiscoveryFilte
   const chosenLanguage = normalize(filters.language)
   return mentors.filter((mentor) => {
     if (!mentorMatchesCategory(mentor, filters.category)) return false
-    if (chosenLanguage && !mentor.languages.some((language) => normalize(language) === chosenLanguage)) return false
+    if (chosenLanguage && !(mentor.languages ?? []).some((language) => normalize(language) === chosenLanguage)) return false
     const searchable = normalize([
       mentor.full_name, mentor.headline, mentor.bio, mentor.organization,
-      ...mentor.expertise, ...mentor.languages,
+      ...(mentor.expertise ?? []), ...(mentor.languages ?? []),
     ].filter(Boolean).join(' '))
     return words.every((word) => searchable.includes(word))
   }).sort((a, b) => {
     if (words.length) {
-      const expertiseA = normalize(a.expertise.join(' ') + ' ' + (a.headline ?? ''))
-      const expertiseB = normalize(b.expertise.join(' ') + ' ' + (b.headline ?? ''))
+      const expertiseA = normalize((a.expertise ?? []).join(' ') + ' ' + (a.headline ?? ''))
+      const expertiseB = normalize((b.expertise ?? []).join(' ') + ' ' + (b.headline ?? ''))
       const scoreA = words.filter((word) => expertiseA.includes(word)).length
       const scoreB = words.filter((word) => expertiseB.includes(word)).length
       if (scoreA !== scoreB) return scoreB - scoreA

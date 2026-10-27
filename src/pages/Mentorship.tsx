@@ -14,6 +14,7 @@ import {
 import { useI18n } from '../i18n'
 import MentorshipHome from '../components/MentorshipHome'
 import MentorshipLearningWorkspace from '../components/MentorshipLearningWorkspace'
+import MentorshipSectionDirectory from '../components/MentorshipSectionDirectory'
 import { discoverMentors, getMentorLanguages, MENTORSHIP_CATEGORIES, mentorMatchesCategory, WEEKDAYS, type MentorshipCategory } from '../lib/mentor-discovery'
 
 export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack: () => void; stageKey?: string | null; onOpenSafety?: () => void }) {
@@ -128,6 +129,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         <h1>{t('mentorship')}</h1>
         <button className="btn btn-secondary" onClick={onBack} disabled={!!busy}>{t('back')}</button>
       </div>
+      <details className="empty-panel" style={{ textAlign: 'left' }}><summary>Explore all 16 mentorship sections</summary><MentorshipSectionDirectory /></details>
       {!loading && !error && mentors && <MentorshipHome
         mentors={mentors}
         requests={requests}
@@ -137,7 +139,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       />}
       {blockedStage && <p role="status" className="banner banner-info">Direct mentorship is not enabled for Grades 1–10. Continue with your teacher and guardian through MELA learning resources.</p>}
       {stageKey === 'school_11_12' && <p className="banner banner-info">Grades 11–12 need verified guardian consent or adult eligibility before requesting mentorship.</p>}
-      {onOpenSafety && <button className="btn btn-secondary" disabled={!!busy} onClick={onOpenSafety}>Safety, guardian consent & reporting</button>}
+      <section id="mentorship-safety" className="empty-panel" style={{ textAlign:'left' }}><h2>15. Guardian and Safety Center</h2><p>Keep discussions inside approved MELA pathways. Report abusive or unsafe contact. Learners who require verified guardian consent must obtain it before direct mentorship.</p>{onOpenSafety && <button className="btn btn-secondary" disabled={!!busy} onClick={onOpenSafety}>Safety, guardian consent & reporting</button>}</section>
       <p className="muted">Session times use your device time zone: {localZone}.</p>
       <details id="mentorship-resources" className="empty-panel" style={{ textAlign: 'left' }}>
         <summary>Prepare for a useful session</summary>
@@ -150,6 +152,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       {!loading && error && <button className="btn btn-secondary" disabled={!!busy} onClick={() => setRevision((value) => value + 1)}>Retry mentorship</button>}
 
       {!loading && !error && <MentorshipLearningWorkspace mode="learner" />}
+      <section id="mentorship-live" className="empty-panel" style={{ textAlign:'left' }}><h2>8. Live Mentorship</h2><p>Request and schedule sessions through MELA. Integrated audio/video calls are not yet activated. Do not share private contact details or join unapproved off-platform meetings.</p></section>
       <div id="mentorship-journey" className="section-heading"><h2>My mentorship journey</h2></div>
       {!loading && !error && sessions.length === 0 && <p className="empty-panel">No sessions yet. Once a mentor accepts your request, your scheduled session will appear here.</p>}
       {!loading && sessions.length > 0 && <>

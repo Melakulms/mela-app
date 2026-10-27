@@ -152,7 +152,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       {loading && <p className="muted" role="status">Loading mentorship…</p>}
       {!loading && error && <button className="btn btn-secondary" disabled={!!busy} onClick={() => setRevision((value) => value + 1)}>Retry mentorship</button>}
 
-      {!loading && !error && <MentorshipLearningWorkspace mode="learner" />}
+      {!loading && !error && <MentorshipLearningWorkspace mode="learner" stageKey={stageKey} />}
       <section id="mentorship-live" className="empty-panel" style={{ textAlign:'left' }}><h2>8. Live Mentorship</h2><p>Request and schedule sessions through MELA. Integrated audio/video calls are not yet activated. Do not share private contact details or join unapproved off-platform meetings.</p></section>
       {!blockedStage && <details className="empty-panel" style={{ textAlign:'left' }}><summary>Apply to become a verified mentor (qualified adults)</summary><MentorApplication /></details>}
       <div id="mentorship-journey" className="section-heading"><h2>My mentorship journey</h2></div>

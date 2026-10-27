@@ -1,4 +1,5 @@
 import PassportRecords from '../components/PassportRecords'
+import PassportReleaseStatus from '../components/PassportReleaseStatus'
 import type { RecordKind } from '../lib/passport-records'
 import { passportRecordEditorsEnabled } from '../lib/passport-environment'
 import PassportGuidance from '../components/PassportGuidance'
@@ -69,6 +70,7 @@ export default function CareerPassport({ onBack, onNavigate, stageKey, gradeLeve
         <button className="btn btn-secondary" onClick={onBack}>{t('back')}</button>
       </div>
       {error && <div className="banner banner-error" role="alert">{error}<button className="btn btn-secondary" onClick={() => setRevision((value) => value + 1)}>Retry</button></div>}
+      <PassportReleaseStatus />
 
       <p>Your learning record brings together skills, achievements and MELA course credentials. A profile score measures profile completeness; it is not proof of professional qualification.</p>
       <section className="list-panel question-card" aria-label="Career Passport new tools">

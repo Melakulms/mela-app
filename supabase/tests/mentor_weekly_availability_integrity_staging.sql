@@ -19,6 +19,7 @@ create temporary table pg_temp.mentor_weekly_slot_probe(
  weekday smallint, start_time time, end_time time,
  timezone text, active boolean default true
 ) on commit drop;
+grant insert on pg_temp.mentor_weekly_slot_probe to authenticated;
 create trigger temp_weekly_slot_guard before insert
  on pg_temp.mentor_weekly_slot_probe
  for each row execute function private.validate_mentor_weekly_availability();

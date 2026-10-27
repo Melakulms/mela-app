@@ -50,6 +50,14 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('Mentorship', () => {
+  it('keeps unverified university adult learners out of direct mentorship requests',async()=>{
+    render(<Mentorship stageKey="university" onBack={vi.fn()}/>)
+    await screen.findByText('Mentor One')
+    expect(screen.getByText('Verify adult eligibility above before requesting')).toBeTruthy()
+    expect(screen.queryByRole('button',{name:'Request mentorship'})).toBeNull()
+    expect(mocks.requestMentor).not.toHaveBeenCalled()
+  })
+
   it('explains grade restrictions and opens the safety flow without offering a request', async () => {
     const safety = vi.fn()
     render(<Mentorship stageKey="school_9_10" onBack={vi.fn()} onOpenSafety={safety} />)

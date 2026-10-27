@@ -22,6 +22,7 @@ import { discoverMentors, getMentorLanguages, MENTORSHIP_CATEGORIES, mentorMatch
 export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack: () => void; stageKey?: string | null; onOpenSafety?: () => void }) {
   const { t } = useI18n()
   const [query, setQuery] = useState('')
+  const [adultReviewApproved,setAdultReviewApproved] = useState(false)
   const [category, setCategory] = useState<MentorshipCategory>('all')
   const [language, setLanguage] = useState('')
   const [mentors, setMentors] = useState<Mentor[] | null>(null)
@@ -34,6 +35,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
   const [preferredAt, setPreferredAt] = useState('')
   const [notice, setNotice] = useState('')
   const blockedStage = ['school_1_6', 'school_7_8', 'school_9_10'].includes(stageKey ?? '')
+  const adultReviewRequired = ['university','college_tvet'].includes(stageKey ?? '') && !adultReviewApproved
   const [ratingDraft, setRatingDraft] = useState<Record<string, number>>({})
   const [ratingComment, setRatingComment] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState<string | null>(null)
@@ -89,7 +91,10 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
   }
 
   const submitRequest = async (mentorId: string) => {
-    if (blockedStage) return
+    if (blockedStage || adultReviewRequired) {
+      setError('Adult mentorship requires independent age verification before requesting a mentor.')
+      return
+    }
     const cleanTopic = topic.trim()
     const cleanMessage = message.trim()
     if (cleanTopic.length < 2) { setError('Add a short topic before sending the request.'); return }
@@ -141,7 +146,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       />}
       {blockedStage && <p role="status" className="banner banner-info">Direct mentorship is not enabled for Grades 1–10. Continue with your teacher and guardian through MELA learning resources.</p>}
       {stageKey === 'school_11_12' && <p className="banner banner-info">Grades 11–12 require a verified guardian relationship for direct mentorship in the current staging rules.</p>}
-      {['university','college_tvet'].includes(stageKey ?? '') && <MentorshipAdultEligibility />}
+      {['university','college_tvet'].includes(stageKey ?? '') && <MentorshipAdultEligibility onApprovalChange={setAdultReviewApproved} />}
       <section id="mentorship-safety" className="empty-panel" style={{ textAlign:'left' }}><h2>15. Guardian and Safety Center</h2><p>Keep discussions inside approved MELA pathways. Report abusive or unsafe contact. Learners who require verified guardian consent must obtain it before direct mentorship.</p>{onOpenSafety && <button className="btn btn-secondary" disabled={!!busy} onClick={onOpenSafety}>Safety, guardian consent & reporting</button>}</section>
       <p className="muted">Session times use your device time zone: {localZone}.</p>
       <details id="mentorship-resources" className="empty-panel" style={{ textAlign: 'left' }}>
@@ -275,7 +280,9 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
             {m.years_experience != null && <p>{m.years_experience} years of experience</p>
             }
             {m.rating_count > 0 && <p className="muted">{m.rating_average.toFixed(2)}/5 · {m.rating_count} {m.rating_count === 1 ? 'rating' : 'ratings'}</p>}
-            {blockedStage ? <span className="pill">Direct mentorship unavailable for your grade</span> : alreadyRequested(m.user_id) ? <span className="pill">Requested</span> : openMentor === m.user_id ? <div>
+            {blockedStage ? <span className="pill">Direct mentorship unavailable for your grade</span>
+              : adultReviewRequired ? <span className="pill">Verify adult eligibility above before requesting</span>
+              : alreadyRequested(m.user_id) ? <span className="pill">Requested</span> : openMentor === m.user_id ? <div>
               <div className="field">
                 <label htmlFor={topicId}>Topic</label>
                 <input id={topicId} value={topic} maxLength={120} disabled={!!busy} onChange={(e) => setTopic(e.target.value)} placeholder="e.g. CV review" />

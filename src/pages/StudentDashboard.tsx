@@ -77,7 +77,7 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
       <div className="section-heading"><h2>{t('exploreMela')}</h2></div>
       <div className="module-grid">
         {MODULES.map(m => {
-          const basicLearningOrSafety = m.view === 'safety' || m.view === 'academy'
+          const basicLearningOrSafety = m.view === 'safety' || m.view === 'academy' || m.view === 'passport'
           const Icon = m.icon
           return <div key={m.key} className={`module-card ${m.cls}`}>
             <div className="module-icon"><Icon size={20}/></div>
@@ -101,6 +101,15 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
       <div className="dash-greeting">
         <div><span className="eyebrow">{t('learningSpace')}</span><h1>{t('hello')}, {profile.full_name?.split(' ')[0] ?? t('there')} <span className="greeting-dot">.</span></h1><p>{t('dailyProgress')}</p></div>
       </div>
+
+      <section className="list-panel question-card" aria-label="Career Passport education experience and verification update">
+        <span className="eyebrow">CAREER PASSPORT · NEW</span>
+        <h2>My education, experience &amp; verification</h2>
+        <p>Add your education or experience privately, keep portfolio projects, and ask MELA administrators to verify saved claims. Start here even when Focus Mode hides other tools.</p>
+        {feature_flags.career_passport === false
+          ? <p role="status">Career Passport is temporarily disabled by MELA administration.</p>
+          : <button className="btn btn-primary" type="button" onClick={() => onNavigate('passport')}>Open Career Passport updates</button>}
+      </section>
 
       <section className="list-panel" aria-label="Grades 1–12 practice update">
         <strong>My registered grade &amp; subjects</strong>

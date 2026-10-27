@@ -1,4 +1,4 @@
-const CACHE = 'mela-shell-v12-public-offline'
+const CACHE = 'mela-shell-v13-passport-visible'
 const scopeUrl = new URL(self.registration.scope)
 const shellUrl = scopeUrl.pathname
 const offlineUrl = `${shellUrl}offline.html`

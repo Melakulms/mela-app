@@ -4,8 +4,8 @@ import { safeExternalUrl } from '../lib/external-url'
 import PassportCareerEditor from './PassportCareerEditor'
 import PassportVerificationPanel from './PassportVerificationPanel'
 const emptyProject = (): ProjectDraft => ({ title:'', description:'', project_url:'', repository_url:'', is_public:false })
-export default function PassportRecords({ onSaved, allowCareerEditing = false, allowProjectVisibility = true }: { onSaved: () => void; allowCareerEditing?: boolean; allowProjectVisibility?: boolean }) {
-  const [kind,setKind] = useState<RecordKind>('projects')
+export default function PassportRecords({ onSaved, allowCareerEditing = false, allowProjectVisibility = true, preferredKind = 'projects' }: { onSaved: () => void; allowCareerEditing?: boolean; allowProjectVisibility?: boolean; preferredKind?: RecordKind }) {
+  const [kind,setKind] = useState<RecordKind>(preferredKind)
   const [records,setRecords] = useState<PassportRecord[]>([])
   const [loading,setLoading] = useState(true)
   const [more,setMore] = useState(false)
@@ -17,6 +17,7 @@ export default function PassportRecords({ onSaved, allowCareerEditing = false, a
   const [careerEdit,setCareerEdit] = useState<PassportRecord | 'new' | null>(null)
   const [saving,setSaving] = useState(false)
   const lock = useRef(false)
+  useEffect(() => { setKind(preferredKind) }, [preferredKind])
   useEffect(()=>{
     let active = true
     setLoading(true); setRecords([]); setError(''); setMore(false)
@@ -41,7 +42,7 @@ export default function PassportRecords({ onSaved, allowCareerEditing = false, a
   }
   return <section id="passport-records" className="list-panel question-card" aria-label="My portfolio records">
     <h2>My portfolio records</h2>
-    <div className="field"><label htmlFor="passport-record-kind">Record type</label><select id="passport-record-kind" value={kind} disabled={loading || saving || !!draft || !!careerEdit} onChange={e=>{setKind(e.target.value as RecordKind);setMessage('');setCareerEdit(null)}}><option value="projects">Projects</option><option value="education">Education</option><option value="experience">Experience</option></select></div>
+    <div className="field"><label htmlFor="passport-record-kind">Record type</label><select id="passport-record-kind" value={kind} disabled={loading || saving || !!draft || !!careerEdit} onChange={e=>{setKind(e.target.value as RecordKind);setMessage('');setCareerEdit(null)}}><option value="education">Education</option><option value="experience">Experience</option><option value="projects">Projects</option></select></div>
     {message && <p role="status">{message}</p>}
     {error && <div role="alert">{error}{!draft && <button className="btn btn-secondary" disabled={loading} onClick={()=>setRevision(v=>v+1)}>Retry records</button>}</div>}
     {kind==='projects' && !draft && <button className="btn btn-primary" onClick={()=>{setDraft(emptyProject());setEditing(null);setMessage('');setError('')}}>Add project</button>}

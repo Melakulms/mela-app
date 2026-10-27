@@ -41,6 +41,9 @@ jobs:
           grep -R -F -q "Try interactive practice" dist/assets
           grep -R -F -q "Scholarship research is not an offer" dist/assets
           grep -R -F -q "Installed app version" dist/assets
+          grep -R -F -q "Open Career Passport updates" dist/assets
+          grep -R -F -q "Request record verification" dist/assets
+          grep -R -F -q "Add education" dist/assets
           printf '{"commit":"%s","published_from":"github-actions"}\n' "$GITHUB_SHA" > dist/mela-release.json
           test -s dist/mela-release.json
       - run: cp dist/index.html dist/404.html

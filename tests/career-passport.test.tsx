@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import CareerPassport from '../src/pages/CareerPassport'
 const mocks = vi.hoisted(() => ({ fetchMyAchievements:vi.fn(), fetchMyVerifiedSkills:vi.fn(), fetchMyCourseCertificates:vi.fn(), fetchDashboard:vi.fn() }))
-vi.mock('../src/components/PassportRecords',()=>({default:()=>null}))
+vi.mock('../src/components/PassportRecords',()=>({default:({preferredKind}: {preferredKind: string})=><span data-testid="passport-record-kind-prop">{preferredKind}</span>}))
 vi.mock('../src/lib/passport',()=>mocks)
 vi.mock('../src/lib/dashboard',()=>mocks)
 beforeEach(()=>{
@@ -41,4 +41,14 @@ it('marks revoked credentials and does not offer to copy them',async()=>{
   expect(screen.getByText('Revoked')).toBeTruthy()
   expect(screen.queryByRole('button',{name:'Copy verification link'})).toBeNull()
   expect(screen.getByRole('link',{name:'View credential'}).getAttribute('href')).toContain('certificate=CODE')
+})
+
+it('shows new Career Passport actions at the top and switches record types',async()=>{
+  render(<CareerPassport onBack={vi.fn()} />)
+  expect(screen.getByText('Career Passport · Education, Experience and Verification')).toBeTruthy()
+  expect(screen.getByTestId('passport-record-kind-prop').textContent).toBe('education')
+  fireEvent.click(screen.getByRole('button',{name:'Add experience'}))
+  expect(screen.getByTestId('passport-record-kind-prop').textContent).toBe('experience')
+  fireEvent.click(screen.getByRole('button',{name:'My projects'}))
+  expect(screen.getByTestId('passport-record-kind-prop').textContent).toBe('projects')
 })

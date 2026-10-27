@@ -22,12 +22,13 @@ export function useStudentNavigation() {
     const restore = () => setView(readStudentView())
     const reset = () => {
       // A restored session normally starts at Home to avoid reopening private
-      // previous screens. An explicitly shared Arena or Scholarships entry is
-      // a deliberate public section request, not session-history restoration.
+      // previous screens. An explicitly requested Arena, Scholarship or
+      // Career Passport link represents new navigation, not session history.
+      // Career Passport still requires an authenticated, authorized learner.
       const params = new URLSearchParams(window.location.search)
       const requested = params.get('view')
       const explicit = params.get('mela_open') === '1' &&
-        (requested === 'arena' || requested === 'scholarships')
+        (requested === 'arena' || requested === 'scholarships' || requested === 'passport')
       const next: StudentView = explicit ? requested as StudentView : 'dashboard'
       // Discard old OAuth/recovery parameters and consume the one-time intent.
       window.history.replaceState(null, '', window.location.pathname + '?view=' + next)

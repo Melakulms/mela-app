@@ -1,5 +1,13 @@
 import { supabase } from './supabase'
 
+export interface MentorAvailability {
+  id: string
+  weekday: number
+  start_time: string
+  end_time: string
+  timezone: string
+}
+
 export interface Mentor {
   user_id: string
   full_name: string | null
@@ -9,6 +17,9 @@ export interface Mentor {
   years_experience: number | null
   rating_average: number
   rating_count: number
+  expertise: string[]
+  languages: string[]
+  availability: MentorAvailability[]
 }
 
 export interface MyMentorshipRequest {
@@ -47,17 +58,32 @@ async function requireUserId(): Promise<string> {
 export async function fetchVerifiedMentors(): Promise<Mentor[]> {
   const { data: mentors, error } = await supabase
     .from('mentor_profiles')
-    .select('user_id, headline, bio, organization, years_experience, rating_average, rating_count')
+    .select('user_id, headline, bio, organization, years_experience, rating_average, rating_count, expertise, languages')
     .eq('verified', true)
     .eq('active', true)
   if (error) throw error
   if (!mentors?.length) return []
   const ids = mentors.map((m) => m.user_id)
-  const { data: profiles, error: pErr } = await supabase.from('profiles').select('id, full_name').in('id', ids)
-  if (pErr) throw pErr
-  const nameById = new Map((profiles ?? []).map((p) => [p.id, p.full_name]))
+  const [namesResult, slotsResult] = await Promise.all([
+    supabase.from('profiles').select('id, full_name').in('id', ids),
+    supabase.from('mentor_availability')
+      .select('id, mentor_id, weekday, start_time, end_time, timezone')
+      .in('mentor_id', ids).eq('active', true).order('weekday', { ascending: true }),
+  ])
+  if (namesResult.error) throw namesResult.error
+  if (slotsResult.error) throw slotsResult.error
+  const nameById = new Map((namesResult.data ?? []).map((p) => [p.id, p.full_name]))
+  const availabilityByMentor = new Map<string, MentorAvailability[]>()
+  for (const slot of slotsResult.data ?? []) {
+    const list = availabilityByMentor.get(slot.mentor_id) ?? []
+    list.push({ id: slot.id, weekday: slot.weekday, start_time: slot.start_time, end_time: slot.end_time, timezone: slot.timezone })
+    availabilityByMentor.set(slot.mentor_id, list)
+  }
   return mentors.map((m) => ({
     ...m,
+    expertise: m.expertise ?? [],
+    languages: m.languages ?? [],
+    availability: availabilityByMentor.get(m.user_id) ?? [],
     rating_average: Number(m.rating_average ?? 0),
     rating_count: Number(m.rating_count ?? 0),
     full_name: nameById.get(m.user_id) ?? 'MELA mentor',

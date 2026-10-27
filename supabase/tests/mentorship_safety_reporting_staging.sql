@@ -58,4 +58,34 @@ begin
   if not blocked then raise exception 'missing MFA identity could resolve a case'; end if;
 end $unauthorized$;
 rollback;
-select 'mentorship_case_report_auth_smoke_passed' result;
+
+-- Simulate a known actor claim without any real registered user. This is
+-- only a negative authorization probe, not an authenticated end-to-end test.
+begin;
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000099',true);
+do $cross_actor$
+declare denied boolean:=false;
+begin
+  begin
+    perform public.report_mentorship_concern(
+      'mentorship_request','00000000-0000-4000-8000-000000000012'::uuid,
+      'Safety concern','This request belongs to a different mentorship relationship.');
+  exception when others then
+    if sqlerrm like '%report only a mentorship request you participated in%' then denied:=true;
+    else raise exception 'unexpected cross-actor denial: %',sqlerrm;end if;
+  end;
+  if not denied then raise exception 'actor reported a request they did not join'; end if;
+  denied:=false;
+  begin
+    perform public.review_mentorship_concern(
+      '00000000-0000-4000-8000-000000000012'::uuid,
+      'resolved','This identity has not been granted MFA administrator privileges.');
+  exception when others then
+    if sqlerrm like '%MFA-verified safety administrator required%' then denied:=true;
+    else raise exception 'unexpected nonadmin denial: %',sqlerrm;end if;
+  end;
+  if not denied then raise exception 'nonadministrator resolved a safety case'; end if;
+end $cross_actor$;
+rollback;
+select 'mentorship_case_report_auth_and_cross_actor_smoke_passed' result;

@@ -58,7 +58,7 @@ export async function loadMentorshipWorkspace(role: 'learner' | 'mentor'): Promi
       .eq('status', 'published').order('title', { ascending: true }).limit(100),
     supabase.from('mentorship_groups')
       .select('id,title,description,category,mentor_id,starts_at,capacity')
-      .eq('status', 'published').order('starts_at', { ascending: true }).limit(50),
+      .eq('status', 'published').gt('starts_at', new Date().toISOString()).order('starts_at', { ascending: true }).limit(50),
   ])
   for (const result of queries) if (result.error) throw result.error
   const assignments = (queries[1].data ?? []) as MentorshipAssignment[]

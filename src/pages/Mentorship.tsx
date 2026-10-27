@@ -16,6 +16,7 @@ import MentorshipHome from '../components/MentorshipHome'
 import MentorshipLearningWorkspace from '../components/MentorshipLearningWorkspace'
 import MentorshipSectionDirectory from '../components/MentorshipSectionDirectory'
 import MentorApplication from '../components/MentorApplication'
+import MentorshipAdultEligibility from '../components/MentorshipAdultEligibility'
 import { discoverMentors, getMentorLanguages, MENTORSHIP_CATEGORIES, mentorMatchesCategory, WEEKDAYS, type MentorshipCategory } from '../lib/mentor-discovery'
 
 export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack: () => void; stageKey?: string | null; onOpenSafety?: () => void }) {
@@ -139,7 +140,8 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         revision={revision}
       />}
       {blockedStage && <p role="status" className="banner banner-info">Direct mentorship is not enabled for Grades 1–10. Continue with your teacher and guardian through MELA learning resources.</p>}
-      {stageKey === 'school_11_12' && <p className="banner banner-info">Grades 11–12 require a verified guardian relationship for direct mentorship in the current staging rules.</p>}
+      {stageKey === 'school_11_12' && <p className="banner banner-info">Grades 11–12 require a verified guardian relationship for direct mentorship in the current staging rules.</p>
+      {['university','college_tvet'].includes(stageKey ?? '') && <MentorshipAdultEligibility />}}
       <section id="mentorship-safety" className="empty-panel" style={{ textAlign:'left' }}><h2>15. Guardian and Safety Center</h2><p>Keep discussions inside approved MELA pathways. Report abusive or unsafe contact. Learners who require verified guardian consent must obtain it before direct mentorship.</p>{onOpenSafety && <button className="btn btn-secondary" disabled={!!busy} onClick={onOpenSafety}>Safety, guardian consent & reporting</button>}</section>
       <p className="muted">Session times use your device time zone: {localZone}.</p>
       <details id="mentorship-resources" className="empty-panel" style={{ textAlign: 'left' }}>

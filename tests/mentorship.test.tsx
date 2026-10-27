@@ -50,6 +50,18 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('Mentorship', () => {
+  it('fails closed with no education stage and does not offer adult mentor applications to school learners', async () => {
+    const {rerender}=render(<Mentorship onBack={vi.fn()} />)
+    await screen.findByText('Mentor One')
+    expect(screen.getByText(/Complete your education profile before using direct mentorship/)).toBeTruthy()
+    expect(screen.queryByRole('button',{name:'Request mentorship'})).toBeNull()
+    expect(screen.queryByText(/Apply to become a verified mentor/)).toBeNull()
+    rerender(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+    await screen.findByText(/Grades 11–12 require a verified guardian relationship/)
+    expect(screen.queryByText(/Apply to become a verified mentor/)).toBeNull()
+    expect(mocks.requestMentor).not.toHaveBeenCalled()
+  })
+
   it('keeps unverified university adult learners out of direct mentorship requests',async()=>{
     render(<Mentorship stageKey="university" onBack={vi.fn()}/>)
     await screen.findByText('Mentor One')
@@ -71,7 +83,7 @@ describe('Mentorship', () => {
 
   it('sends the preferred time and retains the request draft after a failure', async () => {
     mocks.requestMentor.mockRejectedValueOnce(new Error('Try again'))
-    render(<Mentorship onBack={vi.fn()} />)
+    render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
     await screen.findByText('Mentor One')
     fireEvent.click(screen.getByRole('button', { name: 'Request mentorship' }))
     fireEvent.change(screen.getByLabelText('Topic'), { target: { value: 'Study plan' } })
@@ -86,7 +98,7 @@ describe('Mentorship', () => {
   it('shows follow-up notes and allows a new request after a completed session', async () => {
     mocks.fetchMyMentorshipRequests.mockResolvedValue([{ id: 'request-1', mentor_id: 'mentor-1', topic: 'CV review', status: 'accepted', created_at: '2026-10-02T10:00:00Z' }])
     mocks.fetchMyMentorshipSessions.mockResolvedValue([{ id: 'session-1', request_id: 'request-1', mentor_id: 'mentor-1', mentee_id: 'learner', scheduled_at: '2026-10-04T10:00:00Z', duration_min: 30, status: 'completed', rating: 5, rating_comment: null, notes: 'Revise the project section of your CV.' }])
-    render(<Mentorship onBack={vi.fn()} />)
+    render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
     await screen.findByText('Mentor One')
     expect(screen.getByText(/Revise the project section of your CV/)).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Request mentorship' })).toBeTruthy()
@@ -94,7 +106,7 @@ describe('Mentorship', () => {
 
   it('surfaces load failures and retries without leaving a stale error', async () => {
     mocks.fetchVerifiedMentors.mockRejectedValueOnce(new Error('Network unavailable'))
-    render(<Mentorship onBack={vi.fn()} />)
+    render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
 
     expect((await screen.findByRole('alert')).textContent).toContain('Network unavailable')
     fireEvent.click(screen.getByRole('button', { name: 'Retry mentorship' }))
@@ -104,7 +116,7 @@ describe('Mentorship', () => {
   })
 
   it('validates the topic and serializes request submission', async () => {
-    render(<Mentorship onBack={vi.fn()} />)
+    render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
     await screen.findByText('Mentor One')
 
     fireEvent.click(screen.getByRole('button', { name: 'Request mentorship' }))
@@ -125,7 +137,7 @@ describe('Mentorship', () => {
   it('allows learners to cancel a pending request and a scheduled session', async () => {
     mocks.fetchMyMentorshipRequests.mockResolvedValue([{ id: 'request-1', mentor_id: 'mentor-1', topic: 'Interview prep', status: 'pending', created_at: '2026-10-02T10:00:00Z' }])
     mocks.fetchMyMentorshipSessions.mockResolvedValue([{ id: 'session-1', request_id: 'request-2', mentor_id: 'mentor-1', mentee_id: 'learner', scheduled_at: '2026-10-04T10:00:00Z', duration_min: 30, status: 'scheduled', call_room_id: null, completed_at: null, cancelled_at: null, rating: null, rating_comment: null }])
-    render(<Mentorship onBack={vi.fn()} />)
+    render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
 
     await screen.findByText('Your sessions')
     fireEvent.click(screen.getByRole('button', { name: 'Cancel session' }))
@@ -141,7 +153,7 @@ describe('Mentorship', () => {
       .mockResolvedValueOnce([{ id: 'session-2', request_id: 'request-3', mentor_id: 'mentor-1', mentee_id: 'learner', scheduled_at: '2026-10-03T10:00:00Z', duration_min: 45, status: 'completed', call_room_id: null, completed_at: '2026-10-03T10:45:00Z', cancelled_at: null, rating: null, rating_comment: null }])
       .mockResolvedValueOnce([{ id: 'session-2', request_id: 'request-3', mentor_id: 'mentor-1', mentee_id: 'learner', scheduled_at: '2026-10-03T10:00:00Z', duration_min: 45, status: 'completed', call_room_id: null, completed_at: '2026-10-03T10:45:00Z', cancelled_at: null, rating: 4, rating_comment: 'Helpful feedback.' }])
 
-    render(<Mentorship onBack={vi.fn()} />)
+    render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
     expect(await screen.findByText('4.75/5 · 8 ratings')).toBeTruthy()
 
     fireEvent.change(screen.getByLabelText('Rate this completed session'), { target: { value: '4' } })

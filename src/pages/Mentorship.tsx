@@ -17,12 +17,16 @@ import MentorshipLearningWorkspace from '../components/MentorshipLearningWorkspa
 import MentorshipSectionDirectory from '../components/MentorshipSectionDirectory'
 import MentorApplication from '../components/MentorApplication'
 import MentorshipAdultEligibility from '../components/MentorshipAdultEligibility'
+import { fetchMyMentorshipAccess, type MentorshipAccess } from '../lib/mentorship-access'
 import { discoverMentors, getMentorLanguages, MENTORSHIP_CATEGORIES, mentorMatchesCategory, WEEKDAYS, type MentorshipCategory } from '../lib/mentor-discovery'
 
 export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack: () => void; stageKey?: string | null; onOpenSafety?: () => void }) {
   const { t } = useI18n()
   const [query, setQuery] = useState('')
   const [adultReviewApproved,setAdultReviewApproved] = useState(false)
+  const [serverAccess,setServerAccess] = useState<MentorshipAccess|null>(null)
+  const [accessChecking,setAccessChecking] = useState(true)
+  const [accessError,setAccessError] = useState('')
   const [category, setCategory] = useState<MentorshipCategory>('all')
   const [language, setLanguage] = useState('')
   const [mentors, setMentors] = useState<Mentor[] | null>(null)
@@ -36,13 +40,33 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
   const [notice, setNotice] = useState('')
   const blockedStage = !['school_11_12', 'university', 'college_tvet'].includes(stageKey ?? '')
   const missingStage = !stageKey
-  const adultReviewRequired = ['university','college_tvet'].includes(stageKey ?? '') && !adultReviewApproved
+  const directAccessAllowed = !blockedStage && serverAccess?.allowed === true
+  const adultReviewRequired = ['university','college_tvet'].includes(stageKey ?? '') && !directAccessAllowed
+  const guardianReviewRequired = stageKey === 'school_11_12' && !directAccessAllowed
   const [ratingDraft, setRatingDraft] = useState<Record<string, number>>({})
   const [ratingComment, setRatingComment] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [revision, setRevision] = useState(0)
   const actionLock = useRef(false)
+
+  useEffect(() => {
+    let active = true
+    setServerAccess(null)
+    setAccessError('')
+    if (blockedStage) {
+      setAccessChecking(false)
+      return () => { active=false }
+    }
+    setAccessChecking(true)
+    void fetchMyMentorshipAccess()
+      .then((result) => { if(active) setServerAccess(result) })
+      .catch((cause) => {
+        if(active) setAccessError(cause instanceof Error ? cause.message : 'Could not verify mentorship access.')
+      })
+      .finally(() => { if(active) setAccessChecking(false) })
+    return () => { active=false }
+  },[blockedStage,stageKey,adultReviewApproved,revision])
 
   useEffect(() => {
     let active = true
@@ -92,8 +116,8 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
   }
 
   const submitRequest = async (mentorId: string) => {
-    if (blockedStage || adultReviewRequired) {
-      setError(blockedStage ? 'This education stage does not have direct mentorship access.' : 'Adult mentorship requires independent age verification before requesting a mentor.')
+    if (!directAccessAllowed) {
+      setError(blockedStage ? 'This education stage does not have direct mentorship access.' : 'Verified guardian or adult eligibility is required before requesting a mentor.')
       return
     }
     const cleanTopic = topic.trim()
@@ -147,6 +171,9 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       />}
       {blockedStage && <p role="status" className="banner banner-info">{missingStage ? 'Complete your education profile before using direct mentorship. Learning resources remain available.' : 'Direct mentorship is not enabled for Grades 1–10. Continue with your teacher and guardian through MELA learning resources.'}</p>}
       {stageKey === 'school_11_12' && <p className="banner banner-info">Grades 11–12 require a verified guardian relationship for direct mentorship in the current staging rules.</p>}
+      {accessChecking && !blockedStage && <p role="status" className="muted">Checking your current mentorship eligibility…</p>}
+      {accessError && !blockedStage && <p role="alert" className="banner banner-error">{accessError} Direct requests remain disabled until eligibility can be verified.</p>}
+      {!accessChecking && !accessError && guardianReviewRequired && <p role="status" className="banner banner-info">Your verified guardian clearance is not yet confirmed. Open Safety & Privacy to request or review guardian consent.</p>}
       {['university','college_tvet'].includes(stageKey ?? '') && <MentorshipAdultEligibility onApprovalChange={setAdultReviewApproved} />}
       <section id="mentorship-safety" className="empty-panel" style={{ textAlign:'left' }}><h2>15. Guardian and Safety Center</h2><p>Keep discussions inside approved MELA pathways. Report abusive or unsafe contact. Learners who require verified guardian consent must obtain it before direct mentorship.</p>{onOpenSafety && <button className="btn btn-secondary" disabled={!!busy} onClick={onOpenSafety}>Safety, guardian consent & reporting</button>}</section>
       <p className="muted">Session times use your device time zone: {localZone}.</p>
@@ -162,10 +189,10 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
 
       {!loading && !error && <MentorshipLearningWorkspace mode="learner" stageKey={stageKey} />}
       <section id="mentorship-live" className="empty-panel" style={{ textAlign:'left' }}><h2>8. Live Mentorship</h2><p>Request and schedule sessions through MELA. Integrated audio/video calls are not yet activated. Do not share private contact details or join unapproved off-platform meetings.</p></section>
-      {['university','college_tvet'].includes(stageKey ?? '') && adultReviewApproved &&
+      {['university','college_tvet'].includes(stageKey ?? '') && directAccessAllowed &&
         <details className="empty-panel" style={{ textAlign:'left' }}><summary>Apply to become a verified mentor (eligible adults)</summary><MentorApplication /></details>}
       <div id="mentorship-journey" className="section-heading"><h2>My mentorship journey</h2></div>
-      {!loading && !error && sessions.length === 0 && <p className="empty-panel">No sessions yet. Once a mentor accepts your request, your scheduled session will appear here.</p>}
+      {!loading && !error && sessions.length === 0 && <p className="empty-panel">No sessions yet. An accepted request is not a booking; your mentor must separately confirm a session within their published available hours.</p>}
       {!loading && sessions.length > 0 && <>
         <div className="section-heading"><h2>Your sessions</h2></div>
         <div className="list-panel">
@@ -282,7 +309,9 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
             {m.years_experience != null && <p>{m.years_experience} years of experience</p>
             }
             {m.rating_count > 0 && <p className="muted">{m.rating_average.toFixed(2)}/5 · {m.rating_count} {m.rating_count === 1 ? 'rating' : 'ratings'}</p>}
-            {blockedStage ? <span className="pill">Direct mentorship unavailable for your grade</span>
+            {blockedStage ? <span className="pill">Direct mentorship unavailable for this education stage</span>
+              : accessChecking ? <span className="pill">Checking verified mentorship eligibility</span>
+              : guardianReviewRequired ? <span className="pill">Verified guardian clearance required</span>
               : adultReviewRequired ? <span className="pill">Verify adult eligibility above before requesting</span>
               : alreadyRequested(m.user_id) ? <span className="pill">Requested</span> : openMentor === m.user_id ? <div>
               <div className="field">

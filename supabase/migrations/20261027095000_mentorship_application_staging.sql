@@ -29,8 +29,8 @@ create policy mentorship_applications_eligible_adult_submit on public.mentorship
           where tp.user_id=p.id and tp.verification_status in ('approved','verified')))))
   );
 create policy mentorship_applications_admin_review on public.mentorship_applications
-  for update to authenticated using (private.is_admin_user())
-  with check (private.is_admin_user());
+  for update to authenticated using (private.is_admin_user() and (auth.jwt()->>'aal')='aal2')
+  with check (private.is_admin_user() and (auth.jwt()->>'aal')='aal2');
 revoke all on public.mentorship_applications from anon,authenticated;
 grant select on public.mentorship_applications to authenticated;
 grant insert (applicant_id,headline,expertise,languages,background) on public.mentorship_applications to authenticated;

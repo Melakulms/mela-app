@@ -21,8 +21,8 @@ export type MentorshipHomeExtras = {
 }
 
 const normalize = (value: string) => value.toLocaleLowerCase().trim()
-const meaningful = (value: string) => normalize(value).match(/[\p{L}\p{N}]{3,}/gu) ?? []
-const common = new Set(['and', 'the', 'for', 'with', 'from', 'this', 'that', 'want', 'learn', 'learning', 'about', 'help', 'need', 'study'])
+const meaningful = (value: string) => normalize(value).match(/[\p{L}\p{N}]{2,}/gu) ?? []
+const common = new Set(['and', 'the', 'for', 'with', 'from', 'this', 'that', 'want', 'learn', 'learning', 'about', 'help', 'need', 'study', 'to', 'in', 'of', 'on', 'at', 'it', 'an'])
 
 export function summarizeMentorshipHome(requests: MyMentorshipRequest[], sessions: MentorshipSession[], now = Date.now()) {
   const upcoming = sessions.filter((s) => s.status === 'scheduled' && Number.isFinite(Date.parse(s.scheduled_at)) && Date.parse(s.scheduled_at) > now)
@@ -48,7 +48,8 @@ export function recommendMentors(mentors: Mentor[], interests: string[], preferr
     .filter((m) => !contacted.has(m.user_id))
     .map((mentor) => {
       const descriptor = normalize([mentor.headline, mentor.bio, ...(mentor.expertise ?? [])].filter(Boolean).join(' '))
-      const matches = [...keywords].filter((term) => descriptor.includes(term))
+      const descriptorWords = descriptor.split(/[^\p{L}\p{N}]+/u)
+      const matches = [...keywords].filter((term) => term.length <= 2 ? descriptorWords.includes(term) : descriptor.includes(term))
       const score = matches.length * 10 + (
         preferredLanguage && (mentor.languages ?? []).some((lang) => normalize(lang) === normalize(preferredLanguage)) ? 2 : 0
       )

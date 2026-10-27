@@ -18,9 +18,9 @@ const REASONS=[
 export default function MentorshipSafetyReporting({
   mentors,requests,sessions
 }:{
-  mentors:Mentor[]
-  requests:MyMentorshipRequest[]
-  sessions:MentorshipSession[]
+  mentors:Pick<Mentor,'user_id'|'full_name'|'headline'>[]
+  requests:Pick<MyMentorshipRequest,'id'|'topic'>[]
+  sessions:Pick<MentorshipSession,'id'|'scheduled_at'|'status'>[]
 }) {
   const [targetKey,setTargetKey]=useState('')
   const [reason,setReason]=useState('')

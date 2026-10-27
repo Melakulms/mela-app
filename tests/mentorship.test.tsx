@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 vi.mock('../src/components/MentorshipLearningWorkspace', () => ({ default: () => null }))
 vi.mock('../src/components/MentorApplication', () => ({ default: () => null }))
+vi.mock('../src/components/MentorshipAdultEligibility', () => ({ default: () => null }))
 import Mentorship from '../src/pages/Mentorship'
 
 const mocks = vi.hoisted(() => ({

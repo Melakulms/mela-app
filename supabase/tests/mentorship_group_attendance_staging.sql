@@ -40,7 +40,10 @@ begin
    values ('00000000-0000-0000-0000-000000000001','reported_present',
      'Rejected signed-in role without MFA identity',
      '00000000-0000-0000-0000-000000000002');
- exception when insufficient_privilege then v_denied := true;
+ exception when raise_exception then
+   if position('MFA administrator required' in sqlerrm)>0 then v_denied := true;
+   else raise; end if;
+   when insufficient_privilege then v_denied := true;
  end;
  reset role;
  if not v_denied then raise exception 'missing-MFA attendance insert was not denied'; end if;

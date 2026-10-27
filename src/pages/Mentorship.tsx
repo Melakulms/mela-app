@@ -13,6 +13,7 @@ import {
 } from '../lib/mentorship'
 import { useI18n } from '../i18n'
 import MentorshipHome from '../components/MentorshipHome'
+import MentorshipLearningWorkspace from '../components/MentorshipLearningWorkspace'
 import { discoverMentors, getMentorLanguages, MENTORSHIP_CATEGORIES, mentorMatchesCategory, WEEKDAYS, type MentorshipCategory } from '../lib/mentor-discovery'
 
 export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack: () => void; stageKey?: string | null; onOpenSafety?: () => void }) {
@@ -148,6 +149,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       {loading && <p className="muted" role="status">Loading mentorship…</p>}
       {!loading && error && <button className="btn btn-secondary" disabled={!!busy} onClick={() => setRevision((value) => value + 1)}>Retry mentorship</button>}
 
+      {!loading && !error && <MentorshipLearningWorkspace mode="learner" />}
       <div id="mentorship-journey" className="section-heading"><h2>My mentorship journey</h2></div>
       {!loading && !error && sessions.length === 0 && <p className="empty-panel">No sessions yet. Once a mentor accepts your request, your scheduled session will appear here.</p>}
       {!loading && sessions.length > 0 && <>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import MentorAvailabilityManager from './MentorAvailabilityManager'
 import { cancelMentorshipSession, completeMentorshipSession, scheduleMentorshipSession, type MentorshipSession } from '../lib/mentorship'
 
 type RequestRow = { id: string; mentee_id: string; topic: string | null; message: string | null; preferred_at: string | null; status: string; created_at: string }
@@ -77,6 +78,7 @@ export default function MentorLifecycle({ onChanged }: { onChanged: () => void }
   const sessionByRequest = new Map(sessions.filter((row) => row.request_id).map((row) => [row.request_id as string, row]))
 
   return <section>
+    <MentorAvailabilityManager />
     <p>Read the learner’s goal before accepting. Add follow-up notes after the session so the learner has a clear next step. Notes are visible to the learner.</p>
     <p className="muted">Times use {Intl.DateTimeFormat().resolvedOptions().timeZone}. Scheduling does not provide an in-app video call.</p>
     <div className="section-heading"><h2>Mentorship requests</h2><button className="btn btn-secondary" disabled={loading || !!busy} onClick={() => setRevision((value) => value + 1)}>Refresh</button></div>

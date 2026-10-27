@@ -15,6 +15,7 @@ import { useI18n } from '../i18n'
 import MentorshipHome from '../components/MentorshipHome'
 import MentorshipLearningWorkspace from '../components/MentorshipLearningWorkspace'
 import MentorshipSectionDirectory from '../components/MentorshipSectionDirectory'
+import MentorApplication from '../components/MentorApplication'
 import { discoverMentors, getMentorLanguages, MENTORSHIP_CATEGORIES, mentorMatchesCategory, WEEKDAYS, type MentorshipCategory } from '../lib/mentor-discovery'
 
 export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack: () => void; stageKey?: string | null; onOpenSafety?: () => void }) {
@@ -153,6 +154,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
 
       {!loading && !error && <MentorshipLearningWorkspace mode="learner" />}
       <section id="mentorship-live" className="empty-panel" style={{ textAlign:'left' }}><h2>8. Live Mentorship</h2><p>Request and schedule sessions through MELA. Integrated audio/video calls are not yet activated. Do not share private contact details or join unapproved off-platform meetings.</p></section>
+      <details className="empty-panel" style={{ textAlign:'left' }}><summary>Apply to become a verified mentor (qualified adults)</summary><MentorApplication /></details>
       <div id="mentorship-journey" className="section-heading"><h2>My mentorship journey</h2></div>
       {!loading && !error && sessions.length === 0 && <p className="empty-panel">No sessions yet. Once a mentor accepts your request, your scheduled session will appear here.</p>}
       {!loading && sessions.length > 0 && <>

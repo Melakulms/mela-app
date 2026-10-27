@@ -294,7 +294,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
                 <span className="field-hint">{message.length}/1000</span>
               </div>
               <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
-                <div className="field" style={{ width: '100%' }}><label htmlFor={`mentor-preferred-${m.user_id}`}>Preferred session time (optional)</label><input id={`mentor-preferred-${m.user_id}`} type="datetime-local" value={preferredAt} disabled={!!busy} onChange={e => setPreferredAt(e.target.value)} /><span className="field-hint">Time zone: {localZone}. If accepted with this time, a 30-minute session is scheduled.</span></div>
+                <div className="field" style={{ width: '100%' }}><label htmlFor={`mentor-preferred-${m.user_id}`}>Preferred session time (optional)</label><input id={`mentor-preferred-${m.user_id}`} type="datetime-local" value={preferredAt} disabled={!!busy} onChange={e => setPreferredAt(e.target.value)} /><span className="field-hint">Time zone: {localZone}. This is a preference only. Your verified mentor must accept your request and separately confirm a session time.</span></div>
                 <button className="btn btn-primary" onClick={() => submitRequest(m.user_id)} disabled={!!busy || topic.trim().length < 2}>{busy === `request-${m.user_id}` ? 'Sending…' : 'Send request'}</button>
                 <button className="btn btn-secondary" onClick={closeComposer} disabled={!!busy}>Cancel</button>
               </div>

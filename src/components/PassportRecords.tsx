@@ -15,12 +15,13 @@ export default function PassportRecords({ onSaved, allowCareerEditing = false, a
   const [editing,setEditing] = useState<string | null>(null)
   const [draft,setDraft] = useState<ProjectDraft | null>(null)
   const [careerEdit,setCareerEdit] = useState<PassportRecord | 'new' | null>(null)
+  const [pendingRecordIds,setPendingRecordIds] = useState<Set<string>>(() => new Set())
   const [saving,setSaving] = useState(false)
   const lock = useRef(false)
   useEffect(() => { setKind(preferredKind) }, [preferredKind])
   useEffect(()=>{
     let active = true
-    setLoading(true); setRecords([]); setError(''); setMore(false)
+    setLoading(true); setRecords([]); setError(''); setMore(false); setPendingRecordIds(new Set())
     fetchPassportRecords(kind).then(rows=>{ if(active){setRecords(rows);setMore(rows.length===20)} }).catch(e=>{if(active)setError(e.message ?? 'Could not load records.')}).finally(()=>{if(active)setLoading(false)})
     return ()=>{active=false}
   },[kind,revision])
@@ -65,9 +66,9 @@ export default function PassportRecords({ onSaved, allowCareerEditing = false, a
     {records.map(record=><article key={record.id} className="question-card">
       <h3>{record.title ?? record.institution}</h3><p>{record.organization ?? record.qualification}{record.field_of_study ? ` · ${record.field_of_study}` : ''}</p>
       <p style={{whiteSpace:'pre-wrap'}}>{record.description}</p><p>{kind==='projects'?'Self-reported project':record.verified===true?'Verified':'Unverified'} · {record.is_public?'Marked public':'Private'}</p>
-      {kind==='projects' && <><div>{[record.project_url,record.repository_url].map((value,i)=>{const url=safeExternalUrl(value);return url?<a key={i} className="btn btn-secondary" href={url} target="_blank" rel="noopener noreferrer">{i===0?'Open project':'Open repository'}</a>:null})}</div><button className="btn btn-secondary" disabled={saving || !!draft} onClick={()=>{setEditing(record.id);setDraft({title:record.title ?? '',description:record.description ?? '',project_url:record.project_url ?? '',repository_url:record.repository_url ?? '',is_public:allowProjectVisibility && record.is_public});setMessage('')}}>Edit project</button></>}{allowCareerEditing && kind!=='projects' && !record.verified && <button className="btn btn-secondary" disabled={saving || !!careerEdit} onClick={()=>{setCareerEdit(record);setMessage('')}}>Edit {kind}</button>}
+      {kind==='projects' && <><div>{[record.project_url,record.repository_url].map((value,i)=>{const url=safeExternalUrl(value);return url?<a key={i} className="btn btn-secondary" href={url} target="_blank" rel="noopener noreferrer">{i===0?'Open project':'Open repository'}</a>:null})}</div><button className="btn btn-secondary" disabled={saving || !!draft} onClick={()=>{setEditing(record.id);setDraft({title:record.title ?? '',description:record.description ?? '',project_url:record.project_url ?? '',repository_url:record.repository_url ?? '',is_public:allowProjectVisibility && record.is_public});setMessage('')}}>Edit project</button></>}{allowCareerEditing && kind!=='projects' && !record.verified && (pendingRecordIds.has(record.id) ? <span className="pill" role="status">Locked during verification</span> : <button className="btn btn-secondary" disabled={saving || !!careerEdit} onClick={()=>{setCareerEdit(record);setMessage('')}}>Edit {kind}</button>)}
     </article>)}
     {more && <button className="btn btn-secondary" disabled={loading || saving || !!draft} onClick={()=>void loadMore()}>Load more records</button>}
-    {allowCareerEditing && kind!=='projects' && !loading && <PassportVerificationPanel kind={kind} records={records} />}
+    {allowCareerEditing && kind!=='projects' && !loading && <PassportVerificationPanel kind={kind} records={records} onPendingChange={setPendingRecordIds} />}
   </section>
 }

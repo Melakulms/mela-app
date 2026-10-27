@@ -27,7 +27,7 @@ describe('Mentorship confidential safety reporting',()=>{
     render(<MentorshipSafetyReporting mentors={mentors} requests={requests} sessions={sessions}/>)
     const select=screen.getByLabelText('Who or what is involved?') as HTMLSelectElement
     expect(select.options.length).toBe(3)
-    expect(screen.getByText('No mentorship safety reports on this account.')).toBeTruthy()
+    expect(await screen.findByText('No mentorship safety reports on this account.')).toBeTruthy()
   })
   it('submits a selected real mentorship target, reports case reference only after server success',async()=>{
     render(<MentorshipSafetyReporting mentors={mentors} requests={requests} sessions={sessions}/>)

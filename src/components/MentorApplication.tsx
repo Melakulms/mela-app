@@ -10,6 +10,7 @@ function splitTokens(input: string, limit: number) {
 }
 export default function MentorApplication() {
   const [application, setApplication] = useState<Application | null>(null)
+  const [mentorVerified, setMentorVerified] = useState(false)
   const [loading, setLoading] = useState(true)
   const [revision, setRevision] = useState(0)
   const [headline, setHeadline] = useState('')
@@ -33,7 +34,14 @@ export default function MentorApplication() {
           .select('id,headline,expertise,languages,background,status,submitted_at,review_notes')
           .eq('applicant_id', auth.user.id).maybeSingle()
         if (fetchError) throw fetchError
-        if (active) setApplication(data as Application | null)
+        let verified=false
+        if (data) {
+          const { data: mentorProfile, error: mentorError } = await supabase.from('mentor_profiles')
+            .select('verified,active').eq('user_id',auth.user.id).maybeSingle()
+          if (mentorError) throw mentorError
+          verified = Boolean(mentorProfile?.verified && mentorProfile?.active)
+        }
+        if (active) { setApplication(data as Application | null); setMentorVerified(verified) }
       } catch (cause) {
         if (active) setError(cause instanceof Error ? cause.message : 'Could not check application status.')
       } finally { if (active) setLoading(false) }
@@ -74,11 +82,11 @@ export default function MentorApplication() {
     {error && <div role="alert" className="banner banner-error">{error}
       <button className="btn btn-secondary" disabled={busy} type="button" onClick={() => setRevision((n) => n + 1)}>Retry</button></div>}
     {loading ? <p role="status">Checking your application…</p> : application
-      ? <div><strong>Application: {application.status === 'reviewed_eligible' ? 'Eligible for further credential verification' :
+      ? <div><strong>Application: {mentorVerified ? 'Verified and active mentor' : application.status === 'reviewed_eligible' ? 'Eligible for further credential verification' :
         application.status === 'pending_review' ? 'Under review' : 'Not approved'}</strong>
         <p>Your submission: {new Date(application.submitted_at).toLocaleDateString()} · {application.headline}</p>
         {application.review_notes && <p>Reviewer note: {application.review_notes}</p>}
-        <p className="muted">Only a separately verified, active mentor profile can appear in the public directory.</p>
+        <p className="muted">{mentorVerified ? 'Your separately verified mentor profile is active. Mentor tools are available for eligible account roles.' : 'Only a separately verified, active mentor profile can appear in the public directory.'}</p>
       </div>
       : <form onSubmit={submit}>
         <div className="field"><label htmlFor="mentor-apply-headline">Professional headline</label>

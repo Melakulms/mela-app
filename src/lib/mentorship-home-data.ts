@@ -24,7 +24,9 @@ export async function fetchMentorshipHomeExtras(): Promise<MentorshipHomeExtras>
       .then((result) => unwrap(result)),
     supabase.from('platform_announcements')
       .select('id,title,body,audience,starts_at,ends_at,created_at')
-      .eq('status', 'published').order('created_at', { ascending: false }).limit(15)
+      .eq('status', 'published')
+      .in('audience', ['all', 'student', 'students', 'learner', 'learners', 'mentorship'])
+      .order('created_at', { ascending: false }).limit(15)
       .then((result) => unwrap(result)),
     supabase.from('notifications')
       .select('id,title,body,created_at,ref_table').eq('user_id', id)

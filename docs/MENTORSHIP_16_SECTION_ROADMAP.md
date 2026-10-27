@@ -104,3 +104,26 @@ Every new exposed table has RLS enabled and an explicit policy. No ordinary-user
   - `supabase/tests/mentorship_suspended_mentor_read_staging.sql`
   - `supabase/tests/mentorship_cross_actor_spoof_staging.sql`
 - Negative JWT probes are simulated role tests, **not actual authenticated two-account journeys**. Staging still has no verified mentors, requests, sessions or assignments. No production permissions or deployments were modified. Do not merge PR #96 before authentic E2E, guardian verification and privacy tests.
+
+## 2026-10-27 — detailed scheduling and role-eligibility audit (staging)
+
+### Confirmed defects corrected
+
+1. **Overlapping calendar appointments.** Confirmed bookings previously did not check conflicting sessions. `20261027171000_mentorship_double_booking_guard.sql` adds a database trigger that serializes both participants' bookings using deterministic profile row locks and rejects any overlapping existing scheduled mentor/learner session. This also validates active mentor account and reasonable time/duration bounds.
+2. **Published hours not enforced.** The weekly mentor availability editor did not restrict actual confirmed appointments. `20261027172000_mentorship_availability_schedule_enforcement.sql` now requires the complete appointment to fit within an active weekly window in the mentor's chosen time zone (including matching weekday and local date).
+3. **Inconsistent/forged weekly availability.** `20261027173500_mentor_weekly_availability_integrity.sql` prevents unauthorized hours, invalid IANA time zones, overlap within one weekly zone/day and edits of original slot identifiers or creator timestamps. The insert/update is serialized against the verified mentor profile to reduce concurrent duplicate-slot risk.
+4. **Wrong learner access controls.** Learner UI now fails closed with missing/unrecognized education stage and no longer invites Grades 11–12 to apply as adult mentors. Eligible adult university/TVET mentor applications appear only after independent age approval.
+5. **Unclear calendar UI.** The learner and mentor screens now explain that published availability is required, timezone-specific, and protected against overlapping bookings.
+
+### Verified tests
+- `supabase/tests/mentorship_double_booking_staging.sql`: PASS. Verifies trigger installation, private grant, scheduling window boundaries and unauthorized direct scheduling rejection (not real two-account race).
+- `supabase/tests/mentorship_availability_schedule_staging.sql`: PASS. Tests Addis Ababa timezone/calendar calculation and exercises availability trigger on a rollback-only temporary table.
+- `supabase/tests/mentor_weekly_availability_integrity_staging.sql`: PASS. Tests invalid timezone, unverified mentor and identity forgery denials on a rollback-only temporary table.
+- GitHub learner test suite includes regression cases for missing education stage and school-stage adult application visibility.
+- Staging confirmed all 3 new guards installed, private and enabled. Security advisor showed no mentorship-specific finding for these objects. Existing unrelated project-level warnings remain.
+- Staging checked after changes: 0 verified mentors, 0 requests, 0 sessions, 0 weekly slots, 0 assignments, 0 learner responses, 0 feedback, 0 age reviews and 0 mentor applications. SQL tests left no persistent records.
+
+### Unverified and still blocking release
+- No signed-in real mentor/learner booking, no genuine concurrent requests to prove race behavior, and no real weekly calendar fixture with an approved mentor. All validations are database/logic smoke tests plus frontend automated tests.
+- No in-app video or approved real-time supervision, no complete age/guardian verification journey and no production migration.
+- Do not present these development changes as production-deployed or a complete safeguarding certification. Both PRs remain draft; production database and payments are untouched.

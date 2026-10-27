@@ -13,7 +13,10 @@ const mocks = vi.hoisted(() => ({
   cancelMentorshipRequest: vi.fn(),
   cancelMentorshipSession: vi.fn(),
   rateMentorshipSession: vi.fn(),
+  fetchMyMentorshipAccess: vi.fn(),
 }))
+
+vi.mock('../src/lib/mentorship-access', () => ({ fetchMyMentorshipAccess: mocks.fetchMyMentorshipAccess }))
 
 vi.mock('../src/lib/mentorship', () => ({
   fetchVerifiedMentors: mocks.fetchVerifiedMentors,
@@ -45,11 +48,28 @@ beforeEach(() => {
   mocks.cancelMentorshipRequest.mockResolvedValue(undefined)
   mocks.cancelMentorshipSession.mockResolvedValue(undefined)
   mocks.rateMentorshipSession.mockResolvedValue(undefined)
+  mocks.fetchMyMentorshipAccess.mockResolvedValue({allowed:true,reason:'eligible'})
 })
 
 afterEach(cleanup)
 
 describe('Mentorship', () => {
+  it('keeps school learner requests closed until verified guardian clearance', async()=>{
+    mocks.fetchMyMentorshipAccess.mockResolvedValue({allowed:false,reason:'verified_guardian_required'})
+    render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+    await screen.findByText('Mentor One')
+    expect(await screen.findByText('Verified guardian clearance required')).toBeTruthy()
+    expect(screen.queryByRole('button',{name:'Request mentorship'})).toBeNull()
+    expect(mocks.requestMentor).not.toHaveBeenCalled()
+  })
+
+  it('fails closed when the server eligibility status request fails',async()=>{
+    mocks.fetchMyMentorshipAccess.mockRejectedValue(new Error('Access verification unavailable'))
+    render(<Mentorship stageKey="university" onBack={vi.fn()}/>)
+    expect((await screen.findByRole('alert')).textContent).toContain('Access verification unavailable')
+    expect(screen.queryByRole('button',{name:'Request mentorship'})).toBeNull()
+  })
+
   it('fails closed with no education stage and does not offer adult mentor applications to school learners', async () => {
     const {rerender}=render(<Mentorship onBack={vi.fn()} />)
     await screen.findByText('Mentor One')
@@ -63,9 +83,10 @@ describe('Mentorship', () => {
   })
 
   it('keeps unverified university adult learners out of direct mentorship requests',async()=>{
+    mocks.fetchMyMentorshipAccess.mockResolvedValue({allowed:false,reason:'approved_adult_review_required'})
     render(<Mentorship stageKey="university" onBack={vi.fn()}/>)
     await screen.findByText('Mentor One')
-    expect(screen.getByText('Verify adult eligibility above before requesting')).toBeTruthy()
+    expect(await screen.findByText('Verify adult eligibility above before requesting')).toBeTruthy()
     expect(screen.queryByRole('button',{name:'Request mentorship'})).toBeNull()
     expect(mocks.requestMentor).not.toHaveBeenCalled()
   })
@@ -101,7 +122,7 @@ describe('Mentorship', () => {
     render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
     await screen.findByText('Mentor One')
     expect(screen.getByText(/Revise the project section of your CV/)).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Request mentorship' })).toBeTruthy()
+    expect(await screen.findByRole('button', { name: 'Request mentorship' })).toBeTruthy()
   })
 
   it('surfaces load failures and retries without leaving a stale error', async () => {

@@ -127,3 +127,20 @@ Every new exposed table has RLS enabled and an explicit policy. No ordinary-user
 - No signed-in real mentor/learner booking, no genuine concurrent requests to prove race behavior, and no real weekly calendar fixture with an approved mentor. All validations are database/logic smoke tests plus frontend automated tests.
 - No in-app video or approved real-time supervision, no complete age/guardian verification journey and no production migration.
 - Do not present these development changes as production-deployed or a complete safeguarding certification. Both PRs remain draft; production database and payments are untouched.
+
+## 2026-10-27: acceptance, completion and clearance audit
+
+### Confirmed defects and fixes applied to STAGING only
+
+- **Accepting a preferred-time request failed:** legacy `private.process_mentorship_request_status` auto-inserted a session and unapproved `call_room_id`, conflicting with the newer approved-weekly-hours and blocked-video-room triggers. `20261027174500_mentorship_acceptance_no_auto_booking.sql` removes that auto-booking; accepted requests now notify both parties to book separately. Removed duplicate RPC notifications for accept/decline/cancel; the database AFTER UPDATE trigger is the single status-notification source.
+- **Premature or ineligible session completion:** previously a mentor could complete as soon as a scheduled session started, even if it had not ended or current safeguarding access had been revoked. `20261027175000_mentorship_completion_clearance_and_duration.sql` requires the full scheduled duration to have elapsed, an active verified mentor, an accepted request, a currently eligible active student, current guardian/adult clearance and an authorized mentor or MFA AAL2 admin; completion notes are capped at 2,000 characters.
+- **Frontend eligibility could be stale or missing:** `20261027175500_my_mentorship_access_status.sql` adds a self-only secure eligibility status RPC that discloses neither guardian identities nor birth dates. Learner pages call it before enabling direct requests, including for Grade 11–12 guardian verification; failed verification remains closed. Adult mentor-intake visibility also uses current server clearance.
+- **Misleading booking copy:** the empty sessions state now explicitly says accepted request ≠ confirmed appointment.
+
+### Test evidence and limitations
+
+- `supabase/tests/mentorship_acceptance_completion_staging.sql` PASSED on staging: inspects installed function bodies for no automatic room/session creation, single status-notification source, current eligibility/full-duration checks and denied completion without an authenticated identity.
+- `supabase/tests/mentorship_self_access_status_staging.sql` PASSED: checks anonymous denial, self-only authenticated access and absence of exposed age/guardian identity fields, with rollback-only missing-JWT rejection.
+- Expanded `tests/mentorship.test.tsx` for guardian denial and fail-closed eligibility errors. All **five learner GitHub checks** passed on the latest tested commit before this documentation update.
+- Staging post-change reads still show **0 verified mentors, 0 requests, 0 sessions, 0 age reviews, 0 groups, 0 assignments, 0 submissions, 0 feedback**. No production writes, real users, payments or unapproved media were created.
+- **Still NOT verified:** real signed-in mentor+learner E2E accept/schedule/complete, proper guardian and AAL2 admin verification, concurrent scheduling race test, real notifications, moderated media, and production launch readiness. SQL structural and simulated-JWT checks are not substitutes for signed-in tests.

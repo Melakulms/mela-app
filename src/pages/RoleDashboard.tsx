@@ -128,11 +128,30 @@ export default function RoleDashboard({ role, fullName }: Props) {
   const [revision, setRevision] = useState(0)
   const [summary, setSummary] = useState<Summary | null>(null)
   const [error, setError] = useState('')
+  const [teacherMentorApproved, setTeacherMentorApproved] = useState(false)
 
   useEffect(() => {
     let active = true
     setError('')
     loadRoleSummary(role).then(data => { if (active) setSummary(data) }).catch(e => { if (active) setError(e.message ?? 'Could not load your dashboard.') })
+    return () => { active = false }
+  }, [role, revision])
+
+  useEffect(() => {
+    let active = true
+    setTeacherMentorApproved(false)
+    if (role !== 'teacher') return () => { active = false }
+    void (async () => {
+      try {
+        const { data: auth, error: authError } = await supabase.auth.getUser()
+        if (authError || !auth.user) return
+        const { data, error: mentorError } = await supabase.from('mentor_profiles')
+          .select('verified,active').eq('user_id',auth.user.id).maybeSingle()
+        if (!mentorError && active) setTeacherMentorApproved(Boolean(data?.verified && data?.active))
+      } catch {
+        // Mentor tools remain closed if profile verification cannot be read.
+      }
+    })()
     return () => { active = false }
   }, [role, revision])
 
@@ -162,8 +181,8 @@ export default function RoleDashboard({ role, fullName }: Props) {
       {teacherApproved && <AICourseLessonReview />}
       {teacherApproved && <details><summary>Apply for independent mentor verification</summary><MentorApplication /></details>}
       {role === 'mentor' && !mentorApproved && <div className="banner banner-info" role="status">Your mentorship tools require independent mentor verification and an active profile. You can review your account status while awaiting approval.</div>}
-      {mentorApproved && <MentorLifecycle onChanged={() => setRevision(value => value + 1)} />}
-      {mentorApproved && <MentorshipLearningWorkspace mode="mentor" />}
+      {(mentorApproved || (teacherApproved && teacherMentorApproved)) && <MentorLifecycle onChanged={() => setRevision(value => value + 1)} />}
+      {(mentorApproved || (teacherApproved && teacherMentorApproved)) && <MentorshipLearningWorkspace mode="mentor" />}
       {role === 'partner' && <div className="banner banner-info" role="status">Partner programs, scholarships and reports require approved institutional membership and server-side permissions. This view shows only your own membership status.</div>}
       {role === 'parent' && <ParentLearnerProgress />}
       {role === 'parent' && <ParentActions onLinked={() => setRevision(value => value + 1)} />}

@@ -72,3 +72,11 @@ Every new exposed table has RLS enabled and an explicit policy. No ordinary-user
 - `supabase/tests/mentor_final_verification_staging_smoke.sql` passed; an authenticated database role with no signed-in AAL2 admin identity cannot finalize anyone. The private proof check has not yet been exercised with a real approved user and real credential, because staging new registrations are gated.
 - **Important:** teacher-mentor age is reviewed by the administrator using verified qualifications and safeguarding evidence; the existing structured DOB helper is student-specific and is not a complete teacher identity age-verification solution. Finish the dedicated professional identity policy before general production rollout.
 - Still **not production-ready**: real MFA administrator + verified teacher + adult learner authentication tests, verification-record review UX, background-check policy, real supervised communications, minor/guardian abuse-report flow and production release gate.
+
+## 2026-10-27: emergency mentor safeguarding suspension (staging)
+
+- `public.suspend_mentorship_mentor` uses an INVOKER wrapper around a private function that requires an authenticated MFA AAL2 administrator, a verified active mentor, and a 20–2000 character case reason. Self-suspension by the reviewer is denied. It deliberately provides no unreviewed self-reactivation path.
+- On successful suspension, the function deactivates the mentor, cancels their *future* scheduled sessions, declines pending mentorship requests, closes their published supervised groups, notifies the mentor and writes an audit event with affected counts. Updates are transactional; if any step fails, the suspension rolls back.
+- Central Admin PR #65 now provides a safeguard panel with explicit confirmation and case reason, including denial handling. No learner records or private documents are read by the summary.
+- `supabase/tests/mentor_suspension_staging_smoke.sql` passed, proving missing identity/MFA cannot invoke the API. This is a rollback-only negative test; **real authorized admin action and its side effects remain untested** because staging has no approved mentors and registration is still disabled.
+- Do not advertise full child safeguarding, real-time video moderation or reinstatement until independent testing completes.

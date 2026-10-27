@@ -4,6 +4,7 @@ vi.mock('../src/components/MentorshipLearningWorkspace', () => ({ default: () =>
 vi.mock('../src/components/MentorApplication', () => ({ default: () => null }))
 vi.mock('../src/components/MentorshipAdultEligibility', () => ({ default: () => null }))
 vi.mock('../src/components/MentorshipSafetyReporting', () => ({ default: () => null }))
+vi.mock('../src/components/MentorshipSessionJourney', () => ({ default: () => null }))
 import Mentorship from '../src/pages/Mentorship'
 
 const mocks = vi.hoisted(() => ({

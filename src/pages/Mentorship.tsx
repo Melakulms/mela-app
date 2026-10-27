@@ -30,6 +30,9 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
   const [accessError,setAccessError] = useState('')
   const [category, setCategory] = useState<MentorshipCategory>('all')
   const [language, setLanguage] = useState('')
+  const [weekday,setWeekday] = useState<number|null>(null)
+  const [onlyWithAvailability,setOnlyWithAvailability] = useState(false)
+  const [sortMentors,setSortMentors] = useState<'relevance'|'rated'|'experience'>('relevance')
   const [mentors, setMentors] = useState<Mentor[] | null>(null)
   const [requests, setRequests] = useState<MyMentorshipRequest[]>([])
   const [sessions, setSessions] = useState<MentorshipSession[]>([])
@@ -92,7 +95,9 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
   const mentorNames = new Map((mentors ?? []).map(m => [m.user_id, m.full_name ?? 'MELA mentor']))
   const requestTopics = new Map(requests.map(r => [r.id, r.topic]))
   const localZone = Intl.DateTimeFormat().resolvedOptions().timeZone
-  const visibleMentors = discoverMentors(mentors ?? [], { query, category, language })
+  const visibleMentors = discoverMentors(mentors ?? [], {
+    query,category,language,weekday,onlyWithAvailability,sort:sortMentors
+  })
   const languages = getMentorLanguages(mentors ?? [])
   const pendingCount = requests.filter((request) => request.status === 'pending').length
   const upcomingCount = sessions.filter((session) => session.status === 'scheduled' && new Date(session.scheduled_at).getTime() > Date.now()).length
@@ -286,11 +291,37 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
             {languages.map((option) => <option key={option} value={option}>{option}</option>)}
           </select>
         </div>
+        <div className="field">
+          <label htmlFor="mentor-day">Published weekly availability</label>
+          <select id="mentor-day" value={weekday===null?'any':String(weekday)}
+            onChange={event=>setWeekday(event.target.value==='any'?null:Number(event.target.value))}>
+            <option value="any">Any weekday</option>
+            {WEEKDAYS.map((day,index)=><option key={day} value={index}>{day}</option>)}
+          </select>
+        </div>
+        <label className="field">
+          <input type="checkbox" checked={onlyWithAvailability}
+            onChange={event=>setOnlyWithAvailability(event.target.checked)}/>
+          Only mentors with published weekly hours
+        </label>
+        <div className="field"><label htmlFor="mentor-sort">Compare matching mentors</label>
+          <select id="mentor-sort" value={sortMentors}
+            onChange={event=>setSortMentors(event.target.value as typeof sortMentors)}>
+            <option value="relevance">Relevant expertise and name</option>
+            <option value="rated">Highest learner rating (rated mentors first)</option>
+            <option value="experience">Most reported years of experience</option>
+          </select>
+          <p className="muted">Ratings come from completed learner sessions. Years of experience come from reviewed mentor profiles, not separate professional certificates.</p>
+        </div>
         <p role="status">{visibleMentors.length} verified {visibleMentors.length === 1 ? 'mentor' : 'mentors'} match your filters.</p>
-        {(query || language || category !== 'all') && <button className="btn btn-secondary" type="button" onClick={() => { setQuery(''); setCategory('all'); setLanguage('') }}>Clear filters</button>}
+        {(query || language || category !== 'all' || weekday!==null || onlyWithAvailability || sortMentors!=='relevance')
+          && <button className="btn btn-secondary" type="button" onClick={() => {
+            setQuery('');setCategory('all');setLanguage('');setWeekday(null);
+            setOnlyWithAvailability(false);setSortMentors('relevance')
+          }}>Clear filters</button>}
       </section>}
       {!loading && mentors && mentors.length === 0 && <div className="empty-panel">No verified mentors have been onboarded yet. Your mentorship requests and sessions will appear here when an approved mentor becomes available.</div>}
-      {!loading && mentors && mentors.length > 0 && visibleMentors.length === 0 && <p className="empty-panel">No approved mentor currently matches those filters. Try a different guidance area or language.</p>}
+      {!loading && mentors && mentors.length > 0 && visibleMentors.length === 0 && <p className="empty-panel">No approved mentor currently matches those filters. Try another guidance area, language, weekday or availability option.</p>}
       {!loading && mentors && visibleMentors.length > 0 && <div className="module-grid">
         {visibleMentors.map((m) => {
           const topicId = `mentor-topic-${m.user_id}`

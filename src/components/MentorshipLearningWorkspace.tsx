@@ -27,6 +27,8 @@ export default function MentorshipLearningWorkspace({ mode, stageKey }: { mode: 
   const [assignDue, setAssignDue] = useState('')
   const [answers, setAnswers] = useState<Record<string,string>>({})
   const [reviews, setReviews] = useState<Record<string,string>>({})
+  const [resourceQuery,setResourceQuery] = useState('')
+  const [resourceCategory,setResourceCategory] = useState('all')
   const lock = useRef(false)
 
   useEffect(() => {
@@ -84,6 +86,16 @@ export default function MentorshipLearningWorkspace({ mode, stageKey }: { mode: 
   const progress = workspace ? assignmentProgress(workspace) : { assigned: 0, submitted: 0, reviewed: 0 }
   const submissions = new Map((workspace?.submissions ?? []).map((item) => [item.assignment_id, item]))
   const feedback = new Map((workspace?.feedback ?? []).map((item) => [item.assignment_id, item]))
+  const resourceCategories = Array.from(new Set(
+    (workspace?.resources??[]).map(item=>item.category).filter(Boolean)
+  )).sort((a,b)=>a.localeCompare(b))
+  const resourceSearch = resourceQuery.trim().toLocaleLowerCase()
+  const resourceMatches = (workspace?.resources??[]).filter(item=>
+    (resourceCategory==='all'||resourceCategory===item.category)
+    && (!resourceSearch||[item.title,item.category,item.description,item.content]
+      .join(' ').toLocaleLowerCase().includes(resourceSearch))
+  )
+  const reviewedFraction = progress.assigned>0 ? Math.round(100*progress.reviewed/progress.assigned) : 0
 
   return <section aria-label={mode === 'mentor' ? 'Mentor learning workspace' : 'Learner mentorship workspace'}>
     <div className="section-heading"><h2>{mode === 'mentor' ? 'Mentor learning workspace' : 'My mentorship learning journey'}</h2>
@@ -162,14 +174,37 @@ export default function MentorshipLearningWorkspace({ mode, stageKey }: { mode: 
           <div><strong>{progress.reviewed}</strong><p className="muted">Mentor reviews</p></div>
           {mode === 'learner' && <div><strong>{workspace.goals.filter((goal) => goal.status === 'completed').length}</strong><p className="muted">Self-reported goals</p></div>}
         </div>
-        <p className="muted">This is an activity tracker, not an issued certificate or verified Career Passport credential.</p>
+        <label htmlFor="mentorship-reviewed-progress">Share of assigned tasks with feedback: {reviewedFraction}%</label>
+        <progress id="mentorship-reviewed-progress" max={100} value={reviewedFraction} style={{width:'100%',maxWidth:'28rem'}}/>
+        <p className="muted">{progress.assigned===0 ?
+          'No assignments have been issued, so this indicator starts at 0%.'
+          : progress.reviewed+' of '+progress.assigned+' assigned tasks have documented mentor feedback.'}
+          {' '}This measures recorded activity, not mastery or a verified certificate. No Career Passport credential is automatically awarded.</p>
       </section>
       <section id="mentorship-library" className="empty-panel" style={{ textAlign:'left' }}>
         <h3>10. Mentorship resources library</h3>
-        {workspace.resources.length === 0 ? <p className="muted">No approved mentorship guides available yet.</p> : workspace.resources.map((guide) => <details key={guide.id} className="list-row" style={{ display:'block',marginBottom:'.5rem' }}>
-          <summary><strong>{guide.title}</strong> · {guide.category}</summary>
-          <p>{guide.description}</p><p style={{ whiteSpace:'pre-wrap' }}>{guide.content}</p>
-        </details>)}
+        {workspace.resources.length===0?<p className="muted">No published mentorship guides are available yet.</p>:<>
+          <div className="field"><label htmlFor="mentorship-resource-search">Find guidance by topic or keyword</label>
+            <input type="search" id="mentorship-resource-search" value={resourceQuery}
+              onChange={event=>setResourceQuery(event.target.value)}
+              placeholder="e.g. scholarship, resume, safety, study plan"/>
+          </div>
+          <div className="field"><label htmlFor="mentorship-resource-category">Guide category</label>
+            <select id="mentorship-resource-category" value={resourceCategory}
+              onChange={event=>setResourceCategory(event.target.value)}>
+              <option value="all">All published guidance categories</option>
+              {resourceCategories.map(category=><option value={category} key={category}>{category}</option>)}
+            </select>
+          </div>
+          <p role="status">{resourceMatches.length} of {workspace.resources.length} published guides match.</p>
+          {(resourceQuery||resourceCategory!=='all')&&<button type="button" className="btn btn-secondary"
+            onClick={()=>{setResourceQuery('');setResourceCategory('all')}}>Clear resource search</button>}
+          {resourceMatches.length===0?<p>No published guide matches your selected topic.</p>:
+            resourceMatches.map((guide)=><details key={guide.id} className="list-row" style={{display:'block',marginBottom:'.5rem'}}>
+              <summary><strong>{guide.title}</strong> · {guide.category}</summary>
+              <p>{guide.description}</p><p style={{whiteSpace:'pre-wrap'}}>{guide.content}</p>
+            </details>)}
+        </>}
       </section>
       <section id="mentorship-groups" className="empty-panel" style={{ textAlign:'left' }}>
         <h3>13. Group mentorship</h3>

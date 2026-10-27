@@ -139,7 +139,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         revision={revision}
       />}
       {blockedStage && <p role="status" className="banner banner-info">Direct mentorship is not enabled for Grades 1–10. Continue with your teacher and guardian through MELA learning resources.</p>}
-      {stageKey === 'school_11_12' && <p className="banner banner-info">Grades 11–12 need verified guardian consent or adult eligibility before requesting mentorship.</p>}
+      {stageKey === 'school_11_12' && <p className="banner banner-info">Grades 11–12 require a verified guardian relationship for direct mentorship in the current staging rules.</p>}
       <section id="mentorship-safety" className="empty-panel" style={{ textAlign:'left' }}><h2>15. Guardian and Safety Center</h2><p>Keep discussions inside approved MELA pathways. Report abusive or unsafe contact. Learners who require verified guardian consent must obtain it before direct mentorship.</p>{onOpenSafety && <button className="btn btn-secondary" disabled={!!busy} onClick={onOpenSafety}>Safety, guardian consent & reporting</button>}</section>
       <p className="muted">Session times use your device time zone: {localZone}.</p>
       <details id="mentorship-resources" className="empty-panel" style={{ textAlign: 'left' }}>
@@ -154,7 +154,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
 
       {!loading && !error && <MentorshipLearningWorkspace mode="learner" />}
       <section id="mentorship-live" className="empty-panel" style={{ textAlign:'left' }}><h2>8. Live Mentorship</h2><p>Request and schedule sessions through MELA. Integrated audio/video calls are not yet activated. Do not share private contact details or join unapproved off-platform meetings.</p></section>
-      <details className="empty-panel" style={{ textAlign:'left' }}><summary>Apply to become a verified mentor (qualified adults)</summary><MentorApplication /></details>
+      {!blockedStage && <details className="empty-panel" style={{ textAlign:'left' }}><summary>Apply to become a verified mentor (qualified adults)</summary><MentorApplication /></details>}
       <div id="mentorship-journey" className="section-heading"><h2>My mentorship journey</h2></div>
       {!loading && !error && sessions.length === 0 && <p className="empty-panel">No sessions yet. Once a mentor accepts your request, your scheduled session will appear here.</p>}
       {!loading && sessions.length > 0 && <>

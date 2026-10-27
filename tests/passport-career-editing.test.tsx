@@ -5,11 +5,12 @@ import { educationPayload, experiencePayload } from '../src/lib/passport-records
 
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(), insert: vi.fn(), update: vi.fn(), eq: vi.fn(), single: vi.fn(),
-  fetchRecords: vi.fn(), saveProject: vi.fn(), saveCareer: vi.fn(),
+  fetchRecords: vi.fn(), saveProject: vi.fn(), saveCareer: vi.fn(), rpc: vi.fn(),
 }))
 vi.mock('../src/lib/supabase', () => ({
   supabase: {
     auth: { getUser: mocks.auth },
+    rpc: mocks.rpc,
     from: () => {
       const query: any = {
         insert: (value: unknown) => { mocks.insert(value); return query },
@@ -46,6 +47,7 @@ beforeEach(() => {
   mocks.fetchRecords.mockResolvedValue([])
   mocks.saveProject.mockResolvedValue({ id: 'p' })
   mocks.saveCareer.mockResolvedValue({ id: 'saved' })
+  mocks.rpc.mockResolvedValue({data:[],error:null})
 })
 afterEach(cleanup)
 
@@ -112,4 +114,27 @@ it('forces an existing public project private while employer visibility is unava
   await waitFor(() => expect(mocks.saveProject).toHaveBeenCalledWith(
     expect.objectContaining({ is_public: false }), 'p',
   ))
+})
+
+it('locks the edit button while review is pending and explains the restriction', async () => {
+  mocks.fetchRecords.mockResolvedValue([{id:'edu-pending',institution:'Saved institute',verified:false,is_public:false}])
+  mocks.rpc.mockResolvedValue({data:[{
+    id:'review-pending',record_kind:'education',record_id:'edu-pending',status:'pending',
+    requested_at:'2026-10-27T00:00:00Z',reviewed_at:null,review_feedback:null,
+  }],error:null})
+  render(<PassportRecords onSaved={vi.fn()} allowCareerEditing preferredKind="education"/>)
+  await screen.findByText('Locked during verification')
+  expect(screen.queryByRole('button',{name:'Edit education'})).toBeNull()
+  expect(screen.getByText('Awaiting reviewer decision')).toBeTruthy()
+})
+it('offers editing again after the reviewer has declined the claim', async () => {
+  mocks.fetchRecords.mockResolvedValue([{id:'edu-declined',institution:'Correctable institute',verified:false,is_public:false}])
+  mocks.rpc.mockResolvedValue({data:[{
+    id:'review-declined',record_kind:'education',record_id:'edu-declined',status:'rejected',
+    requested_at:'2026-10-27T00:00:00Z',reviewed_at:'2026-10-27T01:00:00Z',review_feedback:'Missing independently checked evidence',
+  }],error:null})
+  render(<PassportRecords onSaved={vi.fn()} allowCareerEditing preferredKind="education"/>)
+  await screen.findByText('Declined — changes may be required')
+  expect(screen.getByRole('button',{name:'Edit education'})).toBeTruthy()
+  expect(screen.queryByText('Locked during verification')).toBeNull()
 })

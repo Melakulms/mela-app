@@ -5,6 +5,7 @@ import EducatorContentReview from '../components/EducatorContentReview'
 import MentorLifecycle from '../components/MentorLifecycle'
 import MentorshipLearningWorkspace from '../components/MentorshipLearningWorkspace'
 import MentorshipMentorSafetyReporting from '../components/MentorshipMentorSafetyReporting'
+import MentorshipOutcomeReview from '../components/MentorshipOutcomeReview'
 import MentorApplication from '../components/MentorApplication'
 import ParentLearnerProgress from '../components/ParentLearnerProgress'
 import { useEffect, useState } from 'react'
@@ -185,6 +186,7 @@ export default function RoleDashboard({ role, fullName }: Props) {
       {(mentorApproved || (teacherApproved && teacherMentorApproved)) && <MentorLifecycle onChanged={() => setRevision(value => value + 1)} />}
       {(mentorApproved || (teacherApproved && teacherMentorApproved)) && <MentorshipLearningWorkspace mode="mentor" />}
       {(mentorApproved || (teacherApproved && teacherMentorApproved)) && <MentorshipMentorSafetyReporting />}
+      {(mentorApproved || (teacherApproved && teacherMentorApproved)) && <MentorshipOutcomeReview mode="mentor" />}
       {role === 'partner' && <div className="banner banner-info" role="status">Partner programs, scholarships and reports require approved institutional membership and server-side permissions. This view shows only your own membership status.</div>}
       {role === 'parent' && <ParentLearnerProgress />}
       {role === 'parent' && <ParentActions onLinked={() => setRevision(value => value + 1)} />}

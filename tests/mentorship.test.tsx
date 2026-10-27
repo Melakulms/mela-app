@@ -7,7 +7,7 @@ vi.mock('../src/components/MentorshipSafetyReporting', () => ({ default: () => n
 import Mentorship from '../src/pages/Mentorship'
 
 const mocks = vi.hoisted(() => ({
-  fetchVerifiedMentors: vi.fn(),
+  fetchVerifiedMentorsPage: vi.fn(),
   fetchMyMentorshipRequests: vi.fn(),
   fetchMyMentorshipSessions: vi.fn(),
   requestMentor: vi.fn(),
@@ -20,7 +20,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../src/lib/mentorship-access', () => ({ fetchMyMentorshipAccess: mocks.fetchMyMentorshipAccess }))
 
 vi.mock('../src/lib/mentorship', () => ({
-  fetchVerifiedMentors: mocks.fetchVerifiedMentors,
+  fetchVerifiedMentorsPage: mocks.fetchVerifiedMentorsPage,
   fetchMyMentorshipRequests: mocks.fetchMyMentorshipRequests,
   fetchMyMentorshipSessions: mocks.fetchMyMentorshipSessions,
   requestMentor: mocks.requestMentor,
@@ -42,7 +42,7 @@ const mentor = {
 
 beforeEach(() => {
   vi.resetAllMocks()
-  mocks.fetchVerifiedMentors.mockResolvedValue([mentor])
+  mocks.fetchVerifiedMentorsPage.mockResolvedValue({mentors:[mentor],hasMore:false})
   mocks.fetchMyMentorshipRequests.mockResolvedValue([])
   mocks.fetchMyMentorshipSessions.mockResolvedValue([])
   mocks.requestMentor.mockResolvedValue(undefined)
@@ -55,6 +55,20 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('Mentorship', () => {
+  it('loads further verified mentors in bounded pages without losing existing profiles',async()=>{
+    mocks.fetchVerifiedMentorsPage
+      .mockResolvedValueOnce({mentors:[mentor],hasMore:true})
+      .mockResolvedValueOnce({mentors:[{...mentor,user_id:'mentor-2',full_name:'Mentor Two'}],hasMore:false})
+    render(<Mentorship stageKey="school_11_12" onBack={vi.fn()}/>)
+    expect(await screen.findByText('Mentor One')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button',{name:'Load more verified mentors'}))
+    expect(await screen.findByText('Mentor Two')).toBeTruthy()
+    expect(screen.getByText('Mentor One')).toBeTruthy()
+    expect(mocks.fetchVerifiedMentorsPage).toHaveBeenCalledWith(0)
+    expect(mocks.fetchVerifiedMentorsPage).toHaveBeenCalledWith(1,50)
+    expect(screen.queryByRole('button',{name:'Load more verified mentors'})).toBeNull()
+  })
+
   it('keeps school learner requests closed until verified guardian clearance', async()=>{
     mocks.fetchMyMentorshipAccess.mockResolvedValue({allowed:false,reason:'verified_guardian_required'})
     render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
@@ -127,7 +141,7 @@ describe('Mentorship', () => {
   })
 
   it('surfaces load failures and retries without leaving a stale error', async () => {
-    mocks.fetchVerifiedMentors.mockRejectedValueOnce(new Error('Network unavailable'))
+    mocks.fetchVerifiedMentorsPage.mockRejectedValueOnce(new Error('Network unavailable'))
     render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
 
     expect((await screen.findByRole('alert')).textContent).toContain('Network unavailable')
@@ -153,7 +167,7 @@ describe('Mentorship', () => {
 
     await waitFor(() => expect(mocks.requestMentor).toHaveBeenCalledTimes(1))
     expect(mocks.requestMentor).toHaveBeenCalledWith('mentor-1', 'CV review', 'Please review my CV.')
-    await waitFor(() => expect(mocks.fetchVerifiedMentors).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(mocks.fetchVerifiedMentorsPage).toHaveBeenCalledTimes(2))
   })
 
   it('allows learners to cancel a pending request and a scheduled session', async () => {

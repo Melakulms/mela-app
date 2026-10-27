@@ -35,6 +35,19 @@ describe('Learning dashboard', () => {
     await screen.findByText('Explore MELA')
     expect(screen.getByText(/badges couldn’t load/)).toBeTruthy()
   })
+  it('shows a clear Career Passport shortcut before the feature grid', async () => {
+    const navigate = vi.fn()
+    render(<StudentDashboard onNavigate={navigate} />)
+    const button = await screen.findByRole('button', { name: 'Open Career Passport updates' })
+    fireEvent.click(button)
+    expect(navigate).toHaveBeenCalledWith('passport')
+  })
+  it('makes Career Passport accessible even when dashboard data fails', async () => {
+    mocks.dashboard.mockRejectedValueOnce(new Error('offline'))
+    render(<StudentDashboard onNavigate={vi.fn()} />)
+    await screen.findByRole('alert')
+    expect(screen.getByRole('button', { name: 'Open' })).toBeTruthy()
+  })
   it('searches learning tools and keeps explicitly disabled question banks disabled', async () => {
     mocks.dashboard.mockResolvedValue({ ...data, feature_flags: { question_bank: false } })
     render(<StudentDashboard onNavigate={vi.fn()} />)
@@ -69,8 +82,8 @@ it('clears the previous route and settings history at an authentication boundary
   expect(window.history.state).toBeNull()
 })
 
-it('opens only explicitly requested Arena and Scholarships links after session restore', () => {
-  for(const view of ['arena','scholarships'] as const) {
+it('opens only explicitly requested Arena, Scholarships and Passport links after session restore', () => {
+  for(const view of ['arena','scholarships','passport'] as const) {
     cleanup()
     window.history.replaceState(null,'',`/mela-app/?view=${view}&mela_open=1&code=private#access_token=redacted`)
     render(<Navigation/>)

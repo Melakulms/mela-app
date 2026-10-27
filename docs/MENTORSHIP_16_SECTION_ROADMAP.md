@@ -165,3 +165,9 @@ Read-only staging check during this pass: **0 verified active mentors, 0 request
 Sections 1–7, 9–11 and 14 have connected development tools, with genuine account and permission acceptance still outstanding. Section 8 has no approved integrated call provider or supervised live delivery. Section 12 now includes the shared branch's learner outcome claims and mentor review, but this does not issue an independently verified Career Passport credential. Section 13 has program/interest administration but no delivered group meetings or verified attendance. Sections 15–16 have reporting, review and suspension tools, but real guardian/admin MFA journeys remain unverified. Translation and content review are also incomplete.
 
 Keep the learner and admin PRs draft until approved mentor/learner/admin/guardian journeys, live-delivery design, group delivery/attendance, independent credential handling and mobile acceptance are complete. No claim of all 16 sections being finished or live is warranted.
+
+## 2026-10-27 — Section 13 manual attendance reporting extension
+
+- Added one immutable attendance report per MFA-admin-approved interest in a real group after its start window, with server-side restrictions and an administrative audit trail.
+- Admin PR #65 provides explicit evidence-confirmed presence/absence reporting. Learner PR #96 displays only the participant's own status and does not present this as a completed live call, verified achievement or certificate.
+- Rollback-only attendance SQL security tests passed; **there are still zero real groups, enrollments, verified mentors or attendance records**. Live group delivery/meeting moderation, independent evidence checks and authenticated browser testing remain blocked. No production promotion.

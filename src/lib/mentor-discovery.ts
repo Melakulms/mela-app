@@ -12,7 +12,11 @@ export const MENTORSHIP_CATEGORIES = [
 ] as const
 
 export type MentorshipCategory = 'all' | (typeof MENTORSHIP_CATEGORIES)[number]['id']
-export type MentorDiscoveryFilters = { query: string; category: MentorshipCategory; language: string }
+export type MentorDiscoveryFilters = {
+  query:string;category:MentorshipCategory;language:string;
+  weekday?:number|null;onlyWithAvailability?:boolean;
+  sort?:'relevance'|'rated'|'experience'
+}
 
 const normalize = (text: string): string => text.toLocaleLowerCase().trim()
 
@@ -44,12 +48,28 @@ export function discoverMentors(mentors: Mentor[], filters: MentorDiscoveryFilte
   return mentors.filter((mentor) => {
     if (!mentorMatchesCategory(mentor, filters.category)) return false
     if (chosenLanguage && !(mentor.languages ?? []).some((language) => normalize(language) === chosenLanguage)) return false
+    const liveSlots=(mentor.availability??[]).filter((slot)=>Number.isInteger(slot.weekday) && slot.weekday>=0 && slot.weekday<=6)
+    if (filters.onlyWithAvailability && liveSlots.length===0) return false
+    if (filters.weekday!==undefined && filters.weekday!==null
+        && !liveSlots.some((slot)=>slot.weekday===filters.weekday)) return false
     const searchable = normalize([
       mentor.full_name, mentor.headline, mentor.bio, mentor.organization,
       ...(mentor.expertise ?? []), ...(mentor.languages ?? []),
     ].filter(Boolean).join(' '))
     return words.every((word) => searchable.includes(word))
-  }).sort((a, b) => {
+  }).sort((a,b)=>{
+    if (filters.sort==='rated') {
+      const aRated=a.rating_count>0,bRated=b.rating_count>0
+      if (aRated!==bRated) return aRated?-1:1
+      if (aRated && bRated) {
+        if (a.rating_average!==b.rating_average) return b.rating_average-a.rating_average
+        if (a.rating_count!==b.rating_count) return b.rating_count-a.rating_count
+      }
+    }
+    if (filters.sort==='experience') {
+      const expA=a.years_experience??-1,expB=b.years_experience??-1
+      if (expA!==expB) return expB-expA
+    }
     if (words.length) {
       const expertiseA = normalize((a.expertise ?? []).join(' ') + ' ' + (a.headline ?? ''))
       const expertiseB = normalize((b.expertise ?? []).join(' ') + ' ' + (b.headline ?? ''))

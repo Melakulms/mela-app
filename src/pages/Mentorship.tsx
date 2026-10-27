@@ -12,10 +12,13 @@ import {
   type MyMentorshipRequest,
 } from '../lib/mentorship'
 import { useI18n } from '../i18n'
+import { discoverMentors, getMentorLanguages, MENTORSHIP_CATEGORIES, mentorMatchesCategory, WEEKDAYS, type MentorshipCategory } from '../lib/mentor-discovery'
 
 export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack: () => void; stageKey?: string | null; onOpenSafety?: () => void }) {
   const { t } = useI18n()
   const [query, setQuery] = useState('')
+  const [category, setCategory] = useState<MentorshipCategory>('all')
+  const [language, setLanguage] = useState('')
   const [mentors, setMentors] = useState<Mentor[] | null>(null)
   const [requests, setRequests] = useState<MyMentorshipRequest[]>([])
   const [sessions, setSessions] = useState<MentorshipSession[]>([])
@@ -56,6 +59,11 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
   const mentorNames = new Map((mentors ?? []).map(m => [m.user_id, m.full_name ?? 'MELA mentor']))
   const requestTopics = new Map(requests.map(r => [r.id, r.topic]))
   const localZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  const visibleMentors = discoverMentors(mentors ?? [], { query, category, language })
+  const languages = getMentorLanguages(mentors ?? [])
+  const pendingCount = requests.filter((request) => request.status === 'pending').length
+  const upcomingCount = sessions.filter((session) => session.status === 'scheduled' && new Date(session.scheduled_at).getTime() > Date.now()).length
+  const completedCount = sessions.filter((session) => session.status === 'completed').length
 
   const runAction = async (key: string, action: () => Promise<void>) => {
     if (actionLock.current) return
@@ -120,13 +128,24 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       </div>
       <section className="empty-panel" style={{ textAlign: 'left', borderTop: '4px solid #16875f' }}>
         <h2>Build your next step with a mentor</h2>
-        <p>Choose a verified mentor, explain your goal, and track your request and session here.</p>
+        <p>Explore mentor expertise, choose a guidance area, agree on a session, and keep your learning journey in one place.</p>
+        {!loading && <div className="module-grid" aria-label="Your mentorship overview">
+          <div><strong>{mentors?.length ?? 0}</strong><div className="muted">Verified active mentors</div></div>
+          <div><strong>{pendingCount}</strong><div className="muted">Pending requests</div></div>
+          <div><strong>{upcomingCount}</strong><div className="muted">Upcoming sessions</div></div>
+          <div><strong>{completedCount}</strong><div className="muted">Completed sessions</div></div>
+        </div>}
+        <nav aria-label="Mentorship sections" style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem', margin: '1rem 0' }}>
+          <a className="btn btn-secondary" href="#mentor-directory">Find a mentor</a>
+          <a className="btn btn-secondary" href="#mentorship-journey">My mentorship</a>
+          <a className="btn btn-secondary" href="#mentorship-resources">Prepare and learn</a>
+        </nav>
         <p>Session times use your device time zone: <strong>{localZone}</strong>.</p>
         {blockedStage ? <p role="status">Direct mentorship is not enabled for Grades 1–10. Continue with your teacher and guardian through MELA learning resources.</p>
           : stageKey === 'school_11_12' ? <p>Grades 11–12 need verified guardian consent or adult eligibility before requesting mentorship.</p> : null}
         {onOpenSafety && <button className="btn btn-secondary" disabled={!!busy} onClick={onOpenSafety}>Safety, guardian consent & reporting</button>}
       </section>
-      <details className="empty-panel" style={{ textAlign: 'left' }}>
+      <details id="mentorship-resources" className="empty-panel" style={{ textAlign: 'left' }}>
         <summary>Prepare for a useful session</summary>
         <ol><li>Choose one goal: career exploration, study planning, CV feedback, scholarships or interview practice.</li><li>Write two or three questions and explain what you have already tried.</li><li>After the session, review your mentor’s follow-up notes and agree on one next step.</li></ol>
         <p>Keep passwords, payment details and identity documents private. Report uncomfortable behaviour through Safety & Privacy. A scheduled session does not yet include an in-app video call.</p>
@@ -136,6 +155,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       {loading && <p className="muted" role="status">Loading mentorship…</p>}
       {!loading && error && <button className="btn btn-secondary" disabled={!!busy} onClick={() => setRevision((value) => value + 1)}>Retry mentorship</button>}
 
+      <div id="mentorship-journey" className="section-heading"><h2>My mentorship journey</h2></div>
       {!loading && !error && sessions.length === 0 && <p className="empty-panel">No sessions yet. Once a mentor accepts your request, your scheduled session will appear here.</p>}
       {!loading && sessions.length > 0 && <>
         <div className="section-heading"><h2>Your sessions</h2></div>
@@ -207,12 +227,34 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         </div>
       </>}
 
-      {!loading && <div className="section-heading"><h2>Verified mentors</h2></div>}
-      {!loading && mentors && mentors.length === 0 && <div className="empty-panel">No verified mentors are available yet.</div>}
-      {!loading && mentors && mentors.length > 0 && <div className="field"><label htmlFor="mentor-search">Find a mentor</label><input id="mentor-search" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search names, experience or topics" /></div>}
-      {!loading && mentors && mentors.length > 0 && !mentors.some(m => `${m.full_name} ${m.headline ?? ''} ${m.bio ?? ''} ${m.organization ?? ''}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())) && <p className="empty-panel">No mentors match your search.</p>}
-      {!loading && mentors && mentors.length > 0 && <div className="module-grid">
-        {mentors.filter(m => `${m.full_name} ${m.headline ?? ''} ${m.bio ?? ''} ${m.organization ?? ''}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())).map((m) => {
+      {!loading && <div id="mentor-directory" className="section-heading"><h2>Find a verified mentor</h2></div>}
+      {!loading && mentors && <section className="empty-panel" style={{ textAlign: 'left' }}>
+        <p>Browse guidance areas or search real, approved mentor profiles. Category suggestions are based on profile descriptions, not a separate certification.</p>
+        <div className="field">
+          <label htmlFor="mentor-search">Search by name, field, skills, or interests</label>
+          <input id="mentor-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="e.g. engineering, interview, scholarship" />
+        </div>
+        <div className="field">
+          <label htmlFor="mentor-category">Mentorship category</label>
+          <select id="mentor-category" value={category} onChange={(event) => setCategory(event.target.value as MentorshipCategory)}>
+            <option value="all">All guidance areas ({mentors.length})</option>
+            {MENTORSHIP_CATEGORIES.map((item) => <option key={item.id} value={item.id}>{item.label} ({mentors.filter((mentor) => mentorMatchesCategory(mentor, item.id)).length})</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="mentor-language">Mentoring language</label>
+          <select id="mentor-language" value={language} onChange={(event) => setLanguage(event.target.value)}>
+            <option value="">Any listed language</option>
+            {languages.map((option) => <option key={option} value={option}>{option}</option>)}
+          </select>
+        </div>
+        <p role="status">{visibleMentors.length} verified {visibleMentors.length === 1 ? 'mentor' : 'mentors'} match your filters.</p>
+        {(query || language || category !== 'all') && <button className="btn btn-secondary" type="button" onClick={() => { setQuery(''); setCategory('all'); setLanguage('') }}>Clear filters</button>}
+      </section>}
+      {!loading && mentors && mentors.length === 0 && <div className="empty-panel">No verified mentors have been onboarded yet. Your mentorship requests and sessions will appear here when an approved mentor becomes available.</div>}
+      {!loading && mentors && mentors.length > 0 && visibleMentors.length === 0 && <p className="empty-panel">No approved mentor currently matches those filters. Try a different guidance area or language.</p>}
+      {!loading && mentors && visibleMentors.length > 0 && <div className="module-grid">
+        {visibleMentors.map((m) => {
           const topicId = `mentor-topic-${m.user_id}`
           const messageId = `mentor-message-${m.user_id}`
           return <div className="module-card" key={m.user_id} style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}>
@@ -220,6 +262,14 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
             <p style={{ color: 'var(--muted)' }}>{m.headline ?? m.organization ?? 'MELA mentor'}</p>
             {m.bio && <p>{m.bio}</p>}
             {m.organization && <p>{m.organization}</p>}
+            {m.expertise.length > 0 && <p><strong>Mentoring fields:</strong> {m.expertise.join(', ')}</p>}
+            {m.languages.length > 0 && <p><strong>Languages:</strong> {m.languages.join(', ')}</p>}
+            {m.availability.length > 0
+              ? <details><summary>Published weekly hours ({m.availability.length})</summary>
+                  <ul>{m.availability.map((slot) => <li key={slot.id}>{WEEKDAYS[slot.weekday] ?? 'Day'} · {slot.start_time.slice(0, 5)}–{slot.end_time.slice(0, 5)} ({slot.timezone})</li>)}</ul>
+                  <p className="muted">Weekly availability is indicative. A mentor must confirm the session.</p>
+                </details>
+              : <p className="muted">No weekly availability published. You can still submit a request.</p>}
             {m.years_experience != null && <p>{m.years_experience} years of experience</p>
             }
             {m.rating_count > 0 && <p className="muted">{m.rating_average.toFixed(2)}/5 · {m.rating_count} {m.rating_count === 1 ? 'rating' : 'ratings'}</p>}

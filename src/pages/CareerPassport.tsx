@@ -1,4 +1,5 @@
 import PassportRecords from '../components/PassportRecords'
+import type { RecordKind } from '../lib/passport-records'
 import { passportRecordEditorsEnabled } from '../lib/passport-environment'
 import PassportGuidance from '../components/PassportGuidance'
 import type { StudentView } from '../hooks/useStudentNavigation'
@@ -26,6 +27,11 @@ export default function CareerPassport({ onBack, onNavigate, stageKey, gradeLeve
   const [error, setError] = useState('')
   const [copied, setCopied] = useState('')
   const [revision, setRevision] = useState(0)
+  const [preferredKind, setPreferredKind] = useState<RecordKind>('education')
+  const openRecords = (kind: RecordKind) => {
+    setPreferredKind(kind)
+    document.getElementById('passport-records')?.scrollIntoView?.({behavior: 'smooth', block: 'start'})
+  }
 
   useEffect(() => {
     let active = true
@@ -65,6 +71,17 @@ export default function CareerPassport({ onBack, onNavigate, stageKey, gradeLeve
       {error && <div className="banner banner-error" role="alert">{error}<button className="btn btn-secondary" onClick={() => setRevision((value) => value + 1)}>Retry</button></div>}
 
       <p>Your learning record brings together skills, achievements and MELA course credentials. A profile score measures profile completeness; it is not proof of professional qualification.</p>
+      <section className="list-panel question-card" aria-label="Career Passport new tools">
+        <strong>Career Passport · Education, Experience and Verification</strong>
+        <p>New: save your education and experience, then request independent verification. Each record starts private and unverified. No document upload is needed to submit a request.</p>
+        <div className="passport-quick-actions" role="group" aria-label="Choose Career Passport record type">
+          <button className="btn btn-primary" type="button" onClick={() => openRecords('education')}>Add education</button>
+          <button className="btn btn-secondary" type="button" onClick={() => openRecords('experience')}>Add experience</button>
+          <button className="btn btn-secondary" type="button" onClick={() => openRecords('projects')}>My projects</button>
+        </div>
+        <p className="field-hint">To request verification, first save an education or experience record, then select “Request verification” beside that record.</p>
+      </section>
+      <PassportRecords preferredKind={preferredKind} onSaved={() => setRevision(v => v + 1)} allowCareerEditing={passportRecordEditorsEnabled(import.meta.env.VITE_SUPABASE_URL)} allowProjectVisibility={false} />
       {loading && <p role="status">Loading your career passport…</p>}
       {Object.keys(sectionErrors).length > 0 && <div className="banner banner-error" role="alert"><p>{Object.values(sectionErrors).join(' ')} Other available sections are shown below.</p><button className="btn btn-secondary" disabled={loading} onClick={() => setRevision(v => v + 1)}>Retry unavailable sections</button></div>}
       {score && (
@@ -78,7 +95,7 @@ export default function CareerPassport({ onBack, onNavigate, stageKey, gradeLeve
         ['Education',score.education_count],['Experience',score.experience_count],['Projects',score.project_count],['Languages',score.language_count],['Documents',score.document_count],['Verified documents',score.verified_document_count],
       ].map(([label,count]) => <div key={String(label)}><dt>{label}</dt><dd style={{margin:0,fontWeight:700}}>{typeof count === 'number' ? count : 'Unavailable'}</dd></div>)}</dl><p className="field-hint">These counts reflect saved records. Having a record does not mean it has been verified.</p></section>}
       <PassportGuidance passport={score} skills={skills} certificates={certificates} stageKey={stageKey} gradeLevel={gradeLevel} onNavigate={onNavigate} />
-      <PassportRecords onSaved={() => setRevision(v => v + 1)} allowCareerEditing={passportRecordEditorsEnabled(import.meta.env.VITE_SUPABASE_URL)} allowProjectVisibility={false} />
+
       <div className="section-heading"><h2>Course credentials</h2></div>
       <p className="field-hint">Only issued credentials appear here. Before sharing a verification link, open it to review the learner name and credential information it reveals. Revoked credentials are not valid.</p>
       {certificates && certificates.length === 0 && <div className="empty-panel">Complete every lesson in a credential-bearing MELA course to earn a verifiable credential.</div>}

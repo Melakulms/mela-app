@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { PassportRecord } from '../lib/passport-records'
 import { fetchMyPassportVerificationRequests, requestPassportVerification, type PassportVerificationStatus, type PassportVerificationKind } from '../lib/passport-verification'
 
-export default function PassportVerificationPanel({kind, records}: {kind: PassportVerificationKind; records: PassportRecord[]}) {
+export default function PassportVerificationPanel({kind, records, onPendingChange}: {kind: PassportVerificationKind; records: PassportRecord[]; onPendingChange?: (ids: Set<string>) => void}) {
   const [requests,setRequests] = useState<PassportVerificationStatus[]>([])
   const [error,setError] = useState('')
   const [info,setInfo] = useState('')
@@ -11,10 +11,14 @@ export default function PassportVerificationPanel({kind, records}: {kind: Passpo
   const [selected,setSelected] = useState<string | null>(null)
   const [note,setNote] = useState('')
   const lock = useRef(false)
+  const publishRequests = (rows: PassportVerificationStatus[]) => {
+    setRequests(rows)
+    onPendingChange?.(new Set(rows.filter(row => row.record_kind === kind && row.status === 'pending').map(row => row.record_id)))
+  }
   const refresh = () => {
     let active = true
     setLoading(true);setError('')
-    void fetchMyPassportVerificationRequests().then(rows=>{if(active)setRequests(rows)}).catch(e=>{if(active)setError(e instanceof Error?e.message:'Could not load verification statuses.')}).finally(()=>{if(active)setLoading(false)})
+    void fetchMyPassportVerificationRequests().then(rows=>{if(active)publishRequests(rows)}).catch(e=>{if(active)setError(e instanceof Error?e.message:'Could not load verification statuses.')}).finally(()=>{if(active)setLoading(false)})
     return () => {active=false}
   }
   useEffect(()=>refresh(),[kind])
@@ -26,13 +30,13 @@ export default function PassportVerificationPanel({kind, records}: {kind: Passpo
       setSelected(null);setNote('')
       setInfo('Verification request sent. Your record stays unverified until an authorized MELA reviewer approves it.')
       const rows=await fetchMyPassportVerificationRequests()
-      setRequests(rows)
+      publishRequests(rows)
     } catch(e) {setError(e instanceof Error?e.message:'Request failed. Please retry.')}
     finally {setSaving(false);lock.current=false}
   }
   return <section className="question-card" aria-label="Career Passport verification requests">
     <h3>Request record verification</h3>
-    <p className="field-hint">Only authorized MELA reviewers can verify education and experience. Do not upload identity documents or paste private identity details here. Reviewers must independently confirm your claim before approval.</p>
+    <p className="field-hint">Only authorized MELA reviewers can verify education and experience. Records are locked against editing or deletion while review is pending. Do not upload identity documents or paste private identity details here. Reviewers must independently confirm your claim before approval.</p>
     {loading && <p role="status">Checking verification requests…</p>}
     {error && <div role="alert">{error}<button className="btn btn-secondary" disabled={saving} onClick={()=>refresh()}>Retry</button></div>}
     {info && <p role="status">{info}</p>}

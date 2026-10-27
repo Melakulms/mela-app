@@ -90,3 +90,17 @@ Every new exposed table has RLS enabled and an explicit policy. No ordinary-user
 - Learner panel displays pending/approved/declined status; 18+ claims are not automatically accepted. Grade 1–10 restrictions and grade 11–12 verified guardian clearance are unchanged. Existing beta signup restriction remains intact.
 - Migration source: `20261027150000_mentorship_adult_age_review_staging.sql` and `20261027151500_mentorship_unified_adult_approval.sql`. Database smoke: `supabase/tests/mentorship_adult_eligibility_staging_smoke.sql` passed, rejecting anonymous age-review attempts, read access, and direct DOB edits. Client tests cover explicit consent and age restriction; Central Admin tests cover mandatory independent evidence.
 - Real AAL2 admin approval, credential evaluation and signed-in adult learner/mentor flow **still require actual controlled test accounts**. Staging has no pending age review and no verified mentors. This is not a production release.
+
+## 2026-10-27: Critical learner-assignment authorization fixes (staging)
+
+- Identified and corrected three existing INSERT RLS policy bugs. Policies compared `r.mentor_id = r.mentor_id`, `a.mentor_id = a.mentor_id` or `s.assignment_id = s.assignment_id` instead of correlating each record with its actual mentorship relationship.
+- Staging migration `20261027163000_mentorship_assignments_feedback_rls_correlation.sql` now enforces matched accepted request, verified active mentor, assigned learner, existing learner submission before feedback, and live guardian/adult eligibility at every assignment, submission and feedback write. Column-level INSERT grants disallow client-supplied IDs/timestamps.
+- Staging `20261027164000_mentorship_live_room_shutdown.sql` blocks arbitrary meeting URL, video room, and recording references until MELA has an approved live-session safeguarding design.
+- Staging `20261027165500_mentorship_suspended_mentor_private_read_revocation.sql` disallows suspended/unverified mentors reading learner request, session, rating, assignment, submission and feedback details; users still see their own data. Authorized admin access to sensitive requests/sessions now requires MFA AAL2.
+- Learner and mentor wording now correctly says accepted mentorship **does not** automatically schedule a session; scheduling remains a separately confirmed action.
+- Rollback-only staging smoke tests passed:
+  - `supabase/tests/mentorship_learning_relationship_security_staging.sql`
+  - `supabase/tests/mentorship_live_room_shutdown_staging.sql`
+  - `supabase/tests/mentorship_suspended_mentor_read_staging.sql`
+  - `supabase/tests/mentorship_cross_actor_spoof_staging.sql`
+- Negative JWT probes are simulated role tests, **not actual authenticated two-account journeys**. Staging still has no verified mentors, requests, sessions or assignments. No production permissions or deployments were modified. Do not merge PR #96 before authentic E2E, guardian verification and privacy tests.

@@ -55,39 +55,60 @@ async function requireUserId(): Promise<string> {
   return auth.user.id
 }
 
-export async function fetchVerifiedMentors(): Promise<Mentor[]> {
-  const { data: mentors, error } = await supabase
-    .from('mentor_profiles')
-    .select('user_id, headline, bio, organization, years_experience, rating_average, rating_count, expertise, languages')
-    .eq('verified', true)
-    .eq('active', true)
-  if (error) throw error
-  if (!mentors?.length) return []
-  const ids = mentors.map((m) => m.user_id)
-  const [namesResult, slotsResult] = await Promise.all([
-    supabase.from('profiles').select('id, full_name').in('id', ids),
-    supabase.from('mentor_availability')
-      .select('id, mentor_id, weekday, start_time, end_time, timezone')
-      .in('mentor_id', ids).eq('active', true).order('weekday', { ascending: true }),
-  ])
-  if (namesResult.error) throw namesResult.error
-  if (slotsResult.error) throw slotsResult.error
-  const nameById = new Map((namesResult.data ?? []).map((p) => [p.id, p.full_name]))
-  const availabilityByMentor = new Map<string, MentorAvailability[]>()
-  for (const slot of slotsResult.data ?? []) {
-    const list = availabilityByMentor.get(slot.mentor_id) ?? []
-    list.push({ id: slot.id, weekday: slot.weekday, start_time: slot.start_time, end_time: slot.end_time, timezone: slot.timezone })
-    availabilityByMentor.set(slot.mentor_id, list)
+export const MENTOR_DIRECTORY_PAGE_SIZE = 50
+
+export async function fetchVerifiedMentorsPage(
+  offset: number, pageSize = MENTOR_DIRECTORY_PAGE_SIZE
+): Promise<{mentors:Mentor[];hasMore:boolean}> {
+  if (!Number.isInteger(offset) || offset<0 ||
+      !Number.isInteger(pageSize) || pageSize<1 || pageSize>100) {
+    throw new Error('Invalid mentor directory page requested.')
   }
-  return mentors.map((m) => ({
+
+  // Look one profile past this page to accurately signal more results,
+  // without relying on the provider's default 1,000-record response cap.
+  const {data:matched,error}=await supabase.from('mentor_profiles')
+    .select('user_id,headline,bio,organization,years_experience,rating_average,rating_count,expertise,languages')
+    .eq('verified',true).eq('active',true)
+    .order('user_id',{ascending:true})
+    .range(offset,offset+pageSize)
+  if(error)throw error
+  const all=matched??[]
+  const hasMore=all.length>pageSize
+  const mentors=all.slice(0,pageSize)
+  if(!mentors.length)return {mentors:[],hasMore:false}
+  const ids=mentors.map(row=>row.user_id)
+  const [namesResult,slotsResult]=await Promise.all([
+    supabase.from('profiles').select('id,full_name').in('id',ids),
+    supabase.from('mentor_availability')
+      .select('id,mentor_id,weekday,start_time,end_time,timezone')
+      .in('mentor_id',ids).eq('active',true).order('weekday',{ascending:true}),
+  ])
+  if(namesResult.error)throw namesResult.error
+  if(slotsResult.error)throw slotsResult.error
+  const nameById=new Map((namesResult.data??[]).map(p=>[p.id,p.full_name]))
+  const availabilityByMentor=new Map<string,MentorAvailability[]>()
+  for(const slot of slotsResult.data??[]){
+    const list=availabilityByMentor.get(slot.mentor_id)??[]
+    list.push({id:slot.id,weekday:slot.weekday,start_time:slot.start_time,
+      end_time:slot.end_time,timezone:slot.timezone})
+    availabilityByMentor.set(slot.mentor_id,list)
+  }
+  return {hasMore,mentors:mentors.map(m=>({
     ...m,
-    expertise: m.expertise ?? [],
-    languages: m.languages ?? [],
-    availability: availabilityByMentor.get(m.user_id) ?? [],
-    rating_average: Number(m.rating_average ?? 0),
-    rating_count: Number(m.rating_count ?? 0),
-    full_name: nameById.get(m.user_id) ?? 'MELA mentor',
-  }))
+    expertise:m.expertise??[],languages:m.languages??[],
+    availability:availabilityByMentor.get(m.user_id)??[],
+    rating_average:Number(m.rating_average??0),
+    rating_count:Number(m.rating_count??0),
+    full_name:nameById.get(m.user_id)??'MELA mentor',
+  }))}
+}
+
+// Backward-compatible first-page reader. Never claim this is the complete
+// directory: use fetchVerifiedMentorsPage for the mobile Load More journey.
+export async function fetchVerifiedMentors():Promise<Mentor[]> {
+  const page=await fetchVerifiedMentorsPage(0)
+  return page.mentors
 }
 
 export async function fetchMyMentorshipRequests(): Promise<MyMentorshipRequest[]> {

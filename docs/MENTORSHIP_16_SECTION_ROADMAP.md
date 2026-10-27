@@ -144,3 +144,24 @@ Every new exposed table has RLS enabled and an explicit policy. No ordinary-user
 - Expanded `tests/mentorship.test.tsx` for guardian denial and fail-closed eligibility errors. All **five learner GitHub checks** passed on the latest tested commit before this documentation update.
 - Staging post-change reads still show **0 verified mentors, 0 requests, 0 sessions, 0 age reviews, 0 groups, 0 assignments, 0 submissions, 0 feedback**. No production writes, real users, payments or unapproved media were created.
 - **Still NOT verified:** real signed-in mentor+learner E2E accept/schedule/complete, proper guardian and AAL2 admin verification, concurrent scheduling race test, real notifications, moderated media, and production launch readiness. SQL structural and simulated-JWT checks are not substitutes for signed-in tests.
+
+## 2026-10-27 — integrated learner and administrator recovery audit
+
+This pass fixes the shared feature branch; it is **not a production release**.
+
+- Fixed malformed JSX that prevented the learner app from compiling. Session preparation and the newly added outcome-review panel now render independently of the empty-session message, so learners who actually have sessions can use them.
+- Private preparation reads now fail closed with a retry action. Failed writes retain drafts; zero-row updates cannot report success. Added seven session recovery/authentication UI cases and preserved the existing session/outcome tests.
+- Added learner and mentor `.ics` downloads for future confirmed appointments. UTC instants preserve timezone conversion; private notes, names, discussion topics and room references are excluded. Calendar copies explicitly do not auto-sync cancellations.
+- Mentor workspace keeps a current booking ahead of old cancelled history, and completion stays disabled until the full duration has elapsed. Invalid durations fail closed. The server remains authoritative.
+- Failed learner/mentor workspace refreshes no longer leave previously loaded private actions visible. Home describes the bounded directory count as mentors loaded.
+- Companion Central Admin changes prevent delayed confidential history responses from appearing under another selected safeguarding case. Refresh clears cached applications, age-review details, final-verification selections, group data and suspension selections.
+
+Validation on the integrated sources: learner **401 tests across 80 files passed** and TypeScript/Vite build passed; admin **391 tests across 45 files passed** and TypeScript/Vite build passed. Calendar privacy/time conversion and stale case-response regressions are included. A local Chromium download failed, so this pass does not claim browser/mobile verification. Existing learner bundle-size warning remains.
+
+Read-only staging check during this pass: **0 verified active mentors, 0 requests, 0 sessions**. No database mutations were made in this pass. Existing migration checks and mock-based tests are not signed-in acceptance tests.
+
+### Remaining work across the 16-section scope
+
+Sections 1–7, 9–11 and 14 have connected development tools, with genuine account and permission acceptance still outstanding. Section 8 has no approved integrated call provider or supervised live delivery. Section 12 now includes the shared branch's learner outcome claims and mentor review, but this does not issue an independently verified Career Passport credential. Section 13 has program/interest administration but no delivered group meetings or verified attendance. Sections 15–16 have reporting, review and suspension tools, but real guardian/admin MFA journeys remain unverified. Translation and content review are also incomplete.
+
+Keep the learner and admin PRs draft until approved mentor/learner/admin/guardian journeys, live-delivery design, group delivery/attendance, independent credential handling and mobile acceptance are complete. No claim of all 16 sections being finished or live is warranted.

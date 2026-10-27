@@ -4,7 +4,7 @@ vi.mock('../src/components/MentorshipLearningWorkspace', () => ({ default: () =>
 vi.mock('../src/components/MentorApplication', () => ({ default: () => null }))
 vi.mock('../src/components/MentorshipAdultEligibility', () => ({ default: () => null }))
 vi.mock('../src/components/MentorshipSafetyReporting', () => ({ default: () => null }))
-vi.mock('../src/components/MentorshipSessionJourney', () => ({ default: () => null }))
+vi.mock('../src/components/MentorshipSessionJourney', () => ({ default: ({sessions}: {sessions: {id:string}[]}) => <div data-testid="session-journey">{sessions.length} session plans</div> }))
 vi.mock('../src/components/MentorshipOutcomeReview', () => ({ default: () => null }))
 import Mentorship from '../src/pages/Mentorship'
 
@@ -142,6 +142,7 @@ describe('Mentorship', () => {
     render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
     await screen.findByText('Mentor One')
     expect(screen.getByText(/Revise the project section of your CV/)).toBeTruthy()
+    expect(screen.getByTestId('session-journey').textContent).toBe('1 session plans')
     expect(await screen.findByRole('button', { name: 'Request mentorship' })).toBeTruthy()
   })
 

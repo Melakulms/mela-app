@@ -19,6 +19,7 @@ import MentorshipSectionDirectory from '../components/MentorshipSectionDirectory
 import MentorApplication from '../components/MentorApplication'
 import MentorshipAdultEligibility from '../components/MentorshipAdultEligibility'
 import MentorshipSafetyReporting from '../components/MentorshipSafetyReporting'
+import MentorshipCalendarButton from '../components/MentorshipCalendarButton'
 import MentorshipSessionJourney from '../components/MentorshipSessionJourney'
 import MentorshipOutcomeReview from '../components/MentorshipOutcomeReview'
 import { fetchMyMentorshipAccess, type MentorshipAccess } from '../lib/mentorship-access'
@@ -91,7 +92,10 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         setSessions(s)
       })
       .catch((cause) => {
-        if (active) setError(cause instanceof Error ? cause.message : 'Could not load mentorship. Please retry.')
+        if (active) {
+          setMentors(null); setRequests([]); setSessions([]); setHasMoreMentors(false)
+          setError(cause instanceof Error ? cause.message : 'Could not load mentorship. Please retry.')
+        }
       })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
@@ -225,9 +229,9 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       {['university','college_tvet'].includes(stageKey ?? '') && directAccessAllowed &&
         <details className="empty-panel" style={{ textAlign:'left' }}><summary>Apply to become a verified mentor (eligible adults)</summary><MentorApplication /></details>}
       <div id="mentorship-journey" className="section-heading"><h2>My mentorship journey</h2></div>
-      {!loading && !error && sessions.length === 0 && <p className="empty-panel">No sessions yet. An accepted request is not a booking; your mentor must separately confirm a session within their published available hours.</p>
+      {!loading && !error && sessions.length === 0 && <p className="empty-panel">No sessions yet. An accepted request is not a booking; your mentor must separately confirm a session within their published available hours.</p>}
       {!loading && !error && ['university','college_tvet','school_11_12'].includes(stageKey ?? '') && <MentorshipSessionJourney sessions={sessions} />}
-      {!loading && !error && ['university','college_tvet','school_11_12'].includes(stageKey ?? '') && <MentorshipOutcomeReview mode="learner" sessions={sessions} />}}
+      {!loading && !error && ['university','college_tvet','school_11_12'].includes(stageKey ?? '') && <MentorshipOutcomeReview mode="learner" sessions={sessions} />}
       {!loading && sessions.length > 0 && <>
         <div className="section-heading"><h2>Your sessions</h2></div>
         <div className="list-panel">
@@ -239,6 +243,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
                 <strong>{requestTopics.get(session.request_id ?? '') ?? 'Mentorship session'} · {mentorNames.get(session.mentor_id ?? '') ?? 'Your mentor'}</strong>
                 <div className="list-row-title">{new Date(session.scheduled_at).toLocaleString()}</div>
                 <div className="list-row-meta">{session.duration_min ?? 30} minutes · {session.status}</div>
+                <MentorshipCalendarButton session={session} />
                 {session.notes && <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}><strong>Follow-up notes: </strong>{session.notes}</p>}
                 {session.status === 'completed' && session.rating !== null && <div className="list-row-meta">Rated {session.rating}/5{session.rating_comment ? ` · ${session.rating_comment}` : ''}</div>}
                 {session.status === 'completed' && session.rating === null && <div style={{ marginTop: '.75rem', display: 'grid', gap: '.5rem', maxWidth: '32rem' }}>

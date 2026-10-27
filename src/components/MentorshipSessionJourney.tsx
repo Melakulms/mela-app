@@ -21,6 +21,7 @@ export default function MentorshipSessionJourney({sessions}:{sessions:Mentorship
  const [loading,setLoading]=useState(true)
  const [busy,setBusy]=useState(false)
  const [error,setError]=useState('')
+ const [loadError,setLoadError]=useState('')
  const [notice,setNotice]=useState('')
  const [revision,setRevision]=useState(0)
  const lock=useRef(false)
@@ -31,7 +32,7 @@ export default function MentorshipSessionJourney({sessions}:{sessions:Mentorship
 
  useEffect(()=>{
   let active=true
-  setLoading(true);setError('')
+  setLoading(true);setLoadError('')
   void (async()=>{
    try{
     const ids=keys.split(',').filter(Boolean)
@@ -57,7 +58,10 @@ export default function MentorshipSessionJourney({sessions}:{sessions:Mentorship
       setReflections((refl.data??[]) as Reflection[])
     }
    }catch(cause){
-    if(active)setError(cause instanceof Error?cause.message:'Unable to load private session preparation.')
+    if(active){
+      setPreparations([]);setReflections([])
+      setLoadError(cause instanceof Error?cause.message:'Unable to load private session preparation.')
+    }
    }finally{if(active)setLoading(false)}
   })()
   return()=>{active=false}
@@ -73,7 +77,7 @@ export default function MentorshipSessionJourney({sessions}:{sessions:Mentorship
  },[selected,preparations,reflections])
 
  const run=async(work:()=>Promise<void>,message:string)=>{
-  if(lock.current)return
+  if(lock.current||loading||loadError)return
   lock.current=true;setBusy(true);setError('');setNotice('')
   try{await work();setNotice(message);setRevision(n=>n+1)}
   catch(cause){setError(cause instanceof Error?cause.message:'Could not save your private session notes.')}
@@ -124,19 +128,23 @@ export default function MentorshipSessionJourney({sessions}:{sessions:Mentorship
    <h2>My session preparation and reflection</h2>
    <p>Prepare questions before an approved appointment and record what you learned afterward. Notes are private to your account, and reflections are self-reported rather than verified credentials.</p>
    {error&&<p role="alert" className="banner banner-error">{error}</p>}
+   {loadError&&<div role="alert" className="banner banner-error">{loadError}
+     <button type="button" className="btn btn-secondary" disabled={loading||busy}
+       onClick={()=>setRevision(n=>n+1)}>Retry private notes</button>
+   </div>}
    {notice&&<p role="status" className="banner banner-info">{notice}</p>}
    {eligible.length===0?<p className="muted">No confirmed or completed sessions yet. When a verified mentor schedules your appointment, preparation tools will appear here.</p>:
      <>
        <div className="field"><label htmlFor="mentorship-session-plan">Select session</label>
          <select id="mentorship-session-plan" value={selected} disabled={busy||loading}
-           onChange={event=>setSelected(event.target.value)}>
+           onChange={event=>{setSelected(event.target.value);setError('');setNotice('')}}>
            <option value="">Choose a confirmed or completed session</option>
            {eligible.map(item=><option key={item.id} value={item.id}>
              {new Date(item.scheduled_at).toLocaleString()} · {item.status}
            </option>)}
          </select>
        </div>
-       {loading?<p role="status">Loading private session notes…</p>:current&&<>
+       {loading?<p role="status">Loading private session notes…</p>:!loadError&&current&&<>
          <form onSubmit={savePreparation}>
            <h3>Prepare for this session</h3>
            <div className="field"><label htmlFor="mentorship-session-goal">Session goal</label>

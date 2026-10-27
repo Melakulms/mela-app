@@ -14,6 +14,7 @@ export default function MentorshipLearningWorkspace({ mode, stageKey }: { mode: 
   const [workspace, setWorkspace] = useState<MentorshipWorkspace | null>(null)
   const [accepted, setAccepted] = useState<AcceptedRequest[]>([])
   const [error, setError] = useState('')
+  const [loadFailed, setLoadFailed] = useState(false)
   const [notice, setNotice] = useState('')
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -34,6 +35,7 @@ export default function MentorshipLearningWorkspace({ mode, stageKey }: { mode: 
   useEffect(() => {
     let active = true
     setLoading(true)
+    setLoadFailed(false)
     setError('')
     void (async () => {
       try {
@@ -51,7 +53,7 @@ export default function MentorshipLearningWorkspace({ mode, stageKey }: { mode: 
         }
         if (active) { setWorkspace(workspaceData); setAccepted(acceptedData) }
       } catch (cause) {
-        if (active) setError(cause instanceof Error ? cause.message : 'Could not load learning workspace.')
+        if (active) { setLoadFailed(true); setError(cause instanceof Error ? cause.message : 'Could not load learning workspace.') }
       } finally { if (active) setLoading(false) }
     })()
     return () => { active = false }
@@ -103,7 +105,7 @@ export default function MentorshipLearningWorkspace({ mode, stageKey }: { mode: 
     {notice && <p className="banner banner-info" role="status">{notice}</p>}
     {error && <div className="banner banner-error" role="alert">{error}<button className="btn btn-secondary" type="button" onClick={() => setRevision((n) => n + 1)} disabled={busy}>Retry</button></div>}
     {loading && <p role="status">Loading learning plans, resources and assignments…</p>}
-    {!loading && workspace && <>
+    {!loading && !loadFailed && workspace && <>
       {mode === 'learner' && <section className="empty-panel" id="mentorship-goals" style={{ textAlign:'left' }}>
         <h3>9. My learning goals and plans</h3>
         <p>Create goals that remain private to your account. A session or self-reported completion is not a verified achievement.</p>

@@ -44,7 +44,7 @@ export default function MentorshipHome({ mentors, requests, sessions, stageKey, 
     <p>Build your next step with trusted guidance. Your overview uses your actual MELA requests, sessions, and learning profile.</p>
 
     <div className="module-grid" aria-label="Your mentorship overview">
-      <div><strong>{mentors.length}</strong><div className="muted">Verified mentors</div></div>
+      <div><strong>{mentors.length}</strong><div className="muted">Verified mentors loaded</div></div>
       <div><strong>{summary.pendingRequests}</strong><div className="muted">Pending requests</div></div>
       <div><strong>{summary.upcomingCount}</strong><div className="muted">Upcoming sessions</div></div>
       <div><strong>{summary.completedCount}</strong><div className="muted">Completed sessions</div></div>

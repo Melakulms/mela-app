@@ -12,8 +12,8 @@ Database migrations were applied **only to staging** `tungqfmypuwzeyrtaseh`. Pro
 | 3 | Categories | Eight descriptive guidance filters | Field review and translations |
 | 4 | Mentor Profiles | Verified status filter, work, expertise, languages, ratings and available hours | Full professional proof review + mentor edit flow |
 | 5 | Smart Matching | Rule-based interest matching, not eligibility determination | Matching evaluation + guardian and underage negative tests |
-| 6 | Mentorship Requests | Existing send/cancel requests UI & DB functions | Existing staging INSERT privilege currently missing; need least-privilege security fix |
-| 7 | Booking & Scheduling | Existing session calendar and mentor schedule/cancel/complete | Existing lifecycle RPC execution grants missing; authenticated integration test required |
+| 6 | Mentorship Requests | Existing send/cancel requests UI & DB functions | Staging INSERT repaired with per-column grants, private audience validation and stage restrictions; **authenticated learner E2E remains untested** |
+| 7 | Booking & Scheduling | Existing session calendar and mentor schedule/cancel/complete | Staging lifecycle RPC grants repaired; acceptance and scheduling now re-check active verified mentors, guardian/adult clearance and participant/MFA authority. **Authenticated scheduling test still required** |
 | 8 | Live Mentorship | Honest status and safety guidance | Approved call provider, moderation, explicit recording controls; **not live** |
 | 9 | My Mentorship | New private goal plans and status updates; existing requests/session history | Adult/child role tests and read-after-write |
 | 10 | Resources | Six original approved guide texts published on staging and read-only library | Expanded expert-reviewed references & localization |
@@ -39,8 +39,16 @@ Every new exposed table has RLS enabled and an explicit policy. No ordinary-user
 ## Release blockers
 
 1. Staging currently has zero approved mentor profiles, requests and sessions. This means no real mentor–learner journey was proven. Do not create fake listings.
-2. Existing mentorship_requests INSERT privilege and session RPC EXECUTE privileges are absent on staging. Do not blindly widen grants: first strengthen adult/guardian checks, review SECURITY DEFINER function paths and run cross-user negative tests.
+2. Existing request/RPC permissions were repaired in *staging* using restrictive grants and DB trigger authorization. The rollback-only smoke test passes for missing-identity rejection. Cross-user and real guardian/adult E2E tests are **still required**.
 3. Group program enrollment and direct audio/video are **not implemented or open**.
 4. Mentor applications reviewed as eligible do not automatically create verified mentor profiles. Admin must independently validate credentials and safeguarding.
 5. Verify GitHub CI for both PR head commits. Then test real staging sign-in, controlled verification, request, session, assignment and feedback paths using approved test accounts before any production rollout.
 6. Independent privacy, safeguarding, moderation, age and production deployment reviews remain required.
+
+## 2026-10-27 staging lifecycle hardening
+
+- Applied migration `20261027110000_mentorship_staging_request_session_security.sql`: per-column INSERT on request fields (not full-table inserts), actor-owned request status RPC permissions, accepted-mentor check, adult/guardian clearance for request submission/acceptance and scheduling, 15–180 minute future schedule validation. The RPCs were already present; this restores narrowly scoped execution on staging only.
+- Applied `20261027111500_mentorship_staging_actor_mfa_guard.sql`: database triggers require the actual mentor/learner participant or an admin with MFA AAL2 for privileged transitions; repeated pending requests for a pair rejected by a partial unique index.
+- Executed `supabase/tests/mentorship_staging_security_smoke.sql` on staging: **passed** (grants and simulated missing-JWT negative paths, transaction rolled back). This does *not* prove real student sign-in, approved mentor provisioning, or a real session.
+- Direct authenticated INSERT on mentorship_sessions remains revoked; anonymous mentorship RPC execution remains denied. No staged learner or mentor records were created by these tests.
+- Still blocked for production: stage a real approved adult mentor and adult learner, verify guardian and teacher roles, cross-account denial, full session lifecycle, email notifications and mobile testing. No live deployment until gates pass.

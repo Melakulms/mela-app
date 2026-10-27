@@ -12,6 +12,7 @@ import {
   type MyMentorshipRequest,
 } from '../lib/mentorship'
 import { useI18n } from '../i18n'
+import MentorshipHome from '../components/MentorshipHome'
 import { discoverMentors, getMentorLanguages, MENTORSHIP_CATEGORIES, mentorMatchesCategory, WEEKDAYS, type MentorshipCategory } from '../lib/mentor-discovery'
 
 export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack: () => void; stageKey?: string | null; onOpenSafety?: () => void }) {
@@ -126,25 +127,17 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         <h1>{t('mentorship')}</h1>
         <button className="btn btn-secondary" onClick={onBack} disabled={!!busy}>{t('back')}</button>
       </div>
-      <section className="empty-panel" style={{ textAlign: 'left', borderTop: '4px solid #16875f' }}>
-        <h2>Build your next step with a mentor</h2>
-        <p>Explore mentor expertise, choose a guidance area, agree on a session, and keep your learning journey in one place.</p>
-        {!loading && <div className="module-grid" aria-label="Your mentorship overview">
-          <div><strong>{mentors?.length ?? 0}</strong><div className="muted">Verified active mentors</div></div>
-          <div><strong>{pendingCount}</strong><div className="muted">Pending requests</div></div>
-          <div><strong>{upcomingCount}</strong><div className="muted">Upcoming sessions</div></div>
-          <div><strong>{completedCount}</strong><div className="muted">Completed sessions</div></div>
-        </div>}
-        <nav aria-label="Mentorship sections" style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem', margin: '1rem 0' }}>
-          <a className="btn btn-secondary" href="#mentor-directory">Find a mentor</a>
-          <a className="btn btn-secondary" href="#mentorship-journey">My mentorship</a>
-          <a className="btn btn-secondary" href="#mentorship-resources">Prepare and learn</a>
-        </nav>
-        <p>Session times use your device time zone: <strong>{localZone}</strong>.</p>
-        {blockedStage ? <p role="status">Direct mentorship is not enabled for Grades 1–10. Continue with your teacher and guardian through MELA learning resources.</p>
-          : stageKey === 'school_11_12' ? <p>Grades 11–12 need verified guardian consent or adult eligibility before requesting mentorship.</p> : null}
-        {onOpenSafety && <button className="btn btn-secondary" disabled={!!busy} onClick={onOpenSafety}>Safety, guardian consent & reporting</button>}
-      </section>
+      {!loading && !error && mentors && <MentorshipHome
+        mentors={mentors}
+        requests={requests}
+        sessions={sessions}
+        stageKey={stageKey}
+        revision={revision}
+      />}
+      {blockedStage && <p role="status" className="banner banner-info">Direct mentorship is not enabled for Grades 1–10. Continue with your teacher and guardian through MELA learning resources.</p>}
+      {stageKey === 'school_11_12' && <p className="banner banner-info">Grades 11–12 need verified guardian consent or adult eligibility before requesting mentorship.</p>}
+      {onOpenSafety && <button className="btn btn-secondary" disabled={!!busy} onClick={onOpenSafety}>Safety, guardian consent & reporting</button>}
+      <p className="muted">Session times use your device time zone: {localZone}.</p>
       <details id="mentorship-resources" className="empty-panel" style={{ textAlign: 'left' }}>
         <summary>Prepare for a useful session</summary>
         <ol><li>Choose one goal: career exploration, study planning, CV feedback, scholarships or interview practice.</li><li>Write two or three questions and explain what you have already tried.</li><li>After the session, review your mentor’s follow-up notes and agree on one next step.</li></ol>

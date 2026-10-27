@@ -8,7 +8,7 @@ type Review = {
   reviewed_at: string | null
 }
 
-export default function MentorshipAdultEligibility() {
+export default function MentorshipAdultEligibility({onApprovalChange}:{onApprovalChange?:(approved:boolean)=>void}) {
   const [review, setReview] = useState<Review | null>(null)
   const [dateOfBirth, setDateOfBirth] = useState('')
   const [acknowledged, setAcknowledged] = useState(false)
@@ -31,9 +31,9 @@ export default function MentorshipAdultEligibility() {
           .select('id,status,created_at,reviewed_at')
           .eq('learner_id', auth.user.id).maybeSingle()
         if (readError) throw new Error(readError.message)
-        if (active) setReview(data as Review | null)
+        if (active) { setReview(data as Review | null); onApprovalChange?.(data?.status==='approved') }
       } catch (cause) {
-        if (active) setError(cause instanceof Error ? cause.message : 'Unable to check mentorship eligibility.')
+        if (active) { setError(cause instanceof Error ? cause.message : 'Unable to check mentorship eligibility.'); onApprovalChange?.(false) }
       } finally { if (active) setLoading(false) }
     })()
     return () => {active=false}

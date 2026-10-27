@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../src/lib/mentorship-access', () => ({ fetchMyMentorshipAccess: mocks.fetchMyMentorshipAccess }))
 
 vi.mock('../src/lib/mentorship', () => ({
+  MENTOR_DIRECTORY_PAGE_SIZE: 50,
   fetchVerifiedMentorsPage: mocks.fetchVerifiedMentorsPage,
   fetchMyMentorshipRequests: mocks.fetchMyMentorshipRequests,
   fetchMyMentorshipSessions: mocks.fetchMyMentorshipSessions,
@@ -56,9 +57,11 @@ afterEach(cleanup)
 
 describe('Mentorship', () => {
   it('loads further verified mentors in bounded pages without losing existing profiles',async()=>{
-    mocks.fetchVerifiedMentorsPage
-      .mockResolvedValueOnce({mentors:[mentor],hasMore:true})
-      .mockResolvedValueOnce({mentors:[{...mentor,user_id:'mentor-2',full_name:'Mentor Two'}],hasMore:false})
+    mocks.fetchVerifiedMentorsPage.mockImplementation((offset:number)=>
+      Promise.resolve(offset===0
+        ? {mentors:[mentor],hasMore:true}
+        : {mentors:[{...mentor,user_id:'mentor-2',full_name:'Mentor Two'}],hasMore:false})
+    )
     render(<Mentorship stageKey="school_11_12" onBack={vi.fn()}/>)
     expect(await screen.findByText('Mentor One')).toBeTruthy()
     fireEvent.click(screen.getByRole('button',{name:'Load more verified mentors'}))

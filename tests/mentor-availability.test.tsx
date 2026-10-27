@@ -1,0 +1,30 @@
+import { beforeEach, afterEach, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import MentorAvailabilityEditor from '../src/components/MentorAvailabilityEditor'
+const mocks = vi.hoisted(() => ({ fetch: vi.fn(), add: vi.fn(), remove: vi.fn() }))
+vi.mock('../src/lib/mentor-availability', () => ({ fetchOwnAvailability: mocks.fetch, addMentorAvailability: mocks.add, removeMentorAvailability: mocks.remove }))
+beforeEach(() => { vi.resetAllMocks(); mocks.fetch.mockResolvedValue([]) })
+afterEach(cleanup)
+it('preserves editable times on failed save and supports retry', async () => {
+  mocks.add.mockRejectedValueOnce(new Error('Connection failed')).mockResolvedValueOnce({ id: 'slot', weekday: 1, start_time: '11:00', end_time: '12:00', timezone: 'Africa/Addis_Ababa' })
+  render(<MentorAvailabilityEditor />)
+  await screen.findByText('No weekly times published.')
+  fireEvent.change(screen.getByLabelText('Start time'), { target: { value: '11:00' } })
+  fireEvent.change(screen.getByLabelText('End time'), { target: { value: '12:00' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Publish availability' }))
+  await screen.findByRole('alert')
+  expect((screen.getByLabelText('Start time') as HTMLInputElement).value).toBe('11:00')
+  expect((screen.getByRole('button', { name: 'Publish availability' }) as HTMLButtonElement).disabled).toBe(false)
+  fireEvent.click(screen.getByRole('button', { name: 'Publish availability' }))
+  await screen.findByRole('button', { name: 'Remove Monday 11:00' })
+  expect(mocks.add).toHaveBeenLastCalledWith(1, '11:00', '12:00', 'Africa/Addis_Ababa')
+})
+it('does not remove a published slot when the server rejects removal', async () => {
+  mocks.fetch.mockResolvedValue([{ id: 'slot', weekday: 1, start_time: '09:00', end_time: '10:00', timezone: 'Africa/Addis_Ababa' }])
+  mocks.remove.mockRejectedValue(new Error('Not permitted'))
+  render(<MentorAvailabilityEditor />)
+  fireEvent.click(await screen.findByRole('button', { name: 'Remove Monday 09:00' }))
+  await waitFor(() => expect(mocks.remove).toHaveBeenCalledWith('slot'))
+  await screen.findByRole('alert')
+  expect(screen.getByRole('button', { name: 'Remove Monday 09:00' })).toBeTruthy()
+})

@@ -1,0 +1,48 @@
+import { beforeEach, afterEach, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import MentorshipHub from '../src/pages/MentorshipHub'
+const mocks = vi.hoisted(() => ({ mentors: vi.fn(), requests: vi.fn(), sessions: vi.fn(), rpc: vi.fn() }))
+vi.mock('../src/lib/mentorship', () => ({ fetchVerifiedMentors: mocks.mentors, fetchMyMentorshipRequests: mocks.requests, fetchMyMentorshipSessions: mocks.sessions }))
+vi.mock('../src/lib/supabase', () => ({ supabase: { rpc: mocks.rpc } }))
+vi.mock('../src/pages/Mentorship', () => ({ default: ({ mode, initialGoal, stageKey }: { mode: string; initialGoal: string; stageKey: string }) => <p>Workspace: {mode}; goal: {initialGoal}; stage: {stageKey}</p> }))
+vi.mock('../src/pages/LearnerTools', () => ({ default: () => <p>Saved MELA goal editor</p> }))
+beforeEach(() => {
+  vi.resetAllMocks()
+  mocks.mentors.mockResolvedValue([]); mocks.requests.mockResolvedValue([]); mocks.sessions.mockResolvedValue([])
+  mocks.rpc.mockResolvedValue({ data: { active_plan: { title: 'Prepare for engineering' }, steps: [{ id: 'step', title: 'Study algebra', status: 'completed' }] }, error: null })
+})
+afterEach(cleanup)
+it('shows the saved goal and carries it with grade restrictions to mentor matching', async () => {
+  render(<MentorshipHub onBack={vi.fn()} onNavigate={vi.fn()} stageKey="school_9_10" />)
+  await screen.findByText('Prepare for engineering')
+  fireEvent.click(screen.getByRole('button', { name: 'Match mentors to my goal' }))
+  expect(await screen.findByText(/Workspace: directory; goal: Prepare for engineering; stage: school_9_10/)).toBeTruthy()
+})
+it('connects resource worksheets, the saved goal editor and safety navigation', async () => {
+  const navigate = vi.fn()
+  render(<MentorshipHub onBack={vi.fn()} onNavigate={navigate} />)
+  await screen.findByText('Prepare for engineering')
+  fireEvent.click(screen.getByRole('button', { name: 'Resources' }))
+  expect(screen.getByText('Scholarship preparation checklist')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Open Scholarship Hub' }))
+  expect(navigate).toHaveBeenCalledWith('scholarships')
+  fireEvent.click(screen.getByRole('button', { name: 'Goals & Learning Plan' }))
+  await screen.findByText('Saved MELA goal editor')
+  fireEvent.click(screen.getByRole('button', { name: 'Guardian & Safety Center' }))
+  expect(navigate).toHaveBeenCalledWith('safety')
+})
+it('does not turn session attendance or self-tracked steps into a verified achievement', async () => {
+  render(<MentorshipHub onBack={vi.fn()} onNavigate={vi.fn()} />)
+  await screen.findByText('Prepare for engineering')
+  fireEvent.click(screen.getByRole('button', { name: 'Progress & Achievements' }))
+  await screen.findByText('No completed sessions recorded.')
+  expect(screen.getByText(/Attending a session does not automatically earn a credential/)).toBeTruthy()
+  expect(screen.getByRole('progressbar').getAttribute('value')).toBe('1')
+})
+it('offers retry instead of reporting empty results when overview loading fails', async () => {
+  mocks.requests.mockRejectedValueOnce(new Error('Connection failed'))
+  render(<MentorshipHub onBack={vi.fn()} onNavigate={vi.fn()} />)
+  expect((await screen.findByRole('alert')).textContent).toContain('Connection failed')
+  fireEvent.click(screen.getByRole('button', { name: 'Retry overview' }))
+  expect(await screen.findByText('Prepare for engineering')).toBeTruthy()
+})

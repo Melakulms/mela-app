@@ -17,7 +17,7 @@ const Practice = lazy(() => import('./pages/Practice'))
 const OpportunityHub = lazy(() => import('./pages/OpportunityHub'))
 const StudyMaterials = lazy(() => import('./pages/StudyMaterials'))
 const SkillAcademy = lazy(() => import('./pages/SkillAcademy'))
-const Mentorship = lazy(() => import('./pages/Mentorship'))
+const Mentorship = lazy(() => import('./pages/MentorshipHub'))
 const CareerPassport = lazy(() => import('./pages/CareerPassport'))
 const EmployerPortal = lazy(() => import('./pages/EmployerPortal'))
 const AiCareerCoach = lazy(() => import('./pages/AiCareerCoach'))
@@ -350,7 +350,7 @@ export default function App() {
           {studentView === 'opportunities' && <OpportunityHub onBack={() => setStudentView('dashboard')} />}
           {studentView === 'materials' && <StudyMaterials stageKey={profile.education_stage_key} gradeLevel={profile.grade_level} onBack={() => setStudentView('dashboard')} onOpenQuestionBank={() => setStudentView('question-bank')} />}
           {studentView === 'academy' && <SkillAcademy onBack={() => setStudentView('dashboard')} />}
-          {studentView === 'mentorship' && <Mentorship stageKey={profile.education_stage_key} onOpenSafety={() => setStudentView('safety')} onBack={() => setStudentView('dashboard')} />}
+          {studentView === 'mentorship' && <Mentorship preferredLanguage={profile.preferred_language} onNavigate={setStudentView} stageKey={profile.education_stage_key} onBack={() => setStudentView('dashboard')} />}
           {studentView === 'passport' && <CareerPassport stageKey={profile.education_stage_key} gradeLevel={profile.grade_level} onNavigate={setStudentView} onBack={() => setStudentView('dashboard')} />}
           {studentView === 'coach' && <AiCareerCoach key={profile.id} userId={profile.id} onBack={() => setStudentView('dashboard')} />}
           {studentView === 'arena' && <Arena onBack={() => setStudentView('dashboard')} />}

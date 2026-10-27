@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import type { MentorAvailability } from './mentor-availability'
 
 export interface Mentor {
   user_id: string
@@ -9,6 +10,9 @@ export interface Mentor {
   years_experience: number | null
   rating_average: number
   rating_count: number
+  expertise?: string[] | null
+  languages?: string[] | null
+  availability?: MentorAvailability[]
 }
 
 export interface MyMentorshipRequest {
@@ -47,7 +51,7 @@ async function requireUserId(): Promise<string> {
 export async function fetchVerifiedMentors(): Promise<Mentor[]> {
   const { data: mentors, error } = await supabase
     .from('mentor_profiles')
-    .select('user_id, headline, bio, organization, years_experience, rating_average, rating_count')
+    .select('user_id, headline, bio, organization, years_experience, rating_average, rating_count, expertise, languages')
     .eq('verified', true)
     .eq('active', true)
   if (error) throw error
@@ -56,8 +60,11 @@ export async function fetchVerifiedMentors(): Promise<Mentor[]> {
   const { data: profiles, error: pErr } = await supabase.from('profiles').select('id, full_name').in('id', ids)
   if (pErr) throw pErr
   const nameById = new Map((profiles ?? []).map((p) => [p.id, p.full_name]))
+  const { data: availability, error: availabilityError } = await supabase.from('mentor_availability').select('id,mentor_id,weekday,start_time,end_time,timezone,active').in('mentor_id', ids).eq('active', true).order('weekday').order('start_time')
+  if (availabilityError) throw availabilityError
   return mentors.map((m) => ({
     ...m,
+    availability: (availability ?? []).filter(slot => slot.mentor_id === m.user_id),
     rating_average: Number(m.rating_average ?? 0),
     rating_count: Number(m.rating_count ?? 0),
     full_name: nameById.get(m.user_id) ?? 'MELA mentor',

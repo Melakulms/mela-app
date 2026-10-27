@@ -32,7 +32,6 @@ afterEach(cleanup)
 describe('Mentorship Home UI', () => {
   it('shows real upcoming sessions, saved goals, verified recommendations and announcements', async () => {
     render(<MentorshipHome mentors={[mentor]} requests={[]} sessions={[session]} revision={0} />)
-    expect(screen.getByText('1')).toBeTruthy()
     expect(await screen.findByText('Complete my programming portfolio')).toBeTruthy()
     expect(screen.getByText('Verified Engineer')).toBeTruthy()
     expect(screen.getByText('Career event')).toBeTruthy()

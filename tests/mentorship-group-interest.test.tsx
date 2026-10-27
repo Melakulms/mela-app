@@ -2,12 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import MentorshipGroupInterest from '../src/components/MentorshipGroupInterest'
 
-const mocks = vi.hoisted(() => ({ user:vi.fn(), read:vi.fn(), insert:vi.fn() }))
+const mocks = vi.hoisted(() => ({ user:vi.fn(), read:vi.fn(), attendanceRead:vi.fn(), insert:vi.fn() }))
 vi.mock('../src/lib/supabase', () => ({
   supabase:{
     auth:{getUser:mocks.user},
     from:()=>({
-      select:()=>({eq:mocks.read}),
+      select:()=>({eq:mocks.read,in:mocks.attendanceRead}),
       insert:mocks.insert,
     }),
   },
@@ -22,6 +22,7 @@ beforeEach(()=>{
   vi.clearAllMocks()
   mocks.user.mockResolvedValue({data:{user:{id:'learner-1'}},error:null})
   mocks.read.mockResolvedValue({data:[],error:null})
+  mocks.attendanceRead.mockResolvedValue({data:[],error:null})
   mocks.insert.mockResolvedValue({error:null})
 })
 afterEach(cleanup)
@@ -44,6 +45,15 @@ describe('mentorship group applications',()=>{
     const alert=await screen.findByRole('alert')
     expect(alert.textContent).toContain('verified eligible adult learner')
     expect(screen.queryByText(/No meeting or place is confirmed/)).toBeNull()
+  })
+  it('shows approved learner own manually reported group attendance without credentials',async()=>{
+    mocks.read.mockResolvedValue({data:[{id:'interest-1',group_id:'group-1',status:'approved'}],error:null})
+    mocks.attendanceRead.mockResolvedValue({data:[{interest_id:'interest-1',status:'reported_present'}],error:null})
+    render(<MentorshipGroupInterest groups={groups}/>)
+    expect(await screen.findByText(/Administrator reported attendance/)).toBeTruthy()
+    expect(screen.getByText(/Approval is not proof of a completed meeting or achievement/)).toBeTruthy()
+    expect(mocks.attendanceRead).toHaveBeenCalledTimes(1)
+    expect(screen.queryByText(/Earned Career Passport/)).toBeNull()
   })
   it('shows real empty directory without invented programs',async()=>{
     render(<MentorshipGroupInterest groups={[]}/>)

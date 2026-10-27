@@ -82,7 +82,7 @@ export default function MentorshipHome({ mentors, requests, sessions, stageKey, 
         ? <p className="muted">Direct mentorship is not available for your school stage. Continue with your approved teacher and guardian.</p>
         : recommendations.length > 0
           ? <>
-              {stageKey === 'school_11_12' && <p className="muted">Any request still requires guardian verification or adult eligibility.</p>}
+              {stageKey === 'school_11_12' && <p className="muted">School Grades 11–12 currently require verified guardian clearance before direct mentorship.</p>}
               <div className="module-grid">
                 {recommendations.map((mentor) => <article key={mentor.user_id} className="module-card" style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}>
                   <h4>{mentor.full_name ?? 'MELA mentor'}</h4>

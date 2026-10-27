@@ -31,7 +31,9 @@ export default function MentorAvailabilityManager() {
         .eq('mentor_id', auth.user.id)
         .order('weekday', { ascending: true })
       if (fetchError) throw fetchError
-      setSlots((data ?? []) as MentorAvailability[])
+      setSlots((data ?? []).filter((slot) => Number.isInteger(slot.weekday) &&
+        typeof slot.id === 'string' && typeof slot.start_time === 'string' &&
+        typeof slot.end_time === 'string' && typeof slot.timezone === 'string') as MentorAvailability[])
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not load availability.')
     } finally {

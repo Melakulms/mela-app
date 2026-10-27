@@ -469,3 +469,19 @@ html[data-mela-reading='compact'] .lesson-content p { line-height: 1.35; }
 .profile-access-diagnostic h2 { margin-top:0; }
 .profile-access-diagnostic textarea { display:block; width:100%; margin:0.5rem 0; min-height:10rem; color:var(--ink); background:var(--surface); border:1px solid var(--line); border-radius:0.5rem; padding:0.7rem; font-family:ui-monospace,monospace; font-size:0.83rem; }
 @media(max-width:540px){ .profile-access-diagnostic { margin:0.75rem; } }
+
+/* Mentorship workspaces: low-data cards and responsive controls. */
+.mentorship-hero { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; padding:1.5rem; border-radius:1rem; background:linear-gradient(120deg,#0f6146,#16875f); color:#fff; }
+.mentorship-hero h1 { color:#fff; margin:.65rem 0; }
+.mentorship-navigation { display:flex; flex-wrap:wrap; gap:.5rem; margin:1rem 0; }
+.mentorship-navigation .btn { white-space:normal; }
+.mentorship-panel { background:var(--surface); border:1px solid var(--line); border-radius:.85rem; padding:1.2rem; margin-bottom:1rem; min-width:0; overflow-wrap:anywhere; }
+.mentorship-panel h3 { margin-top:0; }
+.mentorship-panel li { margin-bottom:.75rem; }
+.mentorship-panel details { margin:.8rem 0; }
+.mentorship-panel progress { display:block; width:100%; accent-color:#16875f; margin:1rem 0; }
+.mentorship-columns, .mentorship-card-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; }
+.mentorship-hub .dash-main { padding:0; }
+.mentorship-hub .module-card { min-width:0; overflow-wrap:anywhere; }
+.mentorship-hub summary { cursor:pointer; padding:.5rem 0; }
+@media(max-width:640px) { .mentorship-columns,.mentorship-card-grid { grid-template-columns:minmax(0,1fr); } .mentorship-hero { padding:1rem; } .mentorship-navigation .btn { flex:1 1 9rem; } }

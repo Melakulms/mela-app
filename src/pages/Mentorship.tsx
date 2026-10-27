@@ -12,10 +12,18 @@ import {
   type MyMentorshipRequest,
 } from '../lib/mentorship'
 import { useI18n } from '../i18n'
+import { discoverMentors, MENTORSHIP_CATEGORIES, WEEKDAYS, mentorshipTime } from '../lib/mentor-discovery'
 
-export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack: () => void; stageKey?: string | null; onOpenSafety?: () => void }) {
+export default function Mentorship({ onBack, stageKey, onOpenSafety, mode = 'all', initialCategory = '', initialGoal = '', preferredLanguage = '', onBusyChange }: { onBack: () => void; stageKey?: string | null; onOpenSafety?: () => void; mode?: 'all' | 'directory' | 'requests' | 'sessions'; initialCategory?: string; initialGoal?: string; preferredLanguage?: string; onBusyChange?: (busy: boolean) => void }) {
   const { t } = useI18n()
   const [query, setQuery] = useState('')
+  const [category, setCategory] = useState(initialCategory)
+  const [language, setLanguage] = useState('')
+  const [availableOnly, setAvailableOnly] = useState(false)
+  const [matchGoal, setMatchGoal] = useState(initialGoal)
+  const showDirectory = mode === 'all' || mode === 'directory'
+  const showRequests = mode === 'all' || mode === 'requests'
+  const showSessions = mode === 'all' || mode === 'sessions'
   const [mentors, setMentors] = useState<Mentor[] | null>(null)
   const [requests, setRequests] = useState<MyMentorshipRequest[]>([])
   const [sessions, setSessions] = useState<MentorshipSession[]>([])
@@ -56,6 +64,9 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
   const mentorNames = new Map((mentors ?? []).map(m => [m.user_id, m.full_name ?? 'MELA mentor']))
   const requestTopics = new Map(requests.map(r => [r.id, r.topic]))
   const localZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  const matches = discoverMentors(mentors ?? [], { query, category, language, availableOnly, goal: matchGoal, preferredLanguage })
+  const languages = [...new Set((mentors ?? []).flatMap(m => m.languages ?? []))].sort()
+  useEffect(() => { onBusyChange?.(!!busy); return () => onBusyChange?.(false) }, [busy, onBusyChange])
 
   const runAction = async (key: string, action: () => Promise<void>) => {
     if (actionLock.current) return
@@ -136,8 +147,8 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       {loading && <p className="muted" role="status">Loading mentorship…</p>}
       {!loading && error && <button className="btn btn-secondary" disabled={!!busy} onClick={() => setRevision((value) => value + 1)}>Retry mentorship</button>}
 
-      {!loading && !error && sessions.length === 0 && <p className="empty-panel">No sessions yet. Once a mentor accepts your request, your scheduled session will appear here.</p>}
-      {!loading && sessions.length > 0 && <>
+      {showSessions && !loading && !error && sessions.length === 0 && <p className="empty-panel">No sessions yet. Once a mentor accepts your request, your scheduled session will appear here.</p>}
+      {showSessions && !loading && sessions.length > 0 && <>
         <div className="section-heading"><h2>Your sessions</h2></div>
         <div className="list-panel">
           {sessions.map((session) => {
@@ -146,7 +157,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
             return <div className="list-row" key={session.id}>
               <div style={{ flex: 1 }}>
                 <strong>{requestTopics.get(session.request_id ?? '') ?? 'Mentorship session'} · {mentorNames.get(session.mentor_id ?? '') ?? 'Your mentor'}</strong>
-                <div className="list-row-title">{new Date(session.scheduled_at).toLocaleString()}</div>
+                <div className="list-row-title">{mentorshipTime(session.scheduled_at)}</div>
                 <div className="list-row-meta">{session.duration_min ?? 30} minutes · {session.status}</div>
                 {session.notes && <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}><strong>Follow-up notes: </strong>{session.notes}</p>}
                 {session.status === 'completed' && session.rating !== null && <div className="list-row-meta">Rated {session.rating}/5{session.rating_comment ? ` · ${session.rating_comment}` : ''}</div>}
@@ -187,7 +198,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         </div>
       </>}
 
-      {!loading && requests.length > 0 && <>
+      {showRequests && !loading && requests.length > 0 && <>
         <div className="section-heading"><h2>Your requests</h2></div>
         <div className="list-panel">
           {requests.map((r) => <div className="list-row" key={r.id}>
@@ -207,18 +218,37 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         </div>
       </>}
 
-      {!loading && <div className="section-heading"><h2>Verified mentors</h2></div>}
-      {!loading && mentors && mentors.length === 0 && <div className="empty-panel">No verified mentors are available yet.</div>}
-      {!loading && mentors && mentors.length > 0 && <div className="field"><label htmlFor="mentor-search">Find a mentor</label><input id="mentor-search" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search names, experience or topics" /></div>}
-      {!loading && mentors && mentors.length > 0 && !mentors.some(m => `${m.full_name} ${m.headline ?? ''} ${m.bio ?? ''} ${m.organization ?? ''}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())) && <p className="empty-panel">No mentors match your search.</p>}
-      {!loading && mentors && mentors.length > 0 && <div className="module-grid">
-        {mentors.filter(m => `${m.full_name} ${m.headline ?? ''} ${m.bio ?? ''} ${m.organization ?? ''}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())).map((m) => {
+      {showRequests && !loading && !error && !requests.length && <p className="empty-panel">No mentorship requests yet. Find a verified mentor to explain your goal.</p>}
+      {showDirectory && !loading && <div className="section-heading"><h2>Verified mentors</h2></div>}
+      {showDirectory && !loading && mentors && mentors.length === 0 && <div className="empty-panel">No verified mentors are available yet.</div>}
+      {showDirectory && !loading && mentors && mentors.length > 0 && <div className="field"><label htmlFor="mentor-search">Find a mentor</label><input id="mentor-search" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search names, experience or topics" /></div>}
+      {showDirectory && !loading && <div className="mentorship-panel">
+        <div className="mentorship-columns">
+          <div className="field"><label htmlFor="mentor-category">Guidance category</label><select id="mentor-category" value={category} disabled={!!busy} onChange={e => setCategory(e.target.value)}><option value="">All categories</option>{MENTORSHIP_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}</select></div>
+          <div className="field"><label htmlFor="mentor-language">Mentor language</label><select id="mentor-language" value={language} disabled={!!busy} onChange={e => setLanguage(e.target.value)}><option value="">Any language</option>{languages.map(l => <option key={l}>{l}</option>)}</select></div>
+        </div>
+        <div className="field"><label htmlFor="mentor-match-goal">Match to my goal</label><input id="mentor-match-goal" value={matchGoal} maxLength={300} disabled={!!busy} onChange={e => setMatchGoal(e.target.value)} placeholder="e.g. Engineering scholarship preparation" /></div>
+        <label><input type="checkbox" checked={availableOnly} disabled={!!busy} onChange={e => setAvailableOnly(e.target.checked)} /> Only mentors with published weekly times</label>
+        <p className="field-hint">Suggestions use goal keywords and your preferred language. They do not certify suitability or change your eligibility. Read the profile before requesting.</p>
+        <p role="status">{matches.length} matching {matches.length === 1 ? 'mentor' : 'mentors'}</p>
+        {!matches.length && !!mentors?.length && <p>No mentors match your search. Try another category or language.</p>}
+      </div>}
+      {showDirectory && !loading && mentors && mentors.length > 0 && <div className="module-grid">
+        {matches.map(({ mentor: m, reasons }) => {
           const topicId = `mentor-topic-${m.user_id}`
           const messageId = `mentor-message-${m.user_id}`
           return <div className="module-card" key={m.user_id} style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}>
             <h3 style={{ color: 'var(--ink)' }}>{m.full_name}</h3>
             <p style={{ color: 'var(--muted)' }}>{m.headline ?? m.organization ?? 'MELA mentor'}</p>
+            <span className="pill">Verified mentor</span>
+            {reasons.length > 0 && <p className="field-hint">Suggested because: {reasons.join(' · ')}</p>}
             {m.bio && <p>{m.bio}</p>}
+            <details><summary>Profile, expertise & availability</summary>
+              <p>Listed expertise: {m.expertise?.join(', ') || 'Not listed'}</p>
+              <p>Languages: {m.languages?.join(', ') || 'Not listed'}</p>
+              {m.availability?.length ? <ul>{m.availability.map(slot => <li key={slot.id}>{WEEKDAYS[slot.weekday]} · {slot.start_time.slice(0, 5)}–{slot.end_time.slice(0, 5)} · {slot.timezone}</li>)}</ul> : <p>No weekly times published. Propose a time in your request.</p>}
+              <p className="field-hint">Weekly times are preferences, not a confirmed booking. All times use a 24-hour clock.</p>
+            </details>
             {m.organization && <p>{m.organization}</p>}
             {m.years_experience != null && <p>{m.years_experience} years of experience</p>
             }

@@ -9,7 +9,7 @@ import { goalOptionsForStage } from '../lib/transition-goals'
 
 type ToolView = 'mastery' | 'graph' | 'next' | 'wallet'
 
-export default function LearnerTools({ view, onBack, onNavigate }: { view: ToolView; onBack: () => void; onNavigate?: (view: StudentView) => void }) {
+export default function LearnerTools({ view, onBack, onNavigate, onBusyChange }: { view: ToolView; onBack: () => void; onNavigate?: (view: StudentView) => void; onBusyChange?: (busy: boolean) => void }) {
   const { t } = useI18n()
   const [savingStep, setSavingStep] = useState<string | null>(null)
   const [careerPath, setCareerPath] = useState('')
@@ -25,6 +25,7 @@ export default function LearnerTools({ view, onBack, onNavigate }: { view: ToolV
   const [targetDate, setTargetDate] = useState('')
   const [revision, setRevision] = useState(0)
   const [busy, setBusy] = useState(false)
+  useEffect(() => { onBusyChange?.(busy || savingStep !== null); return () => onBusyChange?.(false) }, [busy, savingStep, onBusyChange])
 
   useEffect(() => {
     let active = true

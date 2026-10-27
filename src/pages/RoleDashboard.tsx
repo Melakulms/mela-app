@@ -1,3 +1,4 @@
+import MentorAvailabilityEditor from '../components/MentorAvailabilityEditor'
 import AICourseLessonReview from '../components/AICourseLessonReview'
 import TeacherClassrooms from '../components/TeacherClassrooms'
 import TeacherCredentialUpload from '../components/TeacherCredentialUpload'
@@ -159,6 +160,7 @@ export default function RoleDashboard({ role, fullName }: Props) {
       {teacherApproved && <EducatorContentReview />}
       {teacherApproved && <AICourseLessonReview />}
       {role === 'mentor' && !mentorApproved && <div className="banner banner-info" role="status">Your mentorship tools require independent mentor verification and an active profile. You can review your account status while awaiting approval.</div>}
+      {mentorApproved && <MentorAvailabilityEditor />}
       {mentorApproved && <MentorLifecycle onChanged={() => setRevision(value => value + 1)} />}
       {role === 'partner' && <div className="banner banner-info" role="status">Partner programs, scholarships and reports require approved institutional membership and server-side permissions. This view shows only your own membership status.</div>}
       {role === 'parent' && <ParentLearnerProgress />}

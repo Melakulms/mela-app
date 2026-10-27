@@ -1,0 +1,38 @@
+name: Mentorship mobile workspace check
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/mentor*'
+      - 'scripts/mentorship-mobile-fixture.mjs'
+      - '.github/workflows/mentorship-workspace-check.yml'
+permissions:
+  contents: read
+jobs:
+  mentorship-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install isolated browser runner
+        run: |
+          mkdir -p "$RUNNER_TEMP/mela-playwright"
+          npm install --prefix "$RUNNER_TEMP/mela-playwright" --no-save --no-package-lock --ignore-scripts playwright@1.58.2
+          ln -s "$RUNNER_TEMP/mela-playwright/node_modules/playwright" node_modules/playwright
+          "$RUNNER_TEMP/mela-playwright/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Exercise mentorship at 360px using mock data
+        run: node scripts/mentorship-mobile-fixture.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mentorship-mobile-fixture
+          path: mentorship-smoke-artifacts/
+          retention-days: 3

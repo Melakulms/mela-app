@@ -10,7 +10,7 @@ import MentorshipGroupInterest from './MentorshipGroupInterest'
 
 type AcceptedRequest = { id: string; mentee_id: string; topic: string; status: string }
 
-export default function MentorshipLearningWorkspace({ mode }: { mode: 'learner' | 'mentor' }) {
+export default function MentorshipLearningWorkspace({ mode, stageKey }: { mode: 'learner' | 'mentor'; stageKey?: string | null }) {
   const [workspace, setWorkspace] = useState<MentorshipWorkspace | null>(null)
   const [accepted, setAccepted] = useState<AcceptedRequest[]>([])
   const [error, setError] = useState('')
@@ -173,7 +173,10 @@ export default function MentorshipLearningWorkspace({ mode }: { mode: 'learner' 
       </section>
       <section id="mentorship-groups" className="empty-panel" style={{ textAlign:'left' }}>
         <h3>13. Group mentorship</h3>
-        <MentorshipGroupInterest groups={workspace.groups} />
+        {mode === 'mentor' ? <p className="muted">Verified facilitators can propose supervised groups through the Central Admin review workflow.</p>
+          : !['university','college_tvet'].includes(stageKey ?? '') ?
+            <p className="muted">Group applications currently require adult university or TVET eligibility. You may use the approved individual mentorship resources instead.</p>
+            : <MentorshipGroupInterest groups={workspace.groups} />}
       </section>
     </>}
   </section>

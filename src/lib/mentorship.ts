@@ -17,6 +17,8 @@ export interface MyMentorshipRequest {
   topic: string | null
   status: string
   created_at: string
+  message?: string | null
+  preferred_at?: string | null
 }
 
 export interface MentorshipSession {
@@ -32,6 +34,7 @@ export interface MentorshipSession {
   cancelled_at: string | null
   rating: number | null
   rating_comment: string | null
+  notes?: string | null
 }
 
 async function requireUserId(): Promise<string> {
@@ -65,7 +68,7 @@ export async function fetchMyMentorshipRequests(): Promise<MyMentorshipRequest[]
   const userId = await requireUserId()
   const { data, error } = await supabase
     .from('mentorship_requests')
-    .select('id, mentor_id, topic, status, created_at')
+    .select('id, mentor_id, topic, message, preferred_at, status, created_at')
     .eq('mentee_id', userId)
     .order('created_at', { ascending: false })
   if (error) throw error
@@ -76,7 +79,7 @@ export async function fetchMyMentorshipSessions(): Promise<MentorshipSession[]> 
   const userId = await requireUserId()
   const { data, error } = await supabase
     .from('mentorship_sessions')
-    .select('id,request_id,mentor_id,mentee_id,scheduled_at,duration_min,status,call_room_id,completed_at,cancelled_at')
+    .select('id,request_id,mentor_id,mentee_id,scheduled_at,duration_min,status,call_room_id,completed_at,cancelled_at,notes')
     .or(`mentor_id.eq.${userId},mentee_id.eq.${userId}`)
     .order('scheduled_at', { ascending: false })
   if (error) throw error
@@ -109,7 +112,7 @@ export async function fetchMyMentorshipSessions(): Promise<MentorshipSession[]> 
   }) as MentorshipSession[]
 }
 
-export async function requestMentor(mentorId: string, topic: string, message: string): Promise<void> {
+export async function requestMentor(mentorId: string, topic: string, message: string, preferredAt = ''): Promise<void> {
   const cleanMentorId = mentorId.trim()
   const cleanTopic = topic.trim()
   const cleanMessage = message.trim()
@@ -117,6 +120,8 @@ export async function requestMentor(mentorId: string, topic: string, message: st
   if (cleanTopic.length < 2) throw new Error('Add a short topic before sending the request.')
   if (cleanTopic.length > 120) throw new Error('Keep the mentorship topic to 120 characters or fewer.')
   if (cleanMessage.length > 1000) throw new Error('Keep the message to 1000 characters or fewer.')
+  const preferred = preferredAt ? new Date(preferredAt) : null
+  if (preferred && (!Number.isFinite(preferred.getTime()) || preferred.getTime() <= Date.now())) throw new Error('Choose a future preferred time.')
 
   const userId = await requireUserId()
   const { error } = await supabase.from('mentorship_requests').insert({
@@ -124,6 +129,7 @@ export async function requestMentor(mentorId: string, topic: string, message: st
     mentor_id: cleanMentorId,
     topic: cleanTopic,
     message: cleanMessage || null,
+    preferred_at: preferred?.toISOString() ?? null,
     status: 'pending',
   })
   if (error) throw error
@@ -157,6 +163,7 @@ export async function cancelMentorshipSession(sessionId: string, reason = ''): P
 }
 
 export async function completeMentorshipSession(sessionId: string, notes = ''): Promise<void> {
+  if (notes.trim().length > 2000) throw new Error('Keep follow-up notes to 2000 characters or fewer.')
   const { error } = await supabase.rpc('complete_mentorship_session', {
     p_session_id: sessionId,
     p_notes: notes.trim() || null,
@@ -176,3 +183,4 @@ export async function rateMentorshipSession(sessionId: string, rating: number, c
   })
   if (error) throw error
 }
+

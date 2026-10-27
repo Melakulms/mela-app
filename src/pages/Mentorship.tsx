@@ -17,6 +17,7 @@ import MentorshipLearningWorkspace from '../components/MentorshipLearningWorkspa
 import MentorshipSectionDirectory from '../components/MentorshipSectionDirectory'
 import MentorApplication from '../components/MentorApplication'
 import MentorshipAdultEligibility from '../components/MentorshipAdultEligibility'
+import MentorshipSafetyReporting from '../components/MentorshipSafetyReporting'
 import { fetchMyMentorshipAccess, type MentorshipAccess } from '../lib/mentorship-access'
 import { discoverMentors, getMentorLanguages, MENTORSHIP_CATEGORIES, mentorMatchesCategory, WEEKDAYS, type MentorshipCategory } from '../lib/mentor-discovery'
 
@@ -176,6 +177,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       {!accessChecking && !accessError && guardianReviewRequired && <p role="status" className="banner banner-info">Your verified guardian clearance is not yet confirmed. Open Safety & Privacy to request or review guardian consent.</p>}
       {['university','college_tvet'].includes(stageKey ?? '') && <MentorshipAdultEligibility onApprovalChange={setAdultReviewApproved} />}
       <section id="mentorship-safety" className="empty-panel" style={{ textAlign:'left' }}><h2>15. Guardian and Safety Center</h2><p>Keep discussions inside approved MELA pathways. Report abusive or unsafe contact. Learners who require verified guardian consent must obtain it before direct mentorship.</p>{onOpenSafety && <button className="btn btn-secondary" disabled={!!busy} onClick={onOpenSafety}>Safety, guardian consent & reporting</button>}</section>
+      <MentorshipSafetyReporting mentors={mentors ?? []} requests={requests} sessions={sessions} />
       <p className="muted">Session times use your device time zone: {localZone}.</p>
       <details id="mentorship-resources" className="empty-panel" style={{ textAlign: 'left' }}>
         <summary>Prepare for a useful session</summary>

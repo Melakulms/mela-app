@@ -59,7 +59,7 @@ export default function MentorApplication() {
         applicant_id: auth.user.id, headline: headline.trim(), expertise: topics,
         languages: spoken, background: background.trim(),
       })
-      if (insertError) throw insertError
+      if (insertError) throw new Error(insertError.message || 'Application could not be submitted.')
       setNotice('Application submitted for administrator review. You are not yet approved to mentor.')
       setRevision((current) => current + 1)
     } catch (cause) {

@@ -11,6 +11,38 @@ const mentor = (overrides: Partial<Mentor> = {}): Mentor => ({
 })
 
 describe('mentorship discovery (verified profiles only, supplied by the server)', () => {
+  it('matches actual published weekday hours rather than assuming all mentors are bookable',()=>{
+    const monday = mentor({user_id:'monday',availability:[{
+      id:'slot-1',weekday:1,start_time:'09:00',end_time:'10:00',timezone:'Africa/Addis_Ababa',
+    }]})
+    const empty = mentor({user_id:'none',availability:[]})
+    expect(discoverMentors([monday,empty],{
+      query:'',category:'all',language:'',weekday:1,
+    }).map(x=>x.user_id)).toEqual(['monday'])
+    expect(discoverMentors([monday,empty],{
+      query:'',category:'all',language:'',weekday:5,
+    })).toEqual([])
+    expect(discoverMentors([monday,empty],{
+      query:'',category:'all',language:'',onlyWithAvailability:true,
+    }).map(x=>x.user_id)).toEqual(['monday'])
+  })
+  it('sorts genuine session ratings above unrated profiles without inventing score',()=>{
+    const unrated=mentor({user_id:'unrated',rating_average:0,rating_count:0})
+    const rated=mentor({user_id:'rated',rating_average:4.1,rating_count:10})
+    const higher=mentor({user_id:'high',rating_average:4.8,rating_count:2})
+    expect(discoverMentors([unrated,rated,higher],{
+      query:'',category:'all',language:'',sort:'rated',
+    }).map(x=>x.user_id)).toEqual(['high','rated','unrated'])
+  })
+  it('uses actual years-of-experience values for optional comparison',()=>{
+    const unknown=mentor({user_id:'unknown',years_experience:null})
+    const senior=mentor({user_id:'senior',years_experience:15})
+    const junior=mentor({user_id:'junior',years_experience:2})
+    expect(discoverMentors([unknown,junior,senior],{
+      query:'',category:'all',language:'',sort:'experience',
+    }).map(x=>x.user_id)).toEqual(['senior','junior','unknown'])
+  })
+
   it('matches expertise and language without relying on inferred or fake mentors', () => {
     const mentors = [
       mentor(),

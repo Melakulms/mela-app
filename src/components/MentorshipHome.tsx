@@ -39,7 +39,7 @@ export default function MentorshipHome({ mentors, requests, sessions, stageKey, 
     : []
   const blockedStage = ['school_1_6', 'school_7_8', 'school_9_10'].includes(stageKey ?? '')
 
-  return <section className="empty-panel" aria-label="Mentorship Home" style={{ textAlign: 'left', borderTop: '4px solid #16875f' }}>
+  return <section id="mentorship-home" className="empty-panel" aria-label="Mentorship Home" style={{ textAlign: 'left', borderTop: '4px solid #16875f' }}>
     <h2>Mentorship Home</h2>
     <p>Build your next step with trusted guidance. Your overview uses your actual MELA requests, sessions, and learning profile.</p>
 

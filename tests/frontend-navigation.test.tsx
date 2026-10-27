@@ -46,7 +46,7 @@ describe('Learning dashboard', () => {
     mocks.dashboard.mockRejectedValueOnce(new Error('offline'))
     render(<StudentDashboard onNavigate={vi.fn()} />)
     await screen.findByRole('alert')
-    expect(screen.getByRole('button', { name: 'Open' })).toBeTruthy()
+    expect(screen.getAllByRole('button', { name: 'Open' }).length).toBeGreaterThanOrEqual(3)
   })
   it('searches learning tools and keeps explicitly disabled question banks disabled', async () => {
     mocks.dashboard.mockResolvedValue({ ...data, feature_flags: { question_bank: false } })

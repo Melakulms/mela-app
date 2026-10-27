@@ -162,7 +162,6 @@ export default function RoleDashboard({ role, fullName }: Props) {
       {teacherApproved && <AICourseLessonReview />}
       {teacherApproved && <details><summary>Apply for independent mentor verification</summary><MentorApplication /></details>}
       {role === 'mentor' && !mentorApproved && <div className="banner banner-info" role="status">Your mentorship tools require independent mentor verification and an active profile. You can review your account status while awaiting approval.</div>}
-      {role === 'mentor' && !mentorApproved && <MentorApplication />}
       {mentorApproved && <MentorLifecycle onChanged={() => setRevision(value => value + 1)} />}
       {mentorApproved && <MentorshipLearningWorkspace mode="mentor" />}
       {role === 'partner' && <div className="banner banner-info" role="status">Partner programs, scholarships and reports require approved institutional membership and server-side permissions. This view shows only your own membership status.</div>}

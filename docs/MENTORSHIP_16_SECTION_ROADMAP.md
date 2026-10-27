@@ -19,10 +19,10 @@ Database migrations were applied **only to staging** `tungqfmypuwzeyrtaseh`. Pro
 | 10 | Resources | Six original approved guide texts published on staging and read-only library | Expanded expert-reviewed references & localization |
 | 11 | Assignments & Challenges | Verified mentor task assignment to accepted mentee, one learner response, one mentor feedback (staging tables/UI) | Verified mentor+adult learner authenticated end-to-end |
 | 12 | Progress & Achievements | Real assignment submission/review counts and self-reported goal tracking | Independent evidence verification and Career Passport awarding **not live** |
-| 13 | Group Mentorship | RLS-protected, admin-published group directory; no invented groups | Controlled enrolment, supervised communications, attendance; **no groups published** |
+| 13 | Group Mentorship | Staging supervised program drafts/publishing, adult-only interest requests/withdrawals, MFA-admin approval and capacity checks; no groups invented | Real MFA administration, verified mentors, real adult learner E2E; supervised meetings and attendance still unavailable |
 | 14 | Mentor Workspace | Existing requests/session management, new availability editor & assignment forms | Mentor applicant-to-verification & full calendar testing |
 | 15 | Guardian/Safety | Safety entry point and existing restriction notices; new assignment RLS ties work to accepted relationships | Guardian and abuse-report end-to-end checks, explicit 11–12 eligibility validation |
-| 16 | Administration | MFA-protected adult applicant intake review built in Central Admin PR #65 | Approve/verify full mentor profiles, credential checks, audit logs, authenticated MFA tests |
+| 16 | Administration | MFA-protected mentor intake queue, overview counts, supervised program drafts and group interest approvals in Central Admin PR #65 | Real admin login/MFA browser tests, mentor credential validation and complete safeguarding cases |
 
 ## New staging-only schema
 
@@ -52,3 +52,13 @@ Every new exposed table has RLS enabled and an explicit policy. No ordinary-user
 - Executed `supabase/tests/mentorship_staging_security_smoke.sql` on staging: **passed** (grants and simulated missing-JWT negative paths, transaction rolled back). This does *not* prove real student sign-in, approved mentor provisioning, or a real session.
 - Direct authenticated INSERT on mentorship_sessions remains revoked; anonymous mentorship RPC execution remains denied. No staged learner or mentor records were created by these tests.
 - Still blocked for production: stage a real approved adult mentor and adult learner, verify guardian and teacher roles, cross-account denial, full session lifecycle, email notifications and mobile testing. No live deployment until gates pass.
+
+## 2026-10-27 supervised group mentoring extension
+
+- Staging migration `20261027123000_mentorship_supervised_groups_staging.sql` added `mentorship_group_interests` (RLS). Adults in approved university/TVET stages with age record and adult-work attestation can request interest in future published groups led by active verified mentors; records start as pending.
+- MFA-verified admins can create **draft** group programs, publish only with a verified active facilitator and future date, and approve/decline interest. Approvals are serialized against the group row so seat limits cannot be bypassed by concurrent approvals; changes are audited. Learners cannot approve themselves, and cannot read other learners' enrollment records.
+- `20261027124500_mentorship_group_program_integrity.sql` prevents reducing group capacity below approved enrollments and changing facilitators for existing approved groups; records audit events.
+- `20261027125500_mentorship_group_review_revalidation.sql` rechecks adult eligibility and future program status at interest submission and approval; expired programs do not accept new requests.
+- The learner app presents approved programs without fabricating meetings; eligible adults can request/withdraw *pending* interest. Central Admin adds supervised program creation/publication and interest review to its MFA-protected section.
+- `supabase/tests/mentorship_groups_staging_smoke.sql` passed on staging with rollback-only simulated denied-action checks. The test cannot prove real login/guardian safeguarding because staging registrations are currently disabled and no approved test mentors exist.
+- **NOT YET BUILT:** real supervised voice/video, enrollment attendance, group messaging, guardian-enabled groups, automatic certificates or Career Passport grants. No production deployment.

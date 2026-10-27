@@ -4,13 +4,13 @@ import { cleanup,fireEvent,render,screen,waitFor } from '@testing-library/react'
 import MentorshipOutcomeReview from '../src/components/MentorshipOutcomeReview'
 
 const mocks=vi.hoisted(()=>({
- getUser:vi.fn(),read:vi.fn(),insert:vi.fn(),update:vi.fn(),
+ getUser:vi.fn(),read:vi.fn(),verificationRead:vi.fn(),insert:vi.fn(),update:vi.fn(),
 }))
 vi.mock('../src/lib/supabase',()=>({
  supabase:{
   auth:{getUser:mocks.getUser},
   from:()=>({
-   select:()=>({eq:()=>({order:()=>({limit:mocks.read})})}),
+   select:()=>({eq:()=>({order:()=>({limit:mocks.read})}),in:mocks.verificationRead}),
    insert:mocks.insert,
    update:mocks.update,
   }),
@@ -25,6 +25,7 @@ beforeEach(()=>{
  vi.clearAllMocks()
  mocks.getUser.mockResolvedValue({data:{user:{id:'learner-1'}},error:null})
  mocks.read.mockResolvedValue({data:[],error:null})
+ mocks.verificationRead.mockResolvedValue({data:[],error:null})
  mocks.insert.mockResolvedValue({data:null,error:null})
  mocks.update.mockReturnValue({eq:()=>({eq:()=>({select:async()=>({data:[{id:'outcome-1'}],error:null})})})})
 })
@@ -50,6 +51,22 @@ describe('mentorship outcome evidence review',()=>{
    category:'career',outcome_text:'I prepared a detailed practice CV using feedback from my mentor.',
   })
   expect(await screen.findByText(/No credential or certificate has been issued/)).toBeTruthy()
+ })
+ it('shows an independent learner evidence decision without issuing a credential',async()=>{
+  mocks.read.mockResolvedValue({data:[{
+    id:'claim-1',session_id:'session-1',learner_id:'learner-1',mentor_id:'mentor-1',
+    category:'career',outcome_text:'I completed a detailed career planning worksheet.',
+    status:'mentor_supported',review_notes:'I supported the outcome after reviewing the work.',
+    created_at:'2026-10-25T10:41:00Z',
+  }],error:null})
+  mocks.verificationRead.mockResolvedValue({data:[{
+    claim_id:'claim-1',decision:'evidence_supported',
+    public_reason:'Independent reviewers inspected the submitted work and approved evidence for this specific learning outcome.',
+  }],error:null})
+  render(<MentorshipOutcomeReview mode="learner" sessions={[completedSession]}/>)
+  expect(await screen.findByText(/Supporting evidence reviewed by MELA administration/)).toBeTruthy()
+  expect(screen.getByText(/This review does not issue a certificate/)).toBeTruthy()
+  expect(mocks.verificationRead).toHaveBeenCalledTimes(1)
  })
  it('requires a verified mentor review note and preserves server denial',async()=>{
   mocks.getUser.mockResolvedValue({data:{user:{id:'mentor-1'}},error:null})

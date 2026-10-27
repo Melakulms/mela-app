@@ -18,7 +18,7 @@
 | 10 | Resource Library | Six originally authored staging guides with keyword and category search; unpublished content excluded | Expert editorial review, translated resources, learning-level validation |
 | 11 | Assignments | Accepted-request mentor task, one learner submission, one mentor feedback, strict relationship RLS | Authenticated active mentor/adult/guardian E2E, suspension denial |
 | 12 | Progress & Achievements | Activity counts and transparent reviewed-task percentage; self-reported goals clearly marked | **Certificates and Career Passport awards NOT LIVE**, need independent evidence approval and fraud controls |
-| 13 | Group Mentorship | Adult-only interest, withdraw, MFA group review and published facilitator approval with capacity lock | Actual approved groups, concurrency, group attendance, moderated communications |
+| 13 | Group Mentorship | Adult-only interest, withdraw, MFA group review and published facilitator approval with capacity lock; MFA-only manual attendance reports for approved participants after a program starts, auditable and visible to the participant | Real participant attendance E2E and independent evidence, group delivery, concurrent approvals, moderated communications; manual reports are not automated meeting verification |
 | 14 | Mentor Workspace | Verified-mentor request/session/availability/task workflow; verified teachers retain dual dashboard | Real onboarding, publishing hours, lifecycle sign-in and mobile task flow |
 | 15 | Guardian & Safety | Guardian access RPC, adult age review, learner/mentor specific incident reports, confidential reporter status | Real verified guardian/child journey, safety escalation SLAs, external help procedures, confidential investigation checks |
 | 16 | Central Admin | Mentor application and credential review, adult identity review, group review, oversight counts, emergency suspension, MFA report triage with private notes | Real AAL2 sessions, distinct reviewers, audit integrity and complete incident management |
@@ -49,3 +49,12 @@
 9. Keep provider video **off** until it meets explicit child safety and consent requirements. No launch certification until those tests pass.
 
 **Status:** All 16 sections have defined implementations or safe disabled-state behavior on development branches. They are **not all functionally complete or production-ready**.
+
+## 2026-10-27: Staging-only manual group attendance reporting
+
+- `20261027201500_mentorship_group_attendance_staging.sql` creates an append-only, one-per-approved-interest attendance report, with RLS, explicit Data API grants and a private MFA-only insert guard. Reports require program start to be at least one hour in the past; approval alone never creates attendance.
+- The report stores a short **participant-visible** explanation and a reviewer identity and writes an admin audit event. It cannot be changed or deleted through ordinary API roles; reviewer must explicitly confirm a real evidence check before the admin UI submits a report.
+- Central Admin PR #65 includes the review form, absence/presence status and error handling. Learner PR #96 displays a participant's own reported status with a disclaimer and no fabricated meeting claims.
+- `supabase/tests/mentorship_group_attendance_staging.sql` PASSED a rollback-only SQL guard check, including anonymous and unauthenticated-MFA authenticated-role denials. This does **not** establish real attendance, genuine reviewed evidence, or authorized MFA sign-in E2E.
+- Zero approved mentor profiles, programs, interests or attendance records currently exist on staging. No meeting provider, certificates, Career Passport award, payments or production changes were introduced.
+- Before release, verify legitimate adult participant and MFA administrator flow, reporting accuracy, privacy, evidence retention/correction policy, mobile display and supervised meeting delivery. Both PRs stay DRAFT.

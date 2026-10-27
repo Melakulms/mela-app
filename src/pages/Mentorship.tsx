@@ -4,9 +4,10 @@ import {
   cancelMentorshipSession,
   fetchMyMentorshipRequests,
   fetchMyMentorshipSessions,
-  fetchVerifiedMentors,
+  fetchVerifiedMentorsPage,
   rateMentorshipSession,
   requestMentor,
+  MENTOR_DIRECTORY_PAGE_SIZE,
   type Mentor,
   type MentorshipSession,
   type MyMentorshipRequest,
@@ -34,6 +35,8 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
   const [onlyWithAvailability,setOnlyWithAvailability] = useState(false)
   const [sortMentors,setSortMentors] = useState<'relevance'|'rated'|'experience'>('relevance')
   const [mentors, setMentors] = useState<Mentor[] | null>(null)
+  const [hasMoreMentors,setHasMoreMentors] = useState(false)
+  const [loadingMoreMentors,setLoadingMoreMentors] = useState(false)
   const [requests, setRequests] = useState<MyMentorshipRequest[]>([])
   const [sessions, setSessions] = useState<MentorshipSession[]>([])
   const [error, setError] = useState('')
@@ -53,6 +56,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
   const [loading, setLoading] = useState(true)
   const [revision, setRevision] = useState(0)
   const actionLock = useRef(false)
+  const directoryLock = useRef(false)
 
   useEffect(() => {
     let active = true
@@ -76,10 +80,11 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
     let active = true
     setLoading(true)
     setError('')
-    Promise.all([fetchVerifiedMentors(), fetchMyMentorshipRequests(), fetchMyMentorshipSessions()])
+    Promise.all([fetchVerifiedMentorsPage(0), fetchMyMentorshipRequests(), fetchMyMentorshipSessions()])
       .then(([m, r, s]) => {
         if (!active) return
-        setMentors(m)
+        setMentors(m.mentors)
+        setHasMoreMentors(m.hasMore)
         setRequests(r)
         setSessions(s)
       })
@@ -89,6 +94,25 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [revision])
+
+  const loadMoreMentors = async () => {
+    if(directoryLock.current || !hasMoreMentors || !mentors)return
+    directoryLock.current=true
+    setLoadingMoreMentors(true);setError('');setNotice('')
+    try{
+      const page=await fetchVerifiedMentorsPage(mentors.length,MENTOR_DIRECTORY_PAGE_SIZE)
+      setMentors(old=>{
+        const added=new Map((old??[]).map(m=>[m.user_id,m]))
+        for(const m of page.mentors)added.set(m.user_id,m)
+        return [...added.values()]
+      })
+      setHasMoreMentors(page.hasMore)
+    }catch(cause){
+      setError(cause instanceof Error?cause.message:'Could not load more verified mentors.')
+    }finally{
+      directoryLock.current=false;setLoadingMoreMentors(false)
+    }
+  }
 
   const alreadyRequested = (mentorId: string) => requests.some((r) => r.mentor_id === mentorId &&
     (r.status === 'pending' || (r.status === 'accepted' && !sessions.some(s => s.request_id === r.id && s.status === 'completed'))))
@@ -272,7 +296,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
 
       {!loading && <div id="mentor-directory" className="section-heading"><h2>Find a verified mentor</h2></div>}
       {!loading && mentors && <section className="empty-panel" style={{ textAlign: 'left' }}>
-        <p>Browse guidance areas or search real, approved mentor profiles. Category suggestions are based on profile descriptions, not a separate certification.</p>
+        <p>Browse approved mentors progressively. Search, filters and comparison apply to profiles loaded on this device. Load more profiles to expand your results. Category suggestions are based on reviewed profile text, not a separate certification.</p>
         <div className="field">
           <label htmlFor="mentor-search">Search by name, field, skills, or interests</label>
           <input id="mentor-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="e.g. engineering, interview, scholarship" />
@@ -280,7 +304,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         <div className="field">
           <label htmlFor="mentor-category">Mentorship category</label>
           <select id="mentor-category" value={category} onChange={(event) => setCategory(event.target.value as MentorshipCategory)}>
-            <option value="all">All guidance areas ({mentors.length})</option>
+            <option value="all">All loaded guidance areas ({mentors.length})</option>
             {MENTORSHIP_CATEGORIES.map((item) => <option key={item.id} value={item.id}>{item.label} ({mentors.filter((mentor) => mentorMatchesCategory(mentor, item.id)).length})</option>)}
           </select>
         </div>
@@ -313,7 +337,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
           </select>
           <p className="muted">Ratings come from completed learner sessions. Years of experience come from reviewed mentor profiles, not separate professional certificates.</p>
         </div>
-        <p role="status">{visibleMentors.length} verified {visibleMentors.length === 1 ? 'mentor' : 'mentors'} match your filters.</p>
+        <p role="status">{visibleMentors.length} matching verified {visibleMentors.length===1?'mentor':'mentors'} among {mentors.length} loaded profiles{hasMoreMentors?' (more profiles available)':''}.</p>
         {(query || language || category !== 'all' || weekday!==null || onlyWithAvailability || sortMentors!=='relevance')
           && <button className="btn btn-secondary" type="button" onClick={() => {
             setQuery('');setCategory('all');setLanguage('');setWeekday(null);
@@ -366,6 +390,10 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
           </div>
         })}
       </div>}
+      {!loading && mentors && hasMoreMentors && <button type="button" className="btn btn-secondary"
+        onClick={()=>void loadMoreMentors()} disabled={loadingMoreMentors||!!busy}>
+        {loadingMoreMentors?'Loading verified mentor profiles…':'Load more verified mentors'}
+      </button>}
     </div>
   )
 }

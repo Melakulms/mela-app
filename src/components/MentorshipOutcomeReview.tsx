@@ -11,6 +11,7 @@ const CATEGORIES=[
   {value:'other',label:'Other learning outcome'},
 ] as const
 type OutcomeCategory=(typeof CATEGORIES)[number]['value']
+type Verification={claim_id:string;decision:'evidence_supported'|'evidence_rejected';public_reason:string}
 type Outcome={
  id:string;session_id:string;learner_id:string;mentor_id:string;
  category:OutcomeCategory;outcome_text:string;status:string;
@@ -23,6 +24,7 @@ export default function MentorshipOutcomeReview({
  mode:'learner'|'mentor';sessions?:MentorshipSession[]
 }){
  const [claims,setClaims]=useState<Outcome[]>([])
+ const [verifications,setVerifications]=useState<Verification[]>([])
  const [sessionId,setSessionId]=useState('')
  const [category,setCategory]=useState<OutcomeCategory>('career')
  const [outcome,setOutcome]=useState('')
@@ -38,7 +40,7 @@ export default function MentorshipOutcomeReview({
  const submitted=claims.some(c=>c.session_id===sessionId&&c.category===category)
 
  useEffect(()=>{
-  let active=true;setLoading(true);setError('')
+  let active=true;setLoading(true);setError('');setClaims([]);setVerifications([])
   void (async()=>{
     try{
       const {data:auth,error:authError}=await supabase.auth.getUser()
@@ -49,7 +51,16 @@ export default function MentorshipOutcomeReview({
         .select('id,session_id,learner_id,mentor_id,category,outcome_text,status,review_notes,created_at')
         .eq(filterColumn,auth.user.id).order('created_at',{ascending:false}).limit(100)
       if(readError)throw new Error(readError.message)
-      if(active)setClaims((data??[]) as Outcome[])
+      const ownClaims = (data??[]) as Outcome[]
+      let ownVerifications: Verification[] = []
+      if(mode==='learner'&&ownClaims.length){
+        const {data:reviewData,error:reviewError}=await supabase
+          .from('mentorship_outcome_verifications')
+          .select('claim_id,decision,public_reason').in('claim_id',ownClaims.map(c=>c.id))
+        if(reviewError)throw new Error(reviewError.message)
+        ownVerifications=(reviewData??[]) as Verification[]
+      }
+      if(active){setClaims(ownClaims);setVerifications(ownVerifications)}
     }catch(cause){
       if(active)setError(cause instanceof Error?cause.message:'Could not load mentorship outcomes.')
     }finally{if(active)setLoading(false)}
@@ -151,6 +162,11 @@ export default function MentorshipOutcomeReview({
           item.status==='not_supported'?'Mentor could not support claim':'Waiting for mentor review'} ·
           Submitted {new Date(item.created_at).toLocaleDateString()}</p>
         {item.review_notes&&<p><strong>Mentor review:</strong> {item.review_notes}</p>}
+        {mode==='learner'&&verifications.filter(r=>r.claim_id===item.id).map(r=>
+          <p key={r.claim_id}><strong>Independent evidence review:</strong> {r.decision==='evidence_supported'
+            ? 'Supporting evidence reviewed by MELA administration' : 'Evidence not independently supported'}.
+            {' '}{r.public_reason} This review does not issue a certificate, qualification or Career Passport credential.</p>
+        )}
         {mode==='mentor'&&item.status==='submitted'&&
           <section>
             <div className="field"><label htmlFor={'outcome-review-'+item.id}>Review evidence and explain your decision</label>

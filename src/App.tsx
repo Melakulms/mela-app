@@ -350,7 +350,7 @@ export default function App() {
           {studentView === 'opportunities' && <OpportunityHub onBack={() => setStudentView('dashboard')} />}
           {studentView === 'materials' && <StudyMaterials stageKey={profile.education_stage_key} gradeLevel={profile.grade_level} onBack={() => setStudentView('dashboard')} onOpenQuestionBank={() => setStudentView('question-bank')} />}
           {studentView === 'academy' && <SkillAcademy onBack={() => setStudentView('dashboard')} />}
-          {studentView === 'mentorship' && <Mentorship onBack={() => setStudentView('dashboard')} />}
+          {studentView === 'mentorship' && <Mentorship stageKey={profile.education_stage_key} onOpenSafety={() => setStudentView('safety')} onBack={() => setStudentView('dashboard')} />}
           {studentView === 'passport' && <CareerPassport stageKey={profile.education_stage_key} gradeLevel={profile.grade_level} onNavigate={setStudentView} onBack={() => setStudentView('dashboard')} />}
           {studentView === 'coach' && <AiCareerCoach key={profile.id} userId={profile.id} onBack={() => setStudentView('dashboard')} />}
           {studentView === 'arena' && <Arena onBack={() => setStudentView('dashboard')} />}
@@ -392,4 +392,5 @@ export default function App() {
     </div>
   )
 }
+
 

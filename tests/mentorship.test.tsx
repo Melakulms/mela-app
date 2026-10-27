@@ -47,6 +47,40 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('Mentorship', () => {
+  it('explains grade restrictions and opens the safety flow without offering a request', async () => {
+    const safety = vi.fn()
+    render(<Mentorship stageKey="school_9_10" onBack={vi.fn()} onOpenSafety={safety} />)
+    await screen.findByText('Mentor One')
+    expect(screen.queryByRole('button', { name: 'Request mentorship' })).toBeNull()
+    expect(screen.getByText(/Direct mentorship is not enabled for Grades 1–10/)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Safety, guardian consent & reporting' }))
+    expect(safety).toHaveBeenCalledTimes(1)
+    expect(mocks.requestMentor).not.toHaveBeenCalled()
+  })
+
+  it('sends the preferred time and retains the request draft after a failure', async () => {
+    mocks.requestMentor.mockRejectedValueOnce(new Error('Try again'))
+    render(<Mentorship onBack={vi.fn()} />)
+    await screen.findByText('Mentor One')
+    fireEvent.click(screen.getByRole('button', { name: 'Request mentorship' }))
+    fireEvent.change(screen.getByLabelText('Topic'), { target: { value: 'Study plan' } })
+    fireEvent.change(screen.getByLabelText('Preferred session time (optional)'), { target: { value: '2099-11-01T10:00' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Send request' }))
+    expect((await screen.findByRole('alert')).textContent).toContain('Try again')
+    expect((screen.getByLabelText('Topic') as HTMLInputElement).value).toBe('Study plan')
+    expect((screen.getByLabelText('Preferred session time (optional)') as HTMLInputElement).value).toBe('2099-11-01T10:00')
+    expect(mocks.requestMentor).toHaveBeenCalledWith('mentor-1', 'Study plan', '', '2099-11-01T10:00')
+  })
+
+  it('shows follow-up notes and allows a new request after a completed session', async () => {
+    mocks.fetchMyMentorshipRequests.mockResolvedValue([{ id: 'request-1', mentor_id: 'mentor-1', topic: 'CV review', status: 'accepted', created_at: '2026-10-02T10:00:00Z' }])
+    mocks.fetchMyMentorshipSessions.mockResolvedValue([{ id: 'session-1', request_id: 'request-1', mentor_id: 'mentor-1', mentee_id: 'learner', scheduled_at: '2026-10-04T10:00:00Z', duration_min: 30, status: 'completed', rating: 5, rating_comment: null, notes: 'Revise the project section of your CV.' }])
+    render(<Mentorship onBack={vi.fn()} />)
+    await screen.findByText('Mentor One')
+    expect(screen.getByText(/Revise the project section of your CV/)).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Request mentorship' })).toBeTruthy()
+  })
+
   it('surfaces load failures and retries without leaving a stale error', async () => {
     mocks.fetchVerifiedMentors.mockRejectedValueOnce(new Error('Network unavailable'))
     render(<Mentorship onBack={vi.fn()} />)
@@ -109,3 +143,4 @@ describe('Mentorship', () => {
     expect(screen.queryByRole('button', { name: 'Submit rating' })).toBeNull()
   })
 })
+

@@ -80,7 +80,7 @@ export default function MentorLifecycle({ onChanged }: { onChanged: () => void }
   return <section>
     <MentorAvailabilityManager />
     <p>Read the learner’s goal before accepting. Add follow-up notes after the session so the learner has a clear next step. Notes are visible to the learner.</p>
-    <p className="muted">Times use {Intl.DateTimeFormat().resolvedOptions().timeZone}. Scheduling does not provide an in-app video call.</p>
+    <p className="muted">Session entry times use your device time zone ({Intl.DateTimeFormat().resolvedOptions().timeZone}). You must first publish weekly mentoring hours covering the complete appointment in your chosen availability time zone. The system rejects overlapping appointments. Scheduling does not activate video calls.</p>
     <div className="section-heading"><h2>Mentorship requests</h2><button className="btn btn-secondary" disabled={loading || !!busy} onClick={() => setRevision((value) => value + 1)}>Refresh</button></div>
     {error && <div className="banner banner-error" role="alert">{error}</div>}
     {loading ? <p role="status">Loading mentorship…</p> : requests.length === 0 ? <div className="empty-panel">No mentorship requests.</div> : <div className="list-panel">

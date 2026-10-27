@@ -262,11 +262,11 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
             <p style={{ color: 'var(--muted)' }}>{m.headline ?? m.organization ?? 'MELA mentor'}</p>
             {m.bio && <p>{m.bio}</p>}
             {m.organization && <p>{m.organization}</p>}
-            {m.expertise.length > 0 && <p><strong>Mentoring fields:</strong> {m.expertise.join(', ')}</p>}
-            {m.languages.length > 0 && <p><strong>Languages:</strong> {m.languages.join(', ')}</p>}
-            {m.availability.length > 0
-              ? <details><summary>Published weekly hours ({m.availability.length})</summary>
-                  <ul>{m.availability.map((slot) => <li key={slot.id}>{WEEKDAYS[slot.weekday] ?? 'Day'} · {slot.start_time.slice(0, 5)}–{slot.end_time.slice(0, 5)} ({slot.timezone})</li>)}</ul>
+            {(m.expertise ?? []).length > 0 && <p><strong>Mentoring fields:</strong> {(m.expertise ?? []).join(', ')}</p>}
+            {(m.languages ?? []).length > 0 && <p><strong>Languages:</strong> {(m.languages ?? []).join(', ')}</p>}
+            {(m.availability ?? []).length > 0
+              ? <details><summary>Published weekly hours ({(m.availability ?? []).length})</summary>
+                  <ul>{(m.availability ?? []).map((slot) => <li key={slot.id}>{WEEKDAYS[slot.weekday] ?? 'Day'} · {slot.start_time.slice(0, 5)}–{slot.end_time.slice(0, 5)} ({slot.timezone})</li>)}</ul>
                   <p className="muted">Weekly availability is indicative. A mentor must confirm the session.</p>
                 </details>
               : <p className="muted">No weekly availability published. You can still submit a request.</p>}

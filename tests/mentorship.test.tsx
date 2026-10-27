@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 vi.mock('../src/components/MentorshipLearningWorkspace', () => ({ default: () => null }))
 vi.mock('../src/components/MentorApplication', () => ({ default: () => null }))
 vi.mock('../src/components/MentorshipAdultEligibility', () => ({ default: () => null }))
+vi.mock('../src/components/MentorshipSafetyReporting', () => ({ default: () => null }))
 import Mentorship from '../src/pages/Mentorship'
 
 const mocks = vi.hoisted(() => ({

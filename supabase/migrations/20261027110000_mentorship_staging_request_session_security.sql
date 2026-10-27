@@ -50,7 +50,8 @@ with check (
   and exists (select 1 from public.profiles p where p.id=mentee_id
     and p.role='student' and p.account_status='active' and p.deleted_at is null
     and p.education_stage_key in ('school_11_12','college_tvet','university'))
-  and private.user_has_guardian_or_adult_clearance(mentee_id)
+  -- The SECURITY DEFINER BEFORE INSERT trigger checks guardian/adult clearance;
+  -- do not grant individual learners access to that sensitive private helper.
   and exists (select 1 from public.mentor_profiles m where m.user_id=mentor_id
     and m.active=true and m.verified=true)
 );

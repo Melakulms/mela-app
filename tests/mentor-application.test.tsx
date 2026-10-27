@@ -25,6 +25,19 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('MELA adult mentor intake', () => {
+  it('shows the separately verified mentor status only when mentor profile is verified and active', async () => {
+    mocks.load
+      .mockResolvedValueOnce({data:{
+        id:'application-2',headline:'Verified mathematics educator',
+        expertise:['Math'],languages:['English'],
+        background:'Verified independently by administrator',
+        status:'reviewed_eligible',submitted_at:'2026-10-27T00:00:00Z',review_notes:null,
+      },error:null})
+      .mockResolvedValueOnce({data:{verified:true,active:true},error:null})
+    render(<MentorApplication />)
+    expect(await screen.findByText(/Application: Verified and active mentor/)).toBeTruthy()
+  })
+
   it('records an application without declaring the applicant a verified mentor', async () => {
     render(<MentorApplication/>)
     await screen.findByLabelText('Professional headline')

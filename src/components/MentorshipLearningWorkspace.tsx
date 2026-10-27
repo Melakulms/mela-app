@@ -6,6 +6,7 @@ import {
   type MentorshipWorkspace, type MentorshipGoal,
 } from '../lib/mentorship-workspace'
 import { supabase } from '../lib/supabase'
+import MentorshipGroupInterest from './MentorshipGroupInterest'
 
 type AcceptedRequest = { id: string; mentee_id: string; topic: string; status: string }
 
@@ -172,11 +173,7 @@ export default function MentorshipLearningWorkspace({ mode }: { mode: 'learner' 
       </section>
       <section id="mentorship-groups" className="empty-panel" style={{ textAlign:'left' }}>
         <h3>13. Group mentorship</h3>
-        {workspace.groups.length === 0 ? <p className="muted">No approved group programs are currently published. MELA will only display real approved programs.</p> :
-          <div className="list-panel">{workspace.groups.map((group) => <div className="list-row" key={group.id}>
-            <div><strong>{group.title}</strong><p>{group.description}</p><p className="muted">{group.category} · Capacity {group.capacity}{group.starts_at ? ` · Starts ${new Date(group.starts_at).toLocaleString()}` : ''}</p></div>
-          </div>)}</div>}
-        <p className="muted">Group registration and live meetings stay closed until supervision, facilitator verification and scheduling are tested.</p>
+        <MentorshipGroupInterest groups={workspace.groups} />
       </section>
     </>}
   </section>

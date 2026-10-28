@@ -6,6 +6,11 @@
 The isolated staging frontend preview is READY at:
 https://mela-staging-c1ydo95pw-melakuanteneh1-gmailcoms-projects.vercel.app
 
+The stable **STAGING ONLY** alias https://mela-staging.vercel.app was
+intentionally reassigned and verified to resolve to the same READY deployment
+(`dpl_DXrHktucoKrCv5U1rEXyJo2S7d3r`). This is not the production
+domain and does not authorize production traffic to use staging credentials.
+
 PR #96 (foundation, 126 changed files) and PR #98 (Section 2 additions) are
 still DRAFT and based on separate branch layers. Admin recovery UI PR #68 is
 STAGING-only. Existing RPC grant fix PR #99 differs between prod/staging.

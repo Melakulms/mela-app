@@ -108,3 +108,14 @@ This remains an unmerged development PR. Only source code and tests were changed
 - New preparation and completed-session reflection inserts require a database-returned saved row before the learner sees a success message. Empty returned results are not treated as confirmation.
 - Tests cover authenticated owner-scoped updates and zero-row insert responses, plus the unchanged no-certificate behavior.
 - The latest GitHub CI revision remains authoritative for source quality. A passing source test does **not** imply that this version is deployed to the staging phone URL.
+
+## October 28 — cross-section learning actions and persistence integrity
+
+- **Resources (section 10)** now offers **Plan to study this guide** on each real published resource. Selecting it creates only an editable draft (goal title, practical next steps and optional target date); a real private row is written to `mentorship_goals` only after the learner explicitly selects **Save as my learning goal**. Failed writes keep the draft. A successful save offers **View saved learning goal** linking to section 9.
+- **Progress (section 12)** provides direct one-tap navigation to private goals (section 9) and real assignments (section 11); mentor progress links to assignment review.
+- **Goals, assignments, submissions and feedback:** inserts require a returned database record before success is announced; invalid goal calendar dates and overlong goal plans are rejected rather than silently truncated. A feedback row without a matching submitted assignment no longer inflates reviewed progress.
+- **Learning evidence:** new outcome claims require database confirmation; mentor decisions are scoped to the signed-in mentor in the query as well as server-side policies. Failed writes preserve drafts.
+- **Shared device safety:** learner/mentor mode changes clear private unsent draft state instead of carrying it into another role.
+- Added regression tests for the genuine guide-to-goal flow, offline retry, role switching, navigation, calendar validation, authenticated write confirmations and accurate progress.
+
+**Release criteria remain unchanged:** PR #96 stays DRAFT, no new staging or production publication is claimed. GitHub code checks are per-commit; verify them at the exact final head. Staging continues to publish an older bundle and the 16-section published-bundle smoke is expected to fail until an authorized Vercel deployment. No payments or real calls activated.

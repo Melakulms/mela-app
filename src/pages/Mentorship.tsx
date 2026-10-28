@@ -148,6 +148,9 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
   const [topic, setTopic] = useState('')
   const [message, setMessage] = useState('')
   const [preferredAt, setPreferredAt] = useState('')
+  const [preferredTimezone, setPreferredTimezone] = useState(
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'Africa/Addis_Ababa'
+  )
   const [cancelRequestId, setCancelRequestId] = useState<string | null>(null)
   const [cancelSessionId, setCancelSessionId] = useState<string | null>(null)
   const [cancelReason, setCancelReason] = useState('')
@@ -320,8 +323,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
     if (cleanMessage.length > 1000) { setError('Keep the message to 1000 characters or fewer.'); return }
     const epoch = sessionEpoch.current
     await runAction(`request-${mentorId}`, async () => {
-      if (preferredAt) await requestMentor(mentorId, cleanTopic, cleanMessage, preferredAt)
-      else await requestMentor(mentorId, cleanTopic, cleanMessage)
+      await requestMentor(mentorId, cleanTopic, cleanMessage, preferredAt, preferredTimezone)
       if (epoch !== sessionEpoch.current) return
       setOpenMentor(null)
       setTopic('')
@@ -683,6 +685,15 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
                 <span className="field-hint">{message.length}/1000</span>
               </div>
               <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
+                <div className="field" style={{ width: '100%' }}>
+                  <label htmlFor={`mentor-preferred-zone-${m.user_id}`}>My preferred display time zone</label>
+                  <select id={`mentor-preferred-zone-${m.user_id}`} value={preferredTimezone}
+                    disabled={!!busy} onChange={e => setPreferredTimezone(e.target.value)}>
+                    {Array.from(new Set([localZone, 'Africa/Addis_Ababa', 'UTC'].filter(Boolean))).map(zone =>
+                      <option key={zone} value={zone}>{zone}</option>)}
+                  </select>
+                  <span className="field-hint">Time is entered in your phone's local zone ({localZone}); your selected zone is saved only for displaying and discussing the request.</span>
+                </div>
                 <div className="field" style={{ width: '100%' }}><label htmlFor={`mentor-preferred-${m.user_id}`}>Preferred session time (optional)</label><input id={`mentor-preferred-${m.user_id}`} type="datetime-local" value={preferredAt} disabled={!!busy} onChange={e => setPreferredAt(e.target.value)} /><span className="field-hint">Time zone: {localZone}. {uiLanguage === 'am' ? 'ይህ ምርጫ ነው፤ ቀጠሮ አይደለም። አማካሪው ትክክለኛውን ቀንና ቆይታ ለየብቻ ያረጋግጣል።' : 'This is a preference, not a reservation. The mentor confirms the actual date and duration separately.'}</span>
                   {preferredAt && (() => {
                     const g = preferredTimeGuidance(preferredAt ? new Date(preferredAt) : null, m.availability ?? [])

@@ -51,3 +51,12 @@ describe('Mentorship Home UI', () => {
     expect(screen.getByText('Mentorship session')).toBeTruthy()
   })
 })
+
+
+it('pauses all personalized recommendations if private request history cannot be verified', async () => {
+  render(<MentorshipHome mentors={[mentor]} requests={[]} requestsAvailable={false}
+    sessions={[]} stageKey="university" revision={0} matchingOnly />)
+  expect(await screen.findByText(/Personalized suggestions are paused/)).toBeTruthy()
+  expect(screen.queryByText('Verified Engineer')).toBeNull()
+  expect(screen.getByText(/No profile-based suggestions yet/)).toBeTruthy()
+})

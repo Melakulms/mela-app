@@ -14,6 +14,7 @@ import {
 } from '../lib/mentorship'
 import { useI18n } from '../i18n'
 import { readMentorshipSection, withMentorshipSection } from '../lib/mentorship-section-navigation'
+import { mentorshipRequestNextStep, mentorshipRequestStatus, mentorshipSessionStatus } from '../lib/mentorship-status-copy'
 import MentorshipHome from '../components/MentorshipHome'
 import MentorshipLearningWorkspace from '../components/MentorshipLearningWorkspace'
 import MentorshipProgramPlanner from '../components/MentorshipProgramPlanner'
@@ -31,7 +32,7 @@ import { fetchMyMentorshipAccess, type MentorshipAccess } from '../lib/mentorshi
 import { discoverMentors, getMentorLanguages, MENTORSHIP_CATEGORIES, mentorMatchesCategory, WEEKDAYS, type MentorshipCategory } from '../lib/mentor-discovery'
 
 export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack: () => void; stageKey?: string | null; onOpenSafety?: () => void }) {
-  const { t } = useI18n()
+  const { t, language: uiLanguage } = useI18n()
   const [query, setQuery] = useState('')
   const [comparedMentorIds, setComparedMentorIds] = useState<string[]>([])
   const toggleMentorComparison = (id: string) => {
@@ -93,6 +94,9 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       setTopic('')
       setMessage('')
       setPreferredAt('')
+      setCancelRequestId(null)
+      setCancelSessionId(null)
+      setCancelReason('')
       setRatingDraft({})
       setRatingComment({})
       setServerAccess(null)
@@ -141,6 +145,9 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
   const [topic, setTopic] = useState('')
   const [message, setMessage] = useState('')
   const [preferredAt, setPreferredAt] = useState('')
+  const [cancelRequestId, setCancelRequestId] = useState<string | null>(null)
+  const [cancelSessionId, setCancelSessionId] = useState<string | null>(null)
+  const [cancelReason, setCancelReason] = useState('')
   const [notice, setNotice] = useState('')
   const blockedStage = !['school_11_12', 'university', 'college_tvet'].includes(stageKey ?? '')
   const missingStage = !stageKey
@@ -320,6 +327,25 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
     })
   }
 
+  const withdrawRequest = async (requestId: string) => {
+    await runAction(`request-${requestId}`, async () => {
+      await cancelMentorshipRequest(requestId)
+      setCancelRequestId(null)
+    })
+  }
+
+  const withdrawSession = async (sessionId: string) => {
+    if (cancelReason.trim().length > 250) {
+      setError('Keep the cancellation explanation under 250 characters.')
+      return
+    }
+    await runAction(`session-${sessionId}`, async () => {
+      await cancelMentorshipSession(sessionId, cancelReason.trim() || 'Cancelled by learner')
+      setCancelSessionId(null)
+      setCancelReason('')
+    })
+  }
+
   const submitRating = async (sessionId: string) => {
     const rating = ratingDraft[sessionId] ?? 5
     const comment = ratingComment[sessionId] ?? ''
@@ -429,7 +455,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
               <div style={{ flex: 1 }}>
                 <strong>{requestTopics.get(session.request_id ?? '') ?? 'Mentorship session'} · {mentorNames.get(session.mentor_id ?? '') ?? 'Your mentor'}</strong>
                 <div className="list-row-title">{new Date(session.scheduled_at).toLocaleString()}</div>
-                <div className="list-row-meta">{session.duration_min ?? 30} minutes · {session.status}</div>
+                <div className="list-row-meta">{session.duration_min ?? 'Duration unavailable'} minutes · {mentorshipSessionStatus(session.status, uiLanguage)}</div>
                 <MentorshipCalendarButton session={session} />
                 {session.notes && <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}><strong>Follow-up notes: </strong>{session.notes}</p>}
                 {session.status === 'completed' && session.rating !== null && <div className="list-row-meta">Rated {session.rating}/5{session.rating_comment ? ` · ${session.rating_comment}` : ''}</div>}
@@ -462,9 +488,21 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
                   </button>
                 </div>}
               </div>
-              {session.status === 'scheduled'
-                ? <button className="btn btn-secondary" disabled={!!busy} onClick={() => runAction(`session-${session.id}`, () => cancelMentorshipSession(session.id, 'Cancelled by learner'))}>{busy === `session-${session.id}` ? 'Cancelling…' : 'Cancel session'}</button>
-                : <span className="pill">{session.status}</span>}
+              {session.status === 'scheduled' ? <div>
+                <button className="btn btn-secondary" disabled={!!busy} onClick={() => {
+                  setCancelSessionId(session.id)
+                  setCancelRequestId(null)
+                  setCancelReason('')
+                }}>Cancel session</button>
+                {cancelSessionId === session.id && <div className="empty-panel" role="group" aria-label="Confirm session cancellation">
+                  <p>{uiLanguage === 'am' ? 'ይህን የተረጋገጠ ቀጠሮ መሰረዝ ይፈልጋሉ?' : 'Cancel this confirmed appointment? Your mentor will see the change.'}</p>
+                  <label htmlFor={`cancel-reason-${session.id}`}>{uiLanguage === 'am' ? 'ምክንያት (አማራጭ)' : 'Reason (optional)'}</label>
+                  <textarea id={`cancel-reason-${session.id}`} maxLength={250} rows={2} value={cancelReason}
+                    disabled={!!busy} onChange={event => setCancelReason(event.target.value)} />
+                  <button className="btn btn-primary" disabled={!!busy} onClick={() => void withdrawSession(session.id)}>{busy === `session-${session.id}` ? 'Cancelling…' : 'Confirm cancel session'}</button>{' '}
+                  <button className="btn btn-secondary" disabled={!!busy} onClick={() => { setCancelSessionId(null); setCancelReason('') }}>Keep session</button>
+                </div>}
+              </div> : <span className="pill">{mentorshipSessionStatus(session.status, uiLanguage)}</span>}
             </div>
           })}
         </div>
@@ -497,16 +535,27 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
           {filteredRequests.map((r) => <div className="list-row" key={r.id}>
             <div>
               <div className="list-row-title">{r.topic ?? 'Mentorship request'}</div>
-              <div>{mentorNames.get(r.mentor_id) ?? 'Your mentor'} · {r.status}</div>
+              <div>{mentorNames.get(r.mentor_id) ?? 'Your mentor'} · {mentorshipRequestStatus(r.status, uiLanguage)}</div>
+              {mentorshipRequestNextStep(r.status, uiLanguage) && <p className="muted">{mentorshipRequestNextStep(r.status, uiLanguage)}</p>}
               {r.message && <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{r.message}</p>}
               {r.preferred_at && <p>Preferred time: {new Date(r.preferred_at).toLocaleString()}</p>}
               {r.status === 'accepted' && !sessionsError && !sessions.some(s => s.request_id === r.id) && <p>Your mentor has accepted. A session time is still to be scheduled.</p>}
               {r.status === 'accepted' && !sessionsError && sessions.some(s => s.request_id === r.id && s.status === 'cancelled') && <p>The session was cancelled. Your mentor can schedule a replacement.</p>}
               <div className="list-row-meta">Requested {new Date(r.created_at).toLocaleDateString()}</div>
             </div>
-            {r.status === 'pending'
-              ? <button className="btn btn-secondary" disabled={!!busy} onClick={() => runAction(`request-${r.id}`, () => cancelMentorshipRequest(r.id))}>{busy === `request-${r.id}` ? 'Cancelling…' : 'Cancel request'}</button>
-              : <span className="pill">{r.status}</span>}
+            {r.status === 'pending' ? <div>
+              <button className="btn btn-secondary" disabled={!!busy} onClick={() => {
+                setCancelRequestId(r.id)
+                setCancelSessionId(null)
+              }}>Cancel request</button>
+              {cancelRequestId === r.id && <div className="empty-panel" role="group" aria-label="Confirm request cancellation">
+                <p>{uiLanguage === 'am' ? 'ይህን የአማካሪነት ጥያቄ መሰረዝ ይፈልጋሉ?' : 'Withdraw this pending mentorship request? This cannot be undone.'}</p>
+                <button className="btn btn-primary" disabled={!!busy} onClick={() => void withdrawRequest(r.id)}>
+                  {busy === `request-${r.id}` ? 'Cancelling…' : 'Confirm cancel request'}
+                </button>{' '}
+                <button className="btn btn-secondary" disabled={!!busy} onClick={() => setCancelRequestId(null)}>Keep request</button>
+              </div>}
+            </div> : <span className="pill">{mentorshipRequestStatus(r.status, uiLanguage)}</span>}
           </div>)}
         </div>}
       </>}
@@ -625,7 +674,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
                 <span className="field-hint">{message.length}/1000</span>
               </div>
               <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
-                <div className="field" style={{ width: '100%' }}><label htmlFor={`mentor-preferred-${m.user_id}`}>Preferred session time (optional)</label><input id={`mentor-preferred-${m.user_id}`} type="datetime-local" value={preferredAt} disabled={!!busy} onChange={e => setPreferredAt(e.target.value)} /><span className="field-hint">Time zone: {localZone}. This is a preference only. Your verified mentor must accept your request and separately confirm a session time.</span></div>
+                <div className="field" style={{ width: '100%' }}><label htmlFor={`mentor-preferred-${m.user_id}`}>Preferred session time (optional)</label><input id={`mentor-preferred-${m.user_id}`} type="datetime-local" value={preferredAt} disabled={!!busy} onChange={e => setPreferredAt(e.target.value)} /><span className="field-hint">Time zone: {localZone}. Check this mentor's published weekly hours above before suggesting a time. This is a preference, not a reservation. The mentor confirms the actual date and duration separately.</span></div>
                 <button className="btn btn-primary" onClick={() => submitRequest(m.user_id)} disabled={!!busy || topic.trim().length < 2}>{busy === `request-${m.user_id}` ? 'Sending…' : 'Send request'}</button>
                 <button className="btn btn-secondary" onClick={closeComposer} disabled={!!busy}>Cancel</button>
               </div>

@@ -342,8 +342,9 @@ it('opens guidance-category cards and preserves the chosen verified mentor filte
   render(<Mentorship stageKey="university" onBack={vi.fn()} />)
   fireEvent.click(screen.getByRole('button', {name: 'Open Mentorship Categories'}))
   expect(screen.getByRole('heading',{name:'Explore mentorship by guidance area'})).toBeTruthy()
-  expect(screen.getByRole('heading',{name:'Explore mentorship by guidance area'})).toBeTruthy()
-  fireEvent.click(screen.getByRole('button',{name:'Explore Technology & AI'}))
+  const explore = screen.getByRole('button',{name:'Explore Technology & AI'}) as HTMLButtonElement
+  await waitFor(() => expect(explore.disabled).toBe(false))
+  fireEvent.click(explore)
   expect(screen.getByRole('heading',{name:'2. Find a Mentor'})).toBeTruthy()
   expect((screen.getByLabelText('Mentorship category') as HTMLSelectElement).value).toBe('technology')
   expect(screen.getByText('Mentor One')).toBeTruthy()

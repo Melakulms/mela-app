@@ -79,6 +79,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
   const [hasMoreMentors,setHasMoreMentors] = useState(false)
   const [loadingMoreMentors,setLoadingMoreMentors] = useState(false)
   const [requests, setRequests] = useState<MyMentorshipRequest[]>([])
+  const [requestStatusFilter, setRequestStatusFilter] = useState<'all'|'pending'|'accepted'|'finished'>('all')
   const [sessions, setSessions] = useState<MentorshipSession[]>([])
   const [error, setError] = useState('')
   const [directoryError, setDirectoryError] = useState('')
@@ -191,7 +192,14 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
     query,category,language,weekday,onlyWithAvailability,sort:sortMentors
   })
   const languages = getMentorLanguages(mentors ?? [])
-  const pendingCount = requests.filter((request) => request.status === 'pending').length
+  const requestCounts = {
+    pending: requests.filter(request => request.status === 'pending').length,
+    accepted: requests.filter(request => request.status === 'accepted').length,
+    finished: requests.filter(request => request.status === 'completed' || request.status === 'declined' || request.status === 'cancelled').length,
+  }
+  const filteredRequests = requests.filter(request => requestStatusFilter === 'all' ||
+    (requestStatusFilter === 'finished' ? ['completed','declined','cancelled'].includes(request.status) : request.status === requestStatusFilter))
+  const pendingCount = requestCounts.pending
   const upcomingCount = sessions.filter((session) => session.status === 'scheduled' && new Date(session.scheduled_at).getTime() > Date.now()).length
   const completedCount = sessions.filter((session) => session.status === 'completed').length
 
@@ -384,8 +392,25 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       {!loading && !requestsError && requests.length === 0 && <section className="empty-panel"><h2>Your requests</h2><p>You have not sent a mentorship request yet.</p><button className="btn btn-primary" onClick={() => selectSection(2)}>Find a verified mentor</button></section>}
       {!loading && !requestsError && requests.length > 0 && <>
         <div className="section-heading"><h2>Your requests</h2></div>
-        <div className="list-panel">
-          {requests.map((r) => <div className="list-row" key={r.id}>
+        <p className="muted">Track actual requests and mentor decisions. Accepted means a mentor agreed to your request; it does not mean a session is confirmed.</p>
+        <div className="module-grid" aria-label="Your request status overview">
+          <div><strong>{requestCounts.pending}</strong><p className="muted">Awaiting mentor response</p></div>
+          <div><strong>{requestCounts.accepted}</strong><p className="muted">Accepted mentorship requests</p></div>
+          <div><strong>{requestCounts.finished}</strong><p className="muted">Other closed requests</p></div>
+        </div>
+        <div className="field">
+          <label htmlFor="mentorship-request-filter">Filter my requests</label>
+          <select id="mentorship-request-filter" value={requestStatusFilter}
+            onChange={event => setRequestStatusFilter(event.target.value as typeof requestStatusFilter)}>
+            <option value="all">All request statuses</option>
+            <option value="pending">Awaiting mentor response</option>
+            <option value="accepted">Accepted</option>
+            <option value="finished">Completed, declined or cancelled</option>
+          </select>
+        </div>
+        {filteredRequests.length === 0 ? <p className="empty-panel">No requests match this filter. Choose All request statuses to review your full history.</p>
+          : <div className="list-panel">
+          {filteredRequests.map((r) => <div className="list-row" key={r.id}>
             <div>
               <div className="list-row-title">{r.topic ?? 'Mentorship request'}</div>
               <div>{mentorNames.get(r.mentor_id) ?? 'Your mentor'} · {r.status}</div>

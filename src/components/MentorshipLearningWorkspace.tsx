@@ -37,7 +37,21 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
   const [assignmentFilter,setAssignmentFilter] = useState<'all'|'pending'|'waiting'|'reviewed'>('all')
   const [resourceQuery,setResourceQuery] = useState('')
   const [resourceCategory,setResourceCategory] = useState('all')
+  const [plannedGuideId,setPlannedGuideId] = useState<string | null>(null)
+  const [guidePlanTitle,setGuidePlanTitle] = useState('')
+  const [guidePlanDetails,setGuidePlanDetails] = useState('')
+  const [guidePlanDate,setGuidePlanDate] = useState('')
   const lock = useRef(false)
+
+  // A role switch is a privacy boundary on shared devices.
+  useEffect(() => {
+    setGoalTitle('');setGoalDetail('');setGoalDate('')
+    setEditingGoalId(null);setEditingGoalTitle('');setEditingGoalDetail('');setEditingGoalDate('')
+    setConfirmRemoveGoal(null)
+    setAssignRequest('');setAssignTitle('');setAssignText('');setAssignDue('')
+    setAnswers({});setReviews({})
+    setPlannedGuideId(null);setGuidePlanTitle('');setGuidePlanDetails('');setGuidePlanDate('')
+  },[mode])
 
   useEffect(() => {
     let active = true
@@ -71,14 +85,15 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
     return () => { active = false }
   }, [mode, revision, section])
 
-  const run = async (action: () => Promise<void>, onSuccess?: () => void) => {
+  const run = async (action: () => Promise<void>, onSuccess?: () => void,
+    successMessage = 'Your mentorship update was saved.') => {
     if (lock.current) return
     lock.current = true
     setBusy(true); setError(''); setNotice('')
     try {
       await action()
       onSuccess?.()
-      setNotice('Your mentorship update was saved.')
+      setNotice(successMessage)
       setRevision((n) => n + 1)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not save. Please retry.')
@@ -105,6 +120,19 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
       setEditingGoalDetail('')
       setEditingGoalDate('')
     })
+  }
+  const startGuidePlan = (guide: MentorshipWorkspace['resources'][number]) => {
+    setPlannedGuideId(guide.id)
+    setGuidePlanTitle(('Study: '+guide.title).slice(0,160))
+    setGuidePlanDetails('Read the published guide, write three questions, and choose one practical step to try.')
+    setGuidePlanDate('')
+  }
+  const saveGuidePlan = (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!plannedGuideId || !workspace?.resources.some(guide=>guide.id===plannedGuideId)) return
+    void run(()=>addMentorshipGoal(guidePlanTitle,guidePlanDetails,guidePlanDate),
+      ()=>{setPlannedGuideId(null);setGuidePlanTitle('');setGuidePlanDetails('');setGuidePlanDate('')},
+      'Your guide study goal was saved to My Mentorship (section 9). This is a personal plan, not a verified achievement.')
   }
   const createAssignment = (event: React.FormEvent) => {
     event.preventDefault()
@@ -259,7 +287,8 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
               <label htmlFor={`feedback-${task.id}`}>Give constructive feedback</label>
               <textarea id={`feedback-${task.id}`} maxLength={4000} rows={3} disabled={busy} value={reviews[task.id] ?? ''} onChange={(e) => setReviews((v) => ({ ...v, [task.id]:e.target.value }))} />
               <button className="btn btn-primary" disabled={busy || (reviews[task.id] ?? '').trim().length < 2}
-                onClick={() => void run(() => sendMentorshipFeedback(task.id,reviews[task.id] ?? ''))}>Send feedback</button>
+                onClick={() => void run(() => sendMentorshipFeedback(task.id,reviews[task.id] ?? ''),
+                  () => setReviews(current=>{const copy={...current};delete copy[task.id];return copy}))}>Send feedback</button>
             </div>}
           </article>
         })}</div>}
@@ -313,6 +342,23 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
             resourceMatches.map((guide)=><details key={guide.id} className="list-row" style={{display:'block',marginBottom:'.5rem'}}>
               <summary><strong>{guide.title}</strong> · {guide.category}</summary>
               <p>{guide.description}</p><p style={{whiteSpace:'pre-wrap'}}>{guide.content}</p>
+              <p className="muted">Turn this published reading into an editable private study goal. No progress is recorded automatically.</p>
+              {plannedGuideId === guide.id ? <form onSubmit={saveGuidePlan} aria-label={'Study plan for '+guide.title}>
+                <div className="field"><label htmlFor={'guide-plan-title-'+guide.id}>Study goal title</label>
+                  <input id={'guide-plan-title-'+guide.id} value={guidePlanTitle} minLength={3} maxLength={160}
+                    required disabled={busy} onChange={event=>setGuidePlanTitle(event.target.value)}/></div>
+                <div className="field"><label htmlFor={'guide-plan-notes-'+guide.id}>My next steps</label>
+                  <textarea id={'guide-plan-notes-'+guide.id} value={guidePlanDetails} maxLength={2000}
+                    rows={3} disabled={busy} onChange={event=>setGuidePlanDetails(event.target.value)}/></div>
+                <div className="field"><label htmlFor={'guide-plan-date-'+guide.id}>Target date (optional)</label>
+                  <input id={'guide-plan-date-'+guide.id} type="date" value={guidePlanDate}
+                    disabled={busy} onChange={event=>setGuidePlanDate(event.target.value)}/></div>
+                <button className="btn btn-primary" type="submit"
+                  disabled={busy || guidePlanTitle.trim().length<3}>Save as my learning goal</button>{' '}
+                <button className="btn btn-secondary" type="button" disabled={busy}
+                  onClick={()=>setPlannedGuideId(null)}>Cancel study plan</button>
+              </form> : <button type="button" className="btn btn-secondary"
+                disabled={busy} onClick={()=>startGuidePlan(guide)}>Plan to study this guide</button>}
             </details>)}
         </>}
       </section>

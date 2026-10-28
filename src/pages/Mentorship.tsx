@@ -541,6 +541,8 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
               {r.preferred_at && <p>Preferred time: {new Date(r.preferred_at).toLocaleString()}</p>}
               {r.status === 'accepted' && !sessionsError && !sessions.some(s => s.request_id === r.id) && <p>Your mentor has accepted. A session time is still to be scheduled.</p>}
               {r.status === 'accepted' && !sessionsError && sessions.some(s => s.request_id === r.id && s.status === 'cancelled') && <p>The session was cancelled. Your mentor can schedule a replacement.</p>}
+              {r.status === 'accepted' && <button className="btn btn-secondary" type="button" disabled={!!busy} onClick={() => selectSection(7)}>View my booked sessions</button>}
+              {(r.status === 'declined' || r.status === 'cancelled') && <button className="btn btn-secondary" type="button" disabled={!!busy} onClick={() => selectSection(2)}>Find another verified mentor</button>}
               <div className="list-row-meta">Requested {new Date(r.created_at).toLocaleDateString()}</div>
             </div>
             {r.status === 'pending' ? <div>

@@ -114,3 +114,22 @@ it('does not falsely report a successfully saved session plan if no record was c
   expect(screen.queryByText('Your private session preparation was saved.')).toBeNull()
   expect((screen.getByLabelText('Session goal') as HTMLInputElement).value).toBe('Plan a study session')
 })
+
+
+it('does not claim a reflection was saved if no persisted record was confirmed',async()=>{
+  mocks.reflectionInsert.mockResolvedValue({data:[],error:null})
+  render(<MentorshipSessionJourney sessions={[session('completed')]} />)
+  const picker=screen.getByLabelText('Select session') as HTMLSelectElement
+  await waitFor(()=>expect(picker.disabled).toBe(false))
+  fireEvent.change(picker,{target:{value:'session-1'}})
+  fireEvent.change(screen.getByLabelText('What I learned'),{
+    target:{value:'I learned how to describe two practical training choices.'},
+  })
+  fireEvent.change(screen.getByLabelText('My next practical step'),{
+    target:{value:'Draft a list of skills to practise'},
+  })
+  fireEvent.click(screen.getByRole('button',{name:'Save self-reported reflection'}))
+  expect((await screen.findByRole('alert')).textContent).toContain('Private reflection was not confirmed')
+  expect(screen.queryByText(/Your private reflection was saved/)).toBeNull()
+  expect((screen.getByLabelText('What I learned') as HTMLTextAreaElement).value).toContain('two practical')
+})

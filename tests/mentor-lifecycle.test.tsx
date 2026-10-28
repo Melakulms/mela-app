@@ -104,3 +104,21 @@ it('never presents failed request-history reads as a genuinely empty mentor inbo
   expect(screen.queryByText('No mentorship requests.')).toBeNull()
   expect(screen.queryByRole('button',{name:'Schedule session'})).toBeNull()
 })
+
+
+it('blocks past or invalid mentor bookings before calling the backend, then submits a valid future time', async()=>{
+  loadSessions([])
+  mocks.schedule.mockResolvedValue(undefined)
+  render(<MentorLifecycle onChanged={vi.fn()} />)
+  await screen.findByText('Help me choose a field.')
+  fireEvent.click(screen.getByRole('button',{name:'Schedule session'}))
+  const input=screen.getByLabelText('Session time') as HTMLInputElement
+  fireEvent.change(input,{target:{value:'2020-01-01T10:00'}})
+  expect((screen.getByRole('button',{name:'Save session'}) as HTMLButtonElement).disabled).toBe(true)
+  expect(screen.getByText(/Select a future appointment time/)).toBeTruthy()
+  expect(mocks.schedule).not.toHaveBeenCalled()
+  fireEvent.change(input,{target:{value:'2099-01-01T10:00'}})
+  expect((screen.getByRole('button',{name:'Save session'}) as HTMLButtonElement).disabled).toBe(false)
+  fireEvent.click(screen.getByRole('button',{name:'Save session'}))
+  await waitFor(()=>expect(mocks.schedule).toHaveBeenCalledWith('request','2099-01-01T10:00',30))
+})

@@ -505,3 +505,16 @@ it('keeps the learner home visible with verified mentor count unavailable when d
   expect(screen.getAllByText('Unavailable').length).toBeGreaterThan(0)
   expect(mocks.requestMentor).not.toHaveBeenCalled()
 })
+
+it('shows a declined request with the mentor reason and optional note to the learner', async () => {
+  mocks.fetchMyMentorshipRequests.mockResolvedValue([
+    {id:'dr',mentor_id:'mentor-1',topic:'Reason test',status:'declined',created_at:'2026-10-22T10:00:00Z',decline_reason_code:'different_timing',decline_note:'Could you try Thursday?'},
+  ])
+  render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', {name: 'Open Mentorship Programs & Requests'}))
+  await screen.findByText('Reason test')
+  fireEvent.change(screen.getByLabelText('Filter my requests'),{target:{value:'finished'}})
+  expect(screen.getByText(/Mentor’s reason:/)).toBeTruthy()
+  expect(screen.getByText(/can help, but needs a different timing/)).toBeTruthy()
+  expect(screen.getByText('Could you try Thursday?')).toBeTruthy()
+})

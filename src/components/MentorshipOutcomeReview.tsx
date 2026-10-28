@@ -30,6 +30,7 @@ export default function MentorshipOutcomeReview({
  const [outcome,setOutcome]=useState('')
  const [draftNotes,setDraftNotes]=useState<Record<string,string>>({})
  const [loading,setLoading]=useState(true)
+ const [historyVerified,setHistoryVerified]=useState(false)
  const [busy,setBusy]=useState(false)
  const [error,setError]=useState('')
  const [notice,setNotice]=useState('')
@@ -40,7 +41,7 @@ export default function MentorshipOutcomeReview({
  const submitted=claims.some(c=>c.session_id===sessionId&&c.category===category)
 
  useEffect(()=>{
-  let active=true;setLoading(true);setError('');setClaims([]);setVerifications([])
+  let active=true;setLoading(true);setHistoryVerified(false);setError('');setClaims([]);setVerifications([])
   void (async()=>{
     try{
       const {data:auth,error:authError}=await supabase.auth.getUser()
@@ -60,7 +61,7 @@ export default function MentorshipOutcomeReview({
         if(reviewError)throw new Error(reviewError.message)
         ownVerifications=(reviewData??[]) as Verification[]
       }
-      if(active){setClaims(ownClaims);setVerifications(ownVerifications)}
+      if(active){setClaims(ownClaims);setVerifications(ownVerifications);setHistoryVerified(true)}
     }catch(cause){
       if(active)setError(cause instanceof Error?cause.message:'Could not load mentorship outcomes.')
     }finally{if(active)setLoading(false)}
@@ -69,7 +70,10 @@ export default function MentorshipOutcomeReview({
  },[mode,revision])
 
  const act=async(work:()=>Promise<void>,success:string)=>{
-  if(lock.current)return
+  if(lock.current||loading||!historyVerified){
+    if(!loading&&!historyVerified) setError('Verify your private outcome history before changing evidence. Use Refresh after access is restored.')
+    return
+  }
   lock.current=true;setBusy(true);setError('');setNotice('')
   try{
     await work()
@@ -82,7 +86,7 @@ export default function MentorshipOutcomeReview({
 
  const claim=(event:React.FormEvent)=>{
   event.preventDefault()
-  if(!eligibleSession||submitted||outcome.trim().length<20)return
+  if(loading||!historyVerified||!eligibleSession||submitted||outcome.trim().length<20)return
   void act(async()=>{
     const {data:auth,error:authError}=await supabase.auth.getUser()
     if(authError)throw new Error(authError.message)
@@ -99,7 +103,7 @@ export default function MentorshipOutcomeReview({
 
  const decide=(id:string,status:'mentor_supported'|'not_supported')=>{
   const notes=(draftNotes[id]??'').trim()
-  if(notes.length<20)return
+  if(loading||!historyVerified||notes.length<20)return
   void act(async()=>{
     const {data:auth,error:authError}=await supabase.auth.getUser()
     if(authError)throw new Error(authError.message)
@@ -121,6 +125,9 @@ export default function MentorshipOutcomeReview({
       Their verified mentor may review the statement once. A supportive review is not an independent certificate, official qualification, employer endorsement or Career Passport award.</p>
    {error&&<p role="alert" className="banner banner-error">{error}</p>}
    {notice&&<p role="status" className="banner banner-info">{notice}</p>}
+   {!loading&&!historyVerified&&<p role="status" className="banner banner-info">
+     Outcome history is unavailable. Existing claims cannot be checked. Submissions and reviews are paused to prevent duplicates. Use Refresh when the connection returns.
+   </p>}
    {mode==='learner'&&<section>
      {completed.length===0?<p className="muted">No completed mentorship sessions are available for an evidence claim yet.</p>:
        <form onSubmit={claim}>
@@ -141,18 +148,19 @@ export default function MentorshipOutcomeReview({
          </div>
          <div className="field"><label htmlFor="outcome-evidence">What did you actually learn or produce?</label>
            <textarea id="outcome-evidence" value={outcome} minLength={20} maxLength={2000}
-             rows={4} disabled={busy||submitted} required
+             rows={4} disabled={busy||loading||!historyVerified||submitted} required
              onChange={event=>setOutcome(event.target.value)}
              placeholder="Describe the session-specific learning or work, not a claim of certification."/>
          </div>
          {submitted&&<p role="status">You already submitted an outcome in this category for this session.</p>}
          <button type="submit" className="btn btn-primary"
-           disabled={busy||!eligibleSession||submitted||outcome.trim().length<20}>
+           disabled={busy||loading||!historyVerified||!eligibleSession||submitted||outcome.trim().length<20}>
            {busy?'Submitting…':'Submit for mentor review'}
          </button>
        </form>}
    </section>}
    {loading?<p role="status">Loading recorded learning evidence…</p>:
+    !historyVerified ? <p className="muted">Your private outcomes cannot be verified. This is not a confirmed empty history.</p> :
     claims.length===0?<p className="muted">No recorded outcome claims yet.</p>:
       <div className="list-panel">{claims.map(item=><article className="list-row"
         key={item.id} style={{display:'block'}}>
@@ -171,12 +179,12 @@ export default function MentorshipOutcomeReview({
           <section>
             <div className="field"><label htmlFor={'outcome-review-'+item.id}>Review evidence and explain your decision</label>
               <textarea id={'outcome-review-'+item.id} minLength={20} maxLength={2000}
-                disabled={busy} rows={3} value={draftNotes[item.id]??''}
+                disabled={busy||loading||!historyVerified} rows={3} value={draftNotes[item.id]??''}
                 onChange={event=>setDraftNotes(old=>({...old,[item.id]:event.target.value}))}/>
             </div>
-            <button type="button" className="btn btn-primary" disabled={busy||(draftNotes[item.id]??'').trim().length<20}
+            <button type="button" className="btn btn-primary" disabled={busy||loading||!historyVerified||(draftNotes[item.id]??'').trim().length<20}
               onClick={()=>decide(item.id,'mentor_supported')}>Support this outcome</button>{' '}
-            <button type="button" className="btn btn-secondary" disabled={busy||(draftNotes[item.id]??'').trim().length<20}
+            <button type="button" className="btn btn-secondary" disabled={busy||loading||!historyVerified||(draftNotes[item.id]??'').trim().length<20}
               onClick={()=>decide(item.id,'not_supported')}>Do not support this outcome</button>
           </section>}
       </article>)}</div>}

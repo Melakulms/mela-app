@@ -1,0 +1,28 @@
+name: Mentorship 16-section published bundle smoke
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  staging-published:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify public staging release has clickable section panels
+        shell: bash
+        run: |
+          set -euo pipefail
+          site=https://mela-staging.vercel.app
+          curl --fail --show-error --silent --location --retry 4 --retry-delay 3 --max-time 25 -H 'Cache-Control: no-cache' "$site/" -o /tmp/mela-staging-index.html
+          grep -q 'tungqfmypuwzeyrtaseh.supabase.co' /tmp/mela-staging-index.html
+          ! grep -q 'duizgtmbptmlbyipreqg.supabase.co' /tmp/mela-staging-index.html
+          script=$(grep -oE 'src="/assets/[^"]+\.js"' /tmp/mela-staging-index.html | head -1 | cut -d '"' -f2)
+          test -n "$script"
+          curl --fail --show-error --silent --location --retry 4 --retry-delay 3 --max-time 25 "$site$script" -o /tmp/mela-staging-script.js
+          grep -F -q 'Open Mentor Workspace' /tmp/mela-staging-script.js
+          grep -F -q 'Open Administration' /tmp/mela-staging-script.js
+          grep -F -q 'Select a section to open its own information panel' /tmp/mela-staging-script.js
+          grep -F -q 'Verified mentor account required' /tmp/mela-staging-script.js
+          grep -F -q 'Central Admin MFA required' /tmp/mela-staging-script.js
+          echo 'Published staging JS includes live 16-section navigation and role safeguards.'

@@ -7,6 +7,7 @@ vi.mock('../src/components/MentorshipGroupInterest',()=>({default:()=>null}))
 vi.mock('../src/lib/mentorship-workspace',()=>({
  loadMentorshipWorkspace:mocks.load,addMentorshipGoal:mocks.add,
  assignmentProgress:()=>({assigned:0,submitted:0,reviewed:0}),
+ mentorshipActionSummary:()=>({activeGoals:0,overdueGoals:0,assignmentsToSubmit:0,overdueAssignments:0,awaitingFeedback:0}),
  deleteMentorshipGoal:mocks.remove,createMentorshipAssignment:vi.fn(),sendMentorshipFeedback:vi.fn(),setMentorshipGoalStatus:vi.fn(),submitMentorshipAssignment:vi.fn()
 }))
 beforeEach(()=>{

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   decideMfaGate, discardUnfinishedTotp, getMentorMfaSnapshot, mapMfaError,
-  startTotpEnrollment, verifyExistingTotp, verifyTotp,
-  type MfaGateState, type TotpEnrollment,
+  startTotpEnrollment, verifyExistingTotp, verifyTotp, listVerifiedTotpFactors,
+  type MfaGateState, type TotpEnrollment, type VerifiedTotp,
 } from '../lib/mentor-mfa'
 
 /** Usability gate only. Privileged RPCs still validate signed JWT and AAL2 server-side. */
@@ -14,6 +14,8 @@ export default function MentorMfaGate({ purpose, onReady, onCancel }: {
   const [state, setState] = useState<MfaGateState | 'loading' | 'unavailable'>('loading')
   const [enrollment, setEnrollment] = useState<TotpEnrollment | null>(null)
   const [code, setCode] = useState('')
+  const [factors, setFactors] = useState<VerifiedTotp[]>([])
+  const [factorId, setFactorId] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const once = useRef(false)
@@ -30,7 +32,16 @@ export default function MentorMfaGate({ purpose, onReady, onCancel }: {
       const next = decideMfaGate(s)
       if (next === 'ready') {
         if (!once.current) { once.current = true; onReadyRef.current() }
-      } else setState(next)
+      } else {
+        setState(next)
+        if (next === 'verify') {
+          void listVerifiedTotpFactors().then(items => {
+            if (!mounted) return
+            setFactors(items)
+            setFactorId(items[0]?.id ?? '')
+          }).catch(() => { if (mounted) setState('unavailable') })
+        }
+      }
     }).catch(() => { if (mounted) setState('unavailable') })
     return () => { mounted = false }
   }, [])
@@ -74,12 +85,18 @@ export default function MentorMfaGate({ purpose, onReady, onCancel }: {
       <img src={enrollment.qrCode} alt="Authenticator setup QR code" width={180} height={180} />
       <p>Setup key: <code style={{ overflowWrap: 'anywhere' }}>{enrollment.secret}</code></p>
     </>}
+    {state === 'verify' && factors.length > 1 && <div className="field">
+      <label htmlFor="mentor-factor-picker">Choose an authenticator device</label>
+      <select id="mentor-factor-picker" value={factorId} disabled={busy} onChange={e => setFactorId(e.target.value)}>
+        {factors.map(f => <option key={f.id} value={f.id}>{f.friendlyName}</option>)}
+      </select>
+    </div>}
     {(state === 'verify' || (state === 'enroll' && enrollment)) && <>
       <label htmlFor="mentor-two-step-code">6-digit authenticator code</label>
       <input id="mentor-two-step-code" inputMode="numeric" autoComplete="one-time-code" maxLength={6}
         value={code} disabled={busy} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} />
       <button className="btn btn-primary" disabled={busy || code.length !== 6} onClick={() => void execute(() =>
-        enrollment ? verifyTotp(enrollment.factorId, code) : verifyExistingTotp(code))}>
+        enrollment ? verifyTotp(enrollment.factorId, code) : verifyExistingTotp(code, factorId || undefined))}>
         {busy ? 'Verifying…' : 'Verify'}
       </button>
     </>}

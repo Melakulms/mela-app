@@ -9,6 +9,17 @@ type Reflection={
  id:string;session_id:string;learning_summary:string;next_step:string;created_at:string
 }
 
+const SESSION_PREPARATION_STARTERS=[
+  {name:'Academic study',goal:'Understand a difficult topic and plan a practice routine',
+    questions:'Which ideas should I review first? What exercises will show that I understand the topic? What should I practise before next time?'},
+  {name:'Scholarship planning',goal:'Prepare a realistic scholarship application plan',
+    questions:'Which eligibility requirements matter most? What documents should I prepare safely? How can I check official deadlines and avoid scams?'},
+  {name:'Career exploration',goal:'Compare career paths and identify my next skill',
+    questions:'Which daily tasks are typical in these careers? What skills can I practise now? What free learning projects are appropriate for my level?'},
+  {name:'Project review',goal:'Improve a learning project using constructive feedback',
+    questions:'What is the clearest improvement to make first? Which evidence demonstrates my work? How should I test and explain the result?'},
+] as const
+
 export default function MentorshipSessionJourney({sessions}:{sessions:MentorshipSession[]}) {
  const eligible=sessions.filter(s=>s.status==='scheduled'||s.status==='completed')
  const [selected,setSelected]=useState('')
@@ -171,6 +182,13 @@ export default function MentorshipSessionJourney({sessions}:{sessions:Mentorship
        {loading?<p role="status">Loading private session notes…</p>:!loadError&&current&&<>
          {!preparationError&&<form onSubmit={savePreparation}>
            <h3>Prepare for this session</h3>
+           <p className="muted">Choose a starting plan, or write your own. A starter fills only this form; no note is submitted until you select Save my preparation.</p>
+           <div style={{display:'flex',flexWrap:'wrap',gap:'.5rem',marginBottom:'.75rem'}}>
+             {SESSION_PREPARATION_STARTERS.map(starter=><button type="button" key={starter.name} className="btn btn-secondary"
+               disabled={busy} onClick={()=>{
+                 setGoal(starter.goal);setQuestions(starter.questions);setPreparationDirty(true)
+               }}>Use {starter.name} starter</button>)}
+           </div>
            <div className="field"><label htmlFor="mentorship-session-goal">Session goal</label>
              <input id="mentorship-session-goal" value={goal} minLength={3} maxLength={300}
                required disabled={busy} onChange={event=>{setGoal(event.target.value);setPreparationDirty(true)}}

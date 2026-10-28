@@ -254,7 +254,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       <MentorshipSectionDirectory selected={section} onSelect={selectSection} />
       {section !== null && <MentorshipPracticeLab key={section} section={section} />}
       <div hidden={!shows(1,5)}>
-      {!loading && !directoryError && mentors && <MentorshipHome
+      {shows(1,5) && !loading && !directoryError && mentors && <MentorshipHome
         mentors={mentors}
         requestsAvailable={!requestsError}
         sessionsAvailable={!sessionsError}
@@ -272,11 +272,11 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       {accessChecking && !blockedStage && <p role="status" className="muted">Checking your current mentorship eligibility…</p>}
       {accessError && !blockedStage && <p role="alert" className="banner banner-error">{accessError} Direct requests remain disabled until eligibility can be verified.</p>}
       {!accessChecking && !accessError && guardianReviewRequired && <p role="status" className="banner banner-info">Your verified guardian clearance is not yet confirmed. Open Safety & Privacy to request or review guardian consent.</p>}
-      {['university','college_tvet'].includes(stageKey ?? '') && <MentorshipAdultEligibility onApprovalChange={setAdultReviewApproved} />}
+      {shows(2,3,4,6,7,13,14,15) && ['university','college_tvet'].includes(stageKey ?? '') && <MentorshipAdultEligibility onApprovalChange={setAdultReviewApproved} />}
       </div>
       <div hidden={!shows(15)}>
       <section id="mentorship-safety" className="empty-panel" style={{ textAlign:'left' }}><h2>15. Guardian and Safety Center</h2><p>Keep discussions inside approved MELA pathways. Report abusive or unsafe contact. Learners who require verified guardian consent must obtain it before direct mentorship.</p>{onOpenSafety && <button className="btn btn-secondary" disabled={!!busy} onClick={onOpenSafety}>Safety, guardian consent & reporting</button>}</section>
-      <MentorshipSafetyReporting mentors={mentors ?? []} requests={requests} sessions={sessions} />
+      {shows(15) && <MentorshipSafetyReporting mentors={mentors ?? []} requests={requests} sessions={sessions} />}
       </div>
       <div hidden={!shows(7,8)}>
       <p className="muted">Session times use your device time zone: {localZone}.</p>

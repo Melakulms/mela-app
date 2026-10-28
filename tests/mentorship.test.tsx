@@ -225,12 +225,23 @@ describe('Mentorship', () => {
 
     await screen.findByText('Your sessions')
     fireEvent.click(screen.getByRole('button', { name: 'Cancel session' }))
-    await waitFor(() => expect(mocks.cancelMentorshipSession).toHaveBeenCalledWith('session-1', 'Cancelled by learner'))
+    expect(mocks.cancelMentorshipSession).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', {name:'Keep session'}))
+    expect(mocks.cancelMentorshipSession).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', {name:'Cancel session'}))
+    fireEvent.change(screen.getByLabelText('Reason (optional)'),{target:{value:'Change in plans'}})
+    fireEvent.click(screen.getByRole('button', {name:'Confirm cancel session'}))
+    await waitFor(() => expect(mocks.cancelMentorshipSession).toHaveBeenCalledWith('session-1', 'Change in plans'))
 
     await waitFor(() => expect(mocks.fetchMyMentorshipRequests).toHaveBeenCalledTimes(2))
     fireEvent.click(screen.getByRole('button', { name: 'All mentorship sections' }))
     fireEvent.click(screen.getByRole('button', { name: 'Open Mentorship Programs & Requests' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Cancel request' }))
+    expect(mocks.cancelMentorshipRequest).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button',{name:'Keep request'}))
+    expect(mocks.cancelMentorshipRequest).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button',{name:'Cancel request'}))
+    fireEvent.click(screen.getByRole('button',{name:'Confirm cancel request'}))
     await waitFor(() => expect(mocks.cancelMentorshipRequest).toHaveBeenCalledWith('request-1'))
   })
 
@@ -294,6 +305,7 @@ it('keeps saved mentorship requests actionable when mentor search is unavailable
   expect(await screen.findByText('Career options')).toBeTruthy()
   // A failed mentor search must not hide or disable existing request history.
   fireEvent.click(screen.getByRole('button', {name:'Cancel request'}))
+  fireEvent.click(screen.getByRole('button', {name:'Confirm cancel request'}))
   await waitFor(() => expect(mocks.cancelMentorshipRequest).toHaveBeenCalledWith('request-41'))
 })
 

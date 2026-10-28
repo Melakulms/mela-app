@@ -18,6 +18,7 @@ import MentorshipHome from '../components/MentorshipHome'
 import MentorshipLearningWorkspace from '../components/MentorshipLearningWorkspace'
 import MentorshipSectionDirectory from '../components/MentorshipSectionDirectory'
 import MentorshipPracticeLab from '../components/MentorshipPracticeLab'
+import MentorshipMentorCompare from '../components/MentorshipMentorCompare'
 import MentorApplication from '../components/MentorApplication'
 import MentorshipAdultEligibility from '../components/MentorshipAdultEligibility'
 import MentorshipSafetyReporting from '../components/MentorshipSafetyReporting'
@@ -30,6 +31,12 @@ import { discoverMentors, getMentorLanguages, MENTORSHIP_CATEGORIES, mentorMatch
 export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack: () => void; stageKey?: string | null; onOpenSafety?: () => void }) {
   const { t } = useI18n()
   const [query, setQuery] = useState('')
+  const [comparedMentorIds, setComparedMentorIds] = useState<string[]>([])
+  const toggleMentorComparison = (id: string) => {
+    setComparedMentorIds(previous =>
+      previous.includes(id) ? previous.filter(item => item !== id) : previous.length >= 3 ? previous : [...previous,id]
+    )
+  }
   const [section, setSection] = useState<number | null>(() => readMentorshipSection(new URL(window.location.href)))
   const selectSection = (next: number | null) => {
     if (next === section) return
@@ -177,6 +184,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
   const alreadyRequested = (mentorId: string) => requests.some((r) => r.mentor_id === mentorId &&
     (r.status === 'pending' || (r.status === 'accepted' && !sessions.some(s => s.request_id === r.id && s.status === 'completed'))))
   const mentorNames = new Map((mentors ?? []).map(m => [m.user_id, m.full_name ?? 'MELA mentor']))
+  const knownComparedIds = comparedMentorIds.filter(id => (mentors ?? []).some(mentor => mentor.user_id === id))
   const requestTopics = new Map(requests.map(r => [r.id, r.topic]))
   const localZone = Intl.DateTimeFormat().resolvedOptions().timeZone
   const visibleMentors = discoverMentors(mentors ?? [], {
@@ -410,6 +418,9 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
           </article>)}
         </div>
       </section>}
+      {!loading && section === 4 && mentors && <MentorshipMentorCompare
+        mentors={mentors} selectedIds={knownComparedIds} onToggle={toggleMentorComparison}
+        onClear={() => setComparedMentorIds([])} />}
       {!loading && <div id="mentor-directory" className="section-heading"><h2>Find a verified mentor</h2></div>}
       {!loading && mentors && <section className="empty-panel" style={{ textAlign: 'left' }}>
         <p>Browse approved mentors progressively. Search, filters and comparison apply to profiles loaded on this device. Load more profiles to expand your results. Category suggestions are based on reviewed profile text, not a separate certification.</p>
@@ -482,6 +493,12 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
             {m.years_experience != null && <p>{m.years_experience} years of experience</p>
             }
             {m.rating_count > 0 && <p className="muted">{m.rating_average.toFixed(2)}/5 · {m.rating_count} {m.rating_count === 1 ? 'rating' : 'ratings'}</p>}
+            {section === 4 && <button type="button" className="btn btn-secondary"
+              aria-pressed={knownComparedIds.includes(m.user_id)}
+              disabled={!knownComparedIds.includes(m.user_id) && knownComparedIds.length >= 3}
+              onClick={() => toggleMentorComparison(m.user_id)}>
+                {knownComparedIds.includes(m.user_id) ? 'Remove from comparison' : 'Add to comparison'}
+              </button>}
             {blockedStage ? <span className="pill">Direct mentorship unavailable for this education stage</span>
               : accessChecking ? <span className="pill">Checking verified mentorship eligibility</span>
               : guardianReviewRequired ? <span className="pill">Verified guardian clearance required</span>

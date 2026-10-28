@@ -49,3 +49,14 @@
 - Only mounted subsections fetch their private safety report history, age review, or profile recommendations. Optional practice worksheets are collapsed, keeping real section controls first on phones.
 - Tests include the full 1–16 URL range, invalid subsection parameters, Android Back restoration, history-failure request gating, and partial-dashboard unavailable-state labels.
 - **Vercel:** permission was rechecked. The deployment listing operation now also returned HTTP 403; no deployment has been performed. GitHub CI green is NOT equivalent to published staging/production verification.
+
+## Additional improvements — goal lifecycle, mentor reliability and category discovery
+
+- **Mentor inbox** reads incoming requests and scheduled-session history independently. If sessions are unavailable, incoming requests remain visible but scheduling is disabled until the calendar can be checked; a failed request read is never labeled a truly empty inbox.
+- **Goals (section 9)** have age-appropriate suggested starting plans that only fill the input form; the learner must explicitly save. Removing a goal requires a second confirmation and the database must report an actual deleted row before the UI claims success.
+- **Home (section 1)** independently loads actual active `mentorship_goals` saved through section 9, alongside profile goals; goal titles can inform text-based mentor recommendations, without overriding verification and safeguarding restrictions.
+- **Categories (section 3)** includes selectable guidance cards linking to actual filtered verified mentor profiles. Visible totals reflect **loaded** approved profiles only and are not presented as all mentors.
+- **Assignments (section 11)** can be filtered by awaiting learner response, submitted/awaiting mentor feedback, and reviewed status. Assignment due times reject invalid or past dates before insertion.
+- **Progress (section 12)** displays active goals, goals past their target dates, assignments requiring response, overdue assignments and tasks waiting on mentor feedback. Duplicate response/review rows never inflate task counts or completion percentages. These are activity indicators, not mastery scores or automatic certificates.
+- Added regression tests for partial mentor inbox outages, action summary accuracy, saved-goal cross-section visibility, category filtering, confirmation before deletion and assignment-status filters.
+- This remains a **DRAFT** PR. Real staging publishing is blocked by Vercel 403. Continue to require genuine signed-in role and MFA tests before live production.

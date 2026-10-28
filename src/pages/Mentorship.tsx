@@ -326,7 +326,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       {!loading && (error || directoryError || requestsError || sessionsError) && <button className="btn btn-secondary" disabled={!!busy} onClick={() => setRevision((value) => value + 1)}>Retry mentorship</button>}
 
       {/* Learning goals/resources load independently of mentor directory failures. */}
-      {shows(9,10,11,12,13) && <MentorshipLearningWorkspace mode="learner" stageKey={stageKey} section={section} />}
+      {shows(9,10,11,12,13) && <MentorshipLearningWorkspace mode="learner" stageKey={stageKey} section={section} onNavigate={selectSection} />}
       <div hidden={!shows(8)}>
       <section id="mentorship-live" className="empty-panel" style={{ textAlign:'left' }}><h2>8. Live Mentorship</h2><p>Request and schedule sessions through MELA. Integrated audio/video calls are not yet activated. Do not share private contact details or join unapproved off-platform meetings.</p></section>
       </div>

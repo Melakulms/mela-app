@@ -22,7 +22,7 @@ jobs:
           "$RUNNER_TEMP/mela-playwright/node_modules/.bin/playwright" install --with-deps chromium
       - name: Verify real anonymous Android-sized page render without credentials
         env:
-          STAGING_URL: https://mela-staging-fxo7fqkn0-melakuanteneh1-gmailcoms-projects.vercel.app/
+          STAGING_URL: https://mela-staging.vercel.app/
         shell: bash
         run: |
           set -euo pipefail

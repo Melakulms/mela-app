@@ -59,6 +59,21 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('Mentorship', () => {
+  it('shows only one card directory until a learner chooses a subsection', async () => {
+    render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+    expect(screen.getAllByRole('button',{name:/^Open /})).toHaveLength(16)
+    expect(screen.queryByText('Mentor One')).toBeNull()
+    expect(screen.queryByRole('heading',{name:'Find a verified mentor'})).toBeNull()
+    expect(screen.queryByRole('heading',{name:'Your requests'})).toBeNull()
+    fireEvent.click(screen.getByRole('button',{name:'Open Find a Mentor'}))
+    expect(screen.getByRole('heading',{name:'2. Find a Mentor'})).toBeTruthy()
+    expect(screen.queryByRole('button',{name:'Open Resources'})).toBeNull()
+    expect(await screen.findByText('Mentor One')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button',{name:'Back to mentorship sections'}))
+    expect(screen.getAllByRole('button',{name:/^Open /})).toHaveLength(16)
+    expect(screen.queryByText('Mentor One')).toBeNull()
+  })
+
   it('loads further verified mentors in bounded pages without losing existing profiles',async()=>{
     mocks.fetchVerifiedMentorsPage.mockImplementation((offset:number)=>
       Promise.resolve(offset===0
@@ -149,7 +164,7 @@ describe('Mentorship', () => {
     mocks.fetchMyMentorshipSessions.mockResolvedValue([{ id: 'session-1', request_id: 'request-1', mentor_id: 'mentor-1', mentee_id: 'learner', scheduled_at: '2026-10-04T10:00:00Z', duration_min: 30, status: 'completed', rating: 5, rating_comment: null, notes: 'Revise the project section of your CV.' }])
     render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
   fireEvent.click(screen.getByRole('button', {name: 'Open Booking and Scheduling'}))
-    await screen.findByText('Mentor One')
+    await screen.findByText(/Revise the project section of your CV/)
     expect(screen.getByText(/Revise the project section of your CV/)).toBeTruthy()
     expect(screen.getByTestId('session-journey').textContent).toBe('1 session plans')
     fireEvent.click(screen.getByRole('button',{name:'All mentorship sections'}))
@@ -249,7 +264,7 @@ it('keeps verified mentor discovery accessible when private request history fail
   render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
   fireEvent.click(screen.getByRole('button', {name: 'Open Find a Mentor'}))
   expect(await screen.findByText('Mentor One')).toBeTruthy()
-  expect(screen.getByRole('alert').textContent).toContain('Request history temporarily unavailable')
+  expect(screen.getByText('Request history unavailable — retry before sending')).toBeTruthy()
   expect(screen.getByRole('searchbox', { name:'Search by name, field, skills, or interests' })).toBeTruthy()
   expect(screen.getByText('Mentor One')).toBeTruthy()
   expect(screen.queryByText(/No verified mentors have been onboarded/)).toBeNull()
@@ -264,7 +279,7 @@ it('keeps saved mentorship requests actionable when mentor search is unavailable
   render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
   fireEvent.click(screen.getByRole('button', {name: 'Open Mentorship Programs & Requests'}))
   expect(await screen.findByText('Career options')).toBeTruthy()
-  expect(screen.getByRole('alert').textContent).toContain('Mentor directory unavailable')
+  // A failed mentor search must not hide or disable existing request history.
   fireEvent.click(screen.getByRole('button', {name:'Cancel request'}))
   await waitFor(() => expect(mocks.cancelMentorshipRequest).toHaveBeenCalledWith('request-41'))
 })

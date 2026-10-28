@@ -95,3 +95,18 @@ export async function discardUnfinishedTotp(): Promise<void> {
     if (discarded.error) throw discarded.error
   }
 }
+
+export type RecoveryReason = 'lost_device' | 'all_factors_unavailable' | 'device_compromised'
+
+/** Submit only a self-service request. AAL1 cannot approve or execute reset. */
+export async function requestMentorMfaRecovery(reason: RecoveryReason): Promise<string> {
+  if (!(['lost_device', 'all_factors_unavailable', 'device_compromised'] as string[]).includes(reason)) {
+    throw new Error('Select a valid recovery reason.')
+  }
+  const { error } = await supabase.rpc('request_mentor_mfa_recovery', { p_reason: reason })
+  if (error) {
+    if (error.code === 'PGRST202') throw new Error('Recovery requests are not yet enabled. Contact MELA support.')
+    throw new Error(error.message || 'Recovery request could not be submitted.')
+  }
+  return 'Your request was recorded. Two MFA-verified staff reviewers must independently verify your identity. No automatic reset will occur.'
+}

@@ -26,8 +26,8 @@ beforeEach(()=>{
  mocks.getUser.mockResolvedValue({data:{user:{id:'learner-1'}},error:null})
  mocks.read.mockResolvedValue({data:[],error:null})
  mocks.verificationRead.mockResolvedValue({data:[],error:null})
- mocks.insert.mockResolvedValue({data:null,error:null})
- mocks.update.mockReturnValue({eq:()=>({eq:()=>({select:async()=>({data:[{id:'outcome-1'}],error:null})})})})
+ mocks.insert.mockReturnValue({select:async()=>({data:[{id:'claim-1'}],error:null})})
+ mocks.update.mockReturnValue({eq:()=>({eq:()=>({eq:()=>({select:async()=>({data:[{id:'outcome-1'}],error:null})})})})})
 })
 afterEach(cleanup)
 
@@ -152,4 +152,16 @@ it('shows actual saved claims when independent administrator verification read f
   expect((screen.getByRole('button',{name:'Submit for mentor review'}) as HTMLButtonElement).disabled).toBe(true)
   expect(mocks.insert).not.toHaveBeenCalled()
   expect(screen.queryByText(/Supporting evidence reviewed by MELA administration/)).toBeNull()
+})
+
+it('requires a returned saved outcome row before claiming success or clearing the draft',async()=>{
+  mocks.insert.mockReturnValueOnce({select:async()=>({data:[],error:null})})
+  render(<MentorshipOutcomeReview mode="learner" sessions={[completedSession]}/>)
+  fireEvent.change(screen.getByLabelText('Completed session'),{target:{value:'session-1'}})
+  fireEvent.change(screen.getByLabelText('What did you actually learn or produce?'),{target:{value:'I improved my CV and learned to explain three projects.'}})
+  await waitFor(()=>expect((screen.getByRole('button',{name:'Submit for mentor review'}) as HTMLButtonElement).disabled).toBe(false))
+  fireEvent.click(screen.getByRole('button',{name:'Submit for mentor review'}))
+  expect((await screen.findByRole('alert')).textContent).toContain('not confirmed by the database')
+  expect((screen.getByLabelText('What did you actually learn or produce?') as HTMLTextAreaElement).value).toContain('three projects')
+  expect(screen.queryByText(/No credential or certificate has been issued/)).toBeNull()
 })

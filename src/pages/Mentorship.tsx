@@ -197,7 +197,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         <h1>{t('mentorship')}</h1>
         <button className="btn btn-secondary" onClick={onBack} disabled={!!busy}>{t('back')}</button>
       </div>
-      <details className="empty-panel" style={{ textAlign: 'left' }}><summary>Explore all 16 mentorship sections</summary><MentorshipSectionDirectory /></details>
+      <MentorshipSectionDirectory />
       {!loading && !error && mentors && <MentorshipHome
         mentors={mentors}
         requests={requests}
@@ -224,7 +224,8 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       {loading && <p className="muted" role="status">Loading mentorship…</p>}
       {!loading && error && <button className="btn btn-secondary" disabled={!!busy} onClick={() => setRevision((value) => value + 1)}>Retry mentorship</button>}
 
-      {!loading && !error && <MentorshipLearningWorkspace mode="learner" stageKey={stageKey} />}
+      {/* Learning goals/resources load independently of mentor directory failures. */}
+      <MentorshipLearningWorkspace mode="learner" stageKey={stageKey} />
       <section id="mentorship-live" className="empty-panel" style={{ textAlign:'left' }}><h2>8. Live Mentorship</h2><p>Request and schedule sessions through MELA. Integrated audio/video calls are not yet activated. Do not share private contact details or join unapproved off-platform meetings.</p></section>
       {['university','college_tvet'].includes(stageKey ?? '') && directAccessAllowed &&
         <details className="empty-panel" style={{ textAlign:'left' }}><summary>Apply to become a verified mentor (eligible adults)</summary><MentorApplication /></details>}

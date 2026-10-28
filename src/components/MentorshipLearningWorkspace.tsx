@@ -10,7 +10,10 @@ import MentorshipGroupInterest from './MentorshipGroupInterest'
 
 type AcceptedRequest = { id: string; mentee_id: string; topic: string; status: string }
 
-export default function MentorshipLearningWorkspace({ mode, stageKey, section = null }: { mode: 'learner' | 'mentor'; stageKey?: string | null; section?: number | null }) {
+export default function MentorshipLearningWorkspace({ mode, stageKey, section = null, onNavigate }: {
+  mode: 'learner' | 'mentor'; stageKey?: string | null; section?: number | null
+  onNavigate?: (section: number) => void
+}) {
   const [workspace, setWorkspace] = useState<MentorshipWorkspace | null>(null)
   const [accepted, setAccepted] = useState<AcceptedRequest[]>([])
   const [error, setError] = useState('')
@@ -179,7 +182,10 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
   return <section aria-label={mode === 'mentor' ? 'Mentor learning workspace' : 'Learner mentorship workspace'}>
     <div className="section-heading"><h2>{mode === 'mentor' ? 'Mentor learning workspace' : 'My mentorship learning journey'}</h2>
       <button className="btn btn-secondary" type="button" onClick={() => setRevision((n) => n + 1)} disabled={busy || loading}>Refresh</button></div>
-    {notice && <p className="banner banner-info" role="status">{notice}</p>}
+    {notice && <p className="banner banner-info" role="status">{notice}
+      {notice.includes('guide study goal was saved') && onNavigate && <button type="button" className="btn btn-secondary"
+        onClick={() => onNavigate(9)}>View saved learning goal</button>}
+    </p>}
     {error && <div className="banner banner-error" role="alert">{error}<button className="btn btn-secondary" type="button" onClick={() => setRevision((n) => n + 1)} disabled={busy}>Retry</button></div>}
     {acceptedError && <p className="banner banner-error" role="alert">{acceptedError}</p>}
     {loading && <p role="status">Loading learning plans, resources and assignments…</p>}
@@ -303,6 +309,12 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
           {mode === 'learner' && <div><strong>{workspace.goals.filter((goal) => goal.status === 'completed').length}</strong><p className="muted">Self-reported goals</p></div>}
         </div>
         <h4>What needs attention</h4>
+        {onNavigate && <div style={{display:'flex',gap:'.5rem',flexWrap:'wrap',marginBottom:'.75rem'}}>
+          {mode === 'learner' && <button type="button" className="btn btn-secondary"
+            onClick={()=>onNavigate(9)}>Open my learning goals</button>}
+          <button type="button" className="btn btn-secondary"
+            onClick={()=>onNavigate(11)}>{mode === 'mentor' ? 'Review learner assignments' : 'Open my assignments'}</button>
+        </div>}
         <div className="module-grid" aria-label="My mentorship action summary">
           {mode === 'learner' && <>
             <div><strong>{nextActions.activeGoals}</strong><p className="muted">Goals in progress or planned</p></div>

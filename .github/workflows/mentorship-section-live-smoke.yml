@@ -15,10 +15,11 @@ jobs:
           set -euo pipefail
           site=https://mela-staging.vercel.app
           curl --fail --show-error --silent --location --retry 4 --retry-delay 3 --max-time 25 -H 'Cache-Control: no-cache' "$site/" -o /tmp/mela-staging-index.html
-          grep -q 'tungqfmypuwzeyrtaseh.supabase.co' /tmp/mela-staging-index.html
+          grep -q 'tungqfmypuwzeyrtaseh.supabase.co' /tmp/mela-staging-index.html || { echo '::error::Wrong public staging HTML CSP'; exit 1; }
           ! grep -q 'duizgtmbptmlbyipreqg.supabase.co' /tmp/mela-staging-index.html
           script=$(grep -oE 'src="/assets/[^"]+\.js"' /tmp/mela-staging-index.html | head -1 | cut -d '"' -f2)
-          test -n "$script"
+          echo 'HTML and staging CSP validated.'
+          test -n "$script" || { echo '::error::No app entry script'; exit 1; }
           curl --fail --show-error --silent --location --retry 4 --retry-delay 3 --max-time 25 "$site$script" -o /tmp/mela-staging-script.js
           # Mentorship is React.lazy-loaded; its UI strings live in a separate chunk.
           chunks=$(grep -oE 'Mentorship-[A-Za-z0-9_-]+[.]js' /tmp/mela-staging-script.js | sort -u)
@@ -27,10 +28,10 @@ jobs:
           while IFS= read -r chunk; do
             curl --fail --show-error --silent --location --max-time 25 "$site/assets/$chunk" >> /tmp/mela-mentorship-chunks.js
           done <<< "$chunks"
-          grep -F -q 'Open ' /tmp/mela-mentorship-chunks.js
-          grep -F -q 'Mentor Workspace' /tmp/mela-mentorship-chunks.js
-          grep -F -q 'Administration' /tmp/mela-mentorship-chunks.js
-          grep -F -q 'Select a section to open its own information panel' /tmp/mela-mentorship-chunks.js
-          grep -F -q 'Verified mentor account required' /tmp/mela-mentorship-chunks.js
-          grep -F -q 'Central Admin MFA required' /tmp/mela-mentorship-chunks.js
+          grep -F -q 'Open ' /tmp/mela-mentorship-chunks.js || { echo '::error::Missing published mentorship content: Open '; exit 1; }
+          grep -F -q 'Mentor Workspace' /tmp/mela-mentorship-chunks.js || { echo '::error::Missing published mentorship content: Mentor Workspace'; exit 1; }
+          grep -F -q 'Administration' /tmp/mela-mentorship-chunks.js || { echo '::error::Missing published mentorship content: Administration'; exit 1; }
+          grep -F -q 'Select a section to open its own information panel' /tmp/mela-mentorship-chunks.js || { echo '::error::Missing published mentorship content: Select a section to open its own information panel'; exit 1; }
+          grep -F -q 'Verified mentor account required' /tmp/mela-mentorship-chunks.js || { echo '::error::Missing published mentorship content: Verified mentor account required'; exit 1; }
+          grep -F -q 'Central Admin MFA required' /tmp/mela-mentorship-chunks.js || { echo '::error::Missing published mentorship content: Central Admin MFA required'; exit 1; }
           echo 'Published staging JS includes live 16-section navigation and role safeguards.'

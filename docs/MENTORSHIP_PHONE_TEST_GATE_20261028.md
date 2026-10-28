@@ -68,3 +68,12 @@
 - **Section 9, My Mentorship:** Edit title, plan and target date of a saved private goal, with explicit Save and Discard. Failed saves preserve the editor draft for retry; the Supabase update includes both goal ID and signed-in learner ID and must return a row. Invalid dates and unauthenticated changes fail closed.
 - Added React interaction tests and RLS-scoped API unit tests. Tests and builds must pass at the exact final PR head before staging validation.
 - **No staging release** as of this revision; published bundle smoke is expected to fail while the older staging deployment stays in place. Production remains unchanged.
+
+## Additional real subsection tools — final October 28 pass
+
+- Section 4: multi-profile comparison uses only existing verified profiles from the directory, limited to three. Includes published language, expertise, experience, completed-session ratings, and weekly time windows. It does **not** approve a request, infer verified credentials or schedule a session.
+- Section 5: an optional, unsaved goal-based matching form searches only the fetched verified directory; respects learner education stage, excludes pending/accepted requested mentors, and pauses matches if private request history cannot be checked. It is ordinary textual profile matching, not AI credentialing.
+- Section 6: pending, accepted and closed request counters and filters; acceptance never equates to booking. A failed calendar query must never create a false unbooked status.
+- Section 9: securely edit saved private goal title/plan/target date. Invalid calendar dates and empty/unauthorized update results fail; failed save keeps unsaved editor values for retry.
+- Added component and integration tests for all four areas, including the three-profile cap, guardian gating, RLS-scoped goal edits, and matching exclusion on existing active requests.
+- CI must pass at the exact PR head and published staging bundle must be updated. Public staging still serves older code; Vercel access was last checked as HTTP 403. Production has not been changed.

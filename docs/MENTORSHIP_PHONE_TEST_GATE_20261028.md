@@ -60,3 +60,11 @@
 - **Progress (section 12)** displays active goals, goals past their target dates, assignments requiring response, overdue assignments and tasks waiting on mentor feedback. Duplicate response/review rows never inflate task counts or completion percentages. These are activity indicators, not mastery scores or automatic certificates.
 - Added regression tests for partial mentor inbox outages, action summary accuracy, saved-goal cross-section visibility, category filtering, confirmation before deletion and assignment-status filters.
 - This remains a **DRAFT** PR. Real staging publishing is blocked by Vercel 403. Continue to require genuine signed-in role and MFA tests before live production.
+
+## Additional learner tools — 28 October
+
+- **Section 4, Mentor Profiles:** Compare up to three real, server-returned verified mentor profiles by published expertise, language, organization, experience, ratings and weekly availability. Unknown IDs are excluded; no credentials or session slots are invented. Comparison never grants permission.
+- **Section 6, Mentorship Requests:** Track and filter pending, accepted and closed real requests. The counts reflect returned records and an accepted request is never described as a booked session. Session status messages are suppressed when the calendar service cannot be checked.
+- **Section 9, My Mentorship:** Edit title, plan and target date of a saved private goal, with explicit Save and Discard. Failed saves preserve the editor draft for retry; the Supabase update includes both goal ID and signed-in learner ID and must return a row. Invalid dates and unauthenticated changes fail closed.
+- Added React interaction tests and RLS-scoped API unit tests. Tests and builds must pass at the exact final PR head before staging validation.
+- **No staging release** as of this revision; published bundle smoke is expected to fail while the older staging deployment stays in place. Production remains unchanged.

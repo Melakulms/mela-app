@@ -31,6 +31,7 @@ export default function MentorshipOutcomeReview({
  const [draftNotes,setDraftNotes]=useState<Record<string,string>>({})
  const [loading,setLoading]=useState(true)
  const [historyVerified,setHistoryVerified]=useState(false)
+ const [verificationError,setVerificationError]=useState('')
  const [busy,setBusy]=useState(false)
  const [error,setError]=useState('')
  const [notice,setNotice]=useState('')
@@ -41,7 +42,7 @@ export default function MentorshipOutcomeReview({
  const submitted=claims.some(c=>c.session_id===sessionId&&c.category===category)
 
  useEffect(()=>{
-  let active=true;setLoading(true);setHistoryVerified(false);setError('');setClaims([]);setVerifications([])
+  let active=true;setLoading(true);setHistoryVerified(false);setVerificationError('');setError('');setClaims([]);setVerifications([])
   void (async()=>{
     try{
       const {data:auth,error:authError}=await supabase.auth.getUser()
@@ -54,14 +55,22 @@ export default function MentorshipOutcomeReview({
       if(readError)throw new Error(readError.message)
       const ownClaims = (data??[]) as Outcome[]
       let ownVerifications: Verification[] = []
+      let verificationProblem = ''
       if(mode==='learner'&&ownClaims.length){
-        const {data:reviewData,error:reviewError}=await supabase
-          .from('mentorship_outcome_verifications')
-          .select('claim_id,decision,public_reason').in('claim_id',ownClaims.map(c=>c.id))
-        if(reviewError)throw new Error(reviewError.message)
-        ownVerifications=(reviewData??[]) as Verification[]
+        try {
+          const {data:reviewData,error:reviewError}=await supabase
+            .from('mentorship_outcome_verifications')
+            .select('claim_id,decision,public_reason').in('claim_id',ownClaims.map(c=>c.id))
+          if(reviewError)throw new Error(reviewError.message)
+          ownVerifications=(reviewData??[]) as Verification[]
+        }catch(cause){
+          verificationProblem=cause instanceof Error ? cause.message : 'Administrator review details are unavailable.'
+        }
       }
-      if(active){setClaims(ownClaims);setVerifications(ownVerifications);setHistoryVerified(true)}
+      if(active){
+        setClaims(ownClaims);setVerifications(ownVerifications)
+        setVerificationError(verificationProblem);setHistoryVerified(true)
+      }
     }catch(cause){
       if(active)setError(cause instanceof Error?cause.message:'Could not load mentorship outcomes.')
     }finally{if(active)setLoading(false)}
@@ -125,6 +134,9 @@ export default function MentorshipOutcomeReview({
       Their verified mentor may review the statement once. A supportive review is not an independent certificate, official qualification, employer endorsement or Career Passport award.</p>
    {error&&<p role="alert" className="banner banner-error">{error}</p>}
    {notice&&<p role="status" className="banner banner-info">{notice}</p>}
+   {verificationError&&<p role="status" className="banner banner-info">
+     Your saved outcome claims are available, but independent administrator verification details could not be loaded: {verificationError}. No verification result is assumed. Use Refresh to retry.
+   </p>}
    {!loading&&!historyVerified&&<p role="status" className="banner banner-info">
      Outcome history is unavailable. Existing claims cannot be checked. Submissions and reviews are paused to prevent duplicates. Use Refresh when the connection returns.
    </p>}

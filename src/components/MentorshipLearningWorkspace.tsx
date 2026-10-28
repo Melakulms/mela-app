@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   addMentorshipGoal, assignmentProgress, mentorshipActionSummary, createMentorshipAssignment,
-  deleteMentorshipGoal, loadMentorshipWorkspace, sendMentorshipFeedback,
+  deleteMentorshipGoal, loadMentorshipWorkspace, sendMentorshipFeedback, updateMentorshipGoal,
   setMentorshipGoalStatus, submitMentorshipAssignment,
   type MentorshipWorkspace, type MentorshipGoal,
 } from '../lib/mentorship-workspace'
@@ -24,6 +24,10 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
   const [goalDetail, setGoalDetail] = useState('')
   const [goalDate, setGoalDate] = useState('')
   const [confirmRemoveGoal, setConfirmRemoveGoal] = useState<string | null>(null)
+  const [editingGoalId, setEditingGoalId] = useState<string | null>(null)
+  const [editingGoalTitle, setEditingGoalTitle] = useState('')
+  const [editingGoalDetail, setEditingGoalDetail] = useState('')
+  const [editingGoalDate, setEditingGoalDate] = useState('')
   const [assignRequest, setAssignRequest] = useState('')
   const [assignTitle, setAssignTitle] = useState('')
   const [assignText, setAssignText] = useState('')
@@ -84,6 +88,24 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
     event.preventDefault()
     void run(() => addMentorshipGoal(goalTitle,goalDetail,goalDate), () => { setGoalTitle(''); setGoalDetail(''); setGoalDate('') })
   }
+  const editGoal = (goal: MentorshipGoal) => {
+    setEditingGoalId(goal.id)
+    setEditingGoalTitle(goal.title)
+    setEditingGoalDetail(goal.detail ?? '')
+    setEditingGoalDate(goal.target_date ?? '')
+    setConfirmRemoveGoal(null)
+  }
+  const saveGoalEdit = (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!editingGoalId) return
+    const id = editingGoalId
+    void run(() => updateMentorshipGoal(id,editingGoalTitle,editingGoalDetail,editingGoalDate), () => {
+      setEditingGoalId(null)
+      setEditingGoalTitle('')
+      setEditingGoalDetail('')
+      setEditingGoalDate('')
+    })
+  }
   const createAssignment = (event: React.FormEvent) => {
     event.preventDefault()
     const relation = accepted.find((request) => request.id === assignRequest)
@@ -138,7 +160,30 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
         <h3>9. My learning goals and plans</h3>
         <p>Create goals that remain private to your account. A session or self-reported completion is not a verified achievement.</p>
         {workspace.goals.length === 0 ? <p className="muted">No personal mentorship goals yet.</p> : <div className="list-panel">{workspace.goals.map((goal) => <div className="list-row" key={goal.id}>
-          <div style={{ flex:1 }}><strong>{goal.title}</strong>{goal.detail && <p>{goal.detail}</p>}{goal.target_date && <p className="muted">Target: {goal.target_date}</p>}</div>
+          <div style={{ flex:1 }}>
+            {editingGoalId === goal.id ? <form aria-label={'Edit goal ' + goal.title} onSubmit={saveGoalEdit}>
+              <div className="field"><label htmlFor={'edit-goal-title-' + goal.id}>Edit goal title</label>
+                <input id={'edit-goal-title-' + goal.id} required minLength={3} maxLength={160}
+                  disabled={busy} value={editingGoalTitle} onChange={event => setEditingGoalTitle(event.target.value)}/></div>
+              <div className="field"><label htmlFor={'edit-goal-plan-' + goal.id}>Edit learning plan</label>
+                <textarea id={'edit-goal-plan-' + goal.id} rows={3} maxLength={2000}
+                  disabled={busy} value={editingGoalDetail} onChange={event => setEditingGoalDetail(event.target.value)}/></div>
+              <div className="field"><label htmlFor={'edit-goal-target-' + goal.id}>Edit target date</label>
+                <input id={'edit-goal-target-' + goal.id} type="date" disabled={busy}
+                  value={editingGoalDate} onChange={event => setEditingGoalDate(event.target.value)}/></div>
+              <div style={{display:'flex',gap:'.5rem',flexWrap:'wrap'}}>
+                <button type="submit" className="btn btn-primary"
+                  disabled={busy || editingGoalTitle.trim().length < 3}>Save goal changes</button>
+                <button type="button" className="btn btn-secondary" disabled={busy}
+                  onClick={() => setEditingGoalId(null)}>Discard edits</button>
+              </div>
+            </form> : <>
+              <strong>{goal.title}</strong>{goal.detail && <p>{goal.detail}</p>}
+              {goal.target_date && <p className="muted">Target: {goal.target_date}</p>}
+              <button type="button" className="btn btn-secondary" disabled={busy}
+                onClick={() => editGoal(goal)}>Edit goal</button>
+            </>}
+          </div>
           <div className="field"><label htmlFor={`goal-state-${goal.id}`}>Goal status</label>
             <select id={`goal-state-${goal.id}`} value={goal.status} disabled={busy} onChange={(event) => void run(() => setMentorshipGoalStatus(goal.id, event.target.value as MentorshipGoal['status']))}>
               <option value="planned">Planned</option><option value="in_progress">In progress</option><option value="completed">Completed (self-reported)</option><option value="paused">Paused</option>

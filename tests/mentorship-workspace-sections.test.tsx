@@ -162,3 +162,23 @@ it('clears a private learner resource draft when the workspace changes to a ment
   expect((screen.getByLabelText('Study goal title') as HTMLInputElement).value).toBe('Study: Prepare for mentoring')
   expect(mocks.add).not.toHaveBeenCalled()
 })
+
+it('lets a learner navigate from real progress counts to their saved goals and assignments',async()=>{
+  const navigate=vi.fn()
+  render(<MentorshipLearningWorkspace mode="learner" section={12} onNavigate={navigate}/>)
+  await screen.findByText('12. Progress and outcomes')
+  fireEvent.click(screen.getByRole('button',{name:'Open my learning goals'}))
+  fireEvent.click(screen.getByRole('button',{name:'Open my assignments'}))
+  expect(navigate.mock.calls).toEqual([[9],[11]])
+})
+
+it('offers a direct link to the saved goal after the guide study plan is persisted',async()=>{
+  const navigate=vi.fn()
+  render(<MentorshipLearningWorkspace mode="learner" section={10} onNavigate={navigate}/>)
+  await screen.findByText('Prepare for mentoring')
+  fireEvent.click(screen.getByRole('button',{name:'Plan to study this guide'}))
+  fireEvent.click(screen.getByRole('button',{name:'Save as my learning goal'}))
+  const view=await screen.findByRole('button',{name:'View saved learning goal'})
+  fireEvent.click(view)
+  expect(navigate).toHaveBeenCalledWith(9)
+})

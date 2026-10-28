@@ -65,3 +65,31 @@ it('requires a second tap before permanently removing a saved goal', async () =>
  await waitFor(()=>expect(mocks.remove).toHaveBeenCalledTimes(1))
  expect(mocks.remove).toHaveBeenCalledWith('my-goal')
 })
+
+it('filters real learner assignments into pending, awaiting review, and reviewed', async () => {
+  const assignment = (id:string,title:string) => ({
+    id,request_id:'r',mentor_id:'mentor',learner_id:'learner',title,
+    instructions:'Complete an evidence-based practice exercise',due_at:null,created_at:'2026-10-20',
+  })
+  mocks.load.mockResolvedValue({
+    goals:[],resources:[],groups:[],
+    assignments:[assignment('a','To practise'),assignment('b','Sent work'),assignment('c','Reviewed work')],
+    submissions:[
+      {id:'sub-b',assignment_id:'b',learner_id:'learner',response:'Answered B',created_at:'2026-10-22'},
+      {id:'sub-c',assignment_id:'c',learner_id:'learner',response:'Answered C',created_at:'2026-10-22'},
+    ],
+    feedback:[{id:'fb-c',assignment_id:'c',mentor_id:'mentor',feedback:'Good analysis',created_at:'2026-10-23'}],
+  })
+  render(<MentorshipLearningWorkspace mode="learner" section={11} />)
+  await screen.findByText('To practise')
+  fireEvent.change(screen.getByLabelText('Show assignments'), {target:{value:'pending'}})
+  expect(screen.getByText('To practise')).toBeTruthy()
+  expect(screen.queryByText('Sent work')).toBeNull()
+  fireEvent.change(screen.getByLabelText('Show assignments'), {target:{value:'waiting'}})
+  expect(screen.getByText('Sent work')).toBeTruthy()
+  expect(screen.queryByText('To practise')).toBeNull()
+  fireEvent.change(screen.getByLabelText('Show assignments'), {target:{value:'reviewed'}})
+  expect(screen.getByText('Reviewed work')).toBeTruthy()
+  expect(screen.getByText('Good analysis')).toBeTruthy()
+  expect(screen.queryByText('Sent work')).toBeNull()
+})

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { readStudentView, useStudentNavigation } from '../src/hooks/useStudentNavigation'
+import { readExplicitStudentDestination, readStudentView, useStudentNavigation } from '../src/hooks/useStudentNavigation'
 import StudentDashboard from '../src/pages/StudentDashboard'
 
 const mocks = vi.hoisted(() => ({ dashboard: vi.fn(), badges: vi.fn() }))
@@ -82,10 +82,11 @@ it('clears the previous route and settings history at an authentication boundary
   expect(window.history.state).toBeNull()
 })
 
-it('opens only explicitly requested Arena, Scholarships and Passport links after session restore', () => {
-  for(const view of ['arena','scholarships','passport'] as const) {
+it('opens supported explicit learning links including Mentorship after session restore', () => {
+  for(const view of ['arena','scholarships','passport','mentorship'] as const) {
     cleanup()
     window.history.replaceState(null,'',`/mela-app/?view=${view}&mela_open=1&code=private#access_token=redacted`)
+    expect(readExplicitStudentDestination()).toBe(view)
     render(<Navigation/>)
     act(() => window.dispatchEvent(new Event('mela:session-boundary')))
     expect(screen.getByText(view)).toBeTruthy()
@@ -93,6 +94,26 @@ it('opens only explicitly requested Arena, Scholarships and Passport links after
     expect(window.location.hash).toBe('')
     expect(window.history.state).toBeNull()
   }
+})
+
+it('does not restore Mentorship from ordinary session history', () => {
+  window.history.replaceState(null, '', '/?view=mentorship')
+  expect(readExplicitStudentDestination()).toBeNull()
+  render(<Navigation />)
+  act(() => window.dispatchEvent(new Event('mela:session-boundary')))
+  expect(screen.getByText('dashboard')).toBeTruthy()
+})
+
+it('opens the Mentorship card when enabled and respects an explicit disabled setting', async () => {
+  const navigate = vi.fn()
+  mocks.dashboard.mockResolvedValue({...data, feature_flags:{mentorship:true}})
+  render(<StudentDashboard onNavigate={navigate} />)
+  fireEvent.click(await screen.findByRole('button', {name:/Mentorship/i}))
+  expect(navigate).toHaveBeenCalledWith('mentorship')
+  cleanup()
+  mocks.dashboard.mockResolvedValue({...data, feature_flags:{mentorship:false}})
+  render(<StudentDashboard onNavigate={navigate} />)
+  expect((await screen.findByRole('button', {name:/Mentorship/i}) as HTMLButtonElement).disabled).toBe(true)
 })
 
 it('does not reopen arbitrary private sections even when a link asks for it',()=>{

@@ -1,5 +1,13 @@
 import { supabase } from './supabase'
 
+export interface MentorAvailability {
+  id: string
+  weekday: number
+  start_time: string
+  end_time: string
+  timezone: string
+}
+
 export interface Mentor {
   user_id: string
   full_name: string | null
@@ -9,6 +17,9 @@ export interface Mentor {
   years_experience: number | null
   rating_average: number
   rating_count: number
+  expertise: string[]
+  languages: string[]
+  availability: MentorAvailability[]
 }
 
 export interface MyMentorshipRequest {
@@ -19,7 +30,19 @@ export interface MyMentorshipRequest {
   created_at: string
   message?: string | null
   preferred_at?: string | null
+  decline_reason_code?: string | null
+  decline_note?: string | null
 }
+
+export const DECLINE_REASON_CODES = [
+  'schedule_unavailable',
+  'outside_expertise',
+  'capacity_full',
+  'different_timing',
+  'other',
+] as const
+export type DeclineReasonCode = typeof DECLINE_REASON_CODES[number]
+export const DECLINE_NOTE_MAX = 300
 
 export interface MentorshipSession {
   id: string
@@ -44,31 +67,67 @@ async function requireUserId(): Promise<string> {
   return auth.user.id
 }
 
-export async function fetchVerifiedMentors(): Promise<Mentor[]> {
-  const { data: mentors, error } = await supabase
-    .from('mentor_profiles')
-    .select('user_id, headline, bio, organization, years_experience, rating_average, rating_count')
-    .eq('verified', true)
-    .eq('active', true)
-  if (error) throw error
-  if (!mentors?.length) return []
-  const ids = mentors.map((m) => m.user_id)
-  const { data: profiles, error: pErr } = await supabase.from('profiles').select('id, full_name').in('id', ids)
-  if (pErr) throw pErr
-  const nameById = new Map((profiles ?? []).map((p) => [p.id, p.full_name]))
-  return mentors.map((m) => ({
+export const MENTOR_DIRECTORY_PAGE_SIZE = 50
+
+export async function fetchVerifiedMentorsPage(
+  offset: number, pageSize = MENTOR_DIRECTORY_PAGE_SIZE
+): Promise<{mentors:Mentor[];hasMore:boolean}> {
+  if (!Number.isInteger(offset) || offset<0 ||
+      !Number.isInteger(pageSize) || pageSize<1 || pageSize>100) {
+    throw new Error('Invalid mentor directory page requested.')
+  }
+
+  // Look one profile past this page to accurately signal more results,
+  // without relying on the provider's default 1,000-record response cap.
+  const {data:matched,error}=await supabase.from('mentor_profiles')
+    .select('user_id,headline,bio,organization,years_experience,rating_average,rating_count,expertise,languages')
+    .eq('verified',true).eq('active',true)
+    .order('user_id',{ascending:true})
+    .range(offset,offset+pageSize)
+  if(error)throw error
+  const all=matched??[]
+  const hasMore=all.length>pageSize
+  const mentors=all.slice(0,pageSize)
+  if(!mentors.length)return {mentors:[],hasMore:false}
+  const ids=mentors.map(row=>row.user_id)
+  const [namesResult,slotsResult]=await Promise.all([
+    supabase.from('profiles').select('id,full_name').in('id',ids),
+    supabase.from('mentor_availability')
+      .select('id,mentor_id,weekday,start_time,end_time,timezone')
+      .in('mentor_id',ids).eq('active',true).order('weekday',{ascending:true}),
+  ])
+  if(namesResult.error)throw namesResult.error
+  if(slotsResult.error)throw slotsResult.error
+  const nameById=new Map((namesResult.data??[]).map(p=>[p.id,p.full_name]))
+  const availabilityByMentor=new Map<string,MentorAvailability[]>()
+  for(const slot of slotsResult.data??[]){
+    const list=availabilityByMentor.get(slot.mentor_id)??[]
+    list.push({id:slot.id,weekday:slot.weekday,start_time:slot.start_time,
+      end_time:slot.end_time,timezone:slot.timezone})
+    availabilityByMentor.set(slot.mentor_id,list)
+  }
+  return {hasMore,mentors:mentors.map(m=>({
     ...m,
-    rating_average: Number(m.rating_average ?? 0),
-    rating_count: Number(m.rating_count ?? 0),
-    full_name: nameById.get(m.user_id) ?? 'MELA mentor',
-  }))
+    expertise:m.expertise??[],languages:m.languages??[],
+    availability:availabilityByMentor.get(m.user_id)??[],
+    rating_average:Number(m.rating_average??0),
+    rating_count:Number(m.rating_count??0),
+    full_name:nameById.get(m.user_id)??'MELA mentor',
+  }))}
+}
+
+// Backward-compatible first-page reader. Never claim this is the complete
+// directory: use fetchVerifiedMentorsPage for the mobile Load More journey.
+export async function fetchVerifiedMentors():Promise<Mentor[]> {
+  const page=await fetchVerifiedMentorsPage(0)
+  return page.mentors
 }
 
 export async function fetchMyMentorshipRequests(): Promise<MyMentorshipRequest[]> {
   const userId = await requireUserId()
   const { data, error } = await supabase
     .from('mentorship_requests')
-    .select('id, mentor_id, topic, message, preferred_at, status, created_at')
+    .select('id, mentor_id, topic, message, preferred_at, status, created_at, decline_reason_code, decline_note')
     .eq('mentee_id', userId)
     .order('created_at', { ascending: false })
   if (error) throw error
@@ -131,6 +190,30 @@ export async function requestMentor(mentorId: string, topic: string, message: st
     message: cleanMessage || null,
     preferred_at: preferred?.toISOString() ?? null,
     status: 'pending',
+  })
+  if (error) throw error
+}
+
+export async function respondToMentorshipRequest(
+  requestId: string,
+  decision: 'accepted' | 'declined',
+  reasonCode: DeclineReasonCode | '' = '',
+  note = '',
+): Promise<void> {
+  if (!requestId) throw new Error('Choose a mentorship request first.')
+  if (decision === 'declined') {
+    if (!(DECLINE_REASON_CODES as readonly string[]).includes(reasonCode)) {
+      throw new Error('Choose a reason before declining.')
+    }
+    if (note.trim().length > DECLINE_NOTE_MAX) {
+      throw new Error(`Keep the decline note to ${DECLINE_NOTE_MAX} characters or fewer.`)
+    }
+  }
+  const { error } = await supabase.rpc('respond_mentorship_request_with_reason', {
+    p_request_id: requestId,
+    p_decision: decision,
+    p_reason_code: decision === 'declined' ? reasonCode : null,
+    p_note: decision === 'declined' ? note.trim() || null : null,
   })
   if (error) throw error
 }

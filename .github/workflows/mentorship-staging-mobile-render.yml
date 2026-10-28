@@ -1,0 +1,57 @@
+name: Mentorship staging mobile Chromium render smoke
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  mobile-render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated browser runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/mela-playwright" node_modules
+          npm install --prefix "$RUNNER_TEMP/mela-playwright" --no-save --no-package-lock --ignore-scripts playwright@1.58.2
+          ln -s "$RUNNER_TEMP/mela-playwright/node_modules/playwright" node_modules/playwright
+          "$RUNNER_TEMP/mela-playwright/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Verify real anonymous Android-sized page render without credentials
+        env:
+          STAGING_URL: https://mela-staging.vercel.app/
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { chromium } from 'playwright'
+          const browser=await chromium.launch({headless:true})
+          try {
+            const page=await browser.newPage({viewport:{width:393,height:852},deviceScaleFactor:2,isMobile:true,hasTouch:true})
+            const errors=[]
+            page.on('pageerror',e=>errors.push(e.message))
+            const response=await page.goto(process.env.STAGING_URL,{waitUntil:'domcontentloaded',timeout:30000})
+            if(response?.status()!==200)throw new Error('Unexpected page HTTP status '+response?.status())
+            await page.waitForFunction(()=>{
+              const root=document.getElementById('root')
+              return root && root.innerText && root.innerText.trim().length>35
+            },{timeout:30000})
+            const text=await page.locator('#root').innerText()
+            if(errors.length)throw new Error('App runtime exception(s): '+errors.join(' | ').slice(0,800))
+            if(/Missing Supabase public configuration|MELA Central Admin could not start|This site can.t be reached/i.test(text))
+              throw new Error('Frontend failed to initialize')
+            // Auth initialization is asynchronous. Do not treat its loading screen as a failed form.
+            try {
+              await page.locator('#root input').first().waitFor({state:'visible',timeout:20000})
+            } catch {
+              console.log('Anonymous startup screen text:',(await page.locator('#root').innerText()).slice(0,700))
+              throw new Error('Registration or sign-in input did not appear after auth initialization')
+            }
+            console.log('Mobile Chromium page opened; status: 200')
+            console.log('MELA auth/onboarding form rendered; characters:',text.length)
+            console.log('JavaScript page errors: 0; no account used')
+          }finally{await browser.close()}
+          NODE

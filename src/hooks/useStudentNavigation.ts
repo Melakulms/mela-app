@@ -11,6 +11,14 @@ export const VIEW_LABELS = {
 } as const
 export type StudentView = keyof typeof VIEW_LABELS
 
+export function readExplicitStudentDestination(): StudentView | null {
+  const params = new URLSearchParams(window.location.search)
+  const requested = params.get('view')
+  return params.get('mela_open') === '1' &&
+    (requested === 'arena' || requested === 'scholarships' || requested === 'passport' || requested === 'mentorship')
+    ? requested : null
+}
+
 export function readStudentView(): StudentView {
   const view = new URLSearchParams(window.location.search).get('view')
   return view && Object.prototype.hasOwnProperty.call(VIEW_LABELS, view) ? view as StudentView : 'dashboard'
@@ -22,14 +30,9 @@ export function useStudentNavigation() {
     const restore = () => setView(readStudentView())
     const reset = () => {
       // A restored session normally starts at Home to avoid reopening private
-      // previous screens. An explicitly requested Arena, Scholarship or
-      // Career Passport link represents new navigation, not session history.
-      // Career Passport still requires an authenticated, authorized learner.
-      const params = new URLSearchParams(window.location.search)
-      const requested = params.get('view')
-      const explicit = params.get('mela_open') === '1' &&
-        (requested === 'arena' || requested === 'scholarships' || requested === 'passport')
-      const next: StudentView = explicit ? requested as StudentView : 'dashboard'
+      // previous screens. A supported explicit link is new navigation.
+      // App still requires an authenticated, authorized learner.
+      const next = readExplicitStudentDestination() ?? 'dashboard'
       // Discard old OAuth/recovery parameters and consume the one-time intent.
       window.history.replaceState(null, '', window.location.pathname + '?view=' + next)
       setView(next)

@@ -39,7 +39,7 @@ const QuestionBank = lazy(() => import('./pages/QuestionBank'))
 const SafetyCenter = lazy(() => import('./pages/SafetyCenter'))
 
 import ErrorBoundary from './components/ErrorBoundary'
-import { useStudentNavigation, VIEW_LABELS, type StudentView } from './hooks/useStudentNavigation'
+import { readExplicitStudentDestination, useStudentNavigation, VIEW_LABELS, type StudentView } from './hooks/useStudentNavigation'
 
 type AuthView = 'login' | 'register'
 
@@ -61,15 +61,10 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [sessionRevision, setSessionRevision] = useState(0)
   const observedUserId = useRef<string | null>(null)
-  const requestedLearningSection = useRef<StudentView | null>((() => {
-    const p = new URLSearchParams(window.location.search)
-    const target = p.get('view')
-    return p.get('mela_open') === '1' && (target === 'arena' || target === 'scholarships')
-      ? target : null
-  })())
+  const requestedLearningSection = useRef<StudentView | null>(readExplicitStudentDestination())
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<MelaProfile | null>(null)
-  const [authView, setAuthView] = useState<AuthView>(() => new URLSearchParams(window.location.search).has('signed_out') ? 'login' : 'register')
+  const [authView, setAuthView] = useState<AuthView>(() => new URLSearchParams(window.location.search).has('signed_out') || readExplicitStudentDestination() === 'mentorship' ? 'login' : 'register')
   const [pendingEmail, setPendingEmail] = useState('')
   const [studentView, setStudentView] = useStudentNavigation()
   const [online, setOnline] = useState(navigator.onLine)
@@ -114,7 +109,7 @@ export default function App() {
     })
   }, [sessionRevision, t])
 
-  // A deliberate external Arena/Scholarship link may be opened in an already
+  // A deliberate supported learning link may be opened in an already
   // installed app. Apply it only once the authenticated student profile is
   // fully loaded, *after* session-restoration callbacks have completed.
   // Ordinary reloads still start at Dashboard and private sections are never

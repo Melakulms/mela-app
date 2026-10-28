@@ -1,0 +1,1 @@
+alter policy mentorship_applications_admin_review on public.mentorship_applications using (private.is_admin_user() and (auth.jwt()->>'aal')='aal2') with check (private.is_admin_user() and (auth.jwt()->>'aal')='aal2');

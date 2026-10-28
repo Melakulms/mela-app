@@ -119,3 +119,13 @@ This remains an unmerged development PR. Only source code and tests were changed
 - Added regression tests for the genuine guide-to-goal flow, offline retry, role switching, navigation, calendar validation, authenticated write confirmations and accurate progress.
 
 **Release criteria remain unchanged:** PR #96 stays DRAFT, no new staging or production publication is claimed. GitHub code checks are per-commit; verify them at the exact final head. Staging continues to publish an older bundle and the 16-section published-bundle smoke is expected to fail until an authorized Vercel deployment. No payments or real calls activated.
+
+## Additional assignment workflow testing — October 28
+
+- **Mentor assignments (section 11):** four optional editable starters for weekly study reflection, career research, official scholarship eligibility checking, and small portfolio projects. A starter fills the form but does not choose a learner or write anything. Assignment creation still requires an accepted mentorship request and an explicit submit.
+- **Due dates:** reject a past or invalid device-local deadline before sending; the backend remains authoritative for access checks and accepted relationships.
+- **Learner and mentor task lists:** offer newest, earliest-deadline and needs-attention ordering using persisted assignments and submissions. Past-due warnings only apply to tasks without a recorded learner response.
+- **Constructive feedback:** mentors can insert a structure for observed evidence, one improvement and next action; every bracketed prompt must be replaced before the Send feedback action becomes enabled. No template feedback is automatically saved, and no ratings or credentials are invented.
+- **Testing:** added independent React tests for an actual accepted learner, template-only draft behavior, future deadlines, failed-network retry preserving edits, task ordering, and blocking unedited feedback templates. An initial ordering-test selector included a nested "Learner response" label; corrected to select only direct assignment titles. Confirm the entire final PR head is green before changing the release gate.
+
+No production release, mentor certification, live session, payment activation, or permission change was made. The public staging site still lacks the latest Mentorship bundle. The published-bundle smoke remains an unresolved deployment blocker.

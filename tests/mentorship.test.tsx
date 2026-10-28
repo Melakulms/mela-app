@@ -281,3 +281,16 @@ it('keeps Mentorship subsection history on Android Back and restores the directo
     window.history.replaceState(null, '', original)
   }
 })
+
+
+it('fails closed on new mentor requests when private request or session history is unavailable', async () => {
+  mocks.fetchMyMentorshipRequests.mockRejectedValueOnce(new Error('History read failed'))
+  render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  await screen.findByText('Mentor One')
+  expect(screen.getByText('Request history unavailable — retry before sending')).toBeTruthy()
+  expect(screen.queryByRole('button', {name:'Request mentorship'})).toBeNull()
+  expect(mocks.requestMentor).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', {name:'Retry mentorship'}))
+  await waitFor(() => expect(mocks.fetchMyMentorshipRequests).toHaveBeenCalledTimes(2))
+  expect(await screen.findByRole('button', {name:'Request mentorship'})).toBeTruthy()
+})

@@ -40,3 +40,12 @@
 4. Verify MFA-only admin reviews and real safety escalation before considering any production release.
 
 **Release decision: NOT APPROVED for production or unrestricted beta.** Practice simulator is not an authenticated backend test.
+
+## Additional Android and partial-outage work (28 October, later revision)
+
+- Android/browser Back now uses validated `?view=mentorship&mentorship_section=1..16` navigation entries. Invalid/deep-linked IDs are ignored. Leaving Mentorship clears the subsection parameter. Authentication and role checks are unchanged; a URL parameter cannot unlock private data.
+- Mentorship Home remains available when one of request or session history fails, but unavailable counts are explicitly labeled `Unavailable`, rather than deceptively showing a confirmed zero.
+- When request or session history is unavailable, new mentor requests fail closed until Retry obtains real history, to prevent accidental duplicate requests.
+- Only mounted subsections fetch their private safety report history, age review, or profile recommendations. Optional practice worksheets are collapsed, keeping real section controls first on phones.
+- Tests include the full 1–16 URL range, invalid subsection parameters, Android Back restoration, history-failure request gating, and partial-dashboard unavailable-state labels.
+- **Vercel:** permission was rechecked. The deployment listing operation now also returned HTTP 403; no deployment has been performed. GitHub CI green is NOT equivalent to published staging/production verification.

@@ -32,7 +32,8 @@ describe('Mentorship Section 2 publication contract', () => {
   it('saving a private draft never calls publish', async () => {
     mocks.rpc.mockResolvedValueOnce({ data: { saved: true }, error: null })
     await saveNotesDraft('session-1', 'private notes')
-    expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith('save_mentorship_notes_draft', {
+    expect(mocks.rpc).toHaveBeenCalledTimes(1)
+    expect(mocks.rpc).toHaveBeenCalledWith('save_mentorship_notes_draft', {
       p_session_id: 'session-1', p_body: 'private notes',
     })
   })

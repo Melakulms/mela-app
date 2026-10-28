@@ -6,6 +6,7 @@ import {
 
 type Props = {
   mentors: Mentor[]
+  directoryAvailable?: boolean
   requests: MyMentorshipRequest[]
   sessions: MentorshipSession[]
   requestsAvailable?: boolean
@@ -16,7 +17,7 @@ type Props = {
   matchingOnly?: boolean
 }
 
-export default function MentorshipHome({ mentors, requests, sessions, requestsAvailable = true, sessionsAvailable = true, stageKey, revision, onNavigate, matchingOnly = false }: Props) {
+export default function MentorshipHome({ mentors, directoryAvailable = true, requests, sessions, requestsAvailable = true, sessionsAvailable = true, stageKey, revision, onNavigate, matchingOnly = false }: Props) {
   const [extras, setExtras] = useState<MentorshipHomeExtras | null>(null)
   const [loadingExtras, setLoadingExtras] = useState(true)
   const [extrasError, setExtrasError] = useState('')
@@ -38,7 +39,7 @@ export default function MentorshipHome({ mentors, requests, sessions, requestsAv
   const summary = summarizeMentorshipHome(requests, sessions)
   const topics = new Map(requests.map((request) => [request.id, request.topic]))
   const next = summary.nextSession
-  const recommendations = requestsAvailable && extras
+  const recommendations = directoryAvailable && requestsAvailable && extras
     ? recommendMentors(mentors, extras.interests, extras.preferredLanguage, requests, stageKey)
     : []
   const blockedStage = ['school_1_6', 'school_7_8', 'school_9_10'].includes(stageKey ?? '')
@@ -48,11 +49,14 @@ export default function MentorshipHome({ mentors, requests, sessions, requestsAv
     <h2>Mentorship Home</h2>
     <p>Build your next step with trusted guidance. Your overview uses your actual MELA requests, sessions, and learning profile.</p>
 
+    {!directoryAvailable && <p className="banner banner-info" role="status">
+      Verified mentor directory is temporarily unavailable. Your private requests, sessions and goals can still be reviewed; mentor matching is paused until Retry succeeds.
+    </p>}
     {(!requestsAvailable || !sessionsAvailable) && <p className="banner banner-info" role="status">
       Parts of your Mentorship Home could not load. Unavailable counters are labeled rather than shown as zero. Other tools are still accessible; use Retry mentorship to refresh.
     </p>}
     <div className="module-grid" aria-label="Your mentorship overview">
-      <div><strong>{mentors.length}</strong><div className="muted">Verified mentors loaded</div></div>
+      <div><strong>{directoryAvailable ? mentors.length : 'Unavailable'}</strong><div className="muted">Verified mentors loaded</div></div>
       <div><strong>{requestsAvailable ? summary.pendingRequests : 'Unavailable'}</strong><div className="muted">Pending requests</div></div>
       <div><strong>{sessionsAvailable ? summary.upcomingCount : 'Unavailable'}</strong><div className="muted">Upcoming sessions</div></div>
       <div><strong>{sessionsAvailable ? summary.completedCount : 'Unavailable'}</strong><div className="muted">Completed sessions</div></div>

@@ -11,6 +11,7 @@ END;
 $guard$;
 DROP FUNCTION IF EXISTS public.finalize_mentor_mfa_recovery(uuid,boolean);
 DROP FUNCTION IF EXISTS public.claim_mentor_mfa_recovery(uuid);
+DROP FUNCTION IF EXISTS public.list_mentor_mfa_recovery_requests();
 DROP FUNCTION IF EXISTS public.review_mentor_mfa_recovery(uuid,text,boolean);
 DROP FUNCTION IF EXISTS public.request_mentor_mfa_recovery(text);
 DROP FUNCTION IF EXISTS private.mentor_mfa_recovery_is_admin();

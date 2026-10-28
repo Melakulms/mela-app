@@ -1,20 +1,21 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import MentorshipLearningWorkspace from '../src/components/MentorshipLearningWorkspace'
-const mocks=vi.hoisted(()=>({load:vi.fn(),add:vi.fn(),remove:vi.fn()}))
+const mocks=vi.hoisted(()=>({load:vi.fn(),add:vi.fn(),remove:vi.fn(),edit:vi.fn()}))
 vi.mock('../src/lib/supabase',()=>({supabase:{}}))
 vi.mock('../src/components/MentorshipGroupInterest',()=>({default:()=>null}))
 vi.mock('../src/lib/mentorship-workspace',()=>({
  loadMentorshipWorkspace:mocks.load,addMentorshipGoal:mocks.add,
  assignmentProgress:()=>({assigned:0,submitted:0,reviewed:0}),
  mentorshipActionSummary:()=>({activeGoals:0,overdueGoals:0,assignmentsToSubmit:0,overdueAssignments:0,awaitingFeedback:0}),
- deleteMentorshipGoal:mocks.remove,createMentorshipAssignment:vi.fn(),sendMentorshipFeedback:vi.fn(),setMentorshipGoalStatus:vi.fn(),submitMentorshipAssignment:vi.fn()
+ deleteMentorshipGoal:mocks.remove,updateMentorshipGoal:mocks.edit,createMentorshipAssignment:vi.fn(),sendMentorshipFeedback:vi.fn(),setMentorshipGoalStatus:vi.fn(),submitMentorshipAssignment:vi.fn()
 }))
 beforeEach(()=>{
  vi.resetAllMocks()
  mocks.load.mockResolvedValue({goals:[],assignments:[],submissions:[],feedback:[],groups:[],resources:[{id:'r1',title:'Prepare for mentoring',category:'Preparation',description:'Make a plan',content:'Write three questions.'}]})
  mocks.add.mockResolvedValue(undefined)
  mocks.remove.mockResolvedValue(undefined)
+ mocks.edit.mockResolvedValue(undefined)
 })
 afterEach(cleanup)
 it('shows actual resource content without unrelated goal forms and switches to goal creation',async()=>{
@@ -92,4 +93,27 @@ it('filters real learner assignments into pending, awaiting review, and reviewed
   expect(screen.getByText('Reviewed work')).toBeTruthy()
   expect(screen.getByText(/Good analysis/)).toBeTruthy()
   expect(screen.queryByText('Sent work')).toBeNull()
+})
+
+
+it('edits saved private goals only after Save, and preserves the draft on backend failure', async () => {
+ mocks.load.mockResolvedValue({goals:[{
+  id:'goal-41',learner_id:'learner',title:'Initial plan',detail:'Start with maths',
+  target_date:'2026-12-01',status:'in_progress',created_at:'2026-10-20',
+ }],assignments:[],submissions:[],feedback:[],groups:[],resources:[]})
+ mocks.edit.mockRejectedValueOnce(new Error('Connection lost')).mockResolvedValue(undefined)
+ render(<MentorshipLearningWorkspace mode="learner" section={9}/>)
+ await screen.findByText('Initial plan')
+ fireEvent.click(screen.getByRole('button',{name:'Edit goal'}))
+ fireEvent.change(screen.getByLabelText('Edit goal title'),{target:{value:'Revised mathematics plan'}})
+ fireEvent.change(screen.getByLabelText('Edit learning plan'),{target:{value:'Practise two chapters each week'}})
+ expect(mocks.edit).not.toHaveBeenCalled()
+ fireEvent.click(screen.getByRole('button',{name:'Save goal changes'}))
+ expect((await screen.findByRole('alert')).textContent).toContain('Connection lost')
+ expect((screen.getByLabelText('Edit goal title') as HTMLInputElement).value).toBe('Revised mathematics plan')
+ expect((screen.getByLabelText('Edit learning plan') as HTMLTextAreaElement).value).toBe('Practise two chapters each week')
+ fireEvent.click(screen.getByRole('button',{name:'Save goal changes'}))
+ await waitFor(()=>expect(mocks.edit).toHaveBeenCalledTimes(2))
+ expect(mocks.edit).toHaveBeenCalledWith('goal-41','Revised mathematics plan','Practise two chapters each week','2026-12-01')
+ await waitFor(()=>expect(screen.queryByLabelText('Edit goal title')).toBeNull())
 })

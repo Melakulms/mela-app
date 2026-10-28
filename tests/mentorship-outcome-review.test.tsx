@@ -44,6 +44,7 @@ describe('mentorship outcome evidence review',()=>{
   fireEvent.change(screen.getByLabelText('What did you actually learn or produce?'),{
    target:{value:'I prepared a detailed practice CV using feedback from my mentor.'},
   })
+  await waitFor(()=>expect((screen.getByRole('button',{name:'Submit for mentor review'}) as HTMLButtonElement).disabled).toBe(false))
   fireEvent.click(screen.getByRole('button',{name:'Submit for mentor review'}))
   await waitFor(()=>expect(mocks.insert).toHaveBeenCalledTimes(1))
   expect(mocks.insert).toHaveBeenCalledWith({
@@ -90,4 +91,46 @@ describe('mentorship outcome evidence review',()=>{
   })
   expect(await screen.findByText(/not a Career Passport credential/)).toBeTruthy()
  })
+})
+
+
+it('does not present an unreadable learner outcome history as empty or allow a duplicate submission',async()=>{
+  mocks.read.mockResolvedValueOnce({data:null,error:{message:'Outcome history offline'}})
+    .mockResolvedValue({data:[],error:null})
+  render(<MentorshipOutcomeReview mode="learner" sessions={[completedSession]}/>)
+  expect((await screen.findByRole('alert')).textContent).toContain('Outcome history offline')
+  expect(screen.getByText(/not a confirmed empty history/)).toBeTruthy()
+  expect(screen.queryByText('No recorded outcome claims yet.')).toBeNull()
+  const submit=screen.getByRole('button',{name:'Submit for mentor review'}) as HTMLButtonElement
+  expect(submit.disabled).toBe(true)
+  expect(mocks.insert).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button',{name:'Refresh outcome reviews'}))
+  await waitFor(()=>expect(screen.getByText('No recorded outcome claims yet.')).toBeTruthy())
+  expect(screen.queryByText(/not a confirmed empty history/)).toBeNull()
+})
+
+it('does not show a new submission action until the signed-in learner can read existing claims',async()=>{
+  let releaseRead: ((response:unknown)=>void)|null = null
+  mocks.read.mockImplementationOnce(()=>new Promise(resolve=>{releaseRead=resolve}))
+  render(<MentorshipOutcomeReview mode="learner" sessions={[completedSession]}/>)
+  const submit=screen.getByRole('button',{name:'Submit for mentor review'}) as HTMLButtonElement
+  expect(submit.disabled).toBe(true)
+  expect(mocks.insert).not.toHaveBeenCalled()
+  if(!releaseRead) await waitFor(()=>expect(releaseRead).toBeTruthy())
+  releaseRead!({data:[],error:null})
+  await waitFor(()=>expect(screen.getByText('No recorded outcome claims yet.')).toBeTruthy())
+})
+
+it('prevents learner evidence submission when existing category already has a claim',async()=>{
+  mocks.read.mockResolvedValue({data:[{
+    id:'claim-1',session_id:'session-1',learner_id:'learner-1',mentor_id:'mentor-1',
+    category:'career',outcome_text:'A practice portfolio with explained learning evidence.',
+    status:'submitted',review_notes:null,created_at:'2026-10-25',
+  }],error:null})
+  render(<MentorshipOutcomeReview mode="learner" sessions={[completedSession]}/>)
+  await screen.findByText(/A practice portfolio with explained learning evidence/)
+  fireEvent.change(screen.getByLabelText('Completed session'),{target:{value:'session-1'}})
+  expect(screen.getByText(/already submitted an outcome in this category/)).toBeTruthy()
+  expect((screen.getByRole('button',{name:'Submit for mentor review'}) as HTMLButtonElement).disabled).toBe(true)
+  expect(mocks.insert).not.toHaveBeenCalled()
 })

@@ -43,7 +43,13 @@ jobs:
             if(errors.length)throw new Error('App runtime exception(s): '+errors.join(' | ').slice(0,800))
             if(/Missing Supabase public configuration|MELA Central Admin could not start|This site can.t be reached/i.test(text))
               throw new Error('Frontend failed to initialize')
-            if(!(await page.locator('#root input').count()))throw new Error('Registration or sign-in input missing')
+            // Auth initialization is asynchronous. Do not treat its loading screen as a failed form.
+            try {
+              await page.locator('#root input').first().waitFor({state:'visible',timeout:20000})
+            } catch {
+              console.log('Anonymous startup screen text:',(await page.locator('#root').innerText()).slice(0,700))
+              throw new Error('Registration or sign-in input did not appear after auth initialization')
+            }
             console.log('Mobile Chromium page opened; status: 200')
             console.log('MELA auth/onboarding form rendered; characters:',text.length)
             console.log('JavaScript page errors: 0; no account used')

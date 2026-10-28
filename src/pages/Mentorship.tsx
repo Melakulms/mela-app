@@ -48,7 +48,8 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
     // directory instead of unexpectedly closing all Mentorship tools.
     if (new URL(window.location.href).searchParams.get('view') === 'mentorship') {
       const href = withMentorshipSection(new URL(window.location.href), next)
-      window.history.pushState(window.history.state, '', href)
+      if (next === null) window.history.replaceState(window.history.state, '', href)
+      else window.history.pushState(window.history.state, '', href)
     }
     setSection(next)
   }
@@ -145,7 +146,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
   const [ratingDraft, setRatingDraft] = useState<Record<string, number>>({})
   const [ratingComment, setRatingComment] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [revision, setRevision] = useState(0)
   const actionLock = useRef(false)
   const directoryLock = useRef(false)
@@ -158,7 +159,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
     const epoch = sessionEpoch.current
     setServerAccess(null)
     setAccessError('')
-    if (blockedStage) {
+    if (blockedStage || section === null || ![2,3,4,5,6,7,13,14,15].includes(section)) {
       setAccessChecking(false)
       return () => { active=false }
     }
@@ -170,11 +171,18 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       })
       .finally(() => { if(active && epoch === sessionEpoch.current) setAccessChecking(false) })
     return () => { active=false }
-  },[blockedStage,stageKey,adultReviewApproved,revision])
+  },[blockedStage,stageKey,adultReviewApproved,revision,section])
 
   useEffect(() => {
     let active = true
     const epoch = sessionEpoch.current
+    // The card-only landing screen and independent learning sections do not
+    // need to load mentor histories. Avoid unnecessary private API calls until
+    // a subsection actually needs those records.
+    if (![1,2,3,4,5,6,7,13,15].includes(section ?? 0)) {
+      setLoading(false)
+      return () => { active = false }
+    }
     setLoading(true)
     setError('')
     setDirectoryError('')
@@ -213,7 +221,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       }
     }).finally(() => { if (active && epoch === sessionEpoch.current) setLoading(false) })
     return () => { active = false }
-  }, [revision])
+  }, [revision, section])
 
   const loadMoreMentors = async () => {
     if(directoryLock.current || !hasMoreMentors || !mentors)return
@@ -341,7 +349,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
     <div className="dash-main">
       <div className="section-heading">
         <h1>{t('mentorship')}</h1>
-        <button className="btn btn-secondary" onClick={() => section === null ? leaveMentorship() : selectSection(null)} disabled={!!busy}>{section === null ? t('back') : 'Back to mentorship sections'}</button>
+        {section === null && <button className="btn btn-secondary" onClick={leaveMentorship} disabled={!!busy}>{t('back')}</button>}
       </div>
       <MentorshipSectionDirectory selected={section} onSelect={selectSection} />
       {section !== null && <>
@@ -399,14 +407,14 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       </div>
       <div hidden={!shows(14)}>
       {section === 14 && !directAccessAllowed && <p className="empty-panel">This learner account cannot open the private mentor workspace. Eligible adults can apply after completing the eligibility review above. Approved mentors use their mentor account workspace.</p>}
-      {['university','college_tvet'].includes(stageKey ?? '') && directAccessAllowed &&
+      {section === 14 && ['university','college_tvet'].includes(stageKey ?? '') && directAccessAllowed &&
         <details className="empty-panel" style={{ textAlign:'left' }}><summary>Apply to become a verified mentor (eligible adults)</summary><MentorApplication key={sessionEpoch.current} /></details>}
       </div>
       <div hidden={!shows(7)}>
       <div id="mentorship-journey" className="section-heading"><h2>My mentorship journey</h2></div>
       {!loading && !sessionsError && sessions.length === 0 && <p className="empty-panel">No sessions yet. An accepted request is not a booking; your mentor must separately confirm a session within their published available hours.</p>}
-      {!loading && !sessionsError && ['university','college_tvet','school_11_12'].includes(stageKey ?? '') && <MentorshipSessionJourney sessions={sessions} />}
-      {!loading && !sessionsError && ['university','college_tvet','school_11_12'].includes(stageKey ?? '') && <MentorshipOutcomeReview mode="learner" sessions={sessions} />}
+      {shows(7) && !loading && !sessionsError && ['university','college_tvet','school_11_12'].includes(stageKey ?? '') && <MentorshipSessionJourney sessions={sessions} />}
+      {shows(7) && !loading && !sessionsError && ['university','college_tvet','school_11_12'].includes(stageKey ?? '') && <MentorshipOutcomeReview mode="learner" sessions={sessions} />}
       {!loading && !sessionsError && sessions.length > 0 && <>
         <div className="section-heading"><h2>Your sessions</h2></div>
         <div className="list-panel">

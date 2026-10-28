@@ -86,3 +86,18 @@
 - **Section 7 (Scheduling):** the mentor scheduler validates a future appointment in device-local time before calling the backend; server-side age, active verified mentor, published availability and overlap checks remain authoritative.
 - Regression tests cover the above partial-outage behavior, zero-row deletes, recovery after retry, protection against stale availability, and future-time validation.
 - No payments, mentor approvals, guardian privileges, public meeting links or production deployments were activated. Deployment permission and full signed-in role tests are still release blockers.
+
+## Further subsection reliability and practical testing (28 October)
+
+**Section 7 — Session preparation and reflection**
+- Preparation and completed-session reflections use independent, authenticated reads. Failure in one endpoint no longer hides the other; each affected write is disabled until its own history can be verified.
+- The selected session still must be a real scheduled or completed session. Unsent in-memory form values are preserved through retry, without storing private notes on an untrusted device or creating an offline server claim.
+- Four optional guided starters are available for academic study, scholarship planning, career exploration and project review. Choosing a starter fills editable form inputs only; explicit learner submission is still required.
+- New regression tests cover split-read failures, retry draft retention and no automatic writes from preparation starters.
+
+**Section 12 — Learning outcomes and evidence**
+- A failed personal outcomes read cannot be treated as a confirmed empty history. New learner claims and mentor evidence decisions are blocked until the authenticated records load, preventing misleading duplicate action paths.
+- A separate administrator-verification read may fail while the user's actual claims still load. Existing claims remain visible; administrative verification is clearly marked unavailable and no approval or credential is invented.
+- Regression tests cover fail-closed claim submission, pending load, duplicate-category rejection and independent verification-read failure.
+
+This remains an unmerged development PR. Only source code and tests were changed; no staging or production deployment, payments, live calls, guardian privilege, administrator MFA or mentor verification state was activated. The published 16-section bundle check still requires an authorized staging deploy.

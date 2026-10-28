@@ -16,6 +16,7 @@ import { useI18n } from '../i18n'
 import { readMentorshipSection, withMentorshipSection } from '../lib/mentorship-section-navigation'
 import MentorshipHome from '../components/MentorshipHome'
 import MentorshipLearningWorkspace from '../components/MentorshipLearningWorkspace'
+import MentorshipProgramPlanner from '../components/MentorshipProgramPlanner'
 import MentorshipSectionDirectory from '../components/MentorshipSectionDirectory'
 import MentorshipPracticeLab from '../components/MentorshipPracticeLab'
 import MentorshipMentorCompare from '../components/MentorshipMentorCompare'
@@ -393,9 +394,10 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
 
       </div>
       <div hidden={!shows(6)}>
+      {shows(6) && <MentorshipProgramPlanner stageKey={stageKey} onNavigate={(destination)=>selectSection(destination)} />}
       {!loading && !requestsError && requests.length === 0 && <section className="empty-panel"><h2>Your requests</h2><p>You have not sent a mentorship request yet.</p><button className="btn btn-primary" onClick={() => selectSection(2)}>Find a verified mentor</button></section>}
       {!loading && !requestsError && requests.length > 0 && <>
-        <div className="section-heading"><h2>Your requests</h2></div>
+        <div className="section-heading"><h2>My mentorship requests</h2></div>
         <p className="muted">Track actual requests and mentor decisions. Accepted means a mentor agreed to your request; it does not mean a session is confirmed.</p>
         <div className="module-grid" aria-label="Your request status overview">
           <div><strong>{requestCounts.pending}</strong><p className="muted">Awaiting mentor response</p></div>

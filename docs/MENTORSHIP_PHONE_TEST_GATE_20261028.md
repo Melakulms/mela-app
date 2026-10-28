@@ -77,3 +77,12 @@
 - Section 9: securely edit saved private goal title/plan/target date. Invalid calendar dates and empty/unauthorized update results fail; failed save keeps unsaved editor values for retry.
 - Added component and integration tests for all four areas, including the three-profile cap, guardian gating, RLS-scoped goal edits, and matching exclusion on existing active requests.
 - CI must pass at the exact PR head and published staging bundle must be updated. Public staging still serves older code; Vercel access was last checked as HTTP 403. Production has not been changed.
+
+## October 28 follow-up — group interest, mentor hours, safety history and future bookings
+
+- **Section 13 (Group Mentorship):** pending applications/withdrawals are disabled until authenticated group-interest history loads. A failed read is not interpreted as no membership; a failed/zero-row delete is not presented as a successful withdrawal. Retry status keeps the user on the relevant screen.
+- **Mentor weekly availability:** an unreadable existing schedule blocks addition/removal, preventing stale checks from creating duplicate or overlapping windows. Old slots are cleared at refresh; responses from earlier reads cannot reappear after a newer refresh/unmount. Deletions require a returned row.
+- **Section 15 (Safety):** private submitted-report history read failures are distinguished from a confirmed empty history, without preventing a separate new report to the existing moderated RPC. This remains **not an emergency hotline**.
+- **Section 7 (Scheduling):** the mentor scheduler validates a future appointment in device-local time before calling the backend; server-side age, active verified mentor, published availability and overlap checks remain authoritative.
+- Regression tests cover the above partial-outage behavior, zero-row deletes, recovery after retry, protection against stale availability, and future-time validation.
+- No payments, mentor approvals, guardian privileges, public meeting links or production deployments were activated. Deployment permission and full signed-in role tests are still release blockers.

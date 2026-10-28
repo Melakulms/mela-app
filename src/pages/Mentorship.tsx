@@ -210,6 +210,12 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       setError(blockedStage ? 'This education stage does not have direct mentorship access.' : 'Verified guardian or adult eligibility is required before requesting a mentor.')
       return
     }
+    // Without both histories we cannot determine whether an accepted request
+    // is already active. Never make an optimistic duplicate submission.
+    if (loading || requestsError || sessionsError) {
+      setError('Your mentorship history is unavailable. Retry loading requests and sessions before sending another request.')
+      return
+    }
     const cleanTopic = topic.trim()
     const cleanMessage = message.trim()
     if (cleanTopic.length < 2) { setError('Add a short topic before sending the request.'); return }
@@ -463,6 +469,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
               : accessChecking ? <span className="pill">Checking verified mentorship eligibility</span>
               : guardianReviewRequired ? <span className="pill">Verified guardian clearance required</span>
               : adultReviewRequired ? <span className="pill">Verify adult eligibility above before requesting</span>
+              : (requestsError || sessionsError) ? <span className="pill">Request history unavailable — retry before sending</span>
               : alreadyRequested(m.user_id) ? <span className="pill">Requested</span> : openMentor === m.user_id ? <div>
               <div className="field">
                 <label htmlFor={topicId}>Topic</label>

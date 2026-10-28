@@ -87,15 +87,29 @@ export async function loadMentorshipWorkspace(role: 'learner' | 'mentor', sectio
   }
 }
 
+export function validatedGoalTargetDate(targetDate: string): string | null {
+  if (!targetDate) return null
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) throw new Error('Choose a valid goal target date or leave it blank.')
+  const date = new Date(targetDate)
+  if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0,10) !== targetDate) {
+    throw new Error('Choose a valid goal target date or leave it blank.')
+  }
+  return targetDate
+}
+
 export async function addMentorshipGoal(title: string, detail: string, targetDate = '') {
   const id = await currentUser()
-  const { error } = await supabase.from('mentorship_goals').insert({
+  const cleanTitle = assertText(title, 'Goal title', 3, 160)
+  if (detail.trim().length > 2000) throw new Error('Goal plan must be 2000 characters or fewer.')
+  const safeDate = validatedGoalTargetDate(targetDate)
+  const { data, error } = await supabase.from('mentorship_goals').insert({
     learner_id: id,
-    title: assertText(title, 'Goal title', 3, 160),
-    detail: detail.trim().slice(0, 2000),
-    target_date: targetDate || null,
-  })
+    title: cleanTitle,
+    detail: detail.trim(),
+    target_date: safeDate,
+  }).select('id')
   if (error) throw error
+  if (!data?.length) throw new Error('Goal was not confirmed by the database. Refresh before retrying.')
 }
 
 export async function updateMentorshipGoal(
@@ -104,12 +118,9 @@ export async function updateMentorshipGoal(
   const id = await currentUser()
   const cleanTitle = assertText(title, 'Goal title', 3, 160)
   if (detail.trim().length > 2000) throw new Error('Goal plan must be 2000 characters or fewer.')
-  if (targetDate && (!/^\d{4}-\d{2}-\d{2}$/.test(targetDate) ||
-    !Number.isFinite(Date.parse(targetDate)) || new Date(targetDate).toISOString().slice(0,10) !== targetDate)) {
-    throw new Error('Choose a valid target date or leave it blank.')
-  }
+  const safeDate = validatedGoalTargetDate(targetDate)
   const { data, error } = await supabase.from('mentorship_goals')
-    .update({ title:cleanTitle, detail:detail.trim(), target_date:targetDate || null, updated_at:new Date().toISOString() })
+    .update({ title:cleanTitle, detail:detail.trim(), target_date:safeDate, updated_at:new Date().toISOString() })
     .eq('id', goalId).eq('learner_id', id).select('id')
   if (error) throw error
   if (!data?.length) throw new Error('Goal changes were not saved. Check permissions and retry.')
@@ -145,37 +156,43 @@ export async function createMentorshipAssignment(
   requestId: string, learnerId: string, title: string, instructions: string, due = '',
 ) {
   const mentorId = await currentUser()
-  const { error } = await supabase.from('mentorship_assignments').insert({
+  const cleanTitle = assertText(title, 'Assignment title', 3, 160)
+  const cleanInstructions = assertText(instructions, 'Instructions', 10, 4000)
+  const dueAt = due ? validatedAssignmentDue(due) : null
+  const { data, error } = await supabase.from('mentorship_assignments').insert({
     request_id: requestId, mentor_id: mentorId, learner_id: learnerId,
-    title: assertText(title, 'Assignment title', 3, 160),
-    instructions: assertText(instructions, 'Instructions', 10, 4000),
-    due_at: due ? validatedAssignmentDue(due) : null,
-  })
+    title: cleanTitle,
+    instructions: cleanInstructions,
+    due_at: dueAt,
+  }).select('id')
   if (error) throw error
+  if (!data?.length) throw new Error('Assignment was not confirmed by the database. Refresh before retrying.')
 }
 
 export async function submitMentorshipAssignment(assignmentId: string, response: string) {
   const learnerId = await currentUser()
-  const { error } = await supabase.from('mentorship_submissions').insert({
-    assignment_id: assignmentId, learner_id: learnerId,
-    response: assertText(response, 'Answer', 2, 4000),
-  })
+  const cleanAnswer = assertText(response, 'Answer', 2, 4000)
+  const { data, error } = await supabase.from('mentorship_submissions').insert({
+    assignment_id: assignmentId, learner_id: learnerId, response: cleanAnswer,
+  }).select('id')
   if (error) throw error
+  if (!data?.length) throw new Error('Your assignment response was not confirmed by the database. Refresh before retrying.')
 }
 
 export async function sendMentorshipFeedback(assignmentId: string, feedback: string) {
   const mentorId = await currentUser()
-  const { error } = await supabase.from('mentorship_feedback').insert({
-    assignment_id: assignmentId, mentor_id: mentorId,
-    feedback: assertText(feedback, 'Feedback', 2, 4000),
-  })
+  const cleanFeedback = assertText(feedback, 'Feedback', 2, 4000)
+  const { data, error } = await supabase.from('mentorship_feedback').insert({
+    assignment_id: assignmentId, mentor_id: mentorId, feedback: cleanFeedback,
+  }).select('id')
   if (error) throw error
+  if (!data?.length) throw new Error('Mentor feedback was not confirmed by the database. Refresh before retrying.')
 }
 
 export function assignmentProgress(workspace: MentorshipWorkspace): { assigned: number; submitted: number; reviewed: number } {
   const ids = new Set(workspace.assignments.map(row => row.id))
   const submittedIds = new Set(workspace.submissions.map(row => row.assignment_id).filter(id => ids.has(id)))
-  const reviewedIds = new Set(workspace.feedback.map(row => row.assignment_id).filter(id => ids.has(id)))
+  const reviewedIds = new Set(workspace.feedback.map(row => row.assignment_id).filter(id => ids.has(id) && submittedIds.has(id)))
   return { assigned: ids.size, submitted: submittedIds.size, reviewed: reviewedIds.size }
 }
 
@@ -192,7 +209,7 @@ export function mentorshipActionSummary(workspace: MentorshipWorkspace, now = ne
   const today = [now.getFullYear(), String(now.getMonth()+1).padStart(2,'0'),
     String(now.getDate()).padStart(2,'0')].join('-')
   const submitted = new Set(workspace.submissions.map(row => row.assignment_id))
-  const reviewed = new Set(workspace.feedback.map(row => row.assignment_id))
+  const reviewed = new Set(workspace.feedback.map(row => row.assignment_id).filter(id => submitted.has(id)))
   const goals = workspace.goals.filter(row => row.status === 'planned' || row.status === 'in_progress')
   const pending = workspace.assignments.filter(row => !submitted.has(row.id))
   return {

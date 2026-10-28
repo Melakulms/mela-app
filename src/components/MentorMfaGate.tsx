@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   decideMfaGate, discardUnfinishedTotp, getMentorMfaSnapshot, mapMfaError,
   startTotpEnrollment, verifyExistingTotp, verifyTotp, listVerifiedTotpFactors,
+  requestMentorMfaRecovery, type RecoveryReason,
   type MfaGateState, type TotpEnrollment, type VerifiedTotp,
 } from '../lib/mentor-mfa'
 
@@ -14,6 +15,9 @@ export default function MentorMfaGate({ purpose, onReady, onCancel }: {
   const [state, setState] = useState<MfaGateState | 'loading' | 'unavailable'>('loading')
   const [enrollment, setEnrollment] = useState<TotpEnrollment | null>(null)
   const [code, setCode] = useState('')
+  const [showRecovery, setShowRecovery] = useState(false)
+  const [recoveryReason, setRecoveryReason] = useState<RecoveryReason>('lost_device')
+  const [recoveryNotice, setRecoveryNotice] = useState('')
   const [factors, setFactors] = useState<VerifiedTotp[]>([])
   const [factorId, setFactorId] = useState('')
   const [busy, setBusy] = useState(false)
@@ -100,7 +104,35 @@ export default function MentorMfaGate({ purpose, onReady, onCancel }: {
         {busy ? 'Verifying…' : 'Verify'}
       </button>
     </>}
-    {state === 'verify' && <p className="muted">Lost your authenticator? Contact MELA support. Account recovery requires an independent identity review.</p>}
+    {state === 'verify' && <>
+      <p className="muted">Lost both authenticators? Recovery requires independent staff identity verification. A password alone cannot reset MFA.</p>
+      {!showRecovery ? <button type="button" className="btn btn-secondary" disabled={busy}
+        onClick={() => setShowRecovery(true)}>Request lost-device recovery</button> :
+        <div role="group" aria-label="Authenticator recovery request" className="empty-panel">
+          <label htmlFor="mentor-recovery-reason">Why do you need recovery?</label>
+          <select id="mentor-recovery-reason" value={recoveryReason} disabled={busy}
+            onChange={e => setRecoveryReason(e.target.value as RecoveryReason)}>
+            <option value="lost_device">Phone or authenticator lost</option>
+            <option value="all_factors_unavailable">Both authenticators unavailable</option>
+            <option value="device_compromised">Authenticator device compromised</option>
+          </select>
+          <button type="button" className="btn btn-primary" disabled={busy}
+            onClick={() => void (async () => {
+              if (busy) return
+              setBusy(true); setError('')
+              try {
+                const response = await requestMentorMfaRecovery(recoveryReason)
+                setRecoveryNotice(response)
+                setShowRecovery(false)
+              } catch (cause) {
+                setError(cause instanceof Error ? cause.message : 'Recovery request failed.')
+              } finally { setBusy(false) }
+            })()}>Submit recovery request</button>
+          <button type="button" className="btn btn-secondary" disabled={busy}
+            onClick={() => setShowRecovery(false)}>Not now</button>
+        </div>}
+      {recoveryNotice && <p className="banner banner-info" role="status">{recoveryNotice}</p>}
+    </>
     {error && <p role="alert" className="banner banner-error">{error}</p>}
     <button className="btn btn-secondary" disabled={busy} onClick={onCancel}>Not now</button>
   </div>

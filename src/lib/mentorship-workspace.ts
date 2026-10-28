@@ -89,10 +89,10 @@ export async function loadMentorshipWorkspace(role: 'learner' | 'mentor', sectio
 
 export function validatedGoalTargetDate(targetDate: string): string | null {
   if (!targetDate) return null
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) throw new Error('Choose a valid goal target date or leave it blank.')
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) throw new Error('Choose a valid target date for your goal or leave it blank.')
   const date = new Date(targetDate)
   if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0,10) !== targetDate) {
-    throw new Error('Choose a valid goal target date or leave it blank.')
+    throw new Error('Choose a valid target date for your goal or leave it blank.')
   }
   return targetDate
 }

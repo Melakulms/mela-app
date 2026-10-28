@@ -49,15 +49,19 @@ export default function MentorshipSectionDirectory({ selected, onSelect }: {
     </section> : <>
       <h2>Explore all 16 mentorship sections</h2>
       <p>Choose a section to open its tools. Sections that need an approved mentor or administrator explain the next step.</p>
-      <div className="module-grid">
-        {sections.map(item => <article className="module-card" key={item.number}
-          style={{ background:'var(--surface)',border:'1px solid var(--line)',padding:'.85rem' }}>
-          <span className="muted">{String(item.number).padStart(2,'0')}</span>
-          <h3 style={{ fontSize:'1rem',margin:'.25rem 0' }}>{item.title}</h3>
-          <p className="muted" style={{ fontSize:'.82rem' }}>{item.summary}</p>
-          {item.access && <p className="field-hint">{item.access}</p>}
-          <button type="button" className="btn btn-secondary" onClick={() => onSelect(item.number)}>Open {item.title}</button>
-        </article>)}
+      <div className="module-grid" aria-label="Mentorship subsection cards">
+        {sections.map(item => <button type="button" className="module-card" key={item.number}
+          aria-label={`Open ${item.title}`}
+          onClick={() => onSelect(item.number)}
+          style={{
+            background:'var(--surface)',border:'1px solid var(--line)',padding:'.85rem',
+            width:'100%',textAlign:'left',color:'inherit',cursor:'pointer',minHeight:'7.5rem',
+          }}>
+          <span className="muted" style={{display:'block'}}>{String(item.number).padStart(2,'0')}</span>
+          <span style={{display:'block',fontWeight:700,fontSize:'1rem',margin:'.35rem 0'}}>{item.title}</span>
+          <span className="muted" style={{display:'block',fontSize:'.82rem'}}>{item.summary}</span>
+          {item.access && <span className="field-hint" style={{display:'block',marginTop:'.5rem'}}>{item.access}</span>}
+        </button>)}
       </div>
     </>}
   </nav>

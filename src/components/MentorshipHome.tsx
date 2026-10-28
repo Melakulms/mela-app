@@ -8,13 +8,15 @@ type Props = {
   mentors: Mentor[]
   requests: MyMentorshipRequest[]
   sessions: MentorshipSession[]
+  requestsAvailable?: boolean
+  sessionsAvailable?: boolean
   stageKey?: string | null
   revision: number
   onNavigate?: (section: number) => void
   matchingOnly?: boolean
 }
 
-export default function MentorshipHome({ mentors, requests, sessions, stageKey, revision, onNavigate, matchingOnly = false }: Props) {
+export default function MentorshipHome({ mentors, requests, sessions, requestsAvailable = true, sessionsAvailable = true, stageKey, revision, onNavigate, matchingOnly = false }: Props) {
   const [extras, setExtras] = useState<MentorshipHomeExtras | null>(null)
   const [loadingExtras, setLoadingExtras] = useState(true)
   const [extrasError, setExtrasError] = useState('')
@@ -46,11 +48,14 @@ export default function MentorshipHome({ mentors, requests, sessions, stageKey, 
     <h2>Mentorship Home</h2>
     <p>Build your next step with trusted guidance. Your overview uses your actual MELA requests, sessions, and learning profile.</p>
 
+    {(!requestsAvailable || !sessionsAvailable) && <p className="banner banner-info" role="status">
+      Parts of your Mentorship Home could not load. Unavailable counters are labeled rather than shown as zero. Other tools are still accessible; use Retry mentorship to refresh.
+    </p>}
     <div className="module-grid" aria-label="Your mentorship overview">
       <div><strong>{mentors.length}</strong><div className="muted">Verified mentors loaded</div></div>
-      <div><strong>{summary.pendingRequests}</strong><div className="muted">Pending requests</div></div>
-      <div><strong>{summary.upcomingCount}</strong><div className="muted">Upcoming sessions</div></div>
-      <div><strong>{summary.completedCount}</strong><div className="muted">Completed sessions</div></div>
+      <div><strong>{requestsAvailable ? summary.pendingRequests : 'Unavailable'}</strong><div className="muted">Pending requests</div></div>
+      <div><strong>{sessionsAvailable ? summary.upcomingCount : 'Unavailable'}</strong><div className="muted">Upcoming sessions</div></div>
+      <div><strong>{sessionsAvailable ? summary.completedCount : 'Unavailable'}</strong><div className="muted">Completed sessions</div></div>
     </div>
     <nav aria-label="Mentorship sections" style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem', margin: '1rem 0' }}>
       <a className="btn btn-secondary" href="#mentor-directory" onClick={event => { if (onNavigate) { event.preventDefault(); onNavigate(2) } } }>Find a mentor</a>
@@ -59,7 +64,9 @@ export default function MentorshipHome({ mentors, requests, sessions, stageKey, 
     </nav>
 
     <div className="section-heading"><h3>Your next session</h3></div>
-    {next
+    {!sessionsAvailable
+      ? <p className="muted">Session history is temporarily unavailable. Check your confirmed times once the connection is restored.</p>
+      : next
       ? <div className="list-panel"><div className="list-row">
           <div>
             <strong>{topics.get(next.request_id ?? '') ?? 'Mentorship session'}</strong>
@@ -84,6 +91,7 @@ export default function MentorshipHome({ mentors, requests, sessions, stageKey, 
 
       </div>
       <div className="section-heading"><h3>Mentors suggested for your interests</h3></div>
+      {!requestsAvailable && <p className="muted">Mentor suggestions may be incomplete while your request history is unavailable.</p>}
       {blockedStage
         ? <p className="muted">Direct mentorship is not available for your school stage. Continue with your approved teacher and guardian.</p>
         : recommendations.length > 0

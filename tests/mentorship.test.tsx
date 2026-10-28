@@ -294,3 +294,18 @@ it('fails closed on new mentor requests when private request or session history 
   await waitFor(() => expect(mocks.fetchMyMentorshipRequests).toHaveBeenCalledTimes(2))
   expect(await screen.findByRole('button', {name:'Request mentorship'})).toBeTruthy()
 })
+
+it('opens guidance-category cards and preserves the chosen verified mentor filter on Android', async () => {
+  mocks.fetchVerifiedMentorsPage.mockResolvedValue({
+    mentors:[{...mentor,headline:'Software engineer',expertise:['Programming and AI'],languages:['Amharic'],availability:[]}],
+    hasMore:false,
+  })
+  render(<Mentorship stageKey="university" onBack={vi.fn()} />)
+  await screen.findByText('Mentor One')
+  fireEvent.click(screen.getByRole('button',{name:'Open Mentorship Categories'}))
+  expect(screen.getByRole('heading',{name:'Explore mentorship by guidance area'})).toBeTruthy()
+  fireEvent.click(screen.getByRole('button',{name:'Explore Technology & AI'}))
+  expect(screen.getByRole('heading',{name:'2. Find a Mentor'})).toBeTruthy()
+  expect((screen.getByLabelText('Mentorship category') as HTMLSelectElement).value).toBe('technology')
+  expect(screen.getByText('Mentor One')).toBeTruthy()
+})

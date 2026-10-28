@@ -17,7 +17,8 @@ BEGIN
     OR has_table_privilege('authenticated','private.mentor_mfa_recovery_reviews','INSERT') THEN
     RAISE EXCEPTION 'Client can directly access private recovery evidence';
   END IF;
-  IF has_function_privilege('anon','public.request_mentor_mfa_recovery(text)','EXECUTE')
+  IF has_function_privilege('anon','public.list_mentor_mfa_recovery_requests()','EXECUTE')
+    OR has_function_privilege('anon','public.request_mentor_mfa_recovery(text)','EXECUTE')
     OR has_function_privilege('anon','public.review_mentor_mfa_recovery(uuid,text,boolean)','EXECUTE')
     OR has_function_privilege('anon','public.claim_mentor_mfa_recovery(uuid)','EXECUTE')
     OR has_function_privilege('anon','public.finalize_mentor_mfa_recovery(uuid,boolean)','EXECUTE')
@@ -35,6 +36,7 @@ BEGIN
      'request_mentor_mfa_recovery(text)',
      'review_mentor_mfa_recovery(uuid,text,boolean)',
      'claim_mentor_mfa_recovery(uuid)',
+     'list_mentor_mfa_recovery_requests()',
      'finalize_mentor_mfa_recovery(uuid,boolean)'
   ] LOOP
     IF NOT (SELECT prosecdef FROM pg_proc WHERE oid=('public.'||v_func)::regprocedure) THEN

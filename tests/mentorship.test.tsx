@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 vi.mock('../src/components/MentorshipLearningWorkspace', () => ({ default: () => null }))
 vi.mock('../src/components/MentorshipProgramPlanner', () => ({ default: () => null }))
 vi.mock('../src/components/MentorApplication', () => ({ default: () => null }))
@@ -362,4 +362,53 @@ it('allows comparing only three real verified profiles without opening restricte
   fireEvent.click(screen.getByRole('button',{name:'Clear comparison'}))
   expect(screen.getByText('0 of 3 profiles selected for comparison.')).toBeTruthy()
   expect(screen.getAllByRole('button',{name:'Add to comparison'})).toHaveLength(4)
+})
+
+
+it('clears personal mentor requests immediately when the signed-in account changes', async () => {
+  mocks.fetchMyMentorshipRequests
+    .mockResolvedValueOnce([{
+      id:'private-request',mentor_id:'mentor-1',topic:'Private scholarship planning',
+      status:'pending',created_at:'2026-10-27T10:00:00Z',
+    }])
+    .mockResolvedValueOnce([])
+  render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  expect(await screen.findByText('Private scholarship planning')).toBeTruthy()
+  fireEvent(window, new Event('mela:session-boundary'))
+  expect(screen.queryByText('Private scholarship planning')).toBeNull()
+  await waitFor(() => expect(mocks.fetchMyMentorshipRequests).toHaveBeenCalledTimes(2))
+  expect(screen.queryByText('Private scholarship planning')).toBeNull()
+})
+
+it('ignores a private request response from before the account-switch event', async () => {
+  let releaseOldRequest!: (records: any[]) => void
+  mocks.fetchMyMentorshipRequests
+    .mockReturnValueOnce(new Promise(resolve => { releaseOldRequest = resolve }))
+    .mockResolvedValueOnce([])
+  render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  await waitFor(() => expect(mocks.fetchMyMentorshipRequests).toHaveBeenCalledTimes(1))
+  fireEvent(window, new Event('mela:session-boundary'))
+  await waitFor(() => expect(mocks.fetchMyMentorshipRequests).toHaveBeenCalledTimes(2))
+  await act(async () => {
+    releaseOldRequest([{
+      id:'old-request',mentor_id:'mentor-1',topic:'Old account confidential request',
+      status:'pending',created_at:'2026-10-27T10:00:00Z',
+    }])
+  })
+  expect(screen.queryByText('Old account confidential request')).toBeNull()
+})
+
+it('does not show an old account action as saved after the session boundary', async () => {
+  let finishOldAction!: () => void
+  mocks.requestMentor.mockImplementationOnce(() => new Promise<void>(resolve => { finishOldAction = resolve }))
+  render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  await screen.findByText('Mentor One')
+  fireEvent.click(screen.getByRole('button', {name:'Request mentorship'}))
+  fireEvent.change(screen.getByLabelText('Topic'), {target:{value:'Private academic help'}})
+  fireEvent.click(screen.getByRole('button', {name:'Send request'}))
+  await waitFor(() => expect(mocks.requestMentor).toHaveBeenCalledTimes(1))
+  fireEvent(window, new Event('mela:session-boundary'))
+  await act(async () => { finishOldAction() })
+  expect(screen.queryByText('Your mentorship change was saved.')).toBeNull()
+  expect(screen.queryByDisplayValue('Private academic help')).toBeNull()
 })

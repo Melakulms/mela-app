@@ -117,21 +117,22 @@ export default function MentorshipSessionJourney({sessions}:{sessions:Mentorship
   event.preventDefault()
   if(!current||preparationError||goal.trim().length<3||questions.trim().length<10)return
   void run(async()=>{
+    const {data:auth,error:authError}=await supabase.auth.getUser()
+    if(authError)throw new Error(authError.message)
+    if(!auth.user)throw new Error('Please sign in again.')
     if(preparation){
       const {data,error:updateError}=await supabase.from('mentorship_session_preparations')
         .update({goal:goal.trim(),questions:questions.trim()})
-        .eq('id',preparation.id).select('id')
+        .eq('id',preparation.id).eq('learner_id',auth.user.id).select('id')
       if(updateError)throw new Error(updateError.message)
       if(!data?.length)throw new Error('Private preparation was not updated; check your access.')
     }else{
-      const {data:auth,error:authError}=await supabase.auth.getUser()
-      if(authError)throw new Error(authError.message)
-      if(!auth.user)throw new Error('Please sign in again.')
-      const {error:insertError}=await supabase.from('mentorship_session_preparations').insert({
+      const {data,error:insertError}=await supabase.from('mentorship_session_preparations').insert({
         session_id:current.id,learner_id:auth.user.id,
         goal:goal.trim(),questions:questions.trim(),
-      })
+      }).select('id')
       if(insertError)throw new Error(insertError.message)
+      if(!data?.length)throw new Error('Private preparation was not confirmed by the database. Refresh before retrying.')
     }
   },'Your private session preparation was saved.')
  }
@@ -144,11 +145,12 @@ export default function MentorshipSessionJourney({sessions}:{sessions:Mentorship
     const {data:auth,error:authError}=await supabase.auth.getUser()
     if(authError)throw new Error(authError.message)
     if(!auth.user)throw new Error('Please sign in again.')
-    const {error:insertError}=await supabase.from('mentorship_session_reflections').insert({
+    const {data,error:insertError}=await supabase.from('mentorship_session_reflections').insert({
       session_id:current.id,learner_id:auth.user.id,
       learning_summary:learning.trim(),next_step:nextStep.trim(),
-    })
+    }).select('id')
     if(insertError)throw new Error(insertError.message)
+    if(!data?.length)throw new Error('Private reflection was not confirmed by the database. Refresh before retrying.')
   },'Your private reflection was saved. It does not issue a certificate or verified achievement.')
  }
 

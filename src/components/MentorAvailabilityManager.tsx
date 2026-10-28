@@ -14,12 +14,17 @@ export default function MentorAvailabilityManager() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [loading, setLoading] = useState(true)
+  const [availabilityVerified, setAvailabilityVerified] = useState(false)
   const [busy, setBusy] = useState(false)
   const [revision, setRevision] = useState(0)
   const lock = useRef(false)
 
   const load = useCallback(async () => {
     setError('')
+    setAvailabilityVerified(false)
+    // A previous account's cached weekly slots must never be used to check
+    // availability after a failed refresh or a changed authentication session.
+    setSlots([])
     setLoading(true)
     try {
       const { data: auth, error: authError } = await supabase.auth.getUser()
@@ -34,6 +39,7 @@ export default function MentorAvailabilityManager() {
       setSlots((data ?? []).filter((slot) => Number.isInteger(slot.weekday) &&
         typeof slot.id === 'string' && typeof slot.start_time === 'string' &&
         typeof slot.end_time === 'string' && typeof slot.timezone === 'string') as MentorAvailability[])
+      setAvailabilityVerified(true)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not load availability.')
     } finally {
@@ -44,7 +50,10 @@ export default function MentorAvailabilityManager() {
   useEffect(() => { void load() }, [load, revision])
 
   const mutate = async (action: () => Promise<void>) => {
-    if (lock.current) return
+    if (lock.current || loading || !availabilityVerified) {
+      if (!loading && !availabilityVerified) setError('Weekly hours could not be verified. Refresh before editing availability.')
+      return
+    }
     lock.current = true
     setBusy(true)
     setNotice('')
@@ -62,6 +71,7 @@ export default function MentorAvailabilityManager() {
   }
 
   const add = () => {
+    if (loading || !availabilityVerified) return
     if (!isValidAvailabilitySlot(weekday, start, end)) {
       setError('Select a valid weekday and an ending time later than the start time.')
       return
@@ -84,13 +94,15 @@ export default function MentorAvailabilityManager() {
   }
 
   const remove = (id: string) => {
+    if (loading || !availabilityVerified || !slots.some(slot => slot.id === id)) return
     void mutate(async () => {
       const { data: auth, error: authError } = await supabase.auth.getUser()
       if (authError) throw authError
       if (!auth.user) throw new Error('Sign in again to manage availability.')
-      const { error: deleteError } = await supabase.from('mentor_availability')
-        .delete().eq('id', id).eq('mentor_id', auth.user.id)
+      const { data: deleted, error: deleteError } = await supabase.from('mentor_availability')
+        .delete().eq('id', id).eq('mentor_id', auth.user.id).select('id')
       if (deleteError) throw deleteError
+      if (!deleted?.length) throw new Error('This weekly window was not removed. Refresh your hours and retry.')
     })
   }
 
@@ -99,11 +111,15 @@ export default function MentorAvailabilityManager() {
     <p>Publish weekly time windows before booking sessions. Appointments must fit entirely inside an active weekly window in its selected time zone; overlapping appointments are rejected. A request is not a confirmed booking.</p>
     {error && <div role="alert" className="banner banner-error">{error}</div>}
     {notice && <p role="status" className="banner banner-info">{notice}</p>}
-    {loading ? <p role="status">Loading your availability…</p> : slots.length === 0
+    {!loading && !availabilityVerified && <div role="status" className="banner banner-info">
+      Your published weekly hours could not be verified. Editing is paused to prevent overlapping or duplicate windows.
+      <button type="button" className="btn btn-secondary" onClick={() => setRevision(value => value + 1)}>Retry weekly hours</button>
+    </div>}
+    {loading ? <p role="status">Loading your availability…</p> : !availabilityVerified ? null : slots.length === 0
       ? <p>No weekly hours published yet.</p>
       : <ul>{slots.map((slot) => <li key={slot.id} style={{ marginBottom: '.5rem' }}>
         {WEEKDAYS[slot.weekday] ?? 'Day'} · {slot.start_time.slice(0, 5)}–{slot.end_time.slice(0, 5)} ({slot.timezone}){' '}
-        <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => remove(slot.id)} aria-label={`Remove ${WEEKDAYS[slot.weekday]} availability`}>Remove</button>
+        <button type="button" className="btn btn-secondary" disabled={busy || loading || !availabilityVerified} onClick={() => remove(slot.id)} aria-label={`Remove ${WEEKDAYS[slot.weekday]} availability`}>Remove</button>
       </li>)}</ul>}
     <div className="module-grid">
       <div className="field"><label htmlFor="availability-weekday">Day</label><select id="availability-weekday" value={weekday} disabled={busy} onChange={(event) => setWeekday(Number(event.target.value))}>{WEEKDAYS.map((day, index) => <option value={index} key={day}>{day}</option>)}</select></div>
@@ -111,6 +127,6 @@ export default function MentorAvailabilityManager() {
       <div className="field"><label htmlFor="availability-start">From</label><input id="availability-start" type="time" value={start} disabled={busy} onChange={(event) => setStart(event.target.value)} /></div>
       <div className="field"><label htmlFor="availability-end">To</label><input id="availability-end" type="time" value={end} disabled={busy} onChange={(event) => setEnd(event.target.value)} /></div>
     </div>
-    <button type="button" className="btn btn-primary" disabled={busy || loading} onClick={add}>{busy ? 'Saving…' : 'Add weekly hours'}</button>
+    <button type="button" className="btn btn-primary" disabled={busy || loading || !availabilityVerified} onClick={add}>{busy ? 'Saving…' : 'Add weekly hours'}</button>
   </section>
 }

@@ -230,22 +230,22 @@ describe('Mentorship', () => {
     await waitFor(() => expect(mocks.fetchMyMentorshipRequests).toHaveBeenCalledTimes(2))
     fireEvent.click(screen.getByRole('button', { name: 'All mentorship sections' }))
     fireEvent.click(screen.getByRole('button', { name: 'Open Mentorship Programs & Requests' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel request' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Cancel request' }))
     await waitFor(() => expect(mocks.cancelMentorshipRequest).toHaveBeenCalledWith('request-1'))
   })
 
   it('shows mentor rating summaries and submits one rating for a completed session', async () => {
     mocks.fetchMyMentorshipSessions
       .mockResolvedValueOnce([{ id: 'session-2', request_id: 'request-3', mentor_id: 'mentor-1', mentee_id: 'learner', scheduled_at: '2026-10-03T10:00:00Z', duration_min: 45, status: 'completed', call_room_id: null, completed_at: '2026-10-03T10:45:00Z', cancelled_at: null, rating: null, rating_comment: null }])
+      .mockResolvedValueOnce([{ id: 'session-2', request_id: 'request-3', mentor_id: 'mentor-1', mentee_id: 'learner', scheduled_at: '2026-10-03T10:00:00Z', duration_min: 45, status: 'completed', call_room_id: null, completed_at: '2026-10-03T10:45:00Z', cancelled_at: null, rating: null, rating_comment: null }])
       .mockResolvedValueOnce([{ id: 'session-2', request_id: 'request-3', mentor_id: 'mentor-1', mentee_id: 'learner', scheduled_at: '2026-10-03T10:00:00Z', duration_min: 45, status: 'completed', call_room_id: null, completed_at: '2026-10-03T10:45:00Z', cancelled_at: null, rating: 4, rating_comment: 'Helpful feedback.' }])
 
     render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
-  fireEvent.click(screen.getByRole('button', {name: 'Open Booking and Scheduling'}))
-    fireEvent.click(screen.getByRole('button', { name: 'All mentorship sections' }))
     fireEvent.click(screen.getByRole('button', { name: 'Open Find a Mentor' }))
     expect(await screen.findByText('4.75/5 · 8 ratings')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'All mentorship sections' }))
     fireEvent.click(screen.getByRole('button', { name: 'Open Booking and Scheduling' }))
+    await screen.findByLabelText('Rate this completed session')
 
     fireEvent.change(screen.getByLabelText('Rate this completed session'), { target: { value: '4' } })
     fireEvent.change(screen.getByLabelText('Rating comment (optional)'), { target: { value: 'Helpful feedback.' } })
@@ -266,7 +266,7 @@ it('opens requests directly, shows an empty state, and navigates to real mentor 
   expect(screen.getByRole('heading',{name:'Your requests'})).toBeTruthy()
   expect(screen.queryByLabelText('Search by name, field, skills, or interests', {selector: 'input:not([hidden])'})?.closest('[hidden]')).toBeTruthy()
   fireEvent.click(screen.getByRole('button',{name:'Find a verified mentor'}))
-  expect(screen.getByRole('heading',{name:'Find a verified mentor'})).toBeTruthy()
+  expect(await screen.findByRole('heading',{name:'Find a verified mentor'})).toBeTruthy()
   expect(screen.getByRole('searchbox',{name:'Search by name, field, skills, or interests'})).toBeTruthy()
   expect(screen.queryByRole('heading',{name:'Your requests'})).toBeNull()
 })
@@ -306,7 +306,7 @@ it('does not present a failed session history query as an empty confirmed calend
   expect(screen.queryByText(/No sessions yet. An accepted request is not a booking/)).toBeNull()
   fireEvent.click(screen.getByRole('button', {name:'All mentorship sections'}))
   fireEvent.click(screen.getByRole('button', {name:'Open Find a Mentor'}))
-  expect(screen.getByText('Mentor One')).toBeTruthy()
+  expect(await screen.findByText('Mentor One')).toBeTruthy()
 })
 
 
@@ -359,8 +359,9 @@ it('opens guidance-category cards and preserves the chosen verified mentor filte
   await waitFor(() => expect(explore.disabled).toBe(false))
   fireEvent.click(explore)
   expect(screen.getByRole('heading',{name:'2. Find a Mentor'})).toBeTruthy()
-  expect((screen.getByLabelText('Mentorship category') as HTMLSelectElement).value).toBe('technology')
-  expect(screen.getByText('Mentor One')).toBeTruthy()
+  const selected = await screen.findByLabelText('Mentorship category') as HTMLSelectElement
+  expect(selected.value).toBe('technology')
+  expect(await screen.findByText('Mentor One')).toBeTruthy()
 })
 
 

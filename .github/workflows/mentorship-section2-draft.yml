@@ -1,0 +1,33 @@
+name: Mentorship Section 2 draft verification
+on:
+  push:
+    branches:
+      - work/mentorship-section2-recovery-20261028
+  pull_request:
+    branches:
+      - feature/mentorship-foundation-20261027
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Check TypeScript
+        run: npx tsc --noEmit
+      - name: Run full unit and UI tests
+        run: npx vitest run
+      - name: Build using placeholders (no production secrets)
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_build_test

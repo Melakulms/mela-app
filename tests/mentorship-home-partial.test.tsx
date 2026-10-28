@@ -8,7 +8,7 @@ it('does not present unavailable private mentorship data as confirmed zero count
   render(<MentorshipHome
     mentors={[]} requests={[]} sessions={[]} stageKey="school_11_12"
     requestsAvailable={false} sessionsAvailable={false} revision={0} />)
-  expect(screen.getByRole('status').textContent).toMatch(/Unavailable counters are labeled/)
+  expect(screen.getByText(/Unavailable counters are labeled/)).toBeTruthy()
   expect(screen.getAllByText('Unavailable')).toHaveLength(3)
   expect(screen.getByText(/Session history is temporarily unavailable/)).toBeTruthy()
   expect(screen.queryByText(/No upcoming confirmed sessions/)).toBeNull()

@@ -30,7 +30,19 @@ export interface MyMentorshipRequest {
   created_at: string
   message?: string | null
   preferred_at?: string | null
+  decline_reason_code?: string | null
+  decline_note?: string | null
 }
+
+export const DECLINE_REASON_CODES = [
+  'schedule_unavailable',
+  'outside_expertise',
+  'capacity_full',
+  'different_timing',
+  'other',
+] as const
+export type DeclineReasonCode = typeof DECLINE_REASON_CODES[number]
+export const DECLINE_NOTE_MAX = 300
 
 export interface MentorshipSession {
   id: string
@@ -115,7 +127,7 @@ export async function fetchMyMentorshipRequests(): Promise<MyMentorshipRequest[]
   const userId = await requireUserId()
   const { data, error } = await supabase
     .from('mentorship_requests')
-    .select('id, mentor_id, topic, message, preferred_at, status, created_at')
+    .select('id, mentor_id, topic, message, preferred_at, status, created_at, decline_reason_code, decline_note')
     .eq('mentee_id', userId)
     .order('created_at', { ascending: false })
   if (error) throw error
@@ -178,6 +190,30 @@ export async function requestMentor(mentorId: string, topic: string, message: st
     message: cleanMessage || null,
     preferred_at: preferred?.toISOString() ?? null,
     status: 'pending',
+  })
+  if (error) throw error
+}
+
+export async function respondToMentorshipRequest(
+  requestId: string,
+  decision: 'accepted' | 'declined',
+  reasonCode: DeclineReasonCode | '' = '',
+  note = '',
+): Promise<void> {
+  if (!requestId) throw new Error('Choose a mentorship request first.')
+  if (decision === 'declined') {
+    if (!(DECLINE_REASON_CODES as readonly string[]).includes(reasonCode)) {
+      throw new Error('Choose a reason before declining.')
+    }
+    if (note.trim().length > DECLINE_NOTE_MAX) {
+      throw new Error(`Keep the decline note to ${DECLINE_NOTE_MAX} characters or fewer.`)
+    }
+  }
+  const { error } = await supabase.rpc('respond_mentorship_request_with_reason', {
+    p_request_id: requestId,
+    p_decision: decision,
+    p_reason_code: decision === 'declined' ? reasonCode : null,
+    p_note: decision === 'declined' ? note.trim() || null : null,
   })
   if (error) throw error
 }

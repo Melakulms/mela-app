@@ -14,6 +14,7 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
   const [workspace, setWorkspace] = useState<MentorshipWorkspace | null>(null)
   const [accepted, setAccepted] = useState<AcceptedRequest[]>([])
   const [error, setError] = useState('')
+  const [acceptedError, setAcceptedError] = useState('')
   const [loadFailed, setLoadFailed] = useState(false)
   const [notice, setNotice] = useState('')
   const [loading, setLoading] = useState(true)
@@ -38,6 +39,7 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
     setWorkspace(null)
     setLoadFailed(false)
     setError('')
+    setAcceptedError('')
     void (async () => {
       try {
         const workspaceData = await loadMentorshipWorkspace(mode, section)
@@ -49,8 +51,11 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
           const { data, error: requestError } = await supabase.from('mentorship_requests')
             .select('id,mentee_id,topic,status').eq('mentor_id',auth.user.id).eq('status','accepted')
             .order('created_at', { ascending: false }).limit(100)
-          if (requestError) throw requestError
-          acceptedData = (data ?? []) as AcceptedRequest[]
+          if (requestError) {
+            if (active) setAcceptedError('Accepted learners could not load: ' + requestError.message + '. Existing assignments remain viewable; try Refresh.')
+          } else {
+            acceptedData = (data ?? []) as AcceptedRequest[]
+          }
         }
         if (active) { setWorkspace(workspaceData); setAccepted(acceptedData) }
       } catch (cause) {
@@ -105,6 +110,7 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
       <button className="btn btn-secondary" type="button" onClick={() => setRevision((n) => n + 1)} disabled={busy || loading}>Refresh</button></div>
     {notice && <p className="banner banner-info" role="status">{notice}</p>}
     {error && <div className="banner banner-error" role="alert">{error}<button className="btn btn-secondary" type="button" onClick={() => setRevision((n) => n + 1)} disabled={busy}>Retry</button></div>}
+    {acceptedError && <p className="banner banner-error" role="alert">{acceptedError}</p>}
     {loading && <p role="status">Loading learning plans, resources and assignments…</p>}
     {!loading && !loadFailed && workspace && <>
       {mode === 'learner' && <section className="empty-panel" hidden={section !== null && section !== 9} id="mentorship-goals" style={{ textAlign:'left' }}>
@@ -184,7 +190,7 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
           : progress.reviewed+' of '+progress.assigned+' assigned tasks have documented mentor feedback.'}
           {' '}This measures recorded activity, not mastery or a verified certificate. No Career Passport credential is automatically awarded.</p>
       </section>
-      <section hidden={section !== null && section !== 10} id="mentorship-library" className="empty-panel" style={{ textAlign:'left' }}>
+      <section hidden={mode === 'mentor' || (section !== null && section !== 10)} id="mentorship-library" className="empty-panel" style={{ textAlign:'left' }}>
         <h3>10. Mentorship resources library</h3>
         {workspace.resources.length===0?<p className="muted">No published mentorship guides are available yet.</p>:<>
           <div className="field"><label htmlFor="mentorship-resource-search">Find guidance by topic or keyword</label>
@@ -209,7 +215,7 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
             </details>)}
         </>}
       </section>
-      <section hidden={section !== null && section !== 13} id="mentorship-groups" className="empty-panel" style={{ textAlign:'left' }}>
+      <section hidden={mode === 'mentor' || (section !== null && section !== 13)} id="mentorship-groups" className="empty-panel" style={{ textAlign:'left' }}>
         <h3>13. Group mentorship</h3>
         {mode === 'mentor' ? <p className="muted">Verified facilitators can propose supervised groups through the Central Admin review workflow.</p>
           : !['university','college_tvet'].includes(stageKey ?? '') ?

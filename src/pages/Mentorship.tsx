@@ -541,6 +541,10 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
               <div>{mentorNames.get(r.mentor_id) ?? 'Your mentor'} · {mentorshipRequestStatus(r.status, uiLanguage)}</div>
               {mentorshipRequestNextStep(r.status, uiLanguage) && <p className="muted">{mentorshipRequestNextStep(r.status, uiLanguage)}</p>}
               {r.message && <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{r.message}</p>}
+              {r.status === 'declined' && r.decline_reason_code && <div className="banner banner-info" role="note">
+                <strong>{lc.mentorReason}</strong> {mentorshipDeclineReason(r.decline_reason_code, uiLanguage)}
+                {r.decline_note && <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', margin: '.4rem 0 0' }}>{r.decline_note}</p>}
+              </div>}
               {r.preferred_at && <p>{lc.preferredTime}: {new Date(r.preferred_at).toLocaleString()}</p>}
               {r.status === 'accepted' && !sessionsError && !sessions.some(s => s.request_id === r.id) && <p>{lc.mentorAcceptedNoTime}</p>}
               {r.status === 'accepted' && !sessionsError && sessions.some(s => s.request_id === r.id && s.status === 'cancelled') && <p>{lc.mentorCancelledSession}</p>}
@@ -679,7 +683,14 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
                 <span className="field-hint">{message.length}/1000</span>
               </div>
               <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
-                <div className="field" style={{ width: '100%' }}><label htmlFor={`mentor-preferred-${m.user_id}`}>Preferred session time (optional)</label><input id={`mentor-preferred-${m.user_id}`} type="datetime-local" value={preferredAt} disabled={!!busy} onChange={e => setPreferredAt(e.target.value)} /><span className="field-hint">Time zone: {localZone}. Check this mentor's published weekly hours above before suggesting a time. This is a preference, not a reservation. The mentor confirms the actual date and duration separately.</span></div>
+                <div className="field" style={{ width: '100%' }}><label htmlFor={`mentor-preferred-${m.user_id}`}>Preferred session time (optional)</label><input id={`mentor-preferred-${m.user_id}`} type="datetime-local" value={preferredAt} disabled={!!busy} onChange={e => setPreferredAt(e.target.value)} /><span className="field-hint">Time zone: {localZone}. {uiLanguage === 'am' ? 'ይህ ምርጫ ነው፤ ቀጠሮ አይደለም። አማካሪው ትክክለኛውን ቀንና ቆይታ ለየብቻ ያረጋግጣል።' : 'This is a preference, not a reservation. The mentor confirms the actual date and duration separately.'}</span>
+                  {preferredAt && (() => {
+                    const g = preferredTimeGuidance(preferredAt ? new Date(preferredAt) : null, m.availability ?? [])
+                    if (g.status === 'invalid') return <p className="banner banner-error" role="alert">{uiLanguage === 'am' ? 'ትክክለኛ ቀንና ሰዓት ይምረጡ።' : 'Choose a valid date and time.'}</p>
+                    if (g.status === 'inside') return <p className="banner banner-info" role="status">{uiLanguage === 'am' ? 'ይህ ጊዜ በአማካሪው የታተመ ዝግጁ ሰዓት ውስጥ ነው።' : 'This time falls within the mentor’s published weekly hours.'}</p>
+                    if (g.status === 'outside') return <p className="banner banner-info" role="status">{uiLanguage === 'am' ? 'ይህ ጊዜ ከአማካሪው የታተመ ሰዓት ውጭ ነው። ቢቻል በታተመው ሰዓት ውስጥ ይምረጡ።' : 'This time is outside the mentor’s published weekly hours. Choosing a time inside those hours improves the chance of a confirmed session.'}</p>
+                    return null
+                  })()}</div>
                 <button className="btn btn-primary" onClick={() => submitRequest(m.user_id)} disabled={!!busy || topic.trim().length < 2}>{busy === `request-${m.user_id}` ? 'Sending…' : 'Send request'}</button>
                 <button className="btn btn-secondary" onClick={closeComposer} disabled={!!busy}>Cancel</button>
               </div>

@@ -30,7 +30,7 @@ describe('Mentorship section 6 structured programs',()=>{
     await screen.findByText('No personal program plans saved yet.')
     expect((screen.getByLabelText('Learning area') as HTMLSelectElement).options).toHaveLength(1)
     expect(screen.getByText(/academic self-study plans/)).toBeTruthy()
-    expect(screen.getByText(/not mentor assignment or formal program enrollment/i)).toBeTruthy()
+    expect(screen.getByText(/do not assign a mentor/)).toBeTruthy()
     expect(screen.getAllByRole('listitem')).toHaveLength(2)
     expect(mocks.load).toHaveBeenCalledWith('learner',9)
     expect(mocks.add).not.toHaveBeenCalled()

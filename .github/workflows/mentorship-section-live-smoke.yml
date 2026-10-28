@@ -20,9 +20,17 @@ jobs:
           script=$(grep -oE 'src="/assets/[^"]+\.js"' /tmp/mela-staging-index.html | head -1 | cut -d '"' -f2)
           test -n "$script"
           curl --fail --show-error --silent --location --retry 4 --retry-delay 3 --max-time 25 "$site$script" -o /tmp/mela-staging-script.js
-          grep -F -q 'Open Mentor Workspace' /tmp/mela-staging-script.js
-          grep -F -q 'Open Administration' /tmp/mela-staging-script.js
-          grep -F -q 'Select a section to open its own information panel' /tmp/mela-staging-script.js
-          grep -F -q 'Verified mentor account required' /tmp/mela-staging-script.js
-          grep -F -q 'Central Admin MFA required' /tmp/mela-staging-script.js
+          # Mentorship is React.lazy-loaded; its UI strings live in a separate chunk.
+          chunks=$(grep -oE 'Mentorship-[A-Za-z0-9_-]+\\.js' /tmp/mela-staging-script.js | sort -u)
+          test -n "$chunks" || { echo '::error::Mentorship lazy chunk not referenced by app'; exit 1; }
+          : >/tmp/mela-mentorship-chunks.js
+          while IFS= read -r chunk; do
+            curl --fail --show-error --silent --location --max-time 25 "$site/assets/$chunk" >> /tmp/mela-mentorship-chunks.js
+          done <<< "$chunks"
+          grep -F -q 'Open ' /tmp/mela-mentorship-chunks.js
+          grep -F -q 'Mentor Workspace' /tmp/mela-mentorship-chunks.js
+          grep -F -q 'Administration' /tmp/mela-mentorship-chunks.js
+          grep -F -q 'Select a section to open its own information panel' /tmp/mela-mentorship-chunks.js
+          grep -F -q 'Verified mentor account required' /tmp/mela-mentorship-chunks.js
+          grep -F -q 'Central Admin MFA required' /tmp/mela-mentorship-chunks.js
           echo 'Published staging JS includes live 16-section navigation and role safeguards.'

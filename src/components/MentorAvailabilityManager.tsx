@@ -18,8 +18,10 @@ export default function MentorAvailabilityManager() {
   const [busy, setBusy] = useState(false)
   const [revision, setRevision] = useState(0)
   const lock = useRef(false)
+  const readSequence = useRef(0)
 
   const load = useCallback(async () => {
+    const readId = ++readSequence.current
     setError('')
     setAvailabilityVerified(false)
     // A previous account's cached weekly slots must never be used to check
@@ -36,18 +38,23 @@ export default function MentorAvailabilityManager() {
         .eq('mentor_id', auth.user.id)
         .order('weekday', { ascending: true })
       if (fetchError) throw new Error(fetchError.message)
-      setSlots((data ?? []).filter((slot) => Number.isInteger(slot.weekday) &&
-        typeof slot.id === 'string' && typeof slot.start_time === 'string' &&
-        typeof slot.end_time === 'string' && typeof slot.timezone === 'string') as MentorAvailability[])
-      setAvailabilityVerified(true)
+      if (readId === readSequence.current) {
+        setSlots((data ?? []).filter((slot) => Number.isInteger(slot.weekday) &&
+          typeof slot.id === 'string' && typeof slot.start_time === 'string' &&
+          typeof slot.end_time === 'string' && typeof slot.timezone === 'string') as MentorAvailability[])
+        setAvailabilityVerified(true)
+      }
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not load availability.')
+      if (readId === readSequence.current) setError(cause instanceof Error ? cause.message : 'Could not load availability.')
     } finally {
-      setLoading(false)
+      if (readId === readSequence.current) setLoading(false)
     }
   }, [])
 
-  useEffect(() => { void load() }, [load, revision])
+  useEffect(() => {
+    void load()
+    return () => { readSequence.current += 1 }
+  }, [load, revision])
 
   const mutate = async (action: () => Promise<void>) => {
     if (lock.current || loading || !availabilityVerified) {

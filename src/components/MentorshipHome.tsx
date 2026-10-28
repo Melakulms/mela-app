@@ -38,7 +38,7 @@ export default function MentorshipHome({ mentors, requests, sessions, requestsAv
   const summary = summarizeMentorshipHome(requests, sessions)
   const topics = new Map(requests.map((request) => [request.id, request.topic]))
   const next = summary.nextSession
-  const recommendations = extras
+  const recommendations = requestsAvailable && extras
     ? recommendMentors(mentors, extras.interests, extras.preferredLanguage, requests, stageKey)
     : []
   const blockedStage = ['school_1_6', 'school_7_8', 'school_9_10'].includes(stageKey ?? '')
@@ -91,7 +91,7 @@ export default function MentorshipHome({ mentors, requests, sessions, requestsAv
 
       </div>
       <div className="section-heading"><h3>Mentors suggested for your interests</h3></div>
-      {!requestsAvailable && <p className="muted">Mentor suggestions may be incomplete while your request history is unavailable.</p>}
+      {!requestsAvailable && <p className="muted">Personalized suggestions are paused until your request history can be verified, so already-contacted mentors are not recommended again.</p>}
       {blockedStage
         ? <p className="muted">Direct mentorship is not available for your school stage. Continue with your approved teacher and guardian.</p>
         : recommendations.length > 0

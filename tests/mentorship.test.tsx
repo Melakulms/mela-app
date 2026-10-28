@@ -414,3 +414,18 @@ it('does not show an old account action as saved after the session boundary', as
   expect(screen.queryByText('Your mentorship change was saved.')).toBeNull()
   expect(screen.queryByDisplayValue('Private academic help')).toBeNull()
 })
+
+
+it('keeps the learner home visible with verified mentor count unavailable when directory fails', async () => {
+  mocks.fetchVerifiedMentorsPage.mockRejectedValueOnce(new Error('Mentor search is offline'))
+  mocks.fetchMyMentorshipRequests.mockResolvedValueOnce([{
+    id:'request-1',mentor_id:'mentor-1',topic:'Career advice',status:'pending',created_at:'2026-10-10T10:00:00Z',
+  }])
+  render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  expect(await screen.findByRole('heading',{name:'Mentorship Home'})).toBeTruthy()
+  expect(screen.getByText(/Verified mentor directory is temporarily unavailable/)).toBeTruthy()
+  expect(screen.getByText(/Mentor search is offline/)).toBeTruthy()
+  expect(screen.getByText('Career advice')).toBeTruthy()
+  expect(screen.getAllByText('Unavailable').length).toBeGreaterThan(0)
+  expect(mocks.requestMentor).not.toHaveBeenCalled()
+})

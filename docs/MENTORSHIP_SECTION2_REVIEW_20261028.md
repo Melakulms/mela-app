@@ -29,3 +29,35 @@ Environment: **STAGING only**, Supabase `tungqfmypuwzeyrtaseh`. Production MUST 
 - Latest staging Vercel build points to a commit containing all required files, and genuine Android sign-ins work.
 
 The policy fix is independent; it **does not** complete or install the notes workflow. Keep the Section 2 feature unshipped until the blockers are addressed.
+
+
+## Review addendum — reconciliation of supplied 39/39 local checks
+
+The supplied security review reports **39/39** behavioural checks against a *local PostgreSQL 16 test harness with staging-shaped stubs*. This is a reported result, not an independent rerun by this reviewer, and it must never be described as a real staging Auth/MFA test.
+
+### New privilege-model inconsistency
+
+The review claims that authenticated client roles have **no EXECUTE on private functions**. The actual proposed migration contains:
+
+```sql
+grant execute on function private.save_mentorship_notes_draft(uuid, text) to authenticated;
+grant execute on function private.get_mentorship_notes_draft(uuid) to authenticated;
+grant execute on function private.publish_mentorship_session_notes(uuid) to authenticated;
+```
+
+The connected staging database reports `has_schema_privilege('authenticated','private','USAGE') = true`. Consequently, when applied as drafted, these functions would be **directly executable by the authenticated database role** with appropriate SQL access. That does not mean the private schema is exposed by Supabase REST, or that they bypass the internal MFA/ownership checks; however, the no-direct-execute claim is incorrect and the intended privilege boundary should be explicit.
+
+**Required before application:** choose the access architecture and test it consistently. Recommended: make authenticated-visible `public` RPC wrappers narrowly scoped `SECURITY DEFINER` entry points with `SET search_path = ''`, explicit grant only to `authenticated`, no anon/PUBLIC execute grants, no direct `authenticated` execute on the underlying private functions; retain and test private function auth.uid/AAL2/ownership/eligibility enforcement. Audit the SECURITY DEFINER wrapper owner's privileges and test that only the intended calls succeed. This needs careful testing because invoker public wrappers currently depend on direct private EXECUTE.
+
+### Other known corrections still required
+
+- **Wrong test signatures:** the 30-line `supabase/tests/mentorship_section2_staging.sql` uses `update_mentorship_session_notes`, which neither proposed migration creates. Rewrite the structural tests for the actual save/get/publish RPCs, plus no-direct-private-EXECUTE invariants for the chosen architecture.
+- **Unsaved text risk:** publishing consumes the previously stored draft, not necessarily the text visible in `MentorNotesEditor`. Deleting the old draft on publish does not prevent publication of stale draft text if the current editor changes were never saved. Implement an atomic save+publish or explicit fresh save plus revision checks before publish.
+- **MFA before draft read:** `MentorNotesEditor` fetches the protected draft before offering TOTP enrolment/step-up. Gate read before making the RPC, including for new mentors.
+- **Recovery:** there is no verified, auditable account recovery for lost TOTP. Treat as a real mentor launch blocker.
+- **Timezone UI:** requested timezone is not supplied by the provided request-creation frontend.
+- **Review chronology:** the dormant session UPDATE policy has already been **removed and verified on staging** by the separate security review. Do not report it as still awaiting application. The notes and timezone migrations remain **unapplied**.
+
+### Release criteria
+
+No production deployment or notes/timezone migration is authorized by this document. Re-run the local checks after the fixes and then real signed-in staging AAL1/AAL2 tests and mobile user journeys. Confirm migration baseline, function grants, read vs write policies, triggers, error behavior and rollback guards before advancing.

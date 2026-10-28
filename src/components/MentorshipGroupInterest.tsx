@@ -10,13 +10,14 @@ export default function MentorshipGroupInterest({ groups }: { groups: Mentorship
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [loading, setLoading] = useState(true)
+  const [membershipAvailable, setMembershipAvailable] = useState(false)
   const [revision, setRevision] = useState(0)
   const [busyGroup, setBusyGroup] = useState<string | null>(null)
   const lock = useRef(false)
 
   useEffect(() => {
     let active = true
-    setLoading(true);setError('');setInterests([]);setAttendance([])
+    setLoading(true);setMembershipAvailable(false);setError('');setInterests([]);setAttendance([])
     void (async () => {
       try {
         const { data: auth, error: authError } = await supabase.auth.getUser()
@@ -34,7 +35,7 @@ export default function MentorshipGroupInterest({ groups }: { groups: Mentorship
           if (attendanceError) throw attendanceError
           ownAttendance = (records ?? []) as Attendance[]
         }
-        if (active) { setInterests(ownInterests);setAttendance(ownAttendance) }
+        if (active) { setInterests(ownInterests);setAttendance(ownAttendance);setMembershipAvailable(true) }
       } catch (cause) {
         if (active) setError(cause instanceof Error ? cause.message : 'Could not load group interest status.')
       } finally { if (active) setLoading(false) }
@@ -43,7 +44,10 @@ export default function MentorshipGroupInterest({ groups }: { groups: Mentorship
   }, [revision])
 
   const mutate = async (groupId: string, action: 'express'|'withdraw') => {
-    if (lock.current) return
+    if (lock.current || loading || !membershipAvailable) {
+      if (!loading && !membershipAvailable) setError('Your group request history is unavailable. Refresh and verify it before changing participation.')
+      return
+    }
     lock.current = true;setBusyGroup(groupId);setNotice('');setError('')
     try {
       const { data: auth, error: authError } = await supabase.auth.getUser()
@@ -57,9 +61,10 @@ export default function MentorshipGroupInterest({ groups }: { groups: Mentorship
       } else {
         const interest = interests.find((item) => item.group_id===groupId && item.status==='pending')
         if (!interest) throw new Error('Only pending interests can be withdrawn here.')
-        const { error: deleteError } = await supabase.from('mentorship_group_interests')
-          .delete().eq('id',interest.id).eq('learner_id',auth.user.id).eq('status','pending')
+        const { data: deleted, error: deleteError } = await supabase.from('mentorship_group_interests')
+          .delete().eq('id',interest.id).eq('learner_id',auth.user.id).eq('status','pending').select('id')
         if (deleteError) throw new Error(deleteError.message)
+        if (!deleted?.length) throw new Error('Your request was not withdrawn. Refresh the current approval status before trying again.')
         setNotice('Your pending interest was withdrawn.')
       }
       setRevision((n) => n+1)
@@ -73,6 +78,10 @@ export default function MentorshipGroupInterest({ groups }: { groups: Mentorship
     {error && <div className="banner banner-error" role="alert">{error}</div>}
     {notice && <p role="status" className="banner banner-info">{notice}</p>}
     {loading && <p role="status">Checking your group participation requests…</p>}
+    {!loading && !membershipAvailable && <div role="status" className="banner banner-info">
+      Your group request history could not be verified. No new group applications or withdrawals are allowed until it loads.
+      <button type="button" className="btn btn-secondary" onClick={() => setRevision(n=>n+1)}>Retry group status</button>
+    </div>}
     {groups.length===0 && <p className="muted">No approved group programs currently published. MELA will not show placeholder sessions.</p>}
     {groups.length>0 && <div className="list-panel">{groups.map((group) => {
       const existing = interests.find((item) => item.group_id===group.id)
@@ -83,11 +92,11 @@ export default function MentorshipGroupInterest({ groups }: { groups: Mentorship
           {existing && <p role="status">Application: {existing.status==='approved' ? 'Approved by an administrator' : existing.status==='declined' ? 'Declined' : 'Awaiting approval'}</p>}
         </div>
         {existing?.status==='pending' ?
-          <button type="button" className="btn btn-secondary" disabled={loading || !!busyGroup} onClick={() => void mutate(group.id,'withdraw')}>Withdraw interest</button> :
-          !existing ? <button type="button" className="btn btn-primary" disabled={loading || !!busyGroup} onClick={() => void mutate(group.id,'express')}>Request to join</button> : null}
+          <button type="button" className="btn btn-secondary" disabled={loading || !membershipAvailable || !!busyGroup} onClick={() => void mutate(group.id,'withdraw')}>Withdraw interest</button> :
+          !existing ? <button type="button" className="btn btn-primary" disabled={loading || !membershipAvailable || !!busyGroup} onClick={() => void mutate(group.id,'express')}>Request to join</button> : null}
       </article>
     })}</div>}
-    {interests.some(i => i.status === 'approved') && <section aria-label="My group attendance history">
+    {membershipAvailable && interests.some(i => i.status === 'approved') && <section aria-label="My group attendance history">
       <h3>Approved group program history</h3>
       {interests.filter(i => i.status === 'approved').map(i => {
         const program = groups.find(g => g.id === i.group_id)

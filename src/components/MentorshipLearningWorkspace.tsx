@@ -33,6 +33,9 @@ const ASSIGNMENT_STARTERS = [
   },
 ] as const
 
+const FEEDBACK_DRAFT = 'Observed work: [describe actual evidence]. One improvement: [give a specific suggestion]. Next action: [agree on an achievable step].'
+const hasFeedbackPlaceholder = (text:string) => /\[[^\]]+\]/.test(text)
+
 export default function MentorshipLearningWorkspace({ mode, stageKey, section = null, onNavigate }: {
   mode: 'learner' | 'mentor'; stageKey?: string | null; section?: number | null
   onNavigate?: (section: number) => void
@@ -348,8 +351,16 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
                 </div> : <p className="muted">Awaiting learner submission.</p>}
             {review ? <p><strong>Mentor feedback:</strong> {review.feedback}</p> : answer && mode === 'mentor' && <div className="field">
               <label htmlFor={`feedback-${task.id}`}>Give constructive feedback</label>
+              <p className="muted">Review the learner's actual work. You can insert a feedback structure, then replace each bracketed prompt with your own observations. Templates are not sent automatically.</p>
+              <button type="button" className="btn btn-secondary" disabled={busy}
+                onClick={()=>setReviews(current=>({...current,[task.id]:FEEDBACK_DRAFT}))}>
+                Use structured feedback draft
+              </button>
               <textarea id={`feedback-${task.id}`} maxLength={4000} rows={3} disabled={busy} value={reviews[task.id] ?? ''} onChange={(e) => setReviews((v) => ({ ...v, [task.id]:e.target.value }))} />
-              <button className="btn btn-primary" disabled={busy || (reviews[task.id] ?? '').trim().length < 2}
+              {hasFeedbackPlaceholder(reviews[task.id] ?? '') && <p role="status" className="muted">
+                Replace every bracketed example with your actual review before sending.
+              </p>}
+              <button className="btn btn-primary" disabled={busy || (reviews[task.id] ?? '').trim().length < 2 || hasFeedbackPlaceholder(reviews[task.id] ?? '')}
                 onClick={() => void run(() => sendMentorshipFeedback(task.id,reviews[task.id] ?? ''),
                   () => setReviews(current=>{const copy={...current};delete copy[task.id];return copy}))}>Send feedback</button>
             </div>}

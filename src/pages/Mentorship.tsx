@@ -455,7 +455,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
               <div style={{ flex: 1 }}>
                 <strong>{requestTopics.get(session.request_id ?? '') ?? 'Mentorship session'} · {mentorNames.get(session.mentor_id ?? '') ?? 'Your mentor'}</strong>
                 <div className="list-row-title">{new Date(session.scheduled_at).toLocaleString()}</div>
-                <div className="list-row-meta">{session.duration_min ?? 'Duration unavailable'} minutes · {mentorshipSessionStatus(session.status, uiLanguage)}</div>
+                <div className="list-row-meta">{session.duration_min == null ? (uiLanguage === 'am' ? 'የቆይታ ጊዜ አልታወቀም' : 'Duration unavailable') : `${session.duration_min} minutes`} · {mentorshipSessionStatus(session.status, uiLanguage)}</div>
                 <MentorshipCalendarButton session={session} />
                 {session.notes && <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}><strong>Follow-up notes: </strong>{session.notes}</p>}
                 {session.status === 'completed' && session.rating !== null && <div className="list-row-meta">Rated {session.rating}/5{session.rating_comment ? ` · ${session.rating_comment}` : ''}</div>}

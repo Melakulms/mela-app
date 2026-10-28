@@ -27,7 +27,11 @@ jobs:
           grep -oE '[A-Za-z0-9_-]+[.]js' /tmp/mela-staging-script.js | sort -u | head -25 || true
           echo 'Mentorship references in app bundle (identifiers only):'
           grep -oE '[A-Za-z0-9_-]*[Mm]entor[A-Za-z0-9_-]*' /tmp/mela-staging-script.js | sort -u | head -18 || true
-          chunks=$(grep -oE 'Mentorship-[A-Za-z0-9_-]+[.]js' /tmp/mela-staging-script.js | sort -u || true)
+          # The entry chunk lazy-loads App, which in turn lazy-loads Mentorship.
+          appchunk=$(grep -oE 'App-[A-Za-z0-9_-]+[.]js' /tmp/mela-staging-script.js | head -1 || true)
+          test -n "$appchunk" || { echo '::error::App chunk missing'; exit 1; }
+          curl --fail --show-error --silent --location --max-time 25 "$site/assets/$appchunk" -o /tmp/mela-staging-app.js
+          chunks=$(grep -oE 'Mentorship-[A-Za-z0-9_-]+[.]js' /tmp/mela-staging-app.js | sort -u || true)
           test -n "$chunks" || { echo '::error::Mentorship lazy chunk not referenced by app'; exit 1; }
           : >/tmp/mela-mentorship-chunks.js
           while IFS= read -r chunk; do

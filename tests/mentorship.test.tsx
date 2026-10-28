@@ -336,3 +336,29 @@ it('filters authentic request history without deleting pending decisions or mark
   expect(screen.getByText('Pending questions')).toBeTruthy()
   expect(screen.getByRole('button',{name:'Cancel request'})).toBeTruthy()
 })
+
+
+it('allows comparing only three real verified profiles without opening restricted request actions', async () => {
+  mocks.fetchVerifiedMentorsPage.mockResolvedValue({
+    mentors: [1,2,3,4].map(i=>({
+      ...mentor,user_id:'verified-'+i,full_name:'Verified '+i,
+      expertise:['Programming'],languages:['Amharic'],availability:[],
+    })),
+    hasMore:false,
+  })
+  mocks.fetchMyMentorshipAccess.mockResolvedValue({allowed:false,reason:'verified_guardian_required'})
+  render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  await screen.findByText('Verified 1')
+  fireEvent.click(screen.getByRole('button',{name:'Open Mentor Profiles'}))
+  const addButtons = screen.getAllByRole('button',{name:'Add to comparison'})
+  expect(addButtons).toHaveLength(4)
+  fireEvent.click(addButtons[0])
+  fireEvent.click(addButtons[1])
+  fireEvent.click(addButtons[2])
+  expect(screen.getByText('3 of 3 profiles selected for comparison.')).toBeTruthy()
+  expect((screen.getByRole('button',{name:'Add to comparison'}) as HTMLButtonElement).disabled).toBe(true)
+  expect(screen.queryByRole('button',{name:'Request mentorship'})).toBeNull()
+  fireEvent.click(screen.getByRole('button',{name:'Clear comparison'}))
+  expect(screen.getByText('0 of 3 profiles selected for comparison.')).toBeTruthy()
+  expect(screen.getAllByRole('button',{name:'Add to comparison'})).toHaveLength(4)
+})

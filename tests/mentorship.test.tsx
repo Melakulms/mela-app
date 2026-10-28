@@ -65,13 +65,24 @@ describe('Mentorship', () => {
     expect(screen.queryByText('Mentor One')).toBeNull()
     expect(screen.queryByRole('heading',{name:'Find a verified mentor'})).toBeNull()
     expect(screen.queryByRole('heading',{name:'Your requests'})).toBeNull()
+    // The directory itself must not query private mentoring records.
+    expect(mocks.fetchVerifiedMentorsPage).not.toHaveBeenCalled()
+    expect(mocks.fetchMyMentorshipRequests).not.toHaveBeenCalled()
+    expect(mocks.fetchMyMentorshipSessions).not.toHaveBeenCalled()
+    expect(mocks.fetchMyMentorshipAccess).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('button',{name:'Open Find a Mentor'}))
     expect(screen.getByRole('heading',{name:'2. Find a Mentor'})).toBeTruthy()
     expect(screen.queryByRole('button',{name:'Open Resources'})).toBeNull()
+    expect(screen.getAllByRole('button',{name:'All mentorship sections'})).toHaveLength(1)
     expect(await screen.findByText('Mentor One')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button',{name:'Back to mentorship sections'}))
+    fireEvent.click(screen.getByRole('button',{name:'All mentorship sections'}))
     expect(screen.getAllByRole('button',{name:/^Open /})).toHaveLength(16)
     expect(screen.queryByText('Mentor One')).toBeNull()
+    const callCount = mocks.fetchVerifiedMentorsPage.mock.calls.length
+    fireEvent.click(screen.getByRole('button',{name:'Open Resources'}))
+    expect(screen.getByRole('heading',{name:'10. Resources'})).toBeTruthy()
+    expect(screen.queryByRole('heading',{name:'Find a verified mentor'})).toBeNull()
+    expect(mocks.fetchVerifiedMentorsPage).toHaveBeenCalledTimes(callCount)
   })
 
   it('loads further verified mentors in bounded pages without losing existing profiles',async()=>{

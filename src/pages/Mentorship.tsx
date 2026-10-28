@@ -19,6 +19,7 @@ import MentorshipLearningWorkspace from '../components/MentorshipLearningWorkspa
 import MentorshipSectionDirectory from '../components/MentorshipSectionDirectory'
 import MentorshipPracticeLab from '../components/MentorshipPracticeLab'
 import MentorshipMentorCompare from '../components/MentorshipMentorCompare'
+import MentorshipSmartMatch from '../components/MentorshipSmartMatch'
 import MentorApplication from '../components/MentorApplication'
 import MentorshipAdultEligibility from '../components/MentorshipAdultEligibility'
 import MentorshipSafetyReporting from '../components/MentorshipSafetyReporting'
@@ -278,6 +279,9 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         <summary>Optional practice worksheet — no real submission or booking</summary>
         <MentorshipPracticeLab key={section} section={section} />
       </details>}
+      {section === 5 && !loading && mentors && <MentorshipSmartMatch
+        mentors={mentors} requests={requests} requestsAvailable={!requestsError}
+        stageKey={stageKey} onBrowse={() => {setQuery('');setCategory('all');selectSection(2)}} />}
       <div hidden={!shows(1,5)}>
       {shows(1,5) && !loading && !directoryError && mentors && <MentorshipHome
         mentors={mentors}

@@ -46,6 +46,9 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
   const [requests, setRequests] = useState<MyMentorshipRequest[]>([])
   const [sessions, setSessions] = useState<MentorshipSession[]>([])
   const [error, setError] = useState('')
+  const [directoryError, setDirectoryError] = useState('')
+  const [requestsError, setRequestsError] = useState('')
+  const [sessionsError, setSessionsError] = useState('')
   const [openMentor, setOpenMentor] = useState<string | null>(null)
   const [topic, setTopic] = useState('')
   const [message, setMessage] = useState('')
@@ -86,21 +89,41 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
     let active = true
     setLoading(true)
     setError('')
-    Promise.all([fetchVerifiedMentorsPage(0), fetchMyMentorshipRequests(), fetchMyMentorshipSessions()])
-      .then(([m, r, s]) => {
-        if (!active) return
-        setMentors(m.mentors)
-        setHasMoreMentors(m.hasMore)
-        setRequests(r)
-        setSessions(s)
-      })
-      .catch((cause) => {
-        if (active) {
-          setMentors(null); setRequests([]); setSessions([]); setHasMoreMentors(false)
-          setError(cause instanceof Error ? cause.message : 'Could not load mentorship. Please retry.')
-        }
-      })
-      .finally(() => { if (active) setLoading(false) })
+    setDirectoryError('')
+    setRequestsError('')
+    setSessionsError('')
+    // An unavailable requests or sessions endpoint must not take down mentor
+    // discovery, the learner's resources, or other working subsections.
+    Promise.allSettled([
+      fetchVerifiedMentorsPage(0),
+      fetchMyMentorshipRequests(),
+      fetchMyMentorshipSessions(),
+    ]).then(([directoryResult, requestsResult, sessionsResult]) => {
+      if (!active) return
+      if (directoryResult.status === 'fulfilled') {
+        setMentors(directoryResult.value.mentors)
+        setHasMoreMentors(directoryResult.value.hasMore)
+      } else {
+        setMentors(null)
+        setHasMoreMentors(false)
+        setDirectoryError(directoryResult.reason instanceof Error
+          ? directoryResult.reason.message : 'Could not load verified mentors.')
+      }
+      if (requestsResult.status === 'fulfilled') {
+        setRequests(requestsResult.value)
+      } else {
+        setRequests([])
+        setRequestsError(requestsResult.reason instanceof Error
+          ? requestsResult.reason.message : 'Could not load your requests.')
+      }
+      if (sessionsResult.status === 'fulfilled') {
+        setSessions(sessionsResult.value)
+      } else {
+        setSessions([])
+        setSessionsError(sessionsResult.reason instanceof Error
+          ? sessionsResult.reason.message : 'Could not load your sessions.')
+      }
+    }).finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [revision])
 
@@ -203,7 +226,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       <MentorshipSectionDirectory selected={section} onSelect={setSection} />
       {section !== null && <MentorshipPracticeLab key={section} section={section} />}
       <div hidden={!shows(1,5)}>
-      {!loading && !error && mentors && <MentorshipHome
+      {!loading && !directoryError && !requestsError && !sessionsError && mentors && <MentorshipHome
         mentors={mentors}
         requests={requests}
         sessions={sessions}
@@ -238,7 +261,10 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       {notice && <p className="banner banner-info" role="status">{notice}</p>}
       {error && <div className="banner banner-error" role="alert">{error}</div>}
       {loading && <p className="muted" role="status">Loading mentorship…</p>}
-      {!loading && error && <button className="btn btn-secondary" disabled={!!busy} onClick={() => setRevision((value) => value + 1)}>Retry mentorship</button>}
+      {!loading && shows(1,2,3,4,5) && directoryError && <p className="banner banner-error" role="alert">Mentor directory unavailable: {directoryError}</p>}
+      {!loading && shows(1,6) && requestsError && <p className="banner banner-error" role="alert">Your requests are unavailable: {requestsError}</p>}
+      {!loading && shows(1,7) && sessionsError && <p className="banner banner-error" role="alert">Your sessions are unavailable: {sessionsError}</p>}
+      {!loading && (error || directoryError || requestsError || sessionsError) && <button className="btn btn-secondary" disabled={!!busy} onClick={() => setRevision((value) => value + 1)}>Retry mentorship</button>}
 
       {/* Learning goals/resources load independently of mentor directory failures. */}
       {shows(9,10,11,12,13) && <MentorshipLearningWorkspace mode="learner" stageKey={stageKey} section={section} />}
@@ -252,10 +278,10 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       </div>
       <div hidden={!shows(7)}>
       <div id="mentorship-journey" className="section-heading"><h2>My mentorship journey</h2></div>
-      {!loading && !error && sessions.length === 0 && <p className="empty-panel">No sessions yet. An accepted request is not a booking; your mentor must separately confirm a session within their published available hours.</p>}
-      {!loading && !error && ['university','college_tvet','school_11_12'].includes(stageKey ?? '') && <MentorshipSessionJourney sessions={sessions} />}
-      {!loading && !error && ['university','college_tvet','school_11_12'].includes(stageKey ?? '') && <MentorshipOutcomeReview mode="learner" sessions={sessions} />}
-      {!loading && sessions.length > 0 && <>
+      {!loading && !sessionsError && sessions.length === 0 && <p className="empty-panel">No sessions yet. An accepted request is not a booking; your mentor must separately confirm a session within their published available hours.</p>}
+      {!loading && !sessionsError && ['university','college_tvet','school_11_12'].includes(stageKey ?? '') && <MentorshipSessionJourney sessions={sessions} />}
+      {!loading && !sessionsError && ['university','college_tvet','school_11_12'].includes(stageKey ?? '') && <MentorshipOutcomeReview mode="learner" sessions={sessions} />}
+      {!loading && !sessionsError && sessions.length > 0 && <>
         <div className="section-heading"><h2>Your sessions</h2></div>
         <div className="list-panel">
           {sessions.map((session) => {
@@ -308,8 +334,8 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
 
       </div>
       <div hidden={!shows(6)}>
-      {!loading && !error && requests.length === 0 && <section className="empty-panel"><h2>Your requests</h2><p>You have not sent a mentorship request yet.</p><button className="btn btn-primary" onClick={() => setSection(2)}>Find a verified mentor</button></section>}
-      {!loading && requests.length > 0 && <>
+      {!loading && !requestsError && requests.length === 0 && <section className="empty-panel"><h2>Your requests</h2><p>You have not sent a mentorship request yet.</p><button className="btn btn-primary" onClick={() => setSection(2)}>Find a verified mentor</button></section>}
+      {!loading && !requestsError && requests.length > 0 && <>
         <div className="section-heading"><h2>Your requests</h2></div>
         <div className="list-panel">
           {requests.map((r) => <div className="list-row" key={r.id}>

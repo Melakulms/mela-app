@@ -101,3 +101,10 @@
 - Regression tests cover fail-closed claim submission, pending load, duplicate-category rejection and independent verification-read failure.
 
 This remains an unmerged development PR. Only source code and tests were changed; no staging or production deployment, payments, live calls, guardian privilege, administrator MFA or mentor verification state was activated. The published 16-section bundle check still requires an authorized staging deploy.
+
+## Additional verified session-note write protection
+
+- Updating an existing private preparation now scopes both the stored note identifier and current signed-in learner ID, in addition to Supabase RLS.
+- New preparation and completed-session reflection inserts require a database-returned saved row before the learner sees a success message. Empty returned results are not treated as confirmation.
+- Tests cover authenticated owner-scoped updates and zero-row insert responses, plus the unchanged no-certificate behavior.
+- The latest GitHub CI revision remains authoritative for source quality. A passing source test does **not** imply that this version is deployed to the staging phone URL.

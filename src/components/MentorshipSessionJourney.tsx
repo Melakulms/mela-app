@@ -40,13 +40,33 @@ export default function MentorshipSessionJourney({sessions}:{sessions:Mentorship
  const [notice,setNotice]=useState('')
  const [revision,setRevision]=useState(0)
  const lock=useRef(false)
+ const accountEpoch=useRef(0)
  const keys=eligible.map(s=>s.id).join(',')
  const current=eligible.find(s=>s.id===selected)??null
  const preparation=preparations.find(p=>p.session_id===current?.id)
  const reflection=reflections.find(p=>p.session_id===current?.id)
 
+ // Clear private notes immediately on sign-out or account change on shared devices.
+ // Epoch invalidation prevents an earlier account's in-flight request from
+ // repainting its notes or save result after the boundary.
+ useEffect(()=>{
+  const clear=()=>{
+   accountEpoch.current+=1
+   lock.current=false
+   setSelected('');setPreparations([]);setReflections([])
+   setGoal('');setQuestions('');setLearning('');setNextStep('')
+   setPreparationDirty(false);setReflectionDirty(false)
+   setError('');setLoadError('');setPreparationError('');setReflectionError('')
+   setNotice('');setBusy(false);setLoading(true)
+   setRevision(n=>n+1)
+  }
+  window.addEventListener('mela:session-boundary',clear)
+  return()=>window.removeEventListener('mela:session-boundary',clear)
+ },[])
+
  useEffect(()=>{
   let active=true
+  const epoch=accountEpoch.current
   setLoading(true);setLoadError('');setPreparationError('');setReflectionError('')
   // Invalidate data from the previous authenticated read without erasing
   // user-entered form drafts that have not been saved.
@@ -55,7 +75,7 @@ export default function MentorshipSessionJourney({sessions}:{sessions:Mentorship
    try{
     const ids=keys.split(',').filter(Boolean)
     if(!ids.length){
-      if(active){setPreparations([]);setReflections([])}
+      if(active && epoch===accountEpoch.current){setPreparations([]);setReflections([])}
       return
     }
     const {data:auth,error:authError}=await supabase.auth.getUser()
@@ -69,7 +89,7 @@ export default function MentorshipSessionJourney({sessions}:{sessions:Mentorship
         .select('id,session_id,learning_summary,next_step,created_at')
         .eq('learner_id',auth.user.id).in('session_id',ids),
     ])
-    if(!active)return
+    if(!active || epoch!==accountEpoch.current)return
     if(prep.status==='fulfilled' && !prep.value.error){
       setPreparations((prep.value.data??[]) as Preparation[])
     }else{
@@ -83,11 +103,11 @@ export default function MentorshipSessionJourney({sessions}:{sessions:Mentorship
       setReflectionError(problem?.message??'Could not verify session reflection history.')
     }
    }catch(cause){
-    if(active){
+    if(active && epoch===accountEpoch.current){
       setPreparations([]);setReflections([])
       setLoadError(cause instanceof Error?cause.message:'Unable to load private session preparation.')
     }
-   }finally{if(active)setLoading(false)}
+   }finally{if(active && epoch===accountEpoch.current)setLoading(false)}
   })()
   return()=>{active=false}
  },[keys,revision])
@@ -107,10 +127,16 @@ export default function MentorshipSessionJourney({sessions}:{sessions:Mentorship
 
  const run=async(work:()=>Promise<void>,message:string)=>{
   if(lock.current||loading||loadError)return
+  const epoch=accountEpoch.current
   lock.current=true;setBusy(true);setError('');setNotice('')
-  try{await work();setNotice(message);setRevision(n=>n+1)}
-  catch(cause){setError(cause instanceof Error?cause.message:'Could not save your private session notes.')}
-  finally{lock.current=false;setBusy(false)}
+  try{
+   await work()
+   if(epoch===accountEpoch.current){setNotice(message);setRevision(n=>n+1)}
+  }catch(cause){
+   if(epoch===accountEpoch.current)setError(cause instanceof Error?cause.message:'Could not save your private session notes.')
+  }finally{
+   if(epoch===accountEpoch.current){lock.current=false;setBusy(false)}
+  }
  }
 
  const savePreparation=(event:React.FormEvent)=>{

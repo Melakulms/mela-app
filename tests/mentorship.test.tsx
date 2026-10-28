@@ -257,3 +257,27 @@ it('does not present a failed session history query as an empty confirmed calend
   fireEvent.click(screen.getByRole('button', {name:'Open Find a Mentor'}))
   expect(screen.getByText('Mentor One')).toBeTruthy()
 })
+
+
+it('keeps Mentorship subsection history on Android Back and restores the directory', async () => {
+  const original = window.location.href
+  window.history.replaceState(null, '', '/?view=mentorship')
+  try {
+    render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+    await screen.findByText('Mentor One')
+    fireEvent.click(screen.getByRole('button', { name: 'Open Resources' }))
+    expect(new URL(window.location.href).searchParams.get('mentorship_section')).toBe('10')
+    expect(screen.getByRole('heading', { name: '10. Resources' })).toBeTruthy()
+    const directoryUrl = new URL(window.location.href)
+    directoryUrl.searchParams.delete('mentorship_section')
+    window.history.replaceState(null, '', directoryUrl)
+    fireEvent.popState(window)
+    expect(screen.getByRole('heading', { name: 'Explore all 16 mentorship sections' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Open Guardian and Safety' }))
+    expect(new URL(window.location.href).searchParams.get('mentorship_section')).toBe('15')
+    fireEvent.click(screen.getByRole('button', { name: 'All mentorship sections' }))
+    expect(new URL(window.location.href).searchParams.has('mentorship_section')).toBe(false)
+  } finally {
+    window.history.replaceState(null, '', original)
+  }
+})

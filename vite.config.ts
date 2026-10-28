@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
   if (staging && !configured) throw new Error('Staging preview requires its own Supabase URL')
   const url = new URL(configured || fallback)
   if (url.protocol !== 'https:' || url.username || url.password || url.pathname !== '/'
-      || !/^[a-z0-9-]+\\.supabase\\.co$/.test(url.hostname)) {
+      || !/^[a-z0-9-]+\.supabase\.co$/.test(url.hostname)) {
     throw new Error('Invalid Supabase URL for MELA Content Security Policy')
   }
   const connectOrigins = url.origin + ' wss://' + url.hostname

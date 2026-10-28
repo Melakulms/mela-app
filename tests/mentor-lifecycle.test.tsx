@@ -2,8 +2,15 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import MentorLifecycle from '../src/components/MentorLifecycle'
 
-const mocks = vi.hoisted(() => ({ from: vi.fn(), getUser: vi.fn(), rpc: vi.fn(), complete: vi.fn(), schedule: vi.fn(), cancel: vi.fn(), respond: vi.fn() }))
+const mocks = vi.hoisted(() => ({ from: vi.fn(), getUser: vi.fn(), rpc: vi.fn(), complete: vi.fn(), schedule: vi.fn(), cancel: vi.fn(), respond: vi.fn(), snapshot: vi.fn() }))
 vi.mock('../src/components/MentorAvailabilityManager', () => ({ default: () => null }))
+// The real MFA interaction has separate dedicated tests. Here we test whether
+// lifecycle actions correctly wait for the gate before invoking the RPC.
+vi.mock('../src/components/MentorMfaGate', () => ({ default: () => <div role="group" aria-label="Two-step verification">Confirm MFA first</div> }))
+vi.mock('../src/lib/mentor-mfa', async importOriginal => ({
+  ...(await importOriginal<typeof import('../src/lib/mentor-mfa')>()),
+  getMentorMfaSnapshot: mocks.snapshot,
+}))
 vi.mock('../src/lib/supabase', () => ({ supabase: { from: mocks.from, auth: { getUser: mocks.getUser }, rpc: mocks.rpc } }))
 vi.mock('../src/lib/mentorship', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/lib/mentorship')>()),
@@ -13,6 +20,7 @@ beforeEach(() => {
   vi.resetAllMocks()
   mocks.getUser.mockResolvedValue({ data: { user: { id: 'mentor' } }, error: null })
   mocks.complete.mockResolvedValue(undefined)
+  mocks.snapshot.mockResolvedValue({ currentLevel: 'aal2', verifiedFactorCount: 1, unverifiedFactorCount: 0 })
   mocks.respond.mockResolvedValue(undefined)
   mocks.from.mockImplementation((table: string) => ({ select: () => ({ eq: () => ({ order: () => Promise.resolve({ error: null, data: table === 'mentorship_requests'
     ? [{ id: 'request', mentee_id: 'learner', topic: 'Career planning', message: 'Help me choose a field.', preferred_at: null, status: 'accepted', created_at: '2020-01-01' }]
@@ -161,4 +169,15 @@ it('keeps the request open when the mentor backs out of the decline form', async
   fireEvent.click(screen.getByRole('button', { name: 'Keep request' }))
   expect(screen.queryByRole('button', { name: 'Confirm decline' })).toBeNull()
   expect(mocks.respond).not.toHaveBeenCalled()
+})
+
+it('does not complete with notes at aal1 before the MFA step-up succeeds', async () => {
+  mocks.snapshot.mockResolvedValue({ currentLevel: 'aal1', verifiedFactorCount: 1, unverifiedFactorCount: 0 })
+  render(<MentorLifecycle onChanged={vi.fn()} />)
+  await screen.findByText('Help me choose a field.')
+  fireEvent.change(screen.getByLabelText('Follow-up notes for the learner (optional)'), { target: { value: 'Private until MFA.' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Mark complete' }))
+  expect(await screen.findByRole('group', { name: 'Two-step verification' })).toBeTruthy()
+  expect(mocks.complete).not.toHaveBeenCalled()
+  expect((screen.getByLabelText('Follow-up notes for the learner (optional)') as HTMLTextAreaElement).value).toBe('Private until MFA.')
 })

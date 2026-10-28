@@ -71,3 +71,51 @@ it('distinguishes a failed confidential report-history read from a real empty hi
   expect(await screen.findByText(/Your safety concern was submitted to MELA moderation/)).toBeTruthy()
   expect(await screen.findByText('No mentorship safety reports on this account.')).toBeTruthy()
 })
+
+
+it('removes a previous users confidential safety history and unsent draft after account switch',async()=>{
+  mocks.read.mockResolvedValueOnce({data:[{
+    id:'case-first-account',reason:'Confidential first-account incident',
+    status:'under_review',created_at:'2026-10-27T12:00:00Z',
+  }],error:null}).mockResolvedValue({data:[],error:null})
+  render(<MentorshipSafetyReporting mentors={mentors} requests={requests} sessions={sessions}/>)
+  await screen.findByText('Confidential first-account incident')
+  fireEvent.change(screen.getByLabelText('Who or what is involved?'),{
+    target:{value:'mentorship_request:request-1'},
+  })
+  fireEvent.change(screen.getByLabelText('Concern'),{
+    target:{value:'Other mentorship safety concern'},
+  })
+  fireEvent.change(screen.getByLabelText(/Describe what happened/),{
+    target:{value:'Unsent confidential information from the first account.'},
+  })
+  fireEvent(window,new Event('mela:session-boundary'))
+  expect(screen.queryByText('Confidential first-account incident')).toBeNull()
+  expect((screen.getByLabelText(/Describe what happened/) as HTMLTextAreaElement).value).toBe('')
+  expect((screen.getByLabelText('Who or what is involved?') as HTMLSelectElement).value).toBe('')
+  await waitFor(()=>expect(mocks.read).toHaveBeenCalledTimes(2))
+  expect(await screen.findByText('No mentorship safety reports on this account.')).toBeTruthy()
+})
+
+it('does not show the previous users late confidential report receipt after sign-out',async()=>{
+  let finish:(value:unknown)=>void=()=>{}
+  mocks.rpc.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve}))
+  render(<MentorshipSafetyReporting mentors={mentors} requests={requests} sessions={sessions}/>)
+  await screen.findByText('No mentorship safety reports on this account.')
+  fireEvent.change(screen.getByLabelText('Who or what is involved?'),{
+    target:{value:'mentorship_request:request-1'},
+  })
+  fireEvent.change(screen.getByLabelText('Concern'),{
+    target:{value:'Other mentorship safety concern'},
+  })
+  fireEvent.change(screen.getByLabelText(/Describe what happened/),{
+    target:{value:'A confidential report that should never appear after logout.'},
+  })
+  fireEvent.click(screen.getByRole('button',{name:'Send confidential safety report'}))
+  await waitFor(()=>expect(mocks.rpc).toHaveBeenCalledOnce())
+  fireEvent(window,new Event('mela:session-boundary'))
+  finish({data:'00000000-0000-4000-8000-000000000001',error:null})
+  await waitFor(()=>expect(mocks.read).toHaveBeenCalledTimes(2))
+  expect(screen.queryByText(/Your safety concern was submitted/)).toBeNull()
+  expect((screen.getByLabelText(/Describe what happened/) as HTMLTextAreaElement).value).toBe('')
+})

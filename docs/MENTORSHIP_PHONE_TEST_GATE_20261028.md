@@ -138,3 +138,11 @@ No production release, mentor certification, live session, payment activation, o
 - Learners can jump from the program planner to section 9 (edit private plan) and section 11 (real mentor assignments). Self-reported completion is not a verified achievement or certificate.
 - New isolated tests cover eligibility and age-appropriate topics, 2/4/8-week milestone lists, persistence and error retry, client-side duplicate prevention, progress status updates and section navigation. The existing Mentorship UI test mocks the program planner so unrelated directory tests stay independent.
 - **Limitations:** This is a saved learner planning feature, not an administrator-approved program catalog, institutional enrollment, mentor-assignment automation, or per-week independently verified outcomes. Production and staging deployment remain separate from source commits.
+
+## October 28 — outcome and mentor safety account isolation
+
+- Outcome claims, independent review results, learner drafts and mentor review notes now clear on session boundaries and learner/mentor mode changes. Late reads and save responses cannot restore old account state. A save still waiting for authentication stops before writing when its originating session changes.
+- Mentor safety report targets clear and reload on the same session boundary; delayed participation reads cannot restore previous-account request topics or sessions.
+- Validation: all 497 learner tests passed; TypeScript/Vite build passed. Five added regression cases cover stale outcome reads/saves, role changes, mentor target clearing and late mentor reads. These are component tests, not signed-in end-to-end verification.
+- Current external checks: staging has zero mentor profiles and zero mentorship sessions. Connected Vercel team listing confirms the expected team, but project lookup for `mela-staging` returns 404 and the team's project search for `mela` returns no projects. No new deployment was performed.
+- Remaining completion gates: authorized staging publication, legitimate verified test participants, authenticated learner/mentor/guardian/MFA workflows, supervised session delivery and independent credential validation. PR remains draft; production and payments unchanged.

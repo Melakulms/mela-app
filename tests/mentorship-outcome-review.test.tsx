@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach,beforeEach,describe,expect,it,vi } from 'vitest'
-import { cleanup,fireEvent,render,screen,waitFor } from '@testing-library/react'
+import { act,cleanup,fireEvent,render,screen,waitFor } from '@testing-library/react'
 import MentorshipOutcomeReview from '../src/components/MentorshipOutcomeReview'
 
 const mocks=vi.hoisted(()=>({
@@ -164,4 +164,47 @@ it('requires a returned saved outcome row before claiming success or clearing th
   expect((await screen.findByRole('alert')).textContent).toContain('not confirmed by the database')
   expect((screen.getByLabelText('What did you actually learn or produce?') as HTMLTextAreaElement).value).toContain('three projects')
   expect(screen.queryByText(/No credential or certificate has been issued/)).toBeNull()
+})
+
+it('clears unsent evidence and rejects a previous account delayed read',async()=>{
+ let resolveRead!: (value:unknown)=>void
+ mocks.read.mockImplementationOnce(()=>new Promise(resolve=>{resolveRead=resolve}))
+ render(<MentorshipOutcomeReview mode="learner" sessions={[completedSession]}/>)
+ await waitFor(()=>expect(resolveRead).toBeTruthy())
+ fireEvent.change(screen.getByLabelText('What did you actually learn or produce?'),{target:{value:'Private evidence draft from the old account'}})
+ mocks.getUser.mockResolvedValue({data:{user:null},error:null})
+ fireEvent(window,new Event('mela:session-boundary'))
+ expect((screen.getByLabelText('What did you actually learn or produce?') as HTMLTextAreaElement).value).toBe('')
+ await screen.findByRole('alert')
+ await act(async()=>{resolveRead({data:[{id:'old',category:'career',outcome_text:'Confidential previous account evidence',created_at:'2026-10-25'}],error:null})})
+ expect(mocks.verificationRead).not.toHaveBeenCalled()
+ expect(screen.queryByText('Confidential previous account evidence')).toBeNull()
+ expect((screen.getByRole('button',{name:'Submit for mentor review'}) as HTMLButtonElement).disabled).toBe(true)
+})
+
+it('ignores a delayed saved outcome after sign-out',async()=>{
+ let resolveSave!: (value:unknown)=>void
+ mocks.insert.mockReturnValue({select:()=>new Promise(resolve=>{resolveSave=resolve})})
+ render(<MentorshipOutcomeReview mode="learner" sessions={[completedSession]}/>)
+ await screen.findByText('No recorded outcome claims yet.')
+ fireEvent.change(screen.getByLabelText('Completed session'),{target:{value:'session-1'}})
+ fireEvent.change(screen.getByLabelText('What did you actually learn or produce?'),{target:{value:'Private evidence for my completed portfolio project'}})
+ fireEvent.click(screen.getByRole('button',{name:'Submit for mentor review'}))
+ await waitFor(()=>expect(resolveSave).toBeTruthy())
+ mocks.getUser.mockResolvedValue({data:{user:null},error:null})
+ fireEvent(window,new Event('mela:session-boundary'))
+ await screen.findByRole('alert')
+ await act(async()=>{resolveSave({data:[{id:'saved'}],error:null})})
+ expect(screen.queryByText(/No credential or certificate has been issued/)).toBeNull()
+ expect((screen.getByLabelText('What did you actually learn or produce?') as HTMLTextAreaElement).value).toBe('')
+})
+
+it('clears learner drafts when switching to mentor mode and back',async()=>{
+ const view=render(<MentorshipOutcomeReview mode="learner" sessions={[completedSession]}/>)
+ await screen.findByText('No recorded outcome claims yet.')
+ fireEvent.change(screen.getByLabelText('What did you actually learn or produce?'),{target:{value:'Private draft belonging to learner mode'}})
+ view.rerender(<MentorshipOutcomeReview mode="mentor"/>)
+ await screen.findByText('No recorded outcome claims yet.')
+ view.rerender(<MentorshipOutcomeReview mode="learner" sessions={[completedSession]}/>)
+ expect((screen.getByLabelText('What did you actually learn or produce?') as HTMLTextAreaElement).value).toBe('')
 })

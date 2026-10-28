@@ -1,4 +1,4 @@
-import { useEffect,useState } from 'react'
+import { useEffect,useRef,useState } from 'react'
 import { supabase } from '../lib/supabase'
 import MentorshipSafetyReporting from './MentorshipSafetyReporting'
 import type { MentorshipSession,MyMentorshipRequest } from '../lib/mentorship'
@@ -12,8 +12,18 @@ export default function MentorshipMentorSafetyReporting() {
   const [error,setError]=useState('')
   const [loading,setLoading]=useState(true)
   const [revision,setRevision]=useState(0)
+  const accountEpoch=useRef(0)
   useEffect(()=>{
-    let active=true;setError('');setLoading(true)
+    const clear=()=>{
+      accountEpoch.current+=1
+      setRequests([]);setSessions([]);setError('');setLoading(true)
+      setRevision(n=>n+1)
+    }
+    window.addEventListener('mela:session-boundary',clear)
+    return()=>{accountEpoch.current+=1;window.removeEventListener('mela:session-boundary',clear)}
+  },[])
+  useEffect(()=>{
+    let active=true;const epoch=accountEpoch.current;setError('');setLoading(true)
     void (async()=>{
       try{
         const {data:auth,error:authError}=await supabase.auth.getUser()
@@ -28,13 +38,13 @@ export default function MentorshipMentorSafetyReporting() {
         ])
         if(req.error)throw new Error(req.error.message)
         if(session.error)throw new Error(session.error.message)
-        if(active){
+        if(active&&epoch===accountEpoch.current){
           setRequests((req.data??[]) as ReportableRequest[])
           setSessions((session.data??[]) as ReportableSession[])
         }
       }catch(cause){
-        if(active)setError(cause instanceof Error?cause.message:'Could not load mentor safety participation.')
-      }finally{if(active)setLoading(false)}
+        if(active&&epoch===accountEpoch.current)setError(cause instanceof Error?cause.message:'Could not load mentor safety participation.')
+      }finally{if(active&&epoch===accountEpoch.current)setLoading(false)}
     })()
     return()=>{active=false}
   },[revision])

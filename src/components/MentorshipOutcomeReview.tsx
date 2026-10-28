@@ -37,21 +37,40 @@ export default function MentorshipOutcomeReview({
  const [notice,setNotice]=useState('')
  const [revision,setRevision]=useState(0)
  const lock=useRef(false)
+ const accountEpoch=useRef(0)
+ useEffect(()=>{
+  const reset=(reload:boolean)=>{
+   accountEpoch.current+=1;lock.current=false
+   setClaims([]);setVerifications([]);setSessionId('');setCategory('career')
+   setOutcome('');setDraftNotes({});setHistoryVerified(false)
+   setVerificationError('');setError('');setNotice('');setBusy(false);setLoading(true)
+   if(reload)setRevision(n=>n+1)
+  }
+  reset(false)
+  const clear=()=>reset(true)
+  window.addEventListener('mela:session-boundary',clear)
+  return()=>{
+   accountEpoch.current+=1
+   window.removeEventListener('mela:session-boundary',clear)
+  }
+ },[mode])
  const completed=sessions.filter(s=>s.status==='completed'&&s.completed_at)
  const eligibleSession=completed.find(s=>s.id===sessionId)
  const submitted=claims.some(c=>c.session_id===sessionId&&c.category===category)
 
  useEffect(()=>{
-  let active=true;setLoading(true);setHistoryVerified(false);setVerificationError('');setError('');setClaims([]);setVerifications([])
+  let active=true;const epoch=accountEpoch.current;setLoading(true);setHistoryVerified(false);setVerificationError('');setError('');setClaims([]);setVerifications([])
   void (async()=>{
     try{
       const {data:auth,error:authError}=await supabase.auth.getUser()
+      if(!active||epoch!==accountEpoch.current)return
       if(authError)throw new Error(authError.message)
       if(!auth.user)throw new Error('Sign in to view mentorship learning outcomes.')
       const filterColumn=mode==='learner'?'learner_id':'mentor_id'
       const {data,error:readError}=await supabase.from('mentorship_outcome_claims')
         .select('id,session_id,learner_id,mentor_id,category,outcome_text,status,review_notes,created_at')
         .eq(filterColumn,auth.user.id).order('created_at',{ascending:false}).limit(100)
+      if(!active||epoch!==accountEpoch.current)return
       if(readError)throw new Error(readError.message)
       const ownClaims = (data??[]) as Outcome[]
       let ownVerifications: Verification[] = []
@@ -67,37 +86,40 @@ export default function MentorshipOutcomeReview({
           verificationProblem=cause instanceof Error ? cause.message : 'Administrator review details are unavailable.'
         }
       }
-      if(active){
+      if(active&&epoch===accountEpoch.current){
         setClaims(ownClaims);setVerifications(ownVerifications)
         setVerificationError(verificationProblem);setHistoryVerified(true)
       }
     }catch(cause){
-      if(active)setError(cause instanceof Error?cause.message:'Could not load mentorship outcomes.')
-    }finally{if(active)setLoading(false)}
+      if(active&&epoch===accountEpoch.current)setError(cause instanceof Error?cause.message:'Could not load mentorship outcomes.')
+    }finally{if(active&&epoch===accountEpoch.current)setLoading(false)}
   })()
   return()=>{active=false}
  },[mode,revision])
 
- const act=async(work:()=>Promise<void>,success:string)=>{
+ const act=async(work:(epoch:number)=>Promise<void>,success:string)=>{
   if(lock.current||loading||!historyVerified){
     if(!loading&&!historyVerified) setError('Verify your private outcome history before changing evidence. Use Refresh after access is restored.')
     return
   }
+  const epoch=accountEpoch.current
   lock.current=true;setBusy(true);setError('');setNotice('')
   try{
-    await work()
+    await work(epoch)
+    if(epoch!==accountEpoch.current)return
     setNotice(success)
     setRevision(n=>n+1)
   }catch(cause){
-    setError(cause instanceof Error?cause.message:'Your mentorship outcome could not be saved.')
-  }finally{lock.current=false;setBusy(false)}
+    if(epoch===accountEpoch.current)setError(cause instanceof Error?cause.message:'Your mentorship outcome could not be saved.')
+  }finally{if(epoch===accountEpoch.current){lock.current=false;setBusy(false)}}
  }
 
  const claim=(event:React.FormEvent)=>{
   event.preventDefault()
   if(loading||!historyVerified||!eligibleSession||submitted||outcome.trim().length<20)return
-  void act(async()=>{
+  void act(async(epoch)=>{
     const {data:auth,error:authError}=await supabase.auth.getUser()
+    if(epoch!==accountEpoch.current)return
     if(authError)throw new Error(authError.message)
     if(!auth.user)throw new Error('Your sign-in session has expired.')
     if(!eligibleSession.mentor_id)throw new Error('Completed session has no verified mentor.')
@@ -107,15 +129,16 @@ export default function MentorshipOutcomeReview({
     }).select('id')
     if(writeError)throw new Error(writeError.message)
     if(!saved?.length)throw new Error('Outcome claim was not confirmed by the database. Refresh and check your saved claims before retrying.')
-    setOutcome('')
+    if(epoch===accountEpoch.current)setOutcome('')
   },'Your outcome evidence has been submitted for mentor review. No credential or certificate has been issued.')
  }
 
  const decide=(id:string,status:'mentor_supported'|'not_supported')=>{
   const notes=(draftNotes[id]??'').trim()
   if(loading||!historyVerified||notes.length<20)return
-  void act(async()=>{
+  void act(async(epoch)=>{
     const {data:auth,error:authError}=await supabase.auth.getUser()
+    if(epoch!==accountEpoch.current)return
     if(authError)throw new Error(authError.message)
     if(!auth.user)throw new Error('Your sign-in session has expired.')
     const {data,error:reviewError}=await supabase.from('mentorship_outcome_claims')
@@ -124,7 +147,7 @@ export default function MentorshipOutcomeReview({
       .eq('id',id).eq('status','submitted').eq('mentor_id',auth.user.id).select('id')
     if(reviewError)throw new Error(reviewError.message)
     if(!data?.length)throw new Error('The outcome was already reviewed or your account is not the verified mentor.')
-    setDraftNotes(old=>({...old,[id]:''}))
+    if(epoch===accountEpoch.current)setDraftNotes(old=>({...old,[id]:''}))
   },'Mentor outcome review recorded. This is not a Career Passport credential.')
  }
 

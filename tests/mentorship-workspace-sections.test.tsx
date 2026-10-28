@@ -117,3 +117,31 @@ it('edits saved private goals only after Save, and preserves the draft on backen
  expect(mocks.edit).toHaveBeenCalledWith('goal-41','Revised mathematics plan','Practise two chapters each week','2026-12-01')
  await waitFor(()=>expect(screen.queryByLabelText('Edit goal title')).toBeNull())
 })
+
+it('turns a real published guide into a private editable study goal only after an explicit save', async()=>{
+  render(<MentorshipLearningWorkspace mode="learner" section={10}/>)
+  await screen.findByText('Prepare for mentoring')
+  fireEvent.click(screen.getByText('Prepare for mentoring'))
+  fireEvent.click(screen.getByRole('button',{name:'Plan to study this guide'}))
+  expect((screen.getByLabelText('Study goal title') as HTMLInputElement).value).toBe('Study: Prepare for mentoring')
+  expect((screen.getByLabelText('My next steps') as HTMLTextAreaElement).value).toContain('write three questions')
+  expect(mocks.add).not.toHaveBeenCalled()
+  fireEvent.change(screen.getByLabelText('My next steps'),{target:{value:'Read the guide and prepare questions for my mentor'}})
+  fireEvent.click(screen.getByRole('button',{name:'Save as my learning goal'}))
+  await waitFor(()=>expect(mocks.add).toHaveBeenCalledWith('Study: Prepare for mentoring',
+    'Read the guide and prepare questions for my mentor',''))
+  expect(await screen.findByText(/saved to My Mentorship/)).toBeTruthy()
+  expect(screen.queryByLabelText('Study goal title')).toBeNull()
+})
+
+it('keeps an unsaved resource study plan after a failed save so the learner can retry',async()=>{
+  mocks.add.mockRejectedValueOnce(new Error('Offline: cannot save goal'))
+  render(<MentorshipLearningWorkspace mode="learner" section={10}/>)
+  await screen.findByText('Prepare for mentoring')
+  fireEvent.click(screen.getByRole('button',{name:'Plan to study this guide'}))
+  fireEvent.change(screen.getByLabelText('Study goal title'),{target:{value:'Study this resource next week'}})
+  fireEvent.click(screen.getByRole('button',{name:'Save as my learning goal'}))
+  expect((await screen.findByRole('alert')).textContent).toContain('Offline: cannot save goal')
+  expect((screen.getByLabelText('Study goal title') as HTMLInputElement).value).toBe('Study this resource next week')
+  expect(screen.getByRole('button',{name:'Save as my learning goal'})).toBeTruthy()
+})

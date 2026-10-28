@@ -85,3 +85,17 @@ describe('private mentorship session journey',()=>{
   expect(await screen.findByText(/does not issue a certificate or verified achievement/)).toBeTruthy()
  })
 })
+
+
+it('provides guided scholarship session questions without saving until the learner confirms',async()=>{
+  render(<MentorshipSessionJourney sessions={[session('scheduled')]} />)
+  const select=screen.getByLabelText('Select session') as HTMLSelectElement
+  await waitFor(()=>expect(select.disabled).toBe(false))
+  fireEvent.change(select,{target:{value:'session-1'}})
+  fireEvent.click(screen.getByRole('button',{name:'Use Scholarship planning starter'}))
+  expect((screen.getByLabelText('Session goal') as HTMLInputElement).value).toContain('scholarship application plan')
+  expect((screen.getByLabelText('My discussion questions or topics') as HTMLTextAreaElement).value).toContain('avoid scams')
+  expect(mocks.prepInsert).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button',{name:'Save my preparation'}))
+  await waitFor(()=>expect(mocks.prepInsert).toHaveBeenCalledOnce())
+})

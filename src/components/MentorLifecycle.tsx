@@ -3,13 +3,20 @@ import { supabase } from '../lib/supabase'
 import { sessionEndTime } from '../lib/mentorship-calendar'
 import MentorshipCalendarButton from './MentorshipCalendarButton'
 import MentorAvailabilityManager from './MentorAvailabilityManager'
-import { cancelMentorshipSession, completeMentorshipSession, scheduleMentorshipSession, type MentorshipSession } from '../lib/mentorship'
+import { cancelMentorshipSession, completeMentorshipSession, DECLINE_NOTE_MAX, respondToMentorshipRequest, scheduleMentorshipSession, type DeclineReasonCode, type MentorshipSession } from '../lib/mentorship'
+import { DECLINE_REASON_OPTIONS } from '../lib/mentorship-status-copy'
+import { useI18n } from '../i18n'
 
 type RequestRow = { id: string; mentee_id: string; topic: string | null; message: string | null; preferred_at: string | null; status: string; created_at: string }
 
 export default function MentorLifecycle({ onChanged }: { onChanged: () => void }) {
   const [requests, setRequests] = useState<RequestRow[]>([])
   const [sessions, setSessions] = useState<MentorshipSession[]>([])
+  const { language } = useI18n()
+  const declineText = language === 'am'
+  const [declineFor, setDeclineFor] = useState<string | null>(null)
+  const [declineCode, setDeclineCode] = useState<DeclineReasonCode | ''>('')
+  const [declineNote, setDeclineNote] = useState('')
   const [scheduleFor, setScheduleFor] = useState<string | null>(null)
   const [scheduledAt, setScheduledAt] = useState('')
   const [duration, setDuration] = useState(30)
@@ -81,10 +88,15 @@ export default function MentorLifecycle({ onChanged }: { onChanged: () => void }
     }
   }
 
-  const decide = (id: string, decision: 'accepted' | 'declined') => run(`request-${id}`, async () => {
-    const { error: rpcError } = await supabase.rpc('respond_mentorship_request', { p_request_id: id, p_decision: decision })
-    if (rpcError) throw rpcError
-  })
+  const decide = (id: string, decision: 'accepted' | 'declined', reasonCode: DeclineReasonCode | '' = '', note = '') =>
+    run(`request-${id}`, async () => {
+      await respondToMentorshipRequest(id, decision, reasonCode, note)
+      if (decision === 'declined') {
+        setDeclineFor(null)
+        setDeclineCode('')
+        setDeclineNote('')
+      }
+    })
 
   const hasValidFutureTime = scheduledAt !== '' && Number.isFinite(Date.parse(scheduledAt)) &&
     Date.parse(scheduledAt) > Date.now()
@@ -132,7 +144,23 @@ export default function MentorLifecycle({ onChanged }: { onChanged: () => void }
           </div>
           {request.status === 'pending' && <span>
             <button className="btn btn-primary" disabled={!!busy} onClick={() => decide(request.id, 'accepted')}>{busy === `request-${request.id}` ? 'Saving…' : 'Accept'}</button>{' '}
-            <button className="btn btn-secondary" disabled={!!busy} onClick={() => decide(request.id, 'declined')}>Decline</button>
+            <button className="btn btn-secondary" disabled={!!busy} onClick={() => { setDeclineFor(request.id); setDeclineCode(''); setDeclineNote(''); setError('') }}>Decline</button>
+            {declineFor === request.id && <div className="empty-panel" role="group" aria-label="Decline request" style={{ marginTop: '.5rem' }}>
+              <div className="field">
+                <label htmlFor={`decline-code-${request.id}`}>{declineText ? 'የውድቅ ምክንያት (ያስፈልጋል)' : 'Reason for declining (required)'}</label>
+                <select id={`decline-code-${request.id}`} value={declineCode} disabled={!!busy} onChange={(event) => setDeclineCode(event.target.value as DeclineReasonCode | '')}>
+                  <option value="">{declineText ? 'ምክንያት ይምረጡ' : 'Choose a reason'}</option>
+                  {DECLINE_REASON_OPTIONS[declineText ? 'am' : 'en'].map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+              </div>
+              <div className="field">
+                <label htmlFor={`decline-note-${request.id}`}>{declineText ? 'ማብራሪያ (አማራጭ)' : 'Short note for the learner (optional)'}</label>
+                <textarea id={`decline-note-${request.id}`} rows={2} maxLength={DECLINE_NOTE_MAX} disabled={!!busy} value={declineNote} onChange={(event) => setDeclineNote(event.target.value)} />
+                <span className="field-hint">{declineNote.length}/{DECLINE_NOTE_MAX}</span>
+              </div>
+              <button className="btn btn-primary" disabled={!!busy || !declineCode} onClick={() => decide(request.id, 'declined', declineCode, declineNote.trim())}>{busy === `request-${request.id}` ? 'Saving…' : 'Confirm decline'}</button>{' '}
+              <button className="btn btn-secondary" disabled={!!busy} onClick={() => { setDeclineFor(null); setDeclineCode(''); setDeclineNote('') }}>Keep request</button>
+            </div>}
           </span>}
           {canSchedule && scheduleFor !== request.id && <button className="btn btn-primary" disabled={!!busy} onClick={() => { setScheduleFor(request.id); setError('') }}>Schedule session</button>}
           {canSchedule && scheduleFor === request.id && <div style={{ width: '100%' }}>

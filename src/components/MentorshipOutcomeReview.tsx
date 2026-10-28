@@ -101,11 +101,12 @@ export default function MentorshipOutcomeReview({
     if(authError)throw new Error(authError.message)
     if(!auth.user)throw new Error('Your sign-in session has expired.')
     if(!eligibleSession.mentor_id)throw new Error('Completed session has no verified mentor.')
-    const {error:writeError}=await supabase.from('mentorship_outcome_claims').insert({
+    const {data:saved,error:writeError}=await supabase.from('mentorship_outcome_claims').insert({
       session_id:eligibleSession.id,learner_id:auth.user.id,
       mentor_id:eligibleSession.mentor_id,category,outcome_text:outcome.trim(),
-    })
+    }).select('id')
     if(writeError)throw new Error(writeError.message)
+    if(!saved?.length)throw new Error('Outcome claim was not confirmed by the database. Refresh and check your saved claims before retrying.')
     setOutcome('')
   },'Your outcome evidence has been submitted for mentor review. No credential or certificate has been issued.')
  }
@@ -120,7 +121,7 @@ export default function MentorshipOutcomeReview({
     const {data,error:reviewError}=await supabase.from('mentorship_outcome_claims')
       .update({status,review_notes:notes,reviewer_id:auth.user.id,
         reviewed_at:new Date().toISOString()})
-      .eq('id',id).eq('status','submitted').select('id')
+      .eq('id',id).eq('status','submitted').eq('mentor_id',auth.user.id).select('id')
     if(reviewError)throw new Error(reviewError.message)
     if(!data?.length)throw new Error('The outcome was already reviewed or your account is not the verified mentor.')
     setDraftNotes(old=>({...old,[id]:''}))

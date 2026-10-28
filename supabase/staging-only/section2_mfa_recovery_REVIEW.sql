@@ -106,6 +106,28 @@ $body$;
 revoke all on function public.review_mentor_mfa_recovery(uuid,text,boolean) from PUBLIC,anon,authenticated;
 grant execute on function public.review_mentor_mfa_recovery(uuid,text,boolean) to authenticated;
 
+-- Restricted staff list, intentionally excluding private evidence references.
+create or replace function public.list_mentor_mfa_recovery_requests()
+returns jsonb language plpgsql security definer set search_path='' as $body$
+declare v_rows jsonb;
+begin
+  if not private.mentor_mfa_recovery_is_admin() then
+    raise exception 'MFA-verified staff required';
+  end if;
+  select coalesce(jsonb_agg(to_jsonb(q) order by q.created_at desc),'[]'::jsonb)
+    into v_rows from (
+      select r.id,r.mentor_id,r.created_at,r.eligible_after,r.status,r.reason,
+        (select count(*) from private.mentor_mfa_recovery_reviews v where v.request_id=r.id)::integer as review_count
+      from private.mentor_mfa_recovery_requests r
+      where r.created_at > now()-interval '90 days'
+      order by r.created_at desc limit 100
+    ) q;
+  return v_rows;
+end;
+$body$;
+revoke all on function public.list_mentor_mfa_recovery_requests() from PUBLIC,anon,authenticated;
+grant execute on function public.list_mentor_mfa_recovery_requests() to authenticated;
+
 -- Edge function calls this with the caller's signed JWT. An AAL2 admin may
 -- claim only a two-reviewer approval after 24h, then obtain the target user id.
 create or replace function public.claim_mentor_mfa_recovery(p_request_id uuid)
@@ -117,7 +139,15 @@ begin
   if not private.mentor_mfa_recovery_is_admin() then raise exception 'MFA-verified staff required'; end if;
   select * into v_req from private.mentor_mfa_recovery_requests where id=p_request_id for update;
   if not found or v_req.status <> 'approved' or v_req.eligible_after>now()
-    or v_req.mentor_id=v_actor or v_req.attempts>=3 then
+    or v_req.created_at < now()-interval '14 days'
+    or v_req.mentor_id=v_actor or v_req.attempts>=3
+    or not exists (
+      select 1 from public.mentor_profiles m
+        join public.profiles p on p.id=m.user_id
+      where m.user_id=v_req.mentor_id and m.verified and m.active
+        and p.account_status='active' and p.deleted_at is null
+        and p.role <> 'admin'
+    ) then
     raise exception 'Recovery cannot be executed';
   end if;
   select count(*) into v_count from private.mentor_mfa_recovery_reviews where request_id=p_request_id;

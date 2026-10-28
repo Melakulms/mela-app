@@ -66,6 +66,7 @@ describe('Mentorship', () => {
         : {mentors:[{...mentor,user_id:'mentor-2',full_name:'Mentor Two'}],hasMore:false})
     )
     render(<Mentorship stageKey="school_11_12" onBack={vi.fn()}/>)
+  fireEvent.click(screen.getByRole('button', {name: 'Open Find a Mentor'}))
     expect(await screen.findByText('Mentor One')).toBeTruthy()
     fireEvent.click(screen.getByRole('button',{name:'Load more verified mentors'}))
     expect(await screen.findByText('Mentor Two')).toBeTruthy()
@@ -78,6 +79,7 @@ describe('Mentorship', () => {
   it('keeps school learner requests closed until verified guardian clearance', async()=>{
     mocks.fetchMyMentorshipAccess.mockResolvedValue({allowed:false,reason:'verified_guardian_required'})
     render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', {name: 'Open Find a Mentor'}))
     await screen.findByText('Mentor One')
     expect(await screen.findByText('Verified guardian clearance required')).toBeTruthy()
     expect(screen.queryByRole('button',{name:'Request mentorship'})).toBeNull()
@@ -87,12 +89,14 @@ describe('Mentorship', () => {
   it('fails closed when the server eligibility status request fails',async()=>{
     mocks.fetchMyMentorshipAccess.mockRejectedValue(new Error('Access verification unavailable'))
     render(<Mentorship stageKey="university" onBack={vi.fn()}/>)
+  fireEvent.click(screen.getByRole('button', {name: 'Open Find a Mentor'}))
     expect((await screen.findByRole('alert')).textContent).toContain('Access verification unavailable')
     expect(screen.queryByRole('button',{name:'Request mentorship'})).toBeNull()
   })
 
   it('fails closed with no education stage and does not offer adult mentor applications to school learners', async () => {
     const {rerender}=render(<Mentorship onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', {name: 'Open Find a Mentor'}))
     await screen.findByText('Mentor One')
     expect(screen.getByText(/Complete your education profile before using direct mentorship/)).toBeTruthy()
     expect(screen.queryByRole('button',{name:'Request mentorship'})).toBeNull()
@@ -106,6 +110,7 @@ describe('Mentorship', () => {
   it('keeps unverified university adult learners out of direct mentorship requests',async()=>{
     mocks.fetchMyMentorshipAccess.mockResolvedValue({allowed:false,reason:'approved_adult_review_required'})
     render(<Mentorship stageKey="university" onBack={vi.fn()}/>)
+  fireEvent.click(screen.getByRole('button', {name: 'Open Find a Mentor'}))
     await screen.findByText('Mentor One')
     expect(await screen.findByText('Verify adult eligibility above before requesting')).toBeTruthy()
     expect(screen.queryByRole('button',{name:'Request mentorship'})).toBeNull()
@@ -115,7 +120,8 @@ describe('Mentorship', () => {
   it('explains grade restrictions and opens the safety flow without offering a request', async () => {
     const safety = vi.fn()
     render(<Mentorship stageKey="school_9_10" onBack={vi.fn()} onOpenSafety={safety} />)
-    await screen.findByText('Mentor One')
+  fireEvent.click(screen.getByRole('button', {name: 'Open Guardian and Safety'}))
+    await screen.findByText(/Direct mentorship is not enabled for Grades 1–10/)
     expect(screen.queryByRole('button', { name: 'Request mentorship' })).toBeNull()
     expect(screen.getByText(/Direct mentorship is not enabled for Grades 1–10/)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Safety, guardian consent & reporting' }))
@@ -126,6 +132,7 @@ describe('Mentorship', () => {
   it('sends the preferred time and retains the request draft after a failure', async () => {
     mocks.requestMentor.mockRejectedValueOnce(new Error('Try again'))
     render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', {name: 'Open Find a Mentor'}))
     await screen.findByText('Mentor One')
     fireEvent.click(screen.getByRole('button', { name: 'Request mentorship' }))
     fireEvent.change(screen.getByLabelText('Topic'), { target: { value: 'Study plan' } })
@@ -141,15 +148,19 @@ describe('Mentorship', () => {
     mocks.fetchMyMentorshipRequests.mockResolvedValue([{ id: 'request-1', mentor_id: 'mentor-1', topic: 'CV review', status: 'accepted', created_at: '2026-10-02T10:00:00Z' }])
     mocks.fetchMyMentorshipSessions.mockResolvedValue([{ id: 'session-1', request_id: 'request-1', mentor_id: 'mentor-1', mentee_id: 'learner', scheduled_at: '2026-10-04T10:00:00Z', duration_min: 30, status: 'completed', rating: 5, rating_comment: null, notes: 'Revise the project section of your CV.' }])
     render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', {name: 'Open Booking and Scheduling'}))
     await screen.findByText('Mentor One')
     expect(screen.getByText(/Revise the project section of your CV/)).toBeTruthy()
     expect(screen.getByTestId('session-journey').textContent).toBe('1 session plans')
+    fireEvent.click(screen.getByRole('button',{name:'All mentorship sections'}))
+    fireEvent.click(screen.getByRole('button',{name:'Open Find a Mentor'}))
     expect(await screen.findByRole('button', { name: 'Request mentorship' })).toBeTruthy()
   })
 
   it('surfaces load failures and retries without leaving a stale error', async () => {
     mocks.fetchVerifiedMentorsPage.mockRejectedValueOnce(new Error('Network unavailable'))
     render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', {name: 'Open Find a Mentor'}))
 
     expect((await screen.findByRole('alert')).textContent).toContain('Network unavailable')
     fireEvent.click(screen.getByRole('button', { name: 'Retry mentorship' }))
@@ -160,6 +171,7 @@ describe('Mentorship', () => {
 
   it('validates the topic and serializes request submission', async () => {
     render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', {name: 'Open Find a Mentor'}))
     await screen.findByText('Mentor One')
 
     fireEvent.click(screen.getByRole('button', { name: 'Request mentorship' }))
@@ -181,12 +193,15 @@ describe('Mentorship', () => {
     mocks.fetchMyMentorshipRequests.mockResolvedValue([{ id: 'request-1', mentor_id: 'mentor-1', topic: 'Interview prep', status: 'pending', created_at: '2026-10-02T10:00:00Z' }])
     mocks.fetchMyMentorshipSessions.mockResolvedValue([{ id: 'session-1', request_id: 'request-2', mentor_id: 'mentor-1', mentee_id: 'learner', scheduled_at: '2026-10-04T10:00:00Z', duration_min: 30, status: 'scheduled', call_room_id: null, completed_at: null, cancelled_at: null, rating: null, rating_comment: null }])
     render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', {name: 'Open Booking and Scheduling'}))
 
     await screen.findByText('Your sessions')
     fireEvent.click(screen.getByRole('button', { name: 'Cancel session' }))
     await waitFor(() => expect(mocks.cancelMentorshipSession).toHaveBeenCalledWith('session-1', 'Cancelled by learner'))
 
     await waitFor(() => expect(mocks.fetchMyMentorshipRequests).toHaveBeenCalledTimes(2))
+    fireEvent.click(screen.getByRole('button', { name: 'All mentorship sections' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Open Mentorship Programs & Requests' }))
     fireEvent.click(screen.getByRole('button', { name: 'Cancel request' }))
     await waitFor(() => expect(mocks.cancelMentorshipRequest).toHaveBeenCalledWith('request-1'))
   })
@@ -197,7 +212,12 @@ describe('Mentorship', () => {
       .mockResolvedValueOnce([{ id: 'session-2', request_id: 'request-3', mentor_id: 'mentor-1', mentee_id: 'learner', scheduled_at: '2026-10-03T10:00:00Z', duration_min: 45, status: 'completed', call_room_id: null, completed_at: '2026-10-03T10:45:00Z', cancelled_at: null, rating: 4, rating_comment: 'Helpful feedback.' }])
 
     render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', {name: 'Open Booking and Scheduling'}))
+    fireEvent.click(screen.getByRole('button', { name: 'All mentorship sections' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Open Find a Mentor' }))
     expect(await screen.findByText('4.75/5 · 8 ratings')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'All mentorship sections' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Open Booking and Scheduling' }))
 
     fireEvent.change(screen.getByLabelText('Rate this completed session'), { target: { value: '4' } })
     fireEvent.change(screen.getByLabelText('Rating comment (optional)'), { target: { value: 'Helpful feedback.' } })
@@ -213,8 +233,8 @@ describe('Mentorship', () => {
 
 it('opens requests directly, shows an empty state, and navigates to real mentor tools', async () => {
   render(<Mentorship stageKey="university" onBack={vi.fn()} />)
-  await screen.findByText('Mentor One')
-  fireEvent.click(screen.getByRole('button',{name:'Open Mentorship Programs & Requests'}))
+  fireEvent.click(screen.getByRole('button', {name: 'Open Mentorship Programs & Requests'}))
+  await screen.findByRole('heading',{name:'Your requests'})
   expect(screen.getByRole('heading',{name:'Your requests'})).toBeTruthy()
   expect(screen.queryByLabelText('Search by name, field, skills, or interests', {selector: 'input:not([hidden])'})?.closest('[hidden]')).toBeTruthy()
   fireEvent.click(screen.getByRole('button',{name:'Find a verified mentor'}))
@@ -227,13 +247,12 @@ it('opens requests directly, shows an empty state, and navigates to real mentor 
 it('keeps verified mentor discovery accessible when private request history fails', async () => {
   mocks.fetchMyMentorshipRequests.mockRejectedValueOnce(new Error('Request history temporarily unavailable'))
   render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', {name: 'Open Find a Mentor'}))
   expect(await screen.findByText('Mentor One')).toBeTruthy()
   expect(screen.getByRole('alert').textContent).toContain('Request history temporarily unavailable')
-  fireEvent.click(screen.getByRole('button', { name: 'Open Find a Mentor' }))
   expect(screen.getByRole('searchbox', { name:'Search by name, field, skills, or interests' })).toBeTruthy()
   expect(screen.getByText('Mentor One')).toBeTruthy()
   expect(screen.queryByText(/No verified mentors have been onboarded/)).toBeNull()
-  fireEvent.click(screen.getByRole('button', {name: 'All mentorship sections'}))
   fireEvent.click(screen.getByRole('button', {name: 'Retry mentorship'}))
   await waitFor(() => expect(mocks.fetchMyMentorshipRequests).toHaveBeenCalledTimes(2))
   expect(screen.queryByText(/Request history temporarily unavailable/)).toBeNull()
@@ -243,6 +262,7 @@ it('keeps saved mentorship requests actionable when mentor search is unavailable
   mocks.fetchVerifiedMentorsPage.mockRejectedValueOnce(new Error('Mentor directory unavailable'))
   mocks.fetchMyMentorshipRequests.mockResolvedValue([{id:'request-41',mentor_id:'mentor-41',topic:'Career options',status:'pending',created_at:'2026-10-10T10:00:00Z'}])
   render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', {name: 'Open Mentorship Programs & Requests'}))
   expect(await screen.findByText('Career options')).toBeTruthy()
   expect(screen.getByRole('alert').textContent).toContain('Mentor directory unavailable')
   fireEvent.click(screen.getByRole('button', {name:'Cancel request'}))
@@ -252,9 +272,11 @@ it('keeps saved mentorship requests actionable when mentor search is unavailable
 it('does not present a failed session history query as an empty confirmed calendar', async () => {
   mocks.fetchMyMentorshipSessions.mockRejectedValueOnce(new Error('Calendar service unavailable'))
   render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
-  expect(await screen.findByText('Mentor One')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', {name: 'Open Booking and Scheduling'}))
+  expect(await screen.findByText(/Calendar service unavailable/)).toBeTruthy()
   expect(screen.getByRole('alert').textContent).toContain('Calendar service unavailable')
   expect(screen.queryByText(/No sessions yet. An accepted request is not a booking/)).toBeNull()
+  fireEvent.click(screen.getByRole('button', {name:'All mentorship sections'}))
   fireEvent.click(screen.getByRole('button', {name:'Open Find a Mentor'}))
   expect(screen.getByText('Mentor One')).toBeTruthy()
 })
@@ -265,7 +287,7 @@ it('keeps Mentorship subsection history on Android Back and restores the directo
   window.history.replaceState(null, '', '/?view=mentorship')
   try {
     render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
-    await screen.findByText('Mentor One')
+    expect(screen.getAllByRole('button',{name:/^Open /})).toHaveLength(16)
     fireEvent.click(screen.getByRole('button', { name: 'Open Resources' }))
     expect(new URL(window.location.href).searchParams.get('mentorship_section')).toBe('10')
     expect(screen.getByRole('heading', { name: '10. Resources' })).toBeTruthy()
@@ -287,6 +309,7 @@ it('keeps Mentorship subsection history on Android Back and restores the directo
 it('fails closed on new mentor requests when private request or session history is unavailable', async () => {
   mocks.fetchMyMentorshipRequests.mockRejectedValueOnce(new Error('History read failed'))
   render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', {name: 'Open Find a Mentor'}))
   await screen.findByText('Mentor One')
   expect(screen.getByText('Request history unavailable — retry before sending')).toBeTruthy()
   expect(screen.queryByRole('button', {name:'Request mentorship'})).toBeNull()
@@ -302,8 +325,8 @@ it('opens guidance-category cards and preserves the chosen verified mentor filte
     hasMore:false,
   })
   render(<Mentorship stageKey="university" onBack={vi.fn()} />)
-  await screen.findByText('Mentor One')
-  fireEvent.click(screen.getByRole('button',{name:'Open Mentorship Categories'}))
+  fireEvent.click(screen.getByRole('button', {name: 'Open Mentorship Categories'}))
+  expect(screen.getByRole('heading',{name:'Explore mentorship by guidance area'})).toBeTruthy()
   expect(screen.getByRole('heading',{name:'Explore mentorship by guidance area'})).toBeTruthy()
   fireEvent.click(screen.getByRole('button',{name:'Explore Technology & AI'}))
   expect(screen.getByRole('heading',{name:'2. Find a Mentor'})).toBeTruthy()
@@ -319,8 +342,9 @@ it('filters authentic request history without deleting pending decisions or mark
     {id:'d',mentor_id:'mentor-1',topic:'Declined questions',status:'declined',created_at:'2026-10-22T10:00:00Z'},
   ])
   render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', {name: 'Open Mentorship Programs & Requests'}))
   await screen.findByText('Pending questions')
-  fireEvent.click(screen.getByRole('button',{name:'Open Mentorship Programs & Requests'}))
+
   expect(screen.getByText('Accepted questions')).toBeTruthy()
   expect(screen.getByText('Declined questions')).toBeTruthy()
   expect(screen.getByText(/Accepted means a mentor agreed to your request/)).toBeTruthy()
@@ -349,8 +373,9 @@ it('allows comparing only three real verified profiles without opening restricte
   })
   mocks.fetchMyMentorshipAccess.mockResolvedValue({allowed:false,reason:'verified_guardian_required'})
   render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', {name: 'Open Mentor Profiles'}))
   await screen.findByText('Verified 1')
-  fireEvent.click(screen.getByRole('button',{name:'Open Mentor Profiles'}))
+
   const addButtons = screen.getAllByRole('button',{name:'Add to comparison'})
   expect(addButtons).toHaveLength(4)
   fireEvent.click(addButtons[0])
@@ -373,6 +398,7 @@ it('clears personal mentor requests immediately when the signed-in account chang
     }])
     .mockResolvedValueOnce([])
   render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', {name: 'Open Mentorship Programs & Requests'}))
   expect(await screen.findByText('Private scholarship planning')).toBeTruthy()
   fireEvent(window, new Event('mela:session-boundary'))
   expect(screen.queryByText('Private scholarship planning')).toBeNull()
@@ -387,6 +413,7 @@ it('ignores a private request response from before the account-switch event', as
     .mockReturnValueOnce(new Promise(resolve => { releaseOldRequest = resolve }))
     .mockResolvedValueOnce([])
   render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', {name: 'Open Mentorship Programs & Requests'}))
   await waitFor(() => expect(mocks.fetchMyMentorshipRequests).toHaveBeenCalledTimes(1))
   fireEvent(window, new Event('mela:session-boundary'))
   expect(mocks.fetchMyMentorshipRequests).toHaveBeenCalledTimes(1)
@@ -404,6 +431,7 @@ it('does not show an old account action as saved after the session boundary', as
   let finishOldAction!: () => void
   mocks.requestMentor.mockImplementationOnce(() => new Promise<void>(resolve => { finishOldAction = resolve }))
   render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', {name: 'Open Find a Mentor'}))
   await screen.findByText('Mentor One')
   fireEvent.click(screen.getByRole('button', {name:'Request mentorship'}))
   fireEvent.change(screen.getByLabelText('Topic'), {target:{value:'Private academic help'}})
@@ -422,6 +450,7 @@ it('keeps the learner home visible with verified mentor count unavailable when d
     id:'request-1',mentor_id:'mentor-1',topic:'Career advice',status:'pending',created_at:'2026-10-10T10:00:00Z',
   }])
   render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', {name: 'Open Mentorship Home'}))
   // Wait for the async directory lookup. The directory card itself has a
   // heading named Mentorship Home before the real dashboard is rendered.
   expect(await screen.findByText(/Verified mentor directory is temporarily unavailable/)).toBeTruthy()

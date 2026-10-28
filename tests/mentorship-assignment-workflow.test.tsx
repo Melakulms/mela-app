@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import MentorshipLearningWorkspace from '../src/components/MentorshipLearningWorkspace'
 
 const mocks = vi.hoisted(()=>({
-  load:vi.fn(),assign:vi.fn(),getUser:vi.fn(),accepted:vi.fn(),
+  load:vi.fn(),assign:vi.fn(),feedback:vi.fn(),getUser:vi.fn(),accepted:vi.fn(),
 }))
 vi.mock('../src/components/MentorshipGroupInterest',()=>({default:()=>null}))
 vi.mock('../src/lib/supabase',()=>({supabase:{
@@ -19,7 +19,7 @@ vi.mock('../src/lib/mentorship-workspace',()=>({
   assignmentProgress:()=>({assigned:0,submitted:0,reviewed:0}),
   mentorshipActionSummary:()=>({activeGoals:0,overdueGoals:0,assignmentsToSubmit:0,overdueAssignments:0,awaitingFeedback:0}),
   addMentorshipGoal:vi.fn(),deleteMentorshipGoal:vi.fn(),updateMentorshipGoal:vi.fn(),
-  setMentorshipGoalStatus:vi.fn(),sendMentorshipFeedback:vi.fn(),submitMentorshipAssignment:vi.fn(),
+  setMentorshipGoalStatus:vi.fn(),sendMentorshipFeedback:mocks.feedback,submitMentorshipAssignment:vi.fn(),
 }))
 
 beforeEach(()=>{
@@ -29,6 +29,7 @@ beforeEach(()=>{
     id:'accepted-request',mentee_id:'eligible-learner',topic:'Career guidance',status:'accepted',
   }],error:null})
   mocks.assign.mockResolvedValue(undefined)
+  mocks.feedback.mockResolvedValue(undefined)
   mocks.load.mockResolvedValue({goals:[],assignments:[],submissions:[],feedback:[],resources:[],groups:[]})
 })
 afterEach(cleanup)
@@ -90,4 +91,28 @@ it('orders actual task deadlines and prioritizes tasks awaiting mentor feedback'
   fireEvent.change(screen.getByLabelText('Order assignments'),{target:{value:'needs_action'}})
   expect(titles()[0]).toBe('Review submitted work')
   expect(mocks.assign).not.toHaveBeenCalled()
+})
+
+
+it('provides a feedback structure but rejects unchanged template placeholders and sends only actual mentor feedback',async()=>{
+  mocks.load.mockResolvedValue({goals:[],groups:[],resources:[],
+    assignments:[{id:'task-1',title:'Review career plan',request_id:'r',mentor_id:'verified-mentor',
+      learner_id:'l',instructions:'Compare two careers',due_at:null,created_at:'2026-10-28'}],
+    submissions:[{id:'answer-1',assignment_id:'task-1',learner_id:'l',
+      response:'I compared required skills and daily activities.',created_at:'2026-10-28'}],
+    feedback:[],
+  })
+  render(<MentorshipLearningWorkspace mode="mentor" section={11}/>)
+  const draft=await screen.findByRole('button',{name:'Use structured feedback draft'})
+  fireEvent.click(draft)
+  const text=screen.getByLabelText('Give constructive feedback') as HTMLTextAreaElement
+  expect(text.value).toContain('[describe actual evidence]')
+  expect(screen.getByText(/Replace every bracketed example/)).toBeTruthy()
+  const send=screen.getByRole('button',{name:'Send feedback'}) as HTMLButtonElement
+  expect(send.disabled).toBe(true)
+  expect(mocks.feedback).not.toHaveBeenCalled()
+  fireEvent.change(text,{target:{value:'Observed work: compared two careers and requirements. Improvement: add a citation for each source. Next step: complete a skills comparison table.'}})
+  expect(send.disabled).toBe(false)
+  fireEvent.click(send)
+  await waitFor(()=>expect(mocks.feedback).toHaveBeenCalledWith('task-1',expect.stringContaining('add a citation')))
 })

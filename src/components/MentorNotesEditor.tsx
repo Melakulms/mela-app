@@ -19,10 +19,15 @@ export default function MentorNotesEditor({ sessionId, onPublished, onClose }: {
   const lock = useRef(false)
 
   useEffect(() => {
-    let active = true
     setVerified(false); setLoaded(false); setBody(''); setRevision(0); setError('')
-    return () => { active = false; void active }
   }, [sessionId])
+
+  // Clear locally held private notes immediately when the authenticated account changes.
+  useEffect(() => {
+    const clear = () => { setBody(''); setLoaded(false); setVerified(false); onClose() }
+    window.addEventListener('mela:session-boundary', clear)
+    return () => window.removeEventListener('mela:session-boundary', clear)
+  }, [onClose])
 
   useEffect(() => {
     if (!verified) return

@@ -35,7 +35,7 @@ export default function MentorAvailabilityManager() {
         .select('id,weekday,start_time,end_time,timezone')
         .eq('mentor_id', auth.user.id)
         .order('weekday', { ascending: true })
-      if (fetchError) throw fetchError
+      if (fetchError) throw new Error(fetchError.message)
       setSlots((data ?? []).filter((slot) => Number.isInteger(slot.weekday) &&
         typeof slot.id === 'string' && typeof slot.start_time === 'string' &&
         typeof slot.end_time === 'string' && typeof slot.timezone === 'string') as MentorAvailability[])
@@ -89,7 +89,7 @@ export default function MentorAvailabilityManager() {
         mentor_id: auth.user.id, weekday, start_time: start, end_time: end,
         timezone, active: true,
       })
-      if (insertError) throw insertError
+      if (insertError) throw new Error(insertError.message)
     })
   }
 
@@ -101,7 +101,7 @@ export default function MentorAvailabilityManager() {
       if (!auth.user) throw new Error('Sign in again to manage availability.')
       const { data: deleted, error: deleteError } = await supabase.from('mentor_availability')
         .delete().eq('id', id).eq('mentor_id', auth.user.id).select('id')
-      if (deleteError) throw deleteError
+      if (deleteError) throw new Error(deleteError.message)
       if (!deleted?.length) throw new Error('This weekly window was not removed. Refresh your hours and retry.')
     })
   }

@@ -58,10 +58,9 @@ it('does not retain previous private slots if refresh loses access',async()=>{
   ],error:null}).mockResolvedValue({data:null,error:{message:'Permission denied'}})
   render(<MentorAvailabilityManager/>)
   await screen.findByRole('button',{name:'Remove Monday availability'})
-  // Updating a successful slot insertion would normally trigger a refresh;
-  // the direct refresh button is exercised through a failed read instead.
-  fireEvent.click(screen.getByRole('button',{name:'Add weekly hours'}))
-  await screen.findByRole('alert')
+  // Removing the existing window triggers a refresh, whose read is denied.
+  fireEvent.click(screen.getByRole('button',{name:'Remove Monday availability'}))
+  expect((await screen.findByRole('alert')).textContent).toContain('Permission denied')
   expect(screen.queryByRole('button',{name:'Remove Monday availability'})).toBeNull()
   expect((screen.getByRole('button',{name:'Add weekly hours'}) as HTMLButtonElement).disabled).toBe(true)
 })

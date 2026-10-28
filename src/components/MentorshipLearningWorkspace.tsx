@@ -30,6 +30,7 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
   const [assignDue, setAssignDue] = useState('')
   const [answers, setAnswers] = useState<Record<string,string>>({})
   const [reviews, setReviews] = useState<Record<string,string>>({})
+  const [assignmentFilter,setAssignmentFilter] = useState<'all'|'pending'|'waiting'|'reviewed'>('all')
   const [resourceQuery,setResourceQuery] = useState('')
   const [resourceCategory,setResourceCategory] = useState('all')
   const lock = useRef(false)
@@ -106,6 +107,14 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
       ]
   const submissions = new Map((workspace?.submissions ?? []).map((item) => [item.assignment_id, item]))
   const feedback = new Map((workspace?.feedback ?? []).map((item) => [item.assignment_id, item]))
+  const filteredAssignments = (workspace?.assignments??[]).filter(task => {
+    const hasResponse = submissions.has(task.id)
+    const hasReview = feedback.has(task.id)
+    if (assignmentFilter === 'pending') return !hasResponse
+    if (assignmentFilter === 'waiting') return hasResponse && !hasReview
+    if (assignmentFilter === 'reviewed') return hasReview
+    return true
+  })
   const resourceCategories = Array.from(new Set(
     (workspace?.resources??[]).map(item=>item.category).filter(Boolean)
   )).sort((a,b)=>a.localeCompare(b))
@@ -176,7 +185,19 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
             <input id="assignment-due" type="datetime-local" disabled={busy} value={assignDue} onChange={(event) => setAssignDue(event.target.value)} /></div>
           <button className="btn btn-primary" disabled={busy || !assignRequest || assignTitle.trim().length < 3 || assignText.trim().length < 10}>Assign to learner</button>
         </form>}
-        {workspace.assignments.length === 0 ? <p className="muted">No assignments have been issued.</p> : <div className="list-panel">{workspace.assignments.map((task) => {
+        {workspace.assignments.length > 0 && <div className="field">
+          <label htmlFor="mentorship-assignment-filter">Show assignments</label>
+          <select id="mentorship-assignment-filter" value={assignmentFilter} onChange={event=>setAssignmentFilter(event.target.value as typeof assignmentFilter)}>
+            <option value="all">All assigned tasks</option>
+            <option value="pending">{mode === 'mentor' ? 'Awaiting learner response' : 'Needs my response'}</option>
+            <option value="waiting">{mode === 'mentor' ? 'Needs my feedback' : 'Awaiting mentor feedback'}</option>
+            <option value="reviewed">Feedback recorded</option>
+          </select>
+          <p className="muted">{filteredAssignments.length} of {workspace.assignments.length} assigned tasks shown</p>
+        </div>}
+        {workspace.assignments.length === 0 ? <p className="muted">No assignments have been issued.</p> : filteredAssignments.length === 0
+          ? <p className="muted">No assigned tasks match this status filter. Choose All assigned tasks to see everything.</p>
+          : <div className="list-panel">{filteredAssignments.map((task) => {
           const answer = submissions.get(task.id)
           const review = feedback.get(task.id)
           return <article className="list-row" key={task.id} style={{ display: 'block' }}>

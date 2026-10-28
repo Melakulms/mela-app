@@ -64,7 +64,7 @@ export async function fetchLearningLibrary(stageKey: string, gradeLevel: number 
     throw new Error('Your saved grade does not match these materials. Complete or correct your education profile.')
   }
   const { data: student, error: studentError } = await supabase.from('student_profiles')
-    .select('subjects').eq('user_id',auth.user.id).maybeSingle()
+    .select('subjects,academic_track_key').eq('user_id',auth.user.id).maybeSingle()
   if (studentError) throw studentError
   const enrolled = Array.isArray(student?.subjects) ? student.subjects as string[] : []
   if (!enrolled.length) throw new Error('Save your curriculum subjects in Profile before opening school materials.')
@@ -73,7 +73,7 @@ export async function fetchLearningLibrary(stageKey: string, gradeLevel: number 
   if (catalogError) throw catalogError
   const eligible = eligibleSchoolPrograms(
     (library.programs ?? []).map(p=>({...p,stage_key:stageKey})),
-    (catalog ?? []) as CurriculumSubject[],savedGrade,stageKey,enrolled,
+    (catalog ?? []) as CurriculumSubject[],savedGrade,stageKey,enrolled,student?.academic_track_key ?? null,
   )
   const allowedKeys = new Set(eligible.map(p => p.program_key))
   return {...library,programs:library.programs.filter(p => allowedKeys.has(p.program_key))}

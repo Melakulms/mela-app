@@ -5,6 +5,7 @@ import MentorshipCalendarButton from './MentorshipCalendarButton'
 import MentorAvailabilityManager from './MentorAvailabilityManager'
 import MentorMfaGate from './MentorMfaGate'
 import MentorNotesEditor from './MentorNotesEditor'
+import MentorBackupAuthenticator from './MentorBackupAuthenticator'
 import { decideMfaGate, getMentorMfaSnapshot } from '../lib/mentor-mfa'
 import { cancelMentorshipSession, completeMentorshipSession, DECLINE_NOTE_MAX, respondToMentorshipRequest, scheduleMentorshipSession, type DeclineReasonCode, type MentorshipSession } from '../lib/mentorship'
 import { DECLINE_REASON_OPTIONS } from '../lib/mentorship-status-copy'
@@ -142,6 +143,7 @@ export default function MentorLifecycle({ onChanged }: { onChanged: () => void }
 
   return <section>
     <MentorAvailabilityManager />
+    <MentorBackupAuthenticator />
     <p>Read the learner’s goal before accepting. Add follow-up notes after the session so the learner has a clear next step. Notes are visible to the learner.</p>
     <p className="muted">Session entry times use your device time zone ({Intl.DateTimeFormat().resolvedOptions().timeZone}). You must first publish weekly mentoring hours covering the complete appointment in your chosen availability time zone. The system rejects overlapping appointments. Scheduling does not activate video calls.</p>
     <div className="section-heading"><h2>Mentorship requests</h2><button className="btn btn-secondary" disabled={loading || !!busy} onClick={() => setRevision((value) => value + 1)}>Refresh</button></div>

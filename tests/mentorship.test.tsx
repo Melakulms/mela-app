@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 vi.mock('../src/components/MentorshipLearningWorkspace', () => ({ default: () => null }))
 vi.mock('../src/components/MentorshipProgramPlanner', () => ({ default: () => null }))
-vi.mock('../src/components/MentorApplication', () => ({ default: () => null }))
+vi.mock('../src/components/MentorApplication', () => ({ default: () => <div data-testid="private-mentor-application">Mentor application</div> }))
 vi.mock('../src/components/MentorshipAdultEligibility', () => ({ default: () => null }))
 vi.mock('../src/components/MentorshipSafetyReporting', () => ({ default: () => null }))
 vi.mock('../src/components/MentorshipSessionJourney', () => ({ default: ({sessions}: {sessions: {id:string}[]}) => <div data-testid="session-journey">{sessions.length} session plans</div> }))
@@ -75,6 +75,8 @@ describe('Mentorship', () => {
     expect(screen.queryByRole('button',{name:'Open Resources'})).toBeNull()
     expect(screen.getAllByRole('button',{name:'All mentorship sections'})).toHaveLength(1)
     expect(await screen.findByText('Mentor One')).toBeTruthy()
+    expect(screen.queryByTestId('session-journey')).toBeNull()
+    expect(screen.queryByTestId('private-mentor-application')).toBeNull()
     fireEvent.click(screen.getByRole('button',{name:'All mentorship sections'}))
     expect(screen.getAllByRole('button',{name:/^Open /})).toHaveLength(16)
     expect(screen.queryByText('Mentor One')).toBeNull()

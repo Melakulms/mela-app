@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Check staged preview HTML and JavaScript asset from outside Vercel
         env:
-          PREVIEW_URL: https://mela-staging-fxo7fqkn0-melakuanteneh1-gmailcoms-projects.vercel.app
+          PREVIEW_URL: https://mela-staging.vercel.app
         shell: bash
         run: |
           set -euo pipefail

@@ -230,11 +230,13 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
         </div>
         <h4>What needs attention</h4>
         <div className="module-grid" aria-label="My mentorship action summary">
-          <div><strong>{nextActions.activeGoals}</strong><p className="muted">Goals in progress or planned</p></div>
-          <div><strong>{nextActions.overdueGoals}</strong><p className="muted">Goals past target date</p></div>
-          <div><strong>{nextActions.assignmentsToSubmit}</strong><p className="muted">Assignments awaiting my response</p></div>
-          <div><strong>{nextActions.overdueAssignments}</strong><p className="muted">Assignments past due</p></div>
-          <div><strong>{nextActions.awaitingFeedback}</strong><p className="muted">Submitted tasks awaiting mentor feedback</p></div>
+          {mode === 'learner' && <>
+            <div><strong>{nextActions.activeGoals}</strong><p className="muted">Goals in progress or planned</p></div>
+            <div><strong>{nextActions.overdueGoals}</strong><p className="muted">Goals past target date</p></div>
+          </>}
+          <div><strong>{nextActions.assignmentsToSubmit}</strong><p className="muted">{mode === 'mentor' ? 'Assigned tasks awaiting learner response' : 'Assignments awaiting my response'}</p></div>
+          <div><strong>{nextActions.overdueAssignments}</strong><p className="muted">Assigned tasks past due</p></div>
+          <div><strong>{nextActions.awaitingFeedback}</strong><p className="muted">{mode === 'mentor' ? 'Submitted tasks needing my feedback' : 'Submitted tasks awaiting mentor feedback'}</p></div>
         </div>
         <p className="muted">These are saved activity indicators, not a skill score. Overdue means the target date has passed without a recorded response or goal completion.</p>
         <label htmlFor="mentorship-reviewed-progress">Share of assigned tasks with feedback: {reviewedFraction}%</label>

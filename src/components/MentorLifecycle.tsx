@@ -86,7 +86,10 @@ export default function MentorLifecycle({ onChanged }: { onChanged: () => void }
     if (rpcError) throw rpcError
   })
 
+  const hasValidFutureTime = scheduledAt !== '' && Number.isFinite(Date.parse(scheduledAt)) &&
+    Date.parse(scheduledAt) > Date.now()
   const schedule = (requestId: string) => run(`schedule-${requestId}`, async () => {
+    if (!hasValidFutureTime) throw new Error('Choose a valid future session time in your device time zone.')
     if (loading || sessionsError || requestsError) throw new Error('Refresh your complete request and session history before scheduling.')
     await scheduleMentorshipSession(requestId, scheduledAt, duration)
     setScheduleFor(null)
@@ -135,7 +138,10 @@ export default function MentorLifecycle({ onChanged }: { onChanged: () => void }
           {canSchedule && scheduleFor === request.id && <div style={{ width: '100%' }}>
             <div className="field"><label htmlFor={`mentor-time-${request.id}`}>Session time</label><input id={`mentor-time-${request.id}`} type="datetime-local" value={scheduledAt} disabled={!!busy} onChange={(event) => setScheduledAt(event.target.value)} /></div>
             <div className="field"><label htmlFor={`mentor-duration-${request.id}`}>Duration</label><select id={`mentor-duration-${request.id}`} value={duration} disabled={!!busy} onChange={(event) => setDuration(Number(event.target.value))}>{[15,30,45,60,90,120].map((minutes) => <option key={minutes} value={minutes}>{minutes} minutes</option>)}</select></div>
-            <button className="btn btn-primary" disabled={!!busy || !scheduledAt} onClick={() => schedule(request.id)}>{busy === `schedule-${request.id}` ? 'Scheduling…' : 'Save session'}</button>{' '}
+            {scheduledAt && !hasValidFutureTime && <p role="status" className="muted">
+              Select a future appointment time. Your saved availability and any existing appointments will also be checked by MELA.
+            </p>}
+            <button className="btn btn-primary" disabled={!!busy || !hasValidFutureTime} onClick={() => schedule(request.id)}>{busy === `schedule-${request.id}` ? 'Scheduling…' : 'Save session'}</button>{' '}
             <button className="btn btn-secondary" disabled={!!busy} onClick={() => { setScheduleFor(null); setScheduledAt('') }}>Cancel</button>
           </div>}
           {session?.status === 'scheduled' && <span>

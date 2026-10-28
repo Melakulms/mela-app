@@ -110,8 +110,18 @@ export async function setMentorshipGoalStatus(goalId: string, status: Mentorship
 
 export async function deleteMentorshipGoal(goalId: string) {
   const id = await currentUser()
-  const { error } = await supabase.from('mentorship_goals').delete().eq('id', goalId).eq('learner_id', id)
+  const { data, error } = await supabase.from('mentorship_goals')
+    .delete().eq('id', goalId).eq('learner_id', id).select('id')
   if (error) throw error
+  if (!data?.length) throw new Error('Goal was not deleted. Review your permissions and retry.')
+}
+
+export function validatedAssignmentDue(due: string, now = Date.now()): string {
+  const date = new Date(due)
+  if (!Number.isFinite(date.getTime()) || date.getTime() <= now) {
+    throw new Error('Assignment due date must be a valid future date and time.')
+  }
+  return date.toISOString()
 }
 
 export async function createMentorshipAssignment(
@@ -122,7 +132,7 @@ export async function createMentorshipAssignment(
     request_id: requestId, mentor_id: mentorId, learner_id: learnerId,
     title: assertText(title, 'Assignment title', 3, 160),
     instructions: assertText(instructions, 'Instructions', 10, 4000),
-    due_at: due ? new Date(due).toISOString() : null,
+    due_at: due ? validatedAssignmentDue(due) : null,
   })
   if (error) throw error
 }
@@ -146,10 +156,34 @@ export async function sendMentorshipFeedback(assignmentId: string, feedback: str
 }
 
 export function assignmentProgress(workspace: MentorshipWorkspace): { assigned: number; submitted: number; reviewed: number } {
-  const ids = new Set(workspace.assignments.map((row) => row.id))
+  const ids = new Set(workspace.assignments.map(row => row.id))
+  const submittedIds = new Set(workspace.submissions.map(row => row.assignment_id).filter(id => ids.has(id)))
+  const reviewedIds = new Set(workspace.feedback.map(row => row.assignment_id).filter(id => ids.has(id)))
+  return { assigned: ids.size, submitted: submittedIds.size, reviewed: reviewedIds.size }
+}
+
+export type MentorshipActionSummary = {
+  activeGoals: number
+  overdueGoals: number
+  assignmentsToSubmit: number
+  overdueAssignments: number
+  awaitingFeedback: number
+}
+export function mentorshipActionSummary(workspace: MentorshipWorkspace, now = new Date()): MentorshipActionSummary {
+  // Goal target_date is a calendar date, not a UTC instant. Match the
+  // learner's local date so yesterday is overdue but today is not.
+  const today = [now.getFullYear(), String(now.getMonth()+1).padStart(2,'0'),
+    String(now.getDate()).padStart(2,'0')].join('-')
+  const submitted = new Set(workspace.submissions.map(row => row.assignment_id))
+  const reviewed = new Set(workspace.feedback.map(row => row.assignment_id))
+  const goals = workspace.goals.filter(row => row.status === 'planned' || row.status === 'in_progress')
+  const pending = workspace.assignments.filter(row => !submitted.has(row.id))
   return {
-    assigned: ids.size,
-    submitted: workspace.submissions.filter((row) => ids.has(row.assignment_id)).length,
-    reviewed: workspace.feedback.filter((row) => ids.has(row.assignment_id)).length,
+    activeGoals: goals.length,
+    overdueGoals: goals.filter(row => row.target_date && row.target_date < today).length,
+    assignmentsToSubmit: pending.length,
+    overdueAssignments: pending.filter(row => row.due_at && Number.isFinite(Date.parse(row.due_at))
+      && Date.parse(row.due_at) < now.getTime()).length,
+    awaitingFeedback: workspace.assignments.filter(row => submitted.has(row.id) && !reviewed.has(row.id)).length,
   }
 }

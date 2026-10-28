@@ -309,3 +309,30 @@ it('opens guidance-category cards and preserves the chosen verified mentor filte
   expect((screen.getByLabelText('Mentorship category') as HTMLSelectElement).value).toBe('technology')
   expect(screen.getByText('Mentor One')).toBeTruthy()
 })
+
+
+it('filters authentic request history without deleting pending decisions or marking acceptance as a booking', async () => {
+  mocks.fetchMyMentorshipRequests.mockResolvedValue([
+    {id:'p',mentor_id:'mentor-1',topic:'Pending questions',status:'pending',created_at:'2026-10-20T10:00:00Z'},
+    {id:'a',mentor_id:'mentor-1',topic:'Accepted questions',status:'accepted',created_at:'2026-10-21T10:00:00Z'},
+    {id:'d',mentor_id:'mentor-1',topic:'Declined questions',status:'declined',created_at:'2026-10-22T10:00:00Z'},
+  ])
+  render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  await screen.findByText('Pending questions')
+  fireEvent.click(screen.getByRole('button',{name:'Open Mentorship Requests'}))
+  expect(screen.getByText('Accepted questions')).toBeTruthy()
+  expect(screen.getByText('Declined questions')).toBeTruthy()
+  expect(screen.getByText(/Accepted means a mentor agreed to your request/)).toBeTruthy()
+  fireEvent.change(screen.getByLabelText('Filter my requests'),{target:{value:'pending'}})
+  expect(screen.getByText('Pending questions')).toBeTruthy()
+  expect(screen.queryByText('Accepted questions')).toBeNull()
+  fireEvent.change(screen.getByLabelText('Filter my requests'),{target:{value:'accepted'}})
+  expect(screen.getByText('Accepted questions')).toBeTruthy()
+  expect(screen.queryByText('Pending questions')).toBeNull()
+  fireEvent.change(screen.getByLabelText('Filter my requests'),{target:{value:'finished'}})
+  expect(screen.getByText('Declined questions')).toBeTruthy()
+  expect(screen.queryByText('Accepted questions')).toBeNull()
+  fireEvent.change(screen.getByLabelText('Filter my requests'),{target:{value:'all'}})
+  expect(screen.getByText('Pending questions')).toBeTruthy()
+  expect(screen.getByRole('button',{name:'Cancel request'})).toBeTruthy()
+})

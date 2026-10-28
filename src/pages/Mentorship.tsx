@@ -258,7 +258,10 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         <button className="btn btn-secondary" onClick={leaveMentorship} disabled={!!busy}>{t('back')}</button>
       </div>
       <MentorshipSectionDirectory selected={section} onSelect={selectSection} />
-      {section !== null && <MentorshipPracticeLab key={section} section={section} />}
+      {section !== null && <details className="empty-panel" style={{ textAlign: 'left' }}>
+        <summary>Optional practice worksheet — no real submission or booking</summary>
+        <MentorshipPracticeLab key={section} section={section} />
+      </details>}
       <div hidden={!shows(1,5)}>
       {shows(1,5) && !loading && !directoryError && mentors && <MentorshipHome
         mentors={mentors}

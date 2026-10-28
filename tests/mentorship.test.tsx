@@ -221,3 +221,39 @@ it('opens requests directly, shows an empty state, and navigates to real mentor 
   expect(screen.getByRole('searchbox',{name:'Search by name, field, skills, or interests'})).toBeTruthy()
   expect(screen.queryByRole('heading',{name:'Your requests'})).toBeNull()
 })
+
+
+it('keeps verified mentor discovery accessible when private request history fails', async () => {
+  mocks.fetchMyMentorshipRequests.mockRejectedValueOnce(new Error('Request history temporarily unavailable'))
+  render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  expect(await screen.findByText('Mentor One')).toBeTruthy()
+  expect(screen.getByRole('alert').textContent).toContain('Request history temporarily unavailable')
+  fireEvent.click(screen.getByRole('button', { name: 'Open Find a Mentor' }))
+  expect(screen.getByRole('searchbox', { name:'Search by name, field, skills, or interests' })).toBeTruthy()
+  expect(screen.getByText('Mentor One')).toBeTruthy()
+  expect(screen.queryByText(/No verified mentors have been onboarded/)).toBeNull()
+  fireEvent.click(screen.getByRole('button', {name: 'All mentorship sections'}))
+  fireEvent.click(screen.getByRole('button', {name: 'Retry mentorship'}))
+  await waitFor(() => expect(mocks.fetchMyMentorshipRequests).toHaveBeenCalledTimes(2))
+  expect(screen.queryByText(/Request history temporarily unavailable/)).toBeNull()
+})
+
+it('keeps saved mentorship requests actionable when mentor search is unavailable', async () => {
+  mocks.fetchVerifiedMentorsPage.mockRejectedValueOnce(new Error('Mentor directory unavailable'))
+  mocks.fetchMyMentorshipRequests.mockResolvedValue([{id:'request-41',mentor_id:'mentor-41',topic:'Career options',status:'pending',created_at:'2026-10-10T10:00:00Z'}])
+  render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  expect(await screen.findByText('Career options')).toBeTruthy()
+  expect(screen.getByRole('alert').textContent).toContain('Mentor directory unavailable')
+  fireEvent.click(screen.getByRole('button', {name:'Cancel request'}))
+  await waitFor(() => expect(mocks.cancelMentorshipRequest).toHaveBeenCalledWith('request-41'))
+})
+
+it('does not present a failed session history query as an empty confirmed calendar', async () => {
+  mocks.fetchMyMentorshipSessions.mockRejectedValueOnce(new Error('Calendar service unavailable'))
+  render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
+  expect(await screen.findByText('Mentor One')).toBeTruthy()
+  expect(screen.getByRole('alert').textContent).toContain('Calendar service unavailable')
+  expect(screen.queryByText(/No sessions yet. An accepted request is not a booking/)).toBeNull()
+  fireEvent.click(screen.getByRole('button', {name:'Open Find a Mentor'}))
+  expect(screen.getByText('Mentor One')).toBeTruthy()
+})

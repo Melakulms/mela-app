@@ -145,3 +145,20 @@ it('keeps an unsaved resource study plan after a failed save so the learner can 
   expect((screen.getByLabelText('Study goal title') as HTMLInputElement).value).toBe('Study this resource next week')
   expect(screen.getByRole('button',{name:'Save as my learning goal'})).toBeTruthy()
 })
+
+it('clears a private learner resource draft when the workspace changes to a mentor role',async()=>{
+  const view=render(<MentorshipLearningWorkspace mode="learner" section={10}/>)
+  await screen.findByText('Prepare for mentoring')
+  fireEvent.click(screen.getByRole('button',{name:'Plan to study this guide'}))
+  fireEvent.change(screen.getByLabelText('Study goal title'),{
+    target:{value:'Private scholarship preparation notes'},
+  })
+  expect((screen.getByLabelText('Study goal title') as HTMLInputElement).value).toContain('Private scholarship')
+  view.rerender(<MentorshipLearningWorkspace mode="mentor" section={11}/>)
+  await waitFor(()=>expect(screen.queryByLabelText('Study goal title')).toBeNull())
+  view.rerender(<MentorshipLearningWorkspace mode="learner" section={10}/>)
+  await screen.findByText('Prepare for mentoring')
+  fireEvent.click(screen.getByRole('button',{name:'Plan to study this guide'}))
+  expect((screen.getByLabelText('Study goal title') as HTMLInputElement).value).toBe('Study: Prepare for mentoring')
+  expect(mocks.add).not.toHaveBeenCalled()
+})

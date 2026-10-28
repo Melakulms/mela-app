@@ -28,6 +28,8 @@ import { discoverMentors, getMentorLanguages, MENTORSHIP_CATEGORIES, mentorMatch
 export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack: () => void; stageKey?: string | null; onOpenSafety?: () => void }) {
   const { t } = useI18n()
   const [query, setQuery] = useState('')
+  const [section, setSection] = useState<number | null>(null)
+  const shows = (...sections: number[]) => section === null || sections.includes(section)
   const [adultReviewApproved,setAdultReviewApproved] = useState(false)
   const [serverAccess,setServerAccess] = useState<MentorshipAccess|null>(null)
   const [accessChecking,setAccessChecking] = useState(true)
@@ -197,38 +199,56 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         <h1>{t('mentorship')}</h1>
         <button className="btn btn-secondary" onClick={onBack} disabled={!!busy}>{t('back')}</button>
       </div>
-      <MentorshipSectionDirectory />
+      <MentorshipSectionDirectory selected={section} onSelect={setSection} />
+      <div hidden={!shows(1,5)}>
       {!loading && !error && mentors && <MentorshipHome
         mentors={mentors}
         requests={requests}
         sessions={sessions}
         stageKey={stageKey}
         revision={revision}
+        onNavigate={setSection}
+        matchingOnly={section === 5}
       />}
+      </div>
+      <div hidden={!shows(2,3,4,6,7,13,14,15)}>
       {blockedStage && <p role="status" className="banner banner-info">{missingStage ? 'Complete your education profile before using direct mentorship. Learning resources remain available.' : 'Direct mentorship is not enabled for Grades 1–10. Continue with your teacher and guardian through MELA learning resources.'}</p>}
       {stageKey === 'school_11_12' && <p className="banner banner-info">Grades 11–12 require a verified guardian relationship for direct mentorship in the current staging rules.</p>}
       {accessChecking && !blockedStage && <p role="status" className="muted">Checking your current mentorship eligibility…</p>}
       {accessError && !blockedStage && <p role="alert" className="banner banner-error">{accessError} Direct requests remain disabled until eligibility can be verified.</p>}
       {!accessChecking && !accessError && guardianReviewRequired && <p role="status" className="banner banner-info">Your verified guardian clearance is not yet confirmed. Open Safety & Privacy to request or review guardian consent.</p>}
       {['university','college_tvet'].includes(stageKey ?? '') && <MentorshipAdultEligibility onApprovalChange={setAdultReviewApproved} />}
+      </div>
+      <div hidden={!shows(15)}>
       <section id="mentorship-safety" className="empty-panel" style={{ textAlign:'left' }}><h2>15. Guardian and Safety Center</h2><p>Keep discussions inside approved MELA pathways. Report abusive or unsafe contact. Learners who require verified guardian consent must obtain it before direct mentorship.</p>{onOpenSafety && <button className="btn btn-secondary" disabled={!!busy} onClick={onOpenSafety}>Safety, guardian consent & reporting</button>}</section>
       <MentorshipSafetyReporting mentors={mentors ?? []} requests={requests} sessions={sessions} />
+      </div>
+      <div hidden={!shows(7,8)}>
       <p className="muted">Session times use your device time zone: {localZone}.</p>
+      </div>
+      <div hidden={!shows(10)}>
       <details id="mentorship-resources" className="empty-panel" style={{ textAlign: 'left' }}>
         <summary>Prepare for a useful session</summary>
         <ol><li>Choose one goal: career exploration, study planning, CV feedback, scholarships or interview practice.</li><li>Write two or three questions and explain what you have already tried.</li><li>After the session, review your mentor’s follow-up notes and agree on one next step.</li></ol>
         <p>Keep passwords, payment details and identity documents private. Report uncomfortable behaviour through Safety & Privacy. A scheduled session does not yet include an in-app video call.</p>
       </details>
+      </div>
       {notice && <p className="banner banner-info" role="status">{notice}</p>}
       {error && <div className="banner banner-error" role="alert">{error}</div>}
       {loading && <p className="muted" role="status">Loading mentorship…</p>}
       {!loading && error && <button className="btn btn-secondary" disabled={!!busy} onClick={() => setRevision((value) => value + 1)}>Retry mentorship</button>}
 
       {/* Learning goals/resources load independently of mentor directory failures. */}
-      <MentorshipLearningWorkspace mode="learner" stageKey={stageKey} />
+      {shows(9,10,11,12,13) && <MentorshipLearningWorkspace mode="learner" stageKey={stageKey} section={section} />}
+      <div hidden={!shows(8)}>
       <section id="mentorship-live" className="empty-panel" style={{ textAlign:'left' }}><h2>8. Live Mentorship</h2><p>Request and schedule sessions through MELA. Integrated audio/video calls are not yet activated. Do not share private contact details or join unapproved off-platform meetings.</p></section>
+      </div>
+      <div hidden={!shows(14)}>
+      {section === 14 && !directAccessAllowed && <p className="empty-panel">This learner account cannot open the private mentor workspace. Eligible adults can apply after completing the eligibility review above. Approved mentors use their mentor account workspace.</p>}
       {['university','college_tvet'].includes(stageKey ?? '') && directAccessAllowed &&
         <details className="empty-panel" style={{ textAlign:'left' }}><summary>Apply to become a verified mentor (eligible adults)</summary><MentorApplication /></details>}
+      </div>
+      <div hidden={!shows(7)}>
       <div id="mentorship-journey" className="section-heading"><h2>My mentorship journey</h2></div>
       {!loading && !error && sessions.length === 0 && <p className="empty-panel">No sessions yet. An accepted request is not a booking; your mentor must separately confirm a session within their published available hours.</p>}
       {!loading && !error && ['university','college_tvet','school_11_12'].includes(stageKey ?? '') && <MentorshipSessionJourney sessions={sessions} />}
@@ -284,6 +304,9 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         </div>
       </>}
 
+      </div>
+      <div hidden={!shows(6)}>
+      {!loading && !error && requests.length === 0 && <section className="empty-panel"><h2>Your requests</h2><p>You have not sent a mentorship request yet.</p><button className="btn btn-primary" onClick={() => setSection(2)}>Find a verified mentor</button></section>}
       {!loading && requests.length > 0 && <>
         <div className="section-heading"><h2>Your requests</h2></div>
         <div className="list-panel">
@@ -304,6 +327,8 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         </div>
       </>}
 
+      </div>
+      <div hidden={!shows(2,3,4)}>
       {!loading && <div id="mentor-directory" className="section-heading"><h2>Find a verified mentor</h2></div>}
       {!loading && mentors && <section className="empty-panel" style={{ textAlign: 'left' }}>
         <p>Browse approved mentors progressively. Search, filters and comparison apply to profiles loaded on this device. Load more profiles to expand your results. Category suggestions are based on reviewed profile text, not a separate certification.</p>
@@ -404,6 +429,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         onClick={()=>void loadMoreMentors()} disabled={loadingMoreMentors||!!busy}>
         {loadingMoreMentors?'Loading verified mentor profiles…':'Load more verified mentors'}
       </button>}
+      </div>
     </div>
   )
 }

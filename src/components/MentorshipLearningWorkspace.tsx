@@ -10,7 +10,7 @@ import MentorshipGroupInterest from './MentorshipGroupInterest'
 
 type AcceptedRequest = { id: string; mentee_id: string; topic: string; status: string }
 
-export default function MentorshipLearningWorkspace({ mode, stageKey }: { mode: 'learner' | 'mentor'; stageKey?: string | null }) {
+export default function MentorshipLearningWorkspace({ mode, stageKey, section = null }: { mode: 'learner' | 'mentor'; stageKey?: string | null; section?: number | null }) {
   const [workspace, setWorkspace] = useState<MentorshipWorkspace | null>(null)
   const [accepted, setAccepted] = useState<AcceptedRequest[]>([])
   const [error, setError] = useState('')
@@ -35,11 +35,12 @@ export default function MentorshipLearningWorkspace({ mode, stageKey }: { mode: 
   useEffect(() => {
     let active = true
     setLoading(true)
+    setWorkspace(null)
     setLoadFailed(false)
     setError('')
     void (async () => {
       try {
-        const workspaceData = await loadMentorshipWorkspace(mode)
+        const workspaceData = await loadMentorshipWorkspace(mode, section)
         let acceptedData: AcceptedRequest[] = []
         if (mode === 'mentor') {
           const { data: auth, error: authError } = await supabase.auth.getUser()
@@ -57,7 +58,7 @@ export default function MentorshipLearningWorkspace({ mode, stageKey }: { mode: 
       } finally { if (active) setLoading(false) }
     })()
     return () => { active = false }
-  }, [mode, revision])
+  }, [mode, revision, section])
 
   const run = async (action: () => Promise<void>, onSuccess?: () => void) => {
     if (lock.current) return
@@ -106,7 +107,7 @@ export default function MentorshipLearningWorkspace({ mode, stageKey }: { mode: 
     {error && <div className="banner banner-error" role="alert">{error}<button className="btn btn-secondary" type="button" onClick={() => setRevision((n) => n + 1)} disabled={busy}>Retry</button></div>}
     {loading && <p role="status">Loading learning plans, resources and assignments…</p>}
     {!loading && !loadFailed && workspace && <>
-      {mode === 'learner' && <section className="empty-panel" id="mentorship-goals" style={{ textAlign:'left' }}>
+      {mode === 'learner' && <section className="empty-panel" hidden={section !== null && section !== 9} id="mentorship-goals" style={{ textAlign:'left' }}>
         <h3>9. My learning goals and plans</h3>
         <p>Create goals that remain private to your account. A session or self-reported completion is not a verified achievement.</p>
         {workspace.goals.length === 0 ? <p className="muted">No personal mentorship goals yet.</p> : <div className="list-panel">{workspace.goals.map((goal) => <div className="list-row" key={goal.id}>
@@ -129,7 +130,7 @@ export default function MentorshipLearningWorkspace({ mode, stageKey }: { mode: 
         </form>
       </section>}
 
-      <section id="mentorship-assignments" className="empty-panel" style={{ textAlign:'left' }}>
+      <section hidden={section !== null && section !== 11} id="mentorship-assignments" className="empty-panel" style={{ textAlign:'left' }}>
         <h3>11. Challenges, assignments and feedback</h3>
         <p>{mode === 'mentor' ? 'Only assign work to learners with an accepted mentorship request.' : 'Assignments from your approved mentor appear here. Responses are visible only to you and your mentor.'}</p>
         {mode === 'mentor' && <form onSubmit={createAssignment}>
@@ -168,7 +169,7 @@ export default function MentorshipLearningWorkspace({ mode, stageKey }: { mode: 
         })}</div>}
       </section>
 
-      <section id="mentorship-progress" className="empty-panel" style={{ textAlign:'left' }}>
+      <section hidden={section !== null && section !== 12} id="mentorship-progress" className="empty-panel" style={{ textAlign:'left' }}>
         <h3>12. Progress and outcomes</h3>
         <div className="module-grid">
           <div><strong>{progress.assigned}</strong><p className="muted">Assigned tasks</p></div>
@@ -183,7 +184,7 @@ export default function MentorshipLearningWorkspace({ mode, stageKey }: { mode: 
           : progress.reviewed+' of '+progress.assigned+' assigned tasks have documented mentor feedback.'}
           {' '}This measures recorded activity, not mastery or a verified certificate. No Career Passport credential is automatically awarded.</p>
       </section>
-      <section id="mentorship-library" className="empty-panel" style={{ textAlign:'left' }}>
+      <section hidden={section !== null && section !== 10} id="mentorship-library" className="empty-panel" style={{ textAlign:'left' }}>
         <h3>10. Mentorship resources library</h3>
         {workspace.resources.length===0?<p className="muted">No published mentorship guides are available yet.</p>:<>
           <div className="field"><label htmlFor="mentorship-resource-search">Find guidance by topic or keyword</label>
@@ -208,7 +209,7 @@ export default function MentorshipLearningWorkspace({ mode, stageKey }: { mode: 
             </details>)}
         </>}
       </section>
-      <section id="mentorship-groups" className="empty-panel" style={{ textAlign:'left' }}>
+      <section hidden={section !== null && section !== 13} id="mentorship-groups" className="empty-panel" style={{ textAlign:'left' }}>
         <h3>13. Group mentorship</h3>
         {mode === 'mentor' ? <p className="muted">Verified facilitators can propose supervised groups through the Central Admin review workflow.</p>
           : !['university','college_tvet'].includes(stageKey ?? '') ?

@@ -44,19 +44,21 @@ function assertText(value: string, label: string, min: number, max: number) {
   return text
 }
 
-export async function loadMentorshipWorkspace(role: 'learner' | 'mentor'): Promise<MentorshipWorkspace> {
+export async function loadMentorshipWorkspace(role: 'learner' | 'mentor', section: number | null = null): Promise<MentorshipWorkspace> {
   const id = await currentUser()
   const assignmentField = role === 'mentor' ? 'mentor_id' : 'learner_id'
+  const needs = (...sections: number[]) => section === null || sections.includes(section)
+  const empty = () => Promise.resolve({ data: [], error: null })
   const queries = await Promise.all([
-    role === 'mentor' ? Promise.resolve({ data: [], error: null }) : supabase.from('mentorship_goals')
+    role === 'mentor' || !needs(9,12) ? empty() : supabase.from('mentorship_goals')
       .select('id,learner_id,title,detail,status,target_date,created_at').eq('learner_id', id).order('created_at', { ascending: false }).limit(100),
-    supabase.from('mentorship_assignments')
+    !needs(11,12) ? empty() : supabase.from('mentorship_assignments')
       .select('id,request_id,mentor_id,learner_id,title,instructions,due_at,created_at')
       .eq(assignmentField, id).order('created_at', { ascending: false }).limit(100),
-    supabase.from('mentorship_resources')
+    !needs(10) ? empty() : supabase.from('mentorship_resources')
       .select('id,title,category,description,content')
       .eq('status', 'published').order('title', { ascending: true }).limit(100),
-    supabase.from('mentorship_groups')
+    !needs(13) ? empty() : supabase.from('mentorship_groups')
       .select('id,title,description,category,mentor_id,starts_at,capacity')
       .eq('status', 'published').gt('starts_at', new Date().toISOString()).order('starts_at', { ascending: true }).limit(50),
   ])

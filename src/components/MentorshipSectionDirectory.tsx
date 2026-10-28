@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 
 type Section = {
   number: number
@@ -27,12 +27,12 @@ const sections: Section[] = [
   { number:16,title:'Administration',summary:'Credential and safeguarding review',guide:'The Central Admin is a separate application. Only an authorized administrator with required MFA can review mentors, age evidence, groups and reports.',access:'Central Admin MFA required' },
 ]
 
-export default function MentorshipSectionDirectory() {
-  const [selected, setSelected] = useState<number | null>(null)
-  const [notice, setNotice] = useState('')
+export default function MentorshipSectionDirectory({ selected, onSelect }: {
+  selected: number | null
+  onSelect: (section: number | null) => void
+}) {
   const panel = useRef<HTMLElement>(null)
   const section = sections.find(item => item.number === selected)
-
   useEffect(() => {
     if (section) {
       panel.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
@@ -40,49 +40,25 @@ export default function MentorshipSectionDirectory() {
     }
   }, [selected])
 
-  const jumpToTool = () => {
-    if (!section?.anchor) return
-    const target = document.getElementById(section.anchor)
-    if (!target) {
-      setNotice('The tools for this section are not loaded on this account yet. Check the messages below, refresh the mentorship page, or use the guidance shown here.')
-      return
-    }
-    let ancestor = target.parentElement
-    while (ancestor) {
-      if (ancestor instanceof HTMLDetailsElement) ancestor.open = true
-      ancestor = ancestor.parentElement
-    }
-    target.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
-    target.focus?.({ preventScroll: true })
-    setNotice('')
-  }
-
   return <nav className="empty-panel" aria-label="All 16 MELA mentorship sections" style={{ textAlign:'left' }}>
-    <h2>Explore all 16 mentorship sections</h2>
-    <p>Select a section to open its own information panel. Available tools are linked from inside each panel; restricted actions still require verification.</p>
-    {section && <section ref={panel} id="mentorship-section-detail" tabIndex={-1} aria-label={section.title}
-      className="empty-panel" style={{ textAlign:'left',border:'2px solid var(--line)',marginBottom:'1rem' }}>
-      <div className="section-heading">
-        <h3>{section.number}. {section.title}</h3>
-        <button type="button" className="btn btn-secondary" onClick={() => { setSelected(null);setNotice('') }}>Close section</button>
-      </div>
-      <p><strong>{section.summary}</strong></p>
+    {section ? <section ref={panel} tabIndex={-1} aria-label={section.title}>
+      <button type="button" className="btn btn-secondary" onClick={() => onSelect(null)}>All mentorship sections</button>
+      <h2>{section.number}. {section.title}</h2>
       <p>{section.guide}</p>
       {section.access && <p className="banner banner-info" role="status">{section.access}</p>}
-      {section.anchor && <button type="button" className="btn btn-primary"
-        onClick={jumpToTool}>Go to {section.title} tools</button>}
-      {notice && <p role="status" className="banner banner-info">{notice}</p>}
-    </section>}
-    <div className="module-grid">
-      {sections.map(item => <article className="module-card" key={item.number}
-        style={{ background:'var(--surface)',border:'1px solid var(--line)',padding:'.85rem' }}>
-        <span className="muted">{String(item.number).padStart(2,'0')}</span>
-        <h3 style={{ fontSize:'1rem',margin:'.25rem 0' }}>{item.title}</h3>
-        <p className="muted" style={{ fontSize:'.82rem' }}>{item.summary}</p>
-        <button type="button" className={selected===item.number?'btn btn-primary':'btn btn-secondary'}
-          aria-expanded={selected===item.number} aria-controls="mentorship-section-detail"
-          onClick={() => { setSelected(item.number);setNotice('') }}>Open {item.title}</button>
-      </article>)}
-    </div>
+    </section> : <>
+      <h2>Explore all 16 mentorship sections</h2>
+      <p>Choose a section to open its tools. Sections that need an approved mentor or administrator explain the next step.</p>
+      <div className="module-grid">
+        {sections.map(item => <article className="module-card" key={item.number}
+          style={{ background:'var(--surface)',border:'1px solid var(--line)',padding:'.85rem' }}>
+          <span className="muted">{String(item.number).padStart(2,'0')}</span>
+          <h3 style={{ fontSize:'1rem',margin:'.25rem 0' }}>{item.title}</h3>
+          <p className="muted" style={{ fontSize:'.82rem' }}>{item.summary}</p>
+          {item.access && <p className="field-hint">{item.access}</p>}
+          <button type="button" className="btn btn-secondary" onClick={() => onSelect(item.number)}>Open {item.title}</button>
+        </article>)}
+      </div>
+    </>}
   </nav>
 }

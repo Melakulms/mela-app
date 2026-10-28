@@ -40,7 +40,7 @@ jobs:
           grep -F -q 'Open ' /tmp/mela-mentorship-chunks.js || { echo '::error::Missing published mentorship content: Open '; exit 1; }
           grep -F -q 'Mentor Workspace' /tmp/mela-mentorship-chunks.js || { echo '::error::Missing published mentorship content: Mentor Workspace'; exit 1; }
           grep -F -q 'Administration' /tmp/mela-mentorship-chunks.js || { echo '::error::Missing published mentorship content: Administration'; exit 1; }
-          grep -F -q 'Select a section to open its own information panel' /tmp/mela-mentorship-chunks.js || { echo '::error::Missing published mentorship content: Select a section to open its own information panel'; exit 1; }
+          grep -F -q 'Choose a section to open its tools' /tmp/mela-mentorship-chunks.js || { echo '::error::Missing published mentorship content: Choose a section to open its tools'; exit 1; }
           grep -F -q 'Verified mentor account required' /tmp/mela-mentorship-chunks.js || { echo '::error::Missing published mentorship content: Verified mentor account required'; exit 1; }
           grep -F -q 'Central Admin MFA required' /tmp/mela-mentorship-chunks.js || { echo '::error::Missing published mentorship content: Central Admin MFA required'; exit 1; }
           echo 'Published staging JS includes live 16-section navigation and role safeguards.'

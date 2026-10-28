@@ -209,3 +209,15 @@ describe('Mentorship', () => {
   })
 })
 
+
+it('opens requests directly, shows an empty state, and navigates to real mentor tools', async () => {
+  render(<Mentorship stageKey="university" onBack={vi.fn()} />)
+  await screen.findByText('Mentor One')
+  fireEvent.click(screen.getByRole('button',{name:'Open Mentorship Requests'}))
+  expect(screen.getByRole('heading',{name:'Your requests'})).toBeTruthy()
+  expect(screen.queryByLabelText('Search by name, field, skills, or interests', {selector: 'input:not([hidden])'})?.closest('[hidden]')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button',{name:'Find a verified mentor'}))
+  expect(screen.getByRole('heading',{name:'Find a verified mentor'})).toBeTruthy()
+  expect(screen.getByRole('searchbox',{name:'Search by name, field, skills, or interests'})).toBeTruthy()
+  expect(screen.queryByRole('heading',{name:'Your requests'})).toBeNull()
+})

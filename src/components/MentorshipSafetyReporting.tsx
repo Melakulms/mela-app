@@ -33,6 +33,19 @@ export default function MentorshipSafetyReporting({
   const [notice,setNotice]=useState('')
   const [revision,setRevision]=useState(0)
   const lock=useRef(false)
+  const accountEpoch=useRef(0)
+  useEffect(()=>{
+    const clear=()=>{
+      accountEpoch.current+=1
+      lock.current=false
+      setTargetKey('');setReason('');setDetails('');setCases([])
+      setHistoryError('');setError('');setNotice('')
+      setBusy(false);setLoading(true)
+      setRevision(n=>n+1)
+    }
+    window.addEventListener('mela:session-boundary',clear)
+    return()=>window.removeEventListener('mela:session-boundary',clear)
+  },[])
   const targets:Target[]=[
     ...mentors.map(m=>({
       key:'mentor_profile:'+m.user_id,kind:'mentor_profile' as const,
@@ -49,7 +62,8 @@ export default function MentorshipSafetyReporting({
   ]
   const chosen=targets.find(t=>t.key===targetKey)
   useEffect(()=>{
-    let active=true;setLoading(true);setHistoryError('');setCases([])
+    let active=true;const epoch=accountEpoch.current
+    setLoading(true);setHistoryError('');setCases([])
     void (async()=>{
       try{
         const {data:auth,error:authError}=await supabase.auth.getUser()
@@ -60,10 +74,10 @@ export default function MentorshipSafetyReporting({
           .in('target_type',['mentor_profile','mentorship_request','mentorship_session'])
           .order('created_at',{ascending:false}).limit(20)
         if(readError)throw new Error(readError.message)
-        if(active)setCases((data??[]) as CaseStatus[])
+        if(active && epoch===accountEpoch.current)setCases((data??[]) as CaseStatus[])
       }catch(cause){
-        if(active)setHistoryError(cause instanceof Error?cause.message:'Could not load safety report history.')
-      }finally{if(active)setLoading(false)}
+        if(active && epoch===accountEpoch.current)setHistoryError(cause instanceof Error?cause.message:'Could not load safety report history.')
+      }finally{if(active && epoch===accountEpoch.current)setLoading(false)}
     })()
     return()=>{active=false}
   },[revision])
@@ -71,6 +85,7 @@ export default function MentorshipSafetyReporting({
   const send=async(event:React.FormEvent)=>{
     event.preventDefault()
     if(lock.current||!chosen||!reason||details.trim().length<10)return
+    const epoch=accountEpoch.current
     lock.current=true;setBusy(true);setNotice('');setError('')
     try{
       const {data,error:rpcError}=await supabase.rpc('report_mentorship_concern',{
@@ -79,11 +94,15 @@ export default function MentorshipSafetyReporting({
       })
       if(rpcError)throw new Error(rpcError.message)
       if(typeof data!=='string'||!data)throw new Error('Report was not confirmed by the database.')
-      setNotice('Your safety concern was submitted to MELA moderation. Case reference: '+data.slice(0,8)+'. This is not an emergency response service.')
-      setTargetKey('');setReason('');setDetails('');setRevision(n=>n+1)
+      if(epoch===accountEpoch.current){
+        setNotice('Your safety concern was submitted to MELA moderation. Case reference: '+data.slice(0,8)+'. This is not an emergency response service.')
+        setTargetKey('');setReason('');setDetails('');setRevision(n=>n+1)
+      }
     }catch(cause){
-      setError(cause instanceof Error?cause.message:'Could not submit the safety concern.')
-    }finally{lock.current=false;setBusy(false)}
+      if(epoch===accountEpoch.current)setError(cause instanceof Error?cause.message:'Could not submit the safety concern.')
+    }finally{
+      if(epoch===accountEpoch.current){lock.current=false;setBusy(false)}
+    }
   }
   return <section id="mentorship-reporting" className="empty-panel" style={{textAlign:'left'}} aria-label="Mentorship safety reporting">
     <h3>Report a mentorship safety concern</h3>

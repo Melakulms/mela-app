@@ -44,6 +44,10 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
   const [sessionBoundary, setSessionBoundary] = useState(false)
   const selectSection = (next: number | null) => {
     if (next === section) return
+    // Switching panels revokes locally cached eligibility until the server
+    // confirms it again. A previously viewed section must never grant access.
+    setServerAccess(null)
+    setAccessChecking(true)
     // Preserve the parent learner route so Android Back returns to the section
     // directory instead of unexpectedly closing all Mentorship tools.
     if (new URL(window.location.href).searchParams.get('view') === 'mentorship') {

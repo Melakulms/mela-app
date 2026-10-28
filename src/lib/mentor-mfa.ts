@@ -8,6 +8,14 @@ export type MfaSnapshot = {
   unverifiedFactorCount: number
 }
 export interface TotpEnrollment { factorId: string; qrCode: string; secret: string }
+export type VerifiedTotp = { id: string; friendlyName: string }
+
+export async function listVerifiedTotpFactors(): Promise<VerifiedTotp[]> {
+  const { data, error } = await supabase.auth.mfa.listFactors()
+  if (error) throw error
+  return (data?.totp ?? []).filter(f => f.status === 'verified')
+    .map(f => ({ id: f.id, friendlyName: f.friendly_name || 'Authenticator' }))
+}
 
 export function decideMfaGate(s: MfaSnapshot): MfaGateState {
   if (s.currentLevel === 'aal2') return 'ready'
@@ -41,9 +49,15 @@ export async function getMentorMfaSnapshot(): Promise<MfaSnapshot> {
   }
 }
 
-export async function startTotpEnrollment(): Promise<TotpEnrollment> {
+export async function startTotpEnrollment(backup = false): Promise<TotpEnrollment> {
+  if (backup) {
+    const snapshot = await getMentorMfaSnapshot()
+    if (snapshot.currentLevel !== 'aal2' || snapshot.verifiedFactorCount === 0) {
+      throw new Error('Confirm your primary authenticator before adding a backup.')
+    }
+  }
   const { data, error } = await supabase.auth.mfa.enroll({
-    factorType: 'totp', friendlyName: 'MELA mentorship',
+    factorType: 'totp', friendlyName: backup ? 'MELA backup authenticator' : 'MELA mentorship',
   })
   if (error) throw error
   if (!data?.id || !data.totp?.qr_code || !data.totp.secret) throw new Error('MFA setup could not be started.')
@@ -65,10 +79,10 @@ export async function verifyTotp(factorId: string, code: string): Promise<void> 
   if (assurance.data?.currentLevel !== 'aal2') throw new Error('MFA verification is required')
 }
 
-export async function verifyExistingTotp(code: string): Promise<void> {
+export async function verifyExistingTotp(code: string, selectedFactorId?: string): Promise<void> {
   const result = await supabase.auth.mfa.listFactors()
   if (result.error) throw result.error
-  const factor = (result.data?.totp ?? []).find(f => f.status === 'verified')
+  const factor = (result.data?.totp ?? []).find(f => f.status === 'verified' && (!selectedFactorId || f.id === selectedFactorId))
   if (!factor) throw new Error('No verified authenticator available.')
   await verifyTotp(factor.id, code)
 }

@@ -11,7 +11,7 @@ describe('Mentorship section navigation', () => {
   it('opens each destination directly and returns to the directory', () => {
     render(<Directory />)
     const names = ['Mentorship Home','Find a Mentor','Mentorship Categories','Mentor Profiles',
-      'Smart Matching','Mentorship Requests','Booking and Scheduling','Live Mentorship',
+      'Smart Matching','Mentorship Programs & Requests','Booking and Scheduling','Live Mentorship',
       'My Mentorship','Resources','Assignments','Progress','Group Mentorship',
       'Mentor Workspace','Guardian and Safety','Administration']
     for (const [index,name] of names.entries()) {

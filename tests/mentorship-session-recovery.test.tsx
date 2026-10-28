@@ -99,3 +99,37 @@ describe('Private session journey', () => {
     expect(mocks.insert).toHaveBeenCalledTimes(1)
   })
 })
+
+
+it('keeps completed-session reflection writable when only preparation history is unavailable',async()=>{
+  mocks.read.mockImplementation((table:string)=>Promise.resolve(table.endsWith('preparations')
+    ? {data:null,error:{message:'Preparation API unavailable'}}
+    : {data:[],error:null}))
+  render(<MentorshipSessionJourney sessions={[{...session,status:'completed',completed_at:'2099-01-01T10:30:00Z'}]} />)
+  await selectSession()
+  expect((await screen.findByRole('alert')).textContent).toContain('Preparation API unavailable')
+  expect(screen.queryByLabelText('Session goal')).toBeNull()
+  fireEvent.change(screen.getByLabelText('What I learned'),{target:{value:'I learned how to explain my research plan.'}})
+  fireEvent.change(screen.getByLabelText('My next practical step'),{target:{value:'Write a draft outline'}})
+  fireEvent.click(screen.getByRole('button',{name:'Save self-reported reflection'}))
+  await waitFor(()=>expect(mocks.insert).toHaveBeenCalledOnce())
+  expect(mocks.insert.mock.calls[0][0]).toBe('mentorship_session_reflections')
+})
+
+it('keeps an unsaved preparation draft when only reflections fail, then recovers without retyping',async()=>{
+  let failReflections=true
+  mocks.read.mockImplementation((table:string)=>Promise.resolve(table.endsWith('reflections')&&failReflections
+    ? {data:null,error:{message:'Reflection API offline'}}
+    : {data:[],error:null}))
+  render(<MentorshipSessionJourney sessions={[{...session,status:'completed',completed_at:'2099-01-01T10:30:00Z'}]}/>)
+  await selectSession()
+  expect((await screen.findByRole('alert')).textContent).toContain('Reflection API offline')
+  fillPreparation()
+  expect(screen.queryByLabelText('What I learned')).toBeNull()
+  failReflections=false
+  fireEvent.click(screen.getByRole('button',{name:'Retry private notes'}))
+  await waitFor(()=>expect(screen.queryByRole('alert')).toBeNull())
+  expect((screen.getByLabelText('Session goal') as HTMLInputElement).value).toBe('Prepare my portfolio')
+  expect((screen.getByLabelText('My discussion questions or topics') as HTMLTextAreaElement).value).toBe('How can I improve my first project?')
+  expect(screen.getByLabelText('What I learned')).toBeTruthy()
+})

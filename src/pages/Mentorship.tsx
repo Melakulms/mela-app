@@ -40,6 +40,8 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
     )
   }
   const [section, setSection] = useState<number | null>(() => readMentorshipSection(new URL(window.location.href)))
+  // Do not mount private panels again until a new authenticated App instance exists.
+  const [sessionBoundary, setSessionBoundary] = useState(false)
   const selectSection = (next: number | null) => {
     if (next === section) return
     // Preserve the parent learner route so Android Back returns to the section
@@ -62,6 +64,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
     const clear = () => {
       sessionEpoch.current += 1
       actionToken.current += 1
+      setSessionBoundary(true)
       actionLock.current = false
       directoryLock.current = false
       const url = new URL(window.location.href)
@@ -96,8 +99,10 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       setAccessError('')
       setNotice('')
       setBusy(null)
-      // Refetch only in the next authenticated session; stale results are ignored.
-      setRevision(value => value + 1)
+      // App unmounts and remounts on the next authenticated journey. Never
+      // trigger private requests while the sign-in boundary is unresolved.
+      setLoading(false)
+      setAccessChecking(false)
     }
     window.addEventListener('popstate', restore)
     window.addEventListener('mela:session-boundary', clear)
@@ -322,6 +327,13 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
     setMessage('')
     setPreferredAt('')
     setError('')
+  }
+
+  if (sessionBoundary) {
+    return <div className="dash-main" role="status">
+      <h1>Mentorship session changed</h1>
+      <p>Private mentorship information has been cleared. Sign in and open Mentorship again to load your account.</p>
+    </div>
   }
 
   return (

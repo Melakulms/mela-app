@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 vi.mock('../src/components/MentorshipLearningWorkspace', () => ({ default: () => null }))
+vi.mock('../src/components/MentorshipProgramPlanner', () => ({ default: () => null }))
 vi.mock('../src/components/MentorApplication', () => ({ default: () => null }))
 vi.mock('../src/components/MentorshipAdultEligibility', () => ({ default: () => null }))
 vi.mock('../src/components/MentorshipSafetyReporting', () => ({ default: () => null }))
@@ -213,7 +214,7 @@ describe('Mentorship', () => {
 it('opens requests directly, shows an empty state, and navigates to real mentor tools', async () => {
   render(<Mentorship stageKey="university" onBack={vi.fn()} />)
   await screen.findByText('Mentor One')
-  fireEvent.click(screen.getByRole('button',{name:'Open Mentorship Requests'}))
+  fireEvent.click(screen.getByRole('button',{name:'Open Mentorship Programs & Requests'}))
   expect(screen.getByRole('heading',{name:'Your requests'})).toBeTruthy()
   expect(screen.queryByLabelText('Search by name, field, skills, or interests', {selector: 'input:not([hidden])'})?.closest('[hidden]')).toBeTruthy()
   fireEvent.click(screen.getByRole('button',{name:'Find a verified mentor'}))
@@ -319,7 +320,7 @@ it('filters authentic request history without deleting pending decisions or mark
   ])
   render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
   await screen.findByText('Pending questions')
-  fireEvent.click(screen.getByRole('button',{name:'Open Mentorship Requests'}))
+  fireEvent.click(screen.getByRole('button',{name:'Open Mentorship Programs & Requests'}))
   expect(screen.getByText('Accepted questions')).toBeTruthy()
   expect(screen.getByText('Declined questions')).toBeTruthy()
   expect(screen.getByText(/Accepted means a mentor agreed to your request/)).toBeTruthy()

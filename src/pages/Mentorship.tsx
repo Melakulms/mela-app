@@ -59,7 +59,42 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
   }
   useEffect(() => {
     const restore = () => setSection(readMentorshipSection(new URL(window.location.href)))
-    const clear = () => setSection(null)
+    const clear = () => {
+      sessionEpoch.current += 1
+      actionToken.current += 1
+      actionLock.current = false
+      directoryLock.current = false
+      setSection(null)
+      setQuery('')
+      setComparedMentorIds([])
+      setCategory('all')
+      setLanguage('')
+      setWeekday(null)
+      setOnlyWithAvailability(false)
+      setSortMentors('relevance')
+      setMentors(null)
+      setHasMoreMentors(false)
+      setLoadingMoreMentors(false)
+      setRequests([])
+      setSessions([])
+      setOpenMentor(null)
+      setTopic('')
+      setMessage('')
+      setPreferredAt('')
+      setRatingDraft({})
+      setRatingComment({})
+      setServerAccess(null)
+      setAdultReviewApproved(false)
+      setError('')
+      setDirectoryError('')
+      setRequestsError('')
+      setSessionsError('')
+      setAccessError('')
+      setNotice('')
+      setBusy(null)
+      // Refetch only in the next authenticated session; stale results are ignored.
+      setRevision(value => value + 1)
+    }
     window.addEventListener('popstate', restore)
     window.addEventListener('mela:session-boundary', clear)
     return () => {
@@ -104,9 +139,13 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
   const [revision, setRevision] = useState(0)
   const actionLock = useRef(false)
   const directoryLock = useRef(false)
+  // Every account switch invalidates reads and actions started by the prior user.
+  const sessionEpoch = useRef(0)
+  const actionToken = useRef(0)
 
   useEffect(() => {
     let active = true
+    const epoch = sessionEpoch.current
     setServerAccess(null)
     setAccessError('')
     if (blockedStage) {
@@ -115,16 +154,17 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
     }
     setAccessChecking(true)
     void fetchMyMentorshipAccess()
-      .then((result) => { if(active) setServerAccess(result) })
+      .then((result) => { if(active && epoch === sessionEpoch.current) setServerAccess(result) })
       .catch((cause) => {
-        if(active) setAccessError(cause instanceof Error ? cause.message : 'Could not verify mentorship access.')
+        if(active && epoch === sessionEpoch.current) setAccessError(cause instanceof Error ? cause.message : 'Could not verify mentorship access.')
       })
-      .finally(() => { if(active) setAccessChecking(false) })
+      .finally(() => { if(active && epoch === sessionEpoch.current) setAccessChecking(false) })
     return () => { active=false }
   },[blockedStage,stageKey,adultReviewApproved,revision])
 
   useEffect(() => {
     let active = true
+    const epoch = sessionEpoch.current
     setLoading(true)
     setError('')
     setDirectoryError('')
@@ -137,7 +177,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       fetchMyMentorshipRequests(),
       fetchMyMentorshipSessions(),
     ]).then(([directoryResult, requestsResult, sessionsResult]) => {
-      if (!active) return
+      if (!active || epoch !== sessionEpoch.current) return
       if (directoryResult.status === 'fulfilled') {
         setMentors(directoryResult.value.mentors)
         setHasMoreMentors(directoryResult.value.hasMore)
@@ -161,16 +201,18 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         setSessionsError(sessionsResult.reason instanceof Error
           ? sessionsResult.reason.message : 'Could not load your sessions.')
       }
-    }).finally(() => { if (active) setLoading(false) })
+    }).finally(() => { if (active && epoch === sessionEpoch.current) setLoading(false) })
     return () => { active = false }
   }, [revision])
 
   const loadMoreMentors = async () => {
     if(directoryLock.current || !hasMoreMentors || !mentors)return
     directoryLock.current=true
+    const epoch = sessionEpoch.current
     setLoadingMoreMentors(true);setError('');setNotice('')
     try{
       const page=await fetchVerifiedMentorsPage(mentors.length,MENTOR_DIRECTORY_PAGE_SIZE)
+      if (epoch !== sessionEpoch.current) return
       setMentors(old=>{
         const added=new Map((old??[]).map(m=>[m.user_id,m]))
         for(const m of page.mentors)added.set(m.user_id,m)
@@ -178,9 +220,9 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       })
       setHasMoreMentors(page.hasMore)
     }catch(cause){
-      setError(cause instanceof Error?cause.message:'Could not load more verified mentors.')
+      if (epoch === sessionEpoch.current) setError(cause instanceof Error?cause.message:'Could not load more verified mentors.')
     }finally{
-      directoryLock.current=false;setLoadingMoreMentors(false)
+      if (epoch === sessionEpoch.current) {directoryLock.current=false;setLoadingMoreMentors(false)}
     }
   }
 
@@ -208,18 +250,23 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
   const runAction = async (key: string, action: () => Promise<void>) => {
     if (actionLock.current) return
     actionLock.current = true
+    const token = ++actionToken.current
+    const epoch = sessionEpoch.current
     setBusy(key)
     setError('')
     setNotice('')
     try {
       await action()
+      if (epoch !== sessionEpoch.current || token !== actionToken.current) return
       setNotice('Your mentorship change was saved.')
       setRevision((value) => value + 1)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not save that mentorship change. Please retry.')
+      if (epoch === sessionEpoch.current && token === actionToken.current) setError(cause instanceof Error ? cause.message : 'Could not save that mentorship change. Please retry.')
     } finally {
-      actionLock.current = false
-      setBusy(null)
+      if (epoch === sessionEpoch.current && token === actionToken.current) {
+        actionLock.current = false
+        setBusy(null)
+      }
     }
   }
 
@@ -284,7 +331,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         mentors={mentors} requests={requests} requestsAvailable={!requestsError}
         stageKey={stageKey} onBrowse={() => {setQuery('');setCategory('all');selectSection(2)}} />}
       <div hidden={!shows(1,5)}>
-      {shows(1,5) && !loading && !directoryError && mentors && <MentorshipHome
+      {shows(1,5) && !loading && !directoryError && mentors && <MentorshipHome key={sessionEpoch.current}
         mentors={mentors}
         requestsAvailable={!requestsError}
         sessionsAvailable={!sessionsError}
@@ -327,14 +374,14 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       {!loading && (error || directoryError || requestsError || sessionsError) && <button className="btn btn-secondary" disabled={!!busy} onClick={() => setRevision((value) => value + 1)}>Retry mentorship</button>}
 
       {/* Learning goals/resources load independently of mentor directory failures. */}
-      {shows(9,10,11,12,13) && <MentorshipLearningWorkspace mode="learner" stageKey={stageKey} section={section} onNavigate={selectSection} />}
+      {shows(9,10,11,12,13) && <MentorshipLearningWorkspace key={sessionEpoch.current} mode="learner" stageKey={stageKey} section={section} onNavigate={selectSection} />}
       <div hidden={!shows(8)}>
       <section id="mentorship-live" className="empty-panel" style={{ textAlign:'left' }}><h2>8. Live Mentorship</h2><p>Request and schedule sessions through MELA. Integrated audio/video calls are not yet activated. Do not share private contact details or join unapproved off-platform meetings.</p></section>
       </div>
       <div hidden={!shows(14)}>
       {section === 14 && !directAccessAllowed && <p className="empty-panel">This learner account cannot open the private mentor workspace. Eligible adults can apply after completing the eligibility review above. Approved mentors use their mentor account workspace.</p>}
       {['university','college_tvet'].includes(stageKey ?? '') && directAccessAllowed &&
-        <details className="empty-panel" style={{ textAlign:'left' }}><summary>Apply to become a verified mentor (eligible adults)</summary><MentorApplication /></details>}
+        <details className="empty-panel" style={{ textAlign:'left' }}><summary>Apply to become a verified mentor (eligible adults)</summary><MentorApplication key={sessionEpoch.current} /></details>}
       </div>
       <div hidden={!shows(7)}>
       <div id="mentorship-journey" className="section-heading"><h2>My mentorship journey</h2></div>

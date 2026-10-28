@@ -25,14 +25,14 @@ export default function MentorshipGroupInterest({ groups }: { groups: Mentorship
         if (!auth.user) throw new Error('Sign in to see your group program status.')
         const { data, error: readError } = await supabase.from('mentorship_group_interests')
           .select('id,group_id,status').eq('learner_id',auth.user.id)
-        if (readError) throw readError
+        if (readError) throw new Error(readError.message)
         const ownInterests = (data ?? []) as Interest[]
         const approvedIds = ownInterests.filter(i => i.status === 'approved').map(i => i.id)
         let ownAttendance: Attendance[] = []
         if (approvedIds.length) {
           const { data: records, error: attendanceError } = await supabase
             .from('mentorship_group_attendance').select('interest_id,status').in('interest_id', approvedIds)
-          if (attendanceError) throw attendanceError
+          if (attendanceError) throw new Error(attendanceError.message)
           ownAttendance = (records ?? []) as Attendance[]
         }
         if (active) { setInterests(ownInterests);setAttendance(ownAttendance);setMembershipAvailable(true) }

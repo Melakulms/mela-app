@@ -132,7 +132,7 @@ export default function MentorMfaGate({ purpose, onReady, onCancel }: {
             onClick={() => setShowRecovery(false)}>Not now</button>
         </div>}
       {recoveryNotice && <p className="banner banner-info" role="status">{recoveryNotice}</p>}
-    </>
+    </>}
     {error && <p role="alert" className="banner banner-error">{error}</p>}
     <button className="btn btn-secondary" disabled={busy} onClick={onCancel}>Not now</button>
   </div>

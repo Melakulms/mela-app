@@ -68,3 +68,39 @@ it('hides private request details after a refresh loses access', async () => {
   expect(screen.queryByText('Help me choose a field.')).toBeNull()
   expect(screen.queryByRole('button',{name:'Mark complete'})).toBeNull()
 })
+
+it('keeps verified mentor requests visible when session history fails, without enabling a duplicate booking', async () => {
+  mocks.from.mockImplementation((table: string) => ({
+    select: () => ({
+      eq: () => ({
+        order: () => Promise.resolve(table === 'mentorship_sessions'
+          ? { data:null, error: new Error('Calendar API unavailable') }
+          : { data:[{id:'request',mentee_id:'learner',topic:'Career planning',message:'Help me choose a field.',status:'accepted',created_at:'2020-01-01'}],error:null }),
+      }),
+    }),
+  }))
+  render(<MentorLifecycle onChanged={vi.fn()} />)
+  expect(await screen.findByText('Help me choose a field.')).toBeTruthy()
+  expect(screen.getByRole('alert').textContent).toContain('Calendar API unavailable')
+  expect(screen.queryByRole('button', { name: 'Schedule session' })).toBeNull()
+  expect(mocks.schedule).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
+  await waitFor(() => expect(mocks.from.mock.calls.filter(([name])=>name==='mentorship_sessions').length).toBe(2))
+})
+
+it('never presents failed request-history reads as a genuinely empty mentor inbox', async () => {
+  mocks.from.mockImplementation((table: string) => ({
+    select: () => ({
+      eq: () => ({
+        order: () => Promise.resolve(table === 'mentorship_requests'
+          ? { data:null, error: new Error('Request API unavailable') }
+          : { data:[], error:null }),
+      }),
+    }),
+  }))
+  render(<MentorLifecycle onChanged={vi.fn()} />)
+  expect(await screen.findByRole('alert')).toHaveProperty('textContent', expect.stringContaining('Request API unavailable'))
+  expect(screen.getByText(/not a confirmed empty inbox/)).toBeTruthy()
+  expect(screen.queryByText('No mentorship requests.')).toBeNull()
+  expect(screen.queryByRole('button',{name:'Schedule session'})).toBeNull()
+})

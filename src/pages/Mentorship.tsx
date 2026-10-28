@@ -416,15 +416,15 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
               <div>{mentorNames.get(r.mentor_id) ?? 'Your mentor'} · {r.status}</div>
               {r.message && <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{r.message}</p>}
               {r.preferred_at && <p>Preferred time: {new Date(r.preferred_at).toLocaleString()}</p>}
-              {r.status === 'accepted' && !sessions.some(s => s.request_id === r.id) && <p>Your mentor has accepted. A session time is still to be scheduled.</p>}
-              {r.status === 'accepted' && sessions.some(s => s.request_id === r.id && s.status === 'cancelled') && <p>The session was cancelled. Your mentor can schedule a replacement.</p>}
+              {r.status === 'accepted' && !sessionsError && !sessions.some(s => s.request_id === r.id) && <p>Your mentor has accepted. A session time is still to be scheduled.</p>}
+              {r.status === 'accepted' && !sessionsError && sessions.some(s => s.request_id === r.id && s.status === 'cancelled') && <p>The session was cancelled. Your mentor can schedule a replacement.</p>}
               <div className="list-row-meta">Requested {new Date(r.created_at).toLocaleDateString()}</div>
             </div>
             {r.status === 'pending'
               ? <button className="btn btn-secondary" disabled={!!busy} onClick={() => runAction(`request-${r.id}`, () => cancelMentorshipRequest(r.id))}>{busy === `request-${r.id}` ? 'Cancelling…' : 'Cancel request'}</button>
               : <span className="pill">{r.status}</span>}
           </div>)}
-        </div>
+        </div>}
       </>}
 
       </div>

@@ -557,7 +557,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
                 </button>{' '}
                 <button className="btn btn-secondary" disabled={!!busy} onClick={() => setCancelRequestId(null)}>Keep request</button>
               </div>}
-            </div> : <span className="pill">{mentorshipRequestStatus(r.status, uiLanguage)}</span>}
+            </div> : null}
           </div>)}
         </div>}
       </>}

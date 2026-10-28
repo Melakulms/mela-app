@@ -2,13 +2,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import MentorshipGroupInterest from '../src/components/MentorshipGroupInterest'
 
-const mocks = vi.hoisted(() => ({ user:vi.fn(), read:vi.fn(), attendanceRead:vi.fn(), insert:vi.fn() }))
+const mocks = vi.hoisted(() => ({ user:vi.fn(), read:vi.fn(), attendanceRead:vi.fn(), insert:vi.fn(), withdraw:vi.fn() }))
 vi.mock('../src/lib/supabase', () => ({
   supabase:{
     auth:{getUser:mocks.user},
     from:()=>({
       select:()=>({eq:mocks.read,in:mocks.attendanceRead}),
       insert:mocks.insert,
+      delete:()=>({
+        eq:()=>({eq:()=>({eq:()=>({select:mocks.withdraw})})}),
+      }),
     }),
   },
 }))
@@ -24,6 +27,7 @@ beforeEach(()=>{
   mocks.read.mockResolvedValue({data:[],error:null})
   mocks.attendanceRead.mockResolvedValue({data:[],error:null})
   mocks.insert.mockResolvedValue({error:null})
+  mocks.withdraw.mockResolvedValue({data:[{id:'interest-1'}],error:null})
 })
 afterEach(cleanup)
 
@@ -60,4 +64,28 @@ describe('mentorship group applications',()=>{
     expect(screen.getByText(/No approved group programs currently published/)).toBeTruthy()
     expect(screen.queryByRole('button',{name:'Request to join'})).toBeNull()
   })
+})
+
+it('fails closed when membership cannot be loaded, then offers retry once read recovers', async () => {
+  mocks.read.mockResolvedValueOnce({data:null,error:{message:'Membership RLS fetch unavailable'}})
+    .mockResolvedValue({data:[],error:null})
+  render(<MentorshipGroupInterest groups={groups}/>)
+  expect((await screen.findByRole('alert')).textContent).toContain('Membership RLS fetch unavailable')
+  const request = screen.getByRole('button',{name:'Request to join'}) as HTMLButtonElement
+  expect(request.disabled).toBe(true)
+  fireEvent.click(request)
+  expect(mocks.insert).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button',{name:'Retry group status'}))
+  await waitFor(()=>expect((screen.getByRole('button',{name:'Request to join'}) as HTMLButtonElement).disabled).toBe(false))
+  fireEvent.click(screen.getByRole('button',{name:'Request to join'}))
+  await waitFor(()=>expect(mocks.insert).toHaveBeenCalledOnce())
+})
+
+it('does not falsely claim a pending interest was withdrawn if no row was deleted', async () => {
+  mocks.read.mockResolvedValue({data:[{id:'interest-1',group_id:'group-1',status:'pending'}],error:null})
+  mocks.withdraw.mockResolvedValue({data:[],error:null})
+  render(<MentorshipGroupInterest groups={groups}/>)
+  fireEvent.click(await screen.findByRole('button',{name:'Withdraw interest'}))
+  expect((await screen.findByRole('alert')).textContent).toContain('was not withdrawn')
+  expect(screen.queryByText(/Your pending interest was withdrawn/)).toBeNull()
 })

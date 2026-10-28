@@ -10,6 +10,29 @@ import MentorshipGroupInterest from './MentorshipGroupInterest'
 
 type AcceptedRequest = { id: string; mentee_id: string; topic: string; status: string }
 
+const ASSIGNMENT_STARTERS = [
+  {
+    name: 'Weekly study',
+    title: 'One-week study reflection',
+    instructions: 'Choose one relevant subject topic. Complete two practice activities, describe what you learned, and explain one question to discuss with your mentor.',
+  },
+  {
+    name: 'Career research',
+    title: 'Compare two career paths',
+    instructions: 'Research two careers using reliable sources. Compare entry requirements, everyday tasks and skills to practise. Explain which path interests you and why.',
+  },
+  {
+    name: 'Scholarship readiness',
+    title: 'Check scholarship eligibility safely',
+    instructions: 'Use an official scholarship or university page to note eligibility, documents and deadlines. Do not share identity numbers, passwords or private documents in the assignment.',
+  },
+  {
+    name: 'Practical project',
+    title: 'Prepare a small portfolio project',
+    instructions: 'Define a manageable project, create a first draft, describe your own contribution and testing steps, then ask for one specific improvement.',
+  },
+] as const
+
 export default function MentorshipLearningWorkspace({ mode, stageKey, section = null, onNavigate }: {
   mode: 'learner' | 'mentor'; stageKey?: string | null; section?: number | null
   onNavigate?: (section: number) => void
@@ -35,6 +58,7 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
   const [assignTitle, setAssignTitle] = useState('')
   const [assignText, setAssignText] = useState('')
   const [assignDue, setAssignDue] = useState('')
+  const [assignmentView,setAssignmentView] = useState<'newest'|'due_soon'|'needs_action'>('newest')
   const [answers, setAnswers] = useState<Record<string,string>>({})
   const [reviews, setReviews] = useState<Record<string,string>>({})
   const [assignmentFilter,setAssignmentFilter] = useState<'all'|'pending'|'waiting'|'reviewed'>('all')
@@ -146,6 +170,8 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
     })
   }
 
+  const assignmentDueInvalid = Boolean(assignDue) &&
+    (!Number.isFinite(Date.parse(assignDue)) || Date.parse(assignDue) <= Date.now())
   const progress = workspace ? assignmentProgress(workspace) : { assigned: 0, submitted: 0, reviewed: 0 }
   const nextActions = workspace ? mentorshipActionSummary(workspace) :
     { activeGoals: 0, overdueGoals: 0, assignmentsToSubmit: 0, overdueAssignments: 0, awaitingFeedback: 0 }
@@ -162,11 +188,24 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
   const feedback = new Map((workspace?.feedback ?? []).map((item) => [item.assignment_id, item]))
   const filteredAssignments = (workspace?.assignments??[]).filter(task => {
     const hasResponse = submissions.has(task.id)
-    const hasReview = feedback.has(task.id)
+    const hasReview = hasResponse && feedback.has(task.id)
     if (assignmentFilter === 'pending') return !hasResponse
     if (assignmentFilter === 'waiting') return hasResponse && !hasReview
     if (assignmentFilter === 'reviewed') return hasReview
     return true
+  }).sort((a,b)=>{
+    if (assignmentView === 'due_soon') {
+      const time = (item:typeof a) => item.due_at && Number.isFinite(Date.parse(item.due_at))
+        ? Date.parse(item.due_at) : Number.POSITIVE_INFINITY
+      return time(a)-time(b) || a.id.localeCompare(b.id)
+    }
+    if (assignmentView === 'needs_action') {
+      const rank = (item:typeof a) => submissions.has(item.id)
+        ? feedback.has(item.id) ? 2 : mode === 'mentor' ? 0 : 1
+        : mode === 'mentor' ? 1 : 0
+      return rank(a)-rank(b) || a.id.localeCompare(b.id)
+    }
+    return Date.parse(b.created_at)-Date.parse(a.created_at) || a.id.localeCompare(b.id)
   })
   const resourceCategories = Array.from(new Set(
     (workspace?.resources??[]).map(item=>item.category).filter(Boolean)
@@ -252,6 +291,14 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
         <h3>11. Challenges, assignments and feedback</h3>
         <p>{mode === 'mentor' ? 'Only assign work to learners with an accepted mentorship request.' : 'Assignments from your approved mentor appear here. Responses are visible only to you and your mentor.'}</p>
         {mode === 'mentor' && <form onSubmit={createAssignment}>
+          <p className="muted">Choose a task starter to fill editable instructions; nothing is assigned or sent until you choose an accepted learner and submit.</p>
+          <div style={{display:'flex',gap:'.5rem',flexWrap:'wrap',marginBottom:'.75rem'}}>
+            {ASSIGNMENT_STARTERS.map(starter=><button type="button" key={starter.name}
+              className="btn btn-secondary" disabled={busy}
+              onClick={()=>{setAssignTitle(starter.title);setAssignText(starter.instructions)}}>
+              Use: {starter.name} task
+            </button>)}
+          </div>
           <div className="field"><label htmlFor="assign-relation">Accepted mentorship request</label>
             <select id="assign-relation" value={assignRequest} disabled={busy} onChange={(event) => setAssignRequest(event.target.value)} required>
               <option value="">Choose request</option>{accepted.map((request) => <option key={request.id} value={request.id}>{request.topic || 'Mentorship'} · {request.id.slice(0,8)}</option>)}
@@ -261,8 +308,9 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
           <div className="field"><label htmlFor="assignment-instructions">Instructions</label>
             <textarea id="assignment-instructions" value={assignText} disabled={busy} minLength={10} maxLength={4000} rows={4} required onChange={(event) => setAssignText(event.target.value)} /></div>
           <div className="field"><label htmlFor="assignment-due">Due date (optional)</label>
-            <input id="assignment-due" type="datetime-local" disabled={busy} value={assignDue} onChange={(event) => setAssignDue(event.target.value)} /></div>
-          <button className="btn btn-primary" disabled={busy || !assignRequest || assignTitle.trim().length < 3 || assignText.trim().length < 10}>Assign to learner</button>
+            <input id="assignment-due" type="datetime-local" disabled={busy} value={assignDue} onChange={(event) => setAssignDue(event.target.value)} />
+            {assignmentDueInvalid && <p role="status" className="muted">Choose a future due date and time, or leave this blank.</p>}</div>
+          <button className="btn btn-primary" disabled={busy || !assignRequest || assignmentDueInvalid || assignTitle.trim().length < 3 || assignText.trim().length < 10}>Assign to learner</button>
         </form>}
         {workspace.assignments.length > 0 && <div className="field">
           <label htmlFor="mentorship-assignment-filter">Show assignments</label>
@@ -273,6 +321,12 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
             <option value="reviewed">Feedback recorded</option>
           </select>
           <p className="muted">{filteredAssignments.length} of {workspace.assignments.length} assigned tasks shown</p>
+          <label htmlFor="mentorship-assignment-sort">Order assignments</label>
+          <select id="mentorship-assignment-sort" value={assignmentView} onChange={event=>setAssignmentView(event.target.value as typeof assignmentView)}>
+            <option value="newest">Newest assigned first</option>
+            <option value="due_soon">Soonest deadline first</option>
+            <option value="needs_action">Needs attention first</option>
+          </select>
         </div>}
         {workspace.assignments.length === 0 ? <p className="muted">No assignments have been issued.</p> : filteredAssignments.length === 0
           ? <p className="muted">No assigned tasks match this status filter. Choose All assigned tasks to see everything.</p>
@@ -282,7 +336,10 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
           return <article className="list-row" key={task.id} style={{ display: 'block' }}>
             <strong>{task.title}</strong>
             <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{task.instructions}</p>
-            {task.due_at && <p className="muted">Target: {new Date(task.due_at).toLocaleString()}</p>}
+            {task.due_at && <p className="muted">Target: {new Date(task.due_at).toLocaleString()}
+              {!answer && Number.isFinite(Date.parse(task.due_at)) && Date.parse(task.due_at) < Date.now()
+                ? ' · Past due: response not recorded' : ''}
+            </p>}
             {answer ? <div><p><strong>Learner response:</strong> {answer.response}</p></div> : mode === 'learner'
               ? <div className="field"><label htmlFor={`answer-${task.id}`}>My response</label>
                   <textarea id={`answer-${task.id}`} rows={3} maxLength={4000} disabled={busy} value={answers[task.id] ?? ''} onChange={(e) => setAnswers((v) => ({ ...v, [task.id]:e.target.value }))} />

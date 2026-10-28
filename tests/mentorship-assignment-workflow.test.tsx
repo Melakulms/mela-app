@@ -86,7 +86,7 @@ it('orders actual task deadlines and prioritizes tasks awaiting mentor feedback'
   render(<MentorshipLearningWorkspace mode="mentor" section={11}/>)
   await screen.findByText('Late task')
   fireEvent.change(screen.getByLabelText('Order assignments'),{target:{value:'due_soon'}})
-  const titles=()=>Array.from(document.querySelectorAll('article.list-row strong')).map(node=>node.textContent)
+  const titles=()=>Array.from(document.querySelectorAll('article.list-row > strong')).map(node=>node.textContent)
   expect(titles()).toEqual(['Soon task','Late task','Review submitted work'])
   fireEvent.change(screen.getByLabelText('Order assignments'),{target:{value:'needs_action'}})
   expect(titles()[0]).toBe('Review submitted work')

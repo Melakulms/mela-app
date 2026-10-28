@@ -16,6 +16,8 @@ export default function MentorLifecycle({ onChanged }: { onChanged: () => void }
   const [completionNotes, setCompletionNotes] = useState<Record<string, string>>({})
   const [error, setError] = useState('')
   const [loadFailed, setLoadFailed] = useState(false)
+  const [requestsError, setRequestsError] = useState('')
+  const [sessionsError, setSessionsError] = useState('')
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
   const [revision, setRevision] = useState(0)
@@ -25,21 +27,33 @@ export default function MentorLifecycle({ onChanged }: { onChanged: () => void }
     let active = true
     setLoading(true)
     setLoadFailed(false)
+    setRequestsError('')
+    setSessionsError('')
+    // Never retain private records from a previous session during refresh.
+    setRequests([])
+    setSessions([])
     setError('')
     void (async () => {
       try {
         const { data: auth, error: authError } = await supabase.auth.getUser()
         if (authError) throw authError
         if (!auth.user) throw new Error('Please sign in again.')
-        const [requestResult, sessionResult] = await Promise.all([
+        const [requestResult, sessionResult] = await Promise.allSettled([
           supabase.from('mentorship_requests').select('id,mentee_id,topic,message,preferred_at,status,created_at').eq('mentor_id', auth.user.id).order('created_at', { ascending: false }),
           supabase.from('mentorship_sessions').select('id,request_id,mentor_id,mentee_id,scheduled_at,duration_min,status,call_room_id,completed_at,cancelled_at,notes').eq('mentor_id', auth.user.id).order('scheduled_at', { ascending: false }),
         ])
-        if (requestResult.error) throw requestResult.error
-        if (sessionResult.error) throw sessionResult.error
-        if (active) {
-          setRequests((requestResult.data ?? []) as RequestRow[])
-          setSessions((sessionResult.data ?? []) as MentorshipSession[])
+        if (!active) return
+        if (requestResult.status === 'fulfilled' && !requestResult.value.error) {
+          setRequests((requestResult.value.data ?? []) as RequestRow[])
+        } else {
+          const cause = requestResult.status === 'rejected' ? requestResult.reason : requestResult.value.error
+          setRequestsError(cause instanceof Error ? cause.message : 'Could not load mentor requests.')
+        }
+        if (sessionResult.status === 'fulfilled' && !sessionResult.value.error) {
+          setSessions((sessionResult.value.data ?? []) as MentorshipSession[])
+        } else {
+          const cause = sessionResult.status === 'rejected' ? sessionResult.reason : sessionResult.value.error
+          setSessionsError(cause instanceof Error ? cause.message : 'Could not load mentor sessions.')
         }
       } catch (cause) {
         if (active) { setLoadFailed(true); setError(cause instanceof Error ? cause.message : 'Could not load mentorship.') }
@@ -73,6 +87,7 @@ export default function MentorLifecycle({ onChanged }: { onChanged: () => void }
   })
 
   const schedule = (requestId: string) => run(`schedule-${requestId}`, async () => {
+    if (loading || sessionsError || requestsError) throw new Error('Refresh your complete request and session history before scheduling.')
     await scheduleMentorshipSession(requestId, scheduledAt, duration)
     setScheduleFor(null)
     setScheduledAt('')
@@ -96,10 +111,12 @@ export default function MentorLifecycle({ onChanged }: { onChanged: () => void }
     <p className="muted">Session entry times use your device time zone ({Intl.DateTimeFormat().resolvedOptions().timeZone}). You must first publish weekly mentoring hours covering the complete appointment in your chosen availability time zone. The system rejects overlapping appointments. Scheduling does not activate video calls.</p>
     <div className="section-heading"><h2>Mentorship requests</h2><button className="btn btn-secondary" disabled={loading || !!busy} onClick={() => setRevision((value) => value + 1)}>Refresh</button></div>
     {error && <div className="banner banner-error" role="alert">{error}</div>}
-    {loading ? <p role="status">Loading mentorship…</p> : loadFailed ? null : requests.length === 0 ? <div className="empty-panel">No mentorship requests.</div> : <div className="list-panel">
+    {!loading && requestsError && <p role="alert" className="banner banner-error">Requests unavailable: {requestsError}. Please retry.</p>}
+    {!loading && sessionsError && <p role="alert" className="banner banner-error">Sessions unavailable: {sessionsError}. Booking is paused until your calendar has been checked. Existing request decisions remain available.</p>}
+    {loading ? <p role="status">Loading mentorship…</p> : loadFailed ? null : requestsError ? <p className="empty-panel">Your private request history could not be checked. This is not a confirmed empty inbox.</p> : requests.length === 0 ? <div className="empty-panel">No mentorship requests.</div> : <div className="list-panel">
       {requests.map((request) => {
         const session = sessionByRequest.get(request.id)
-        const canSchedule = request.status === 'accepted' && (!session || session.status === 'cancelled')
+        const canSchedule = !sessionsError && !requestsError && request.status === 'accepted' && (!session || session.status === 'cancelled')
         return <div className="list-row" key={request.id}>
           <div>
             <b>{request.topic ?? 'Mentorship request'}</b>

@@ -373,7 +373,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
 
       </div>
       <div hidden={!shows(6)}>
-      {!loading && !requestsError && requests.length === 0 && <section className="empty-panel"><h2>Your requests</h2><p>You have not sent a mentorship request yet.</p><button className="btn btn-primary" onClick={() => setSection(2)}>Find a verified mentor</button></section>}
+      {!loading && !requestsError && requests.length === 0 && <section className="empty-panel"><h2>Your requests</h2><p>You have not sent a mentorship request yet.</p><button className="btn btn-primary" onClick={() => selectSection(2)}>Find a verified mentor</button></section>}
       {!loading && !requestsError && requests.length > 0 && <>
         <div className="section-heading"><h2>Your requests</h2></div>
         <div className="list-panel">
@@ -396,6 +396,20 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
 
       </div>
       <div hidden={!shows(2,3,4)}>
+      {section === 3 && <section className="empty-panel" aria-label="Mentorship guidance categories" style={{ textAlign:'left' }}>
+        <h2>Explore mentorship by guidance area</h2>
+        <p>Choose a topic to open a filtered directory. Counts describe only currently loaded, verified mentor profiles — they are not promises of available sessions or separate subject credentials.</p>
+        <div className="module-grid">
+          {MENTORSHIP_CATEGORIES.map(item => <article key={item.id} className="module-card" style={{background:'var(--surface)',border:'1px solid var(--line)'}}>
+            <h3 style={{fontSize:'1rem'}}>{item.label}</h3>
+            <p className="muted">{mentors ? mentors.filter(m => mentorMatchesCategory(m,item.id)).length + ' matching loaded verified profiles' : 'Mentor directory unavailable'}</p>
+            <button type="button" className="btn btn-secondary" disabled={!mentors}
+              onClick={() => {setQuery('');setCategory(item.id);setLanguage('');setWeekday(null);setOnlyWithAvailability(false);selectSection(2)}}>
+              Explore {item.label}
+            </button>
+          </article>)}
+        </div>
+      </section>}
       {!loading && <div id="mentor-directory" className="section-heading"><h2>Find a verified mentor</h2></div>}
       {!loading && mentors && <section className="empty-panel" style={{ textAlign: 'left' }}>
         <p>Browse approved mentors progressively. Search, filters and comparison apply to profiles loaded on this device. Load more profiles to expand your results. Category suggestions are based on reviewed profile text, not a separate certification.</p>

@@ -48,17 +48,24 @@ export async function loadMentorshipWorkspace(role: 'learner' | 'mentor', sectio
   const id = await currentUser()
   const assignmentField = role === 'mentor' ? 'mentor_id' : 'learner_id'
   const needs = (...sections: number[]) => section === null || sections.includes(section)
+  // The mentor panel only needs work assigned to their own accepted learners.
+  // Avoid unrelated learner-only resource and group endpoints denying access
+  // and unintentionally hiding the mentor's real assignments.
+  const wantGoals = role === 'learner' && needs(9,12)
+  const wantAssignments = role === 'mentor' || needs(11,12)
+  const wantResources = role === 'learner' && needs(10)
+  const wantGroups = role === 'learner' && needs(13)
   const empty = () => Promise.resolve({ data: [], error: null })
   const queries = await Promise.all([
-    role === 'mentor' || !needs(9,12) ? empty() : supabase.from('mentorship_goals')
+    !wantGoals ? empty() : supabase.from('mentorship_goals')
       .select('id,learner_id,title,detail,status,target_date,created_at').eq('learner_id', id).order('created_at', { ascending: false }).limit(100),
-    !needs(11,12) ? empty() : supabase.from('mentorship_assignments')
+    !wantAssignments ? empty() : supabase.from('mentorship_assignments')
       .select('id,request_id,mentor_id,learner_id,title,instructions,due_at,created_at')
       .eq(assignmentField, id).order('created_at', { ascending: false }).limit(100),
-    !needs(10) ? empty() : supabase.from('mentorship_resources')
+    !wantResources ? empty() : supabase.from('mentorship_resources')
       .select('id,title,category,description,content')
       .eq('status', 'published').order('title', { ascending: true }).limit(100),
-    !needs(13) ? empty() : supabase.from('mentorship_groups')
+    !wantGroups ? empty() : supabase.from('mentorship_groups')
       .select('id,title,description,category,mentor_id,starts_at,capacity')
       .eq('status', 'published').gt('starts_at', new Date().toISOString()).order('starts_at', { ascending: true }).limit(50),
   ])

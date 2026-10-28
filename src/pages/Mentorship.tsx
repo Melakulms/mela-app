@@ -351,8 +351,9 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         mentors={mentors} requests={requests} requestsAvailable={!requestsError}
         stageKey={stageKey} onBrowse={() => {setQuery('');setCategory('all');selectSection(2)}} />}
       <div hidden={!shows(1,5)}>
-      {shows(1,5) && !loading && !directoryError && mentors && <MentorshipHome key={sessionEpoch.current}
-        mentors={mentors}
+      {shows(1,5) && !loading && <MentorshipHome key={sessionEpoch.current}
+        mentors={mentors ?? []}
+        directoryAvailable={!directoryError && mentors !== null}
         requestsAvailable={!requestsError}
         sessionsAvailable={!sessionsError}
         requests={requests}

@@ -13,12 +13,12 @@ vi.mock('../src/lib/supabase',()=>({
     from:(table:string)=>{
       if(table==='mentorship_session_preparations')return{
         select:()=>({eq:()=>({in:mocks.prepRead})}),
-        insert:mocks.prepInsert,
+        insert:(payload:unknown)=>({select:()=>mocks.prepInsert(payload)}),
         update:mocks.prepUpdate,
       }
       if(table==='mentorship_session_reflections')return{
         select:()=>({eq:()=>({in:mocks.reflectionRead})}),
-        insert:mocks.reflectionInsert,
+        insert:(payload:unknown)=>({select:()=>mocks.reflectionInsert(payload)}),
       }
       throw new Error('Unexpected table '+table)
     },
@@ -35,8 +35,8 @@ beforeEach(()=>{
  mocks.getUser.mockResolvedValue({data:{user:{id:'learner-1'}},error:null})
  mocks.prepRead.mockResolvedValue({data:[],error:null})
  mocks.reflectionRead.mockResolvedValue({data:[],error:null})
- mocks.prepInsert.mockResolvedValue({data:null,error:null})
- mocks.reflectionInsert.mockResolvedValue({data:null,error:null})
+ mocks.prepInsert.mockResolvedValue({data:[{id:'preparation-id'}],error:null})
+ mocks.reflectionInsert.mockResolvedValue({data:[{id:'reflection-id'}],error:null})
 })
 afterEach(cleanup)
 describe('private mentorship session journey',()=>{
@@ -98,4 +98,19 @@ it('provides guided scholarship session questions without saving until the learn
   expect(mocks.prepInsert).not.toHaveBeenCalled()
   fireEvent.click(screen.getByRole('button',{name:'Save my preparation'}))
   await waitFor(()=>expect(mocks.prepInsert).toHaveBeenCalledOnce())
+})
+
+
+it('does not falsely report a successfully saved session plan if no record was confirmed',async()=>{
+  mocks.prepInsert.mockResolvedValue({data:[],error:null})
+  render(<MentorshipSessionJourney sessions={[session('scheduled')]}/>)
+  const picker=screen.getByLabelText('Select session') as HTMLSelectElement
+  await waitFor(()=>expect(picker.disabled).toBe(false))
+  fireEvent.change(picker,{target:{value:'session-1'}})
+  fireEvent.change(screen.getByLabelText('Session goal'),{target:{value:'Plan a study session'}})
+  fireEvent.change(screen.getByLabelText('My discussion questions or topics'),{target:{value:'What should I practise and how often?'}})
+  fireEvent.click(screen.getByRole('button',{name:'Save my preparation'}))
+  expect((await screen.findByRole('alert')).textContent).toContain('not confirmed by the database')
+  expect(screen.queryByText('Your private session preparation was saved.')).toBeNull()
+  expect((screen.getByLabelText('Session goal') as HTMLInputElement).value).toBe('Plan a study session')
 })

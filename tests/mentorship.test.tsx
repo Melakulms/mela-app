@@ -422,8 +422,10 @@ it('keeps the learner home visible with verified mentor count unavailable when d
     id:'request-1',mentor_id:'mentor-1',topic:'Career advice',status:'pending',created_at:'2026-10-10T10:00:00Z',
   }])
   render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
-  expect(await screen.findByRole('heading',{name:'Mentorship Home'})).toBeTruthy()
-  expect(screen.getByText(/Verified mentor directory is temporarily unavailable/)).toBeTruthy()
+  // Wait for the async directory lookup. The directory card itself has a
+  // heading named Mentorship Home before the real dashboard is rendered.
+  expect(await screen.findByText(/Verified mentor directory is temporarily unavailable/)).toBeTruthy()
+  expect(screen.getByRole('heading',{name:'Mentorship Home'})).toBeTruthy()
   expect(screen.getByText(/Mentor search is offline/)).toBeTruthy()
   expect(screen.getByText('Career advice')).toBeTruthy()
   expect(screen.getAllByText('Unavailable').length).toBeGreaterThan(0)

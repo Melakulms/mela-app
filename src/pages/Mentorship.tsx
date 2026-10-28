@@ -16,6 +16,7 @@ import { useI18n } from '../i18n'
 import MentorshipHome from '../components/MentorshipHome'
 import MentorshipLearningWorkspace from '../components/MentorshipLearningWorkspace'
 import MentorshipSectionDirectory from '../components/MentorshipSectionDirectory'
+import MentorshipPracticeLab from '../components/MentorshipPracticeLab'
 import MentorApplication from '../components/MentorApplication'
 import MentorshipAdultEligibility from '../components/MentorshipAdultEligibility'
 import MentorshipSafetyReporting from '../components/MentorshipSafetyReporting'
@@ -200,6 +201,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         <button className="btn btn-secondary" onClick={onBack} disabled={!!busy}>{t('back')}</button>
       </div>
       <MentorshipSectionDirectory selected={section} onSelect={setSection} />
+      {section !== null && <MentorshipPracticeLab key={section} section={section} />}
       <div hidden={!shows(1,5)}>
       {!loading && !error && mentors && <MentorshipHome
         mentors={mentors}

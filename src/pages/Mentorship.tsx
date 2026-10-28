@@ -345,10 +345,6 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       </div>
       <MentorshipSectionDirectory selected={section} onSelect={selectSection} />
       {section !== null && <>
-      <details className="empty-panel" style={{ textAlign: 'left' }}>
-        <summary>Optional practice worksheet — no real submission or booking</summary>
-        <MentorshipPracticeLab key={section} section={section} />
-      </details>
       {section === 5 && !loading && mentors && <MentorshipSmartMatch
         mentors={mentors} requests={requests} requestsAvailable={!requestsError}
         stageKey={stageKey} onBrowse={() => {setQuery('');setCategory('all');selectSection(2)}} />}
@@ -630,6 +626,10 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         {loadingMoreMentors?'Loading verified mentor profiles…':'Load more verified mentors'}
       </button>}
       </div>
+      <details className="empty-panel" style={{ textAlign: 'left' }}>
+        <summary>Optional practice worksheet — no real submission or booking</summary>
+        <MentorshipPracticeLab key={section} section={section} />
+      </details>
       </>}
     </div>
   )

@@ -213,7 +213,7 @@ describe('Mentorship', () => {
     fireEvent.click(send)
 
     await waitFor(() => expect(mocks.requestMentor).toHaveBeenCalledTimes(1))
-    expect(mocks.requestMentor).toHaveBeenCalledWith('mentor-1', 'CV review', 'Please review my CV.', Intl.DateTimeFormat().resolvedOptions().timeZone || 'Africa/Addis_Ababa')
+    expect(mocks.requestMentor).toHaveBeenCalledWith('mentor-1', 'CV review', 'Please review my CV.', '', Intl.DateTimeFormat().resolvedOptions().timeZone || 'Africa/Addis_Ababa')
     await waitFor(() => expect(mocks.fetchVerifiedMentorsPage).toHaveBeenCalledTimes(2))
   })
 

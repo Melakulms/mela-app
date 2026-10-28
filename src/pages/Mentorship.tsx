@@ -13,6 +13,7 @@ import {
   type MyMentorshipRequest,
 } from '../lib/mentorship'
 import { useI18n } from '../i18n'
+import { readMentorshipSection, withMentorshipSection } from '../lib/mentorship-section-navigation'
 import MentorshipHome from '../components/MentorshipHome'
 import MentorshipLearningWorkspace from '../components/MentorshipLearningWorkspace'
 import MentorshipSectionDirectory from '../components/MentorshipSectionDirectory'
@@ -29,7 +30,34 @@ import { discoverMentors, getMentorLanguages, MENTORSHIP_CATEGORIES, mentorMatch
 export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack: () => void; stageKey?: string | null; onOpenSafety?: () => void }) {
   const { t } = useI18n()
   const [query, setQuery] = useState('')
-  const [section, setSection] = useState<number | null>(null)
+  const [section, setSection] = useState<number | null>(() => readMentorshipSection(new URL(window.location.href)))
+  const selectSection = (next: number | null) => {
+    if (next === section) return
+    // Preserve the parent learner route so Android Back returns to the section
+    // directory instead of unexpectedly closing all Mentorship tools.
+    if (new URL(window.location.href).searchParams.get('view') === 'mentorship') {
+      const href = withMentorshipSection(new URL(window.location.href), next)
+      window.history.pushState(window.history.state, '', href)
+    }
+    setSection(next)
+  }
+  const leaveMentorship = () => {
+    // A later re-entry must open the directory, not a previously visited private
+    // subsection. This does not change server-side account permissions.
+    const href = withMentorshipSection(new URL(window.location.href), null)
+    window.history.replaceState(window.history.state, '', href)
+    onBack()
+  }
+  useEffect(() => {
+    const restore = () => setSection(readMentorshipSection(new URL(window.location.href)))
+    const clear = () => setSection(null)
+    window.addEventListener('popstate', restore)
+    window.addEventListener('mela:session-boundary', clear)
+    return () => {
+      window.removeEventListener('popstate', restore)
+      window.removeEventListener('mela:session-boundary', clear)
+    }
+  }, [])
   const shows = (...sections: number[]) => section === null || sections.includes(section)
   const [adultReviewApproved,setAdultReviewApproved] = useState(false)
   const [serverAccess,setServerAccess] = useState<MentorshipAccess|null>(null)
@@ -221,18 +249,20 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
     <div className="dash-main">
       <div className="section-heading">
         <h1>{t('mentorship')}</h1>
-        <button className="btn btn-secondary" onClick={onBack} disabled={!!busy}>{t('back')}</button>
+        <button className="btn btn-secondary" onClick={leaveMentorship} disabled={!!busy}>{t('back')}</button>
       </div>
-      <MentorshipSectionDirectory selected={section} onSelect={setSection} />
+      <MentorshipSectionDirectory selected={section} onSelect={selectSection} />
       {section !== null && <MentorshipPracticeLab key={section} section={section} />}
       <div hidden={!shows(1,5)}>
-      {!loading && !directoryError && !requestsError && !sessionsError && mentors && <MentorshipHome
+      {!loading && !directoryError && mentors && <MentorshipHome
         mentors={mentors}
+        requestsAvailable={!requestsError}
+        sessionsAvailable={!sessionsError}
         requests={requests}
         sessions={sessions}
         stageKey={stageKey}
         revision={revision}
-        onNavigate={setSection}
+        onNavigate={selectSection}
         matchingOnly={section === 5}
       />}
       </div>

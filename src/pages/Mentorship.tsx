@@ -13,8 +13,10 @@ import {
   type MyMentorshipRequest,
 } from '../lib/mentorship'
 import { useI18n } from '../i18n'
+import { preferredTimeGuidance } from '../lib/mentorship-preferred-time'
+import { learnerCopy } from '../lib/mentorship-learner-copy'
 import { readMentorshipSection, withMentorshipSection } from '../lib/mentorship-section-navigation'
-import { mentorshipRequestNextStep, mentorshipRequestStatus, mentorshipSessionStatus } from '../lib/mentorship-status-copy'
+import { mentorshipDeclineReason, mentorshipRequestNextStep, mentorshipRequestStatus, mentorshipSessionStatus } from '../lib/mentorship-status-copy'
 import MentorshipHome from '../components/MentorshipHome'
 import MentorshipLearningWorkspace from '../components/MentorshipLearningWorkspace'
 import MentorshipProgramPlanner from '../components/MentorshipProgramPlanner'
@@ -33,6 +35,7 @@ import { discoverMentors, getMentorLanguages, MENTORSHIP_CATEGORIES, mentorMatch
 
 export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack: () => void; stageKey?: string | null; onOpenSafety?: () => void }) {
   const { t, language: uiLanguage } = useI18n()
+  const lc = learnerCopy(uiLanguage)
   const [query, setQuery] = useState('')
   const [comparedMentorIds, setComparedMentorIds] = useState<string[]>([])
   const toggleMentorComparison = (id: string) => {
@@ -442,11 +445,11 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       </div>
       <div hidden={!shows(7)}>
       <div id="mentorship-journey" className="section-heading"><h2>My mentorship journey</h2></div>
-      {!loading && !sessionsError && sessions.length === 0 && <p className="empty-panel">No sessions yet. An accepted request is not a booking; your mentor must separately confirm a session within their published available hours.</p>}
+      {!loading && !sessionsError && sessions.length === 0 && <p className="empty-panel">{lc.noSessionsYet}</p>}
       {shows(7) && !loading && !sessionsError && ['university','college_tvet','school_11_12'].includes(stageKey ?? '') && <MentorshipSessionJourney sessions={sessions} />}
       {shows(7) && !loading && !sessionsError && ['university','college_tvet','school_11_12'].includes(stageKey ?? '') && <MentorshipOutcomeReview mode="learner" sessions={sessions} />}
       {!loading && !sessionsError && sessions.length > 0 && <>
-        <div className="section-heading"><h2>Your sessions</h2></div>
+        <div className="section-heading"><h2>{lc.sessionsTitle}</h2></div>
         <div className="list-panel">
           {sessions.map((session) => {
             const ratingId = `session-rating-${session.id}`
@@ -455,12 +458,12 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
               <div style={{ flex: 1 }}>
                 <strong>{requestTopics.get(session.request_id ?? '') ?? 'Mentorship session'} · {mentorNames.get(session.mentor_id ?? '') ?? 'Your mentor'}</strong>
                 <div className="list-row-title">{new Date(session.scheduled_at).toLocaleString()}</div>
-                <div className="list-row-meta">{session.duration_min == null ? (uiLanguage === 'am' ? 'የቆይታ ጊዜ አልታወቀም' : 'Duration unavailable') : `${session.duration_min} minutes`} · {mentorshipSessionStatus(session.status, uiLanguage)}</div>
+                <div className="list-row-meta">{session.duration_min == null ? lc.durationUnknown : `${session.duration_min} ${lc.minutes}`} · {mentorshipSessionStatus(session.status, uiLanguage)}</div>
                 <MentorshipCalendarButton session={session} />
-                {session.notes && <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}><strong>Follow-up notes: </strong>{session.notes}</p>}
-                {session.status === 'completed' && session.rating !== null && <div className="list-row-meta">Rated {session.rating}/5{session.rating_comment ? ` · ${session.rating_comment}` : ''}</div>}
+                {session.notes && <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}><strong>{lc.followUpNotes}</strong>{session.notes}</p>}
+                {session.status === 'completed' && session.rating !== null && <div className="list-row-meta">{lc.ratedPrefix} {session.rating}/5{session.rating_comment ? ` · ${session.rating_comment}` : ''}</div>}
                 {session.status === 'completed' && session.rating === null && <div style={{ marginTop: '.75rem', display: 'grid', gap: '.5rem', maxWidth: '32rem' }}>
-                  <label htmlFor={ratingId}>Rate this completed session</label>
+                  <label htmlFor={ratingId}>{lc.rateSession}</label>
                   <select
                     id={ratingId}
                     value={ratingDraft[session.id] ?? 5}
@@ -473,7 +476,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
                     <option value={2}>2 — Needs improvement</option>
                     <option value={1}>1 — Poor</option>
                   </select>
-                  <label htmlFor={commentId}>Rating comment (optional)</label>
+                  <label htmlFor={commentId}>{lc.ratingComment}</label>
                   <textarea
                     id={commentId}
                     rows={3}
@@ -484,7 +487,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
                   />
                   <span className="field-hint">{(ratingComment[session.id] ?? '').length}/2000</span>
                   <button className="btn btn-primary" disabled={!!busy} onClick={() => submitRating(session.id)}>
-                    {busy === `rating-${session.id}` ? 'Submitting rating…' : 'Submit rating'}
+                    {busy === `rating-${session.id}` ? lc.submittingRating : lc.submitRating}
                   </button>
                 </div>}
               </div>
@@ -493,14 +496,14 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
                   setCancelSessionId(session.id)
                   setCancelRequestId(null)
                   setCancelReason('')
-                }}>Cancel session</button>
-                {cancelSessionId === session.id && <div className="empty-panel" role="group" aria-label="Confirm session cancellation">
-                  <p>{uiLanguage === 'am' ? 'ይህን የተረጋገጠ ቀጠሮ መሰረዝ ይፈልጋሉ?' : 'Cancel this confirmed appointment? Your mentor will see the change.'}</p>
-                  <label htmlFor={`cancel-reason-${session.id}`}>{uiLanguage === 'am' ? 'ምክንያት (አማራጭ)' : 'Reason (optional)'}</label>
+                }}>{lc.cancelSession}</button>
+                {cancelSessionId === session.id && <div className="empty-panel" role="group" aria-label={lc.cancelSessionAria}>
+                  <p>{lc.cancelSessionQuestion}</p>
+                  <label htmlFor={`cancel-reason-${session.id}`}>{lc.cancelReasonLabel}</label>
                   <textarea id={`cancel-reason-${session.id}`} maxLength={250} rows={2} value={cancelReason}
                     disabled={!!busy} onChange={event => setCancelReason(event.target.value)} />
-                  <button className="btn btn-primary" disabled={!!busy} onClick={() => void withdrawSession(session.id)}>{busy === `session-${session.id}` ? 'Cancelling…' : 'Confirm cancel session'}</button>{' '}
-                  <button className="btn btn-secondary" disabled={!!busy} onClick={() => { setCancelSessionId(null); setCancelReason('') }}>Keep session</button>
+                  <button className="btn btn-primary" disabled={!!busy} onClick={() => void withdrawSession(session.id)}>{busy === `session-${session.id}` ? 'Cancelling…' : lc.confirmCancelSession}</button>{' '}
+                  <button className="btn btn-secondary" disabled={!!busy} onClick={() => { setCancelSessionId(null); setCancelReason('') }}>{lc.keepSession}</button>
                 </div>}
               </div> : <span className="pill">{mentorshipSessionStatus(session.status, uiLanguage)}</span>}
             </div>
@@ -511,26 +514,26 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       </div>
       <div hidden={!shows(6)}>
       {shows(6) && <MentorshipProgramPlanner stageKey={stageKey} onNavigate={(destination)=>selectSection(destination)} />}
-      {!loading && !requestsError && requests.length === 0 && <section className="empty-panel"><h2>Your requests</h2><p>You have not sent a mentorship request yet.</p><button className="btn btn-primary" onClick={() => selectSection(2)}>Find a verified mentor</button></section>}
+      {!loading && !requestsError && requests.length === 0 && <section className="empty-panel"><h2>Your requests</h2><p>{lc.noRequestsYet}</p><button className="btn btn-primary" onClick={() => selectSection(2)}>{lc.findVerifiedMentor}</button></section>}
       {!loading && !requestsError && requests.length > 0 && <>
-        <div className="section-heading"><h2>My mentorship requests</h2></div>
-        <p className="muted">Track actual requests and mentor decisions. Accepted means a mentor agreed to your request; it does not mean a session is confirmed.</p>
-        <div className="module-grid" aria-label="Your request status overview">
-          <div><strong>{requestCounts.pending}</strong><p className="muted">Awaiting mentor response</p></div>
-          <div><strong>{requestCounts.accepted}</strong><p className="muted">Accepted mentorship requests</p></div>
-          <div><strong>{requestCounts.finished}</strong><p className="muted">Other closed requests</p></div>
+        <div className="section-heading"><h2>{lc.requestsTitle}</h2></div>
+        <p className="muted">{lc.requestsTrack}</p>
+        <div className="module-grid" aria-label={lc.countAriaLabel}>
+          <div><strong>{requestCounts.pending}</strong><p className="muted">{lc.countPending}</p></div>
+          <div><strong>{requestCounts.accepted}</strong><p className="muted">{lc.countAccepted}</p></div>
+          <div><strong>{requestCounts.finished}</strong><p className="muted">{lc.countFinished}</p></div>
         </div>
         <div className="field">
-          <label htmlFor="mentorship-request-filter">Filter my requests</label>
+          <label htmlFor="mentorship-request-filter">{lc.filterLabel}</label>
           <select id="mentorship-request-filter" value={requestStatusFilter}
             onChange={event => setRequestStatusFilter(event.target.value as typeof requestStatusFilter)}>
-            <option value="all">All request statuses</option>
-            <option value="pending">Awaiting mentor response</option>
-            <option value="accepted">Accepted</option>
-            <option value="finished">Completed, declined or cancelled</option>
+            <option value="all">{lc.filterAll}</option>
+            <option value="pending">{lc.filterPending}</option>
+            <option value="accepted">{lc.filterAccepted}</option>
+            <option value="finished">{lc.filterFinished}</option>
           </select>
         </div>
-        {filteredRequests.length === 0 ? <p className="empty-panel">No requests match this filter. Choose All request statuses to review your full history.</p>
+        {filteredRequests.length === 0 ? <p className="empty-panel">{lc.filterEmpty}</p>
           : <div className="list-panel">
           {filteredRequests.map((r) => <div className="list-row" key={r.id}>
             <div>
@@ -538,24 +541,24 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
               <div>{mentorNames.get(r.mentor_id) ?? 'Your mentor'} · {mentorshipRequestStatus(r.status, uiLanguage)}</div>
               {mentorshipRequestNextStep(r.status, uiLanguage) && <p className="muted">{mentorshipRequestNextStep(r.status, uiLanguage)}</p>}
               {r.message && <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{r.message}</p>}
-              {r.preferred_at && <p>Preferred time: {new Date(r.preferred_at).toLocaleString()}</p>}
-              {r.status === 'accepted' && !sessionsError && !sessions.some(s => s.request_id === r.id) && <p>Your mentor has accepted. A session time is still to be scheduled.</p>}
-              {r.status === 'accepted' && !sessionsError && sessions.some(s => s.request_id === r.id && s.status === 'cancelled') && <p>The session was cancelled. Your mentor can schedule a replacement.</p>}
-              {r.status === 'accepted' && <button className="btn btn-secondary" type="button" disabled={!!busy} onClick={() => selectSection(7)}>View my booked sessions</button>}
-              {(r.status === 'declined' || r.status === 'cancelled') && <button className="btn btn-secondary" type="button" disabled={!!busy} onClick={() => selectSection(2)}>Find another verified mentor</button>}
-              <div className="list-row-meta">Requested {new Date(r.created_at).toLocaleDateString()}</div>
+              {r.preferred_at && <p>{lc.preferredTime}: {new Date(r.preferred_at).toLocaleString()}</p>}
+              {r.status === 'accepted' && !sessionsError && !sessions.some(s => s.request_id === r.id) && <p>{lc.mentorAcceptedNoTime}</p>}
+              {r.status === 'accepted' && !sessionsError && sessions.some(s => s.request_id === r.id && s.status === 'cancelled') && <p>{lc.mentorCancelledSession}</p>}
+              {r.status === 'accepted' && <button className="btn btn-secondary" type="button" disabled={!!busy} onClick={() => selectSection(7)}>{lc.viewBookedSessions}</button>}
+              {(r.status === 'declined' || r.status === 'cancelled') && <button className="btn btn-secondary" type="button" disabled={!!busy} onClick={() => selectSection(2)}>{lc.findAnotherMentor}</button>}
+              <div className="list-row-meta">{lc.requestedOn} {new Date(r.created_at).toLocaleDateString()}</div>
             </div>
             {r.status === 'pending' ? <div>
               <button className="btn btn-secondary" disabled={!!busy} onClick={() => {
                 setCancelRequestId(r.id)
                 setCancelSessionId(null)
-              }}>Cancel request</button>
-              {cancelRequestId === r.id && <div className="empty-panel" role="group" aria-label="Confirm request cancellation">
-                <p>{uiLanguage === 'am' ? 'ይህን የአማካሪነት ጥያቄ መሰረዝ ይፈልጋሉ?' : 'Withdraw this pending mentorship request? This cannot be undone.'}</p>
+              }}>{lc.cancelRequest}</button>
+              {cancelRequestId === r.id && <div className="empty-panel" role="group" aria-label={lc.cancelRequestAria}>
+                <p>{lc.withdrawQuestion}</p>
                 <button className="btn btn-primary" disabled={!!busy} onClick={() => void withdrawRequest(r.id)}>
-                  {busy === `request-${r.id}` ? 'Cancelling…' : 'Confirm cancel request'}
+                  {busy === `request-${r.id}` ? 'Cancelling…' : lc.confirmCancelRequest}
                 </button>{' '}
-                <button className="btn btn-secondary" disabled={!!busy} onClick={() => setCancelRequestId(null)}>Keep request</button>
+                <button className="btn btn-secondary" disabled={!!busy} onClick={() => setCancelRequestId(null)}>{lc.keepRequest}</button>
               </div>}
             </div> : null}
           </div>)}

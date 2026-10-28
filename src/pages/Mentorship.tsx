@@ -64,6 +64,10 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       actionToken.current += 1
       actionLock.current = false
       directoryLock.current = false
+      const url = new URL(window.location.href)
+      if (url.searchParams.has('mentorship_section')) {
+        window.history.replaceState(window.history.state, '', withMentorshipSection(url, null))
+      }
       setSection(null)
       setQuery('')
       setComparedMentorIds([])
@@ -286,9 +290,11 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
     if (cleanTopic.length < 2) { setError('Add a short topic before sending the request.'); return }
     if (cleanTopic.length > 120) { setError('Keep the mentorship topic to 120 characters or fewer.'); return }
     if (cleanMessage.length > 1000) { setError('Keep the message to 1000 characters or fewer.'); return }
+    const epoch = sessionEpoch.current
     await runAction(`request-${mentorId}`, async () => {
       if (preferredAt) await requestMentor(mentorId, cleanTopic, cleanMessage, preferredAt)
       else await requestMentor(mentorId, cleanTopic, cleanMessage)
+      if (epoch !== sessionEpoch.current) return
       setOpenMentor(null)
       setTopic('')
       setMessage('')
@@ -300,8 +306,10 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
     const rating = ratingDraft[sessionId] ?? 5
     const comment = ratingComment[sessionId] ?? ''
     if (comment.length > 2000) { setError('Keep the rating comment to 2000 characters or fewer.'); return }
+    const epoch = sessionEpoch.current
     await runAction(`rating-${sessionId}`, async () => {
       await rateMentorshipSession(sessionId, rating, comment)
+      if (epoch !== sessionEpoch.current) return
       setRatingDraft((current) => { const next = { ...current }; delete next[sessionId]; return next })
       setRatingComment((current) => { const next = { ...current }; delete next[sessionId]; return next })
     })

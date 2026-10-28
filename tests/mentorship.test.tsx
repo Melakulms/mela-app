@@ -376,7 +376,8 @@ it('clears personal mentor requests immediately when the signed-in account chang
   expect(await screen.findByText('Private scholarship planning')).toBeTruthy()
   fireEvent(window, new Event('mela:session-boundary'))
   expect(screen.queryByText('Private scholarship planning')).toBeNull()
-  await waitFor(() => expect(mocks.fetchMyMentorshipRequests).toHaveBeenCalledTimes(2))
+  expect(mocks.fetchMyMentorshipRequests).toHaveBeenCalledTimes(1)
+  expect(screen.getByText('Mentorship session changed')).toBeTruthy()
   expect(screen.queryByText('Private scholarship planning')).toBeNull()
 })
 
@@ -388,7 +389,8 @@ it('ignores a private request response from before the account-switch event', as
   render(<Mentorship stageKey="school_11_12" onBack={vi.fn()} />)
   await waitFor(() => expect(mocks.fetchMyMentorshipRequests).toHaveBeenCalledTimes(1))
   fireEvent(window, new Event('mela:session-boundary'))
-  await waitFor(() => expect(mocks.fetchMyMentorshipRequests).toHaveBeenCalledTimes(2))
+  expect(mocks.fetchMyMentorshipRequests).toHaveBeenCalledTimes(1)
+  expect(screen.getByText('Mentorship session changed')).toBeTruthy()
   await act(async () => {
     releaseOldRequest([{
       id:'old-request',mentor_id:'mentor-1',topic:'Old account confidential request',

@@ -27,6 +27,7 @@ export default function MentorshipSafetyReporting({
   const [details,setDetails]=useState('')
   const [cases,setCases]=useState<CaseStatus[]>([])
   const [loading,setLoading]=useState(true)
+  const [historyError,setHistoryError]=useState('')
   const [busy,setBusy]=useState(false)
   const [error,setError]=useState('')
   const [notice,setNotice]=useState('')
@@ -48,7 +49,7 @@ export default function MentorshipSafetyReporting({
   ]
   const chosen=targets.find(t=>t.key===targetKey)
   useEffect(()=>{
-    let active=true;setLoading(true)
+    let active=true;setLoading(true);setHistoryError('');setCases([])
     void (async()=>{
       try{
         const {data:auth,error:authError}=await supabase.auth.getUser()
@@ -61,7 +62,7 @@ export default function MentorshipSafetyReporting({
         if(readError)throw new Error(readError.message)
         if(active)setCases((data??[]) as CaseStatus[])
       }catch(cause){
-        if(active)setError(cause instanceof Error?cause.message:'Could not load safety report history.')
+        if(active)setHistoryError(cause instanceof Error?cause.message:'Could not load safety report history.')
       }finally{if(active)setLoading(false)}
     })()
     return()=>{active=false}
@@ -114,6 +115,10 @@ export default function MentorshipSafetyReporting({
       </form>}
     <h4>My previous mentorship reports</h4>
     {loading?<p role="status">Loading report status…</p>:
+      historyError ? <div role="status" className="banner banner-info">
+        Your private report history could not be verified: {historyError}. This does not mean that no reports exist.
+        You can still submit a new safety concern above.
+      </div> :
       cases.length===0?<p className="muted">No mentorship safety reports on this account.</p>:
       <ul>{cases.map(item=><li key={item.id}>
         <strong>{item.reason}</strong> · {item.status} · {new Date(item.created_at).toLocaleDateString()}

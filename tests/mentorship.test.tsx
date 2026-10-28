@@ -425,7 +425,7 @@ it('keeps the learner home visible with verified mentor count unavailable when d
   // Wait for the async directory lookup. The directory card itself has a
   // heading named Mentorship Home before the real dashboard is rendered.
   expect(await screen.findByText(/Verified mentor directory is temporarily unavailable/)).toBeTruthy()
-  expect(screen.getByRole('heading',{name:'Mentorship Home'})).toBeTruthy()
+  expect(screen.getByRole('heading',{level:2,name:'Mentorship Home'})).toBeTruthy()
   expect(screen.getByText(/Mentor search is offline/)).toBeTruthy()
   expect(screen.getByText('Career advice')).toBeTruthy()
   expect(screen.getAllByText('Unavailable').length).toBeGreaterThan(0)

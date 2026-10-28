@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  addMentorshipGoal, assignmentProgress, createMentorshipAssignment,
+  addMentorshipGoal, assignmentProgress, mentorshipActionSummary, createMentorshipAssignment,
   deleteMentorshipGoal, loadMentorshipWorkspace, sendMentorshipFeedback,
   setMentorshipGoalStatus, submitMentorshipAssignment,
   type MentorshipWorkspace, type MentorshipGoal,
@@ -23,6 +23,7 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
   const [goalTitle, setGoalTitle] = useState('')
   const [goalDetail, setGoalDetail] = useState('')
   const [goalDate, setGoalDate] = useState('')
+  const [confirmRemoveGoal, setConfirmRemoveGoal] = useState<string | null>(null)
   const [assignRequest, setAssignRequest] = useState('')
   const [assignTitle, setAssignTitle] = useState('')
   const [assignText, setAssignText] = useState('')
@@ -92,6 +93,17 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
   }
 
   const progress = workspace ? assignmentProgress(workspace) : { assigned: 0, submitted: 0, reviewed: 0 }
+  const nextActions = workspace ? mentorshipActionSummary(workspace) :
+    { activeGoals: 0, overdueGoals: 0, assignmentsToSubmit: 0, overdueAssignments: 0, awaitingFeedback: 0 }
+  const goalTemplates = ['school_1_6','school_7_8','school_9_10','school_11_12'].includes(stageKey ?? '')
+    ? [
+        { title: 'Build a weekly study routine', detail: 'Choose a subject, practise several times this week, and record one thing I understand better.' },
+        { title: 'Prepare three career questions', detail: 'Discuss education and job paths with my approved teacher or guardian before seeking professional mentoring.' },
+      ]
+    : [
+        { title: 'Build a portfolio project', detail: 'Choose a small project, define a milestone, save evidence, and request constructive feedback.' },
+        { title: 'Prepare for a career conversation', detail: 'Research two careers, draft three questions, and identify a skill I can practise.' },
+      ]
   const submissions = new Map((workspace?.submissions ?? []).map((item) => [item.assignment_id, item]))
   const feedback = new Map((workspace?.feedback ?? []).map((item) => [item.assignment_id, item]))
   const resourceCategories = Array.from(new Set(
@@ -123,8 +135,20 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
               <option value="planned">Planned</option><option value="in_progress">In progress</option><option value="completed">Completed (self-reported)</option><option value="paused">Paused</option>
             </select>
           </div>
-          <button className="btn btn-secondary" disabled={busy} onClick={() => void run(() => deleteMentorshipGoal(goal.id))}>Remove</button>
+          {confirmRemoveGoal === goal.id ? <div style={{display:'flex',gap:'.5rem',flexWrap:'wrap'}}>
+            <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => void run(
+              () => deleteMentorshipGoal(goal.id), () => setConfirmRemoveGoal(null)
+            )}>Confirm removal</button>
+            <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => setConfirmRemoveGoal(null)}>Keep goal</button>
+          </div> : <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => setConfirmRemoveGoal(goal.id)}>Remove</button>}
         </div>)}</div>}
+        <p className="muted">Need ideas? Choose a starter plan to fill the form below. Nothing is saved until you select Add personal goal.</p>
+        <div style={{display:'flex',flexWrap:'wrap',gap:'.5rem',marginBottom:'.75rem'}}>
+          {goalTemplates.map(item => <button type="button" className="btn btn-secondary" key={item.title}
+            disabled={busy} onClick={() => {setGoalTitle(item.title);setGoalDetail(item.detail);setGoalDate('')}}>
+              Use: {item.title}
+          </button>)}
+        </div>
         <form onSubmit={createGoal}>
           <div className="field"><label htmlFor="mentorship-goal-title">Goal title</label>
             <input id="mentorship-goal-title" value={goalTitle} minLength={3} maxLength={160} required disabled={busy} onChange={(event) => setGoalTitle(event.target.value)} placeholder="e.g. Build my first portfolio project" /></div>
@@ -183,6 +207,15 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
           <div><strong>{progress.reviewed}</strong><p className="muted">Mentor reviews</p></div>
           {mode === 'learner' && <div><strong>{workspace.goals.filter((goal) => goal.status === 'completed').length}</strong><p className="muted">Self-reported goals</p></div>}
         </div>
+        <h4>What needs attention</h4>
+        <div className="module-grid" aria-label="My mentorship action summary">
+          <div><strong>{nextActions.activeGoals}</strong><p className="muted">Goals in progress or planned</p></div>
+          <div><strong>{nextActions.overdueGoals}</strong><p className="muted">Goals past target date</p></div>
+          <div><strong>{nextActions.assignmentsToSubmit}</strong><p className="muted">Assignments awaiting my response</p></div>
+          <div><strong>{nextActions.overdueAssignments}</strong><p className="muted">Assignments past due</p></div>
+          <div><strong>{nextActions.awaitingFeedback}</strong><p className="muted">Submitted tasks awaiting mentor feedback</p></div>
+        </div>
+        <p className="muted">These are saved activity indicators, not a skill score. Overdue means the target date has passed without a recorded response or goal completion.</p>
         <label htmlFor="mentorship-reviewed-progress">Share of assigned tasks with feedback: {reviewedFraction}%</label>
         <progress id="mentorship-reviewed-progress" max={100} value={reviewedFraction} style={{width:'100%',maxWidth:'28rem'}}/>
         <p className="muted">{progress.assigned===0 ?

@@ -33,6 +33,13 @@ export async function fetchMentorshipHomeExtras(): Promise<MentorshipHomeExtras>
       .in('ref_table', ['mentorship_requests', 'mentorship_sessions'])
       .order('created_at', { ascending: false }).limit(3)
       .then((result) => unwrap(result)),
+    // Goals saved under My Mentorship (#9) must also appear on Home (#1).
+    // This independent read must never block mentor discovery or announcements.
+    supabase.from('mentorship_goals')
+      .select('id,title,status,target_date').eq('learner_id', id)
+      .in('status', ['planned','in_progress'])
+      .order('created_at', { ascending:false }).limit(15)
+      .then((result) => unwrap(result)),
   ] as const)
 
   const warnings: string[] = []
@@ -49,12 +56,15 @@ export async function fetchMentorshipHomeExtras(): Promise<MentorshipHomeExtras>
   const profile = unpack(1, 'Language preferences', null) as { preferred_language?: string } | null
   const announcements = unpack<MentorshipHomeNotice[]>(2, 'Mentorship announcements', [])
   const notifications = unpack<MentorshipHomeNotice[]>(3, 'Session updates', [])
+  const savedGoals = unpack<{id:string;title:string;status:string;target_date:string|null}[]>(4, 'Saved mentorship goals', [])
+  const goalTitles = savedGoals.map(goal => goal.title)
 
   return {
-    goals: safeProfileTopics(learner?.goals),
+    goals: safeProfileTopics([...goalTitles, ...safeProfileTopics(learner?.goals)], 15),
     interests: safeProfileTopics([...(Array.isArray(learner?.learning_interests) ? learner.learning_interests : []),
       ...(Array.isArray(learner?.preferred_learning_areas) ? learner.preferred_learning_areas : []),
-      ...(Array.isArray(learner?.goals) ? learner.goals : [])], 16),
+      ...(Array.isArray(learner?.goals) ? learner.goals : []),
+      ...goalTitles], 16),
     preferredLanguage: typeof profile?.preferred_language === 'string' ? profile.preferred_language : '',
     announcements: publicMentorshipAnnouncements(announcements),
     updates: notifications,

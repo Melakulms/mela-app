@@ -90,6 +90,6 @@ it('filters real learner assignments into pending, awaiting review, and reviewed
   expect(screen.queryByText('To practise')).toBeNull()
   fireEvent.change(screen.getByLabelText('Show assignments'), {target:{value:'reviewed'}})
   expect(screen.getByText('Reviewed work')).toBeTruthy()
-  expect(screen.getByText('Good analysis')).toBeTruthy()
+  expect(screen.getByText(/Good analysis/)).toBeTruthy()
   expect(screen.queryByText('Sent work')).toBeNull()
 })

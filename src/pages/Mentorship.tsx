@@ -111,7 +111,8 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
       window.removeEventListener('mela:session-boundary', clear)
     }
   }, [])
-  const shows = (...sections: number[]) => section === null || sections.includes(section)
+  // Only the selected subsection renders. The entry screen is a card directory, not a second copy of all tools.
+  const shows = (...sections: number[]) => section !== null && sections.includes(section)
   const [adultReviewApproved,setAdultReviewApproved] = useState(false)
   const [serverAccess,setServerAccess] = useState<MentorshipAccess|null>(null)
   const [accessChecking,setAccessChecking] = useState(true)
@@ -340,13 +341,14 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
     <div className="dash-main">
       <div className="section-heading">
         <h1>{t('mentorship')}</h1>
-        <button className="btn btn-secondary" onClick={leaveMentorship} disabled={!!busy}>{t('back')}</button>
+        <button className="btn btn-secondary" onClick={() => section === null ? leaveMentorship() : selectSection(null)} disabled={!!busy}>{section === null ? t('back') : 'Back to mentorship sections'}</button>
       </div>
       <MentorshipSectionDirectory selected={section} onSelect={selectSection} />
-      {section !== null && <details className="empty-panel" style={{ textAlign: 'left' }}>
+      {section !== null && <>
+      <details className="empty-panel" style={{ textAlign: 'left' }}>
         <summary>Optional practice worksheet — no real submission or booking</summary>
         <MentorshipPracticeLab key={section} section={section} />
-      </details>}
+      </details>
       {section === 5 && !loading && mentors && <MentorshipSmartMatch
         mentors={mentors} requests={requests} requestsAvailable={!requestsError}
         stageKey={stageKey} onBrowse={() => {setQuery('');setCategory('all');selectSection(2)}} />}
@@ -628,6 +630,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         {loadingMoreMentors?'Loading verified mentor profiles…':'Load more verified mentors'}
       </button>}
       </div>
+      </>}
     </div>
   )
 }

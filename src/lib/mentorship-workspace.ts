@@ -98,6 +98,23 @@ export async function addMentorshipGoal(title: string, detail: string, targetDat
   if (error) throw error
 }
 
+export async function updateMentorshipGoal(
+  goalId: string, title: string, detail: string, targetDate: string,
+) {
+  const id = await currentUser()
+  const cleanTitle = assertText(title, 'Goal title', 3, 160)
+  if (detail.trim().length > 2000) throw new Error('Goal plan must be 2000 characters or fewer.')
+  if (targetDate && (!/^\d{4}-\d{2}-\d{2}$/.test(targetDate) ||
+    !Number.isFinite(Date.parse(targetDate)) || new Date(targetDate).toISOString().slice(0,10) !== targetDate)) {
+    throw new Error('Choose a valid target date or leave it blank.')
+  }
+  const { data, error } = await supabase.from('mentorship_goals')
+    .update({ title:cleanTitle, detail:detail.trim(), target_date:targetDate || null, updated_at:new Date().toISOString() })
+    .eq('id', goalId).eq('learner_id', id).select('id')
+  if (error) throw error
+  if (!data?.length) throw new Error('Goal changes were not saved. Check permissions and retry.')
+}
+
 export async function setMentorshipGoalStatus(goalId: string, status: MentorshipGoal['status']) {
   if (!['planned','in_progress','completed','paused'].includes(status)) throw new Error('Invalid goal status.')
   const id = await currentUser()

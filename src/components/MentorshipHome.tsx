@@ -86,8 +86,8 @@ export default function MentorshipHome({ mentors, requests, sessions, requestsAv
       <div className="section-heading"><h3>Current learning goals</h3></div>
       {extras.goals.length
         ? <ul>{extras.goals.map((goal) => <li key={goal}>{goal}</li>)}</ul>
-        : <p className="muted">No learning goals are saved in your education profile yet. Your own goals will appear here after you add them to your profile.</p>}
-      <p className="muted">Goals are copied from your private student profile. Completing sessions does not automatically certify these goals.</p>
+        : <p className="muted">No learning goals yet. Use section 9, My Mentorship, to add a private goal or complete your education profile.</p>}
+      <p className="muted">Goals come from your private My Mentorship plans and education profile. Completing sessions does not automatically certify these goals.</p>
 
       </div>
       <div className="section-heading"><h3>Mentors suggested for your interests</h3></div>

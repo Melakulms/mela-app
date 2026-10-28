@@ -133,3 +133,46 @@ it('does not claim a reflection was saved if no persisted record was confirmed',
   expect(screen.queryByText(/Your private reflection was saved/)).toBeNull()
   expect((screen.getByLabelText('What I learned') as HTMLTextAreaElement).value).toContain('two practical')
 })
+
+
+it('clears private notes and reloads only the current account after session boundary',async()=>{
+  mocks.prepRead.mockResolvedValueOnce({data:[{
+    id:'private-note-1',session_id:'session-1',goal:'First account private goal',
+    questions:'Private planning details from first account',updated_at:'2026-10-28',
+  }],error:null}).mockResolvedValue({data:[],error:null})
+  render(<MentorshipSessionJourney sessions={[session('completed')]}/>)
+  const picker=screen.getByLabelText('Select session') as HTMLSelectElement
+  await waitFor(()=>expect(picker.disabled).toBe(false))
+  fireEvent.change(picker,{target:{value:'session-1'}})
+  expect((screen.getByLabelText('Session goal') as HTMLInputElement).value).toBe('First account private goal')
+  fireEvent.change(screen.getByLabelText('Session goal'),{target:{value:'Unsent private draft'}})
+
+  fireEvent(window,new Event('mela:session-boundary'))
+  expect((picker as HTMLSelectElement).value).toBe('')
+  expect(screen.queryByDisplayValue('Unsent private draft')).toBeNull()
+  await waitFor(()=>expect(mocks.prepRead).toHaveBeenCalledTimes(2))
+  await waitFor(()=>expect(picker.disabled).toBe(false))
+  fireEvent.change(picker,{target:{value:'session-1'}})
+  expect((screen.getByLabelText('Session goal') as HTMLInputElement).value).toBe('')
+  expect(screen.queryByDisplayValue('First account private goal')).toBeNull()
+})
+
+it('ignores a previous accounts late save response after sign-out',async()=>{
+  let resolveSave:(value:unknown)=>void=()=>{}
+  mocks.prepInsert.mockImplementationOnce(()=>new Promise(resolve=>{resolveSave=resolve}))
+  render(<MentorshipSessionJourney sessions={[session('scheduled')]}/>)
+  const picker=screen.getByLabelText('Select session') as HTMLSelectElement
+  await waitFor(()=>expect(picker.disabled).toBe(false))
+  fireEvent.change(picker,{target:{value:'session-1'}})
+  fireEvent.change(screen.getByLabelText('Session goal'),{target:{value:'Confidential first account goal'}})
+  fireEvent.change(screen.getByLabelText('My discussion questions or topics'),{
+    target:{value:'These questions are private to the first account only.'},
+  })
+  fireEvent.click(screen.getByRole('button',{name:'Save my preparation'}))
+  await waitFor(()=>expect(mocks.prepInsert).toHaveBeenCalledOnce())
+  fireEvent(window,new Event('mela:session-boundary'))
+  resolveSave({data:[{id:'old-save'}],error:null})
+  await waitFor(()=>expect(mocks.prepRead).toHaveBeenCalledTimes(2))
+  expect(screen.queryByText('Your private session preparation was saved.')).toBeNull()
+  expect(screen.queryByDisplayValue('Confidential first account goal')).toBeNull()
+})

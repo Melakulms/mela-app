@@ -55,3 +55,19 @@ describe('Mentorship confidential safety reporting',()=>{
     expect(screen.queryByText(/Your safety concern was submitted/)).toBeNull()
   })
 })
+
+
+it('distinguishes a failed confidential report-history read from a real empty history, without blocking new safety reports',async()=>{
+  mocks.read.mockResolvedValueOnce({data:null,error:{message:'Safety history temporarily unavailable'}})
+    .mockResolvedValue({data:[],error:null})
+  render(<MentorshipSafetyReporting mentors={mentors} requests={requests} sessions={sessions}/>)
+  expect(await screen.findByText(/Your private report history could not be verified/)).toBeTruthy()
+  expect(screen.queryByText('No mentorship safety reports on this account.')).toBeNull()
+  fireEvent.change(screen.getByLabelText('Who or what is involved?'),{target:{value:'mentorship_request:request-1'}})
+  fireEvent.change(screen.getByLabelText('Concern'),{target:{value:'Other mentorship safety concern'}})
+  fireEvent.change(screen.getByLabelText(/Describe what happened/),{target:{value:'This matter needs confidential review by the safety team.'}})
+  fireEvent.click(screen.getByRole('button',{name:'Send confidential safety report'}))
+  await waitFor(()=>expect(mocks.rpc).toHaveBeenCalledTimes(1))
+  expect(await screen.findByText(/Your safety concern was submitted to MELA moderation/)).toBeTruthy()
+  expect(await screen.findByText('No mentorship safety reports on this account.')).toBeTruthy()
+})

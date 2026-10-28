@@ -13,12 +13,14 @@ beforeEach(() => {
   vi.resetAllMocks()
   mocks.getUser.mockResolvedValue({data:{user:{id:'learner'}},error:null})
   mocks.read.mockResolvedValue({data:[],error:null})
-  mocks.insert.mockResolvedValue({error:null})
+  mocks.insert.mockResolvedValue({data:[{id:'saved-record'}],error:null})
   mocks.update.mockResolvedValue({data:[{id:'p1'}],error:null})
   mocks.from.mockImplementation((table: string) => ({
     select: () => ({eq: (field: string, value: string) => ({in: (key: string, ids: string[]) => mocks.read(table, field, value, key, ids)})}),
-    insert: (payload: unknown) => mocks.insert(table,payload),
-    update: (payload: unknown) => ({eq: (_key:string,id:string) => ({select: () => mocks.update(table,id,payload)})}),
+    insert: (payload: unknown) => ({select: () => mocks.insert(table,payload)}),
+    update: (payload: unknown) => ({eq: (_key:string,id:string) => ({
+      eq: (_ownerKey:string,ownerId:string) => ({select: () => mocks.update(table,id,payload,ownerId)}),
+    })}),
   }))
 })
 afterEach(cleanup)
@@ -132,4 +134,21 @@ it('keeps an unsaved preparation draft when only reflections fail, then recovers
   expect((screen.getByLabelText('Session goal') as HTMLInputElement).value).toBe('Prepare my portfolio')
   expect((screen.getByLabelText('My discussion questions or topics') as HTMLTextAreaElement).value).toBe('How can I improve my first project?')
   expect(screen.getByLabelText('What I learned')).toBeTruthy()
+})
+
+
+it('requires a signed-in learner match to update an existing private preparation',async()=>{
+  mocks.read.mockImplementation((table:string)=>Promise.resolve({error:null,data:
+    table.endsWith('preparations') ? [{
+      id:'preparation-id',session_id:'s1',goal:'Previous goal',
+      questions:'Previous discussion questions',updated_at:'2026-10-01',
+    }] : []}))
+  render(<MentorshipSessionJourney sessions={[session]}/>)
+  await selectSession()
+  fillPreparation()
+  fireEvent.click(screen.getByRole('button',{name:'Update my private preparation'}))
+  await waitFor(()=>expect(mocks.update).toHaveBeenCalledOnce())
+  expect(mocks.update).toHaveBeenCalledWith('mentorship_session_preparations','preparation-id',{
+    goal:'Prepare my portfolio', questions:'How can I improve my first project?',
+  },'learner')
 })

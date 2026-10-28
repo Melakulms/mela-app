@@ -134,3 +134,22 @@ it('prevents learner evidence submission when existing category already has a cl
   expect((screen.getByRole('button',{name:'Submit for mentor review'}) as HTMLButtonElement).disabled).toBe(true)
   expect(mocks.insert).not.toHaveBeenCalled()
 })
+
+
+it('shows actual saved claims when independent administrator verification read fails',async()=>{
+  mocks.read.mockResolvedValue({data:[{
+    id:'saved-claim',session_id:'session-1',learner_id:'learner-1',mentor_id:'mentor-1',
+    category:'career',outcome_text:'I learned how to improve my practical CV and planning process.',
+    status:'mentor_supported',review_notes:'Observed the learner exercise.',
+    created_at:'2026-10-25',
+  }],error:null})
+  mocks.verificationRead.mockResolvedValue({data:null,error:{message:'Independent verification offline'}})
+  render(<MentorshipOutcomeReview mode="learner" sessions={[completedSession]}/>)
+  expect(await screen.findByText(/I learned how to improve my practical CV/)).toBeTruthy()
+  expect(screen.getByText(/independent administrator verification details could not be loaded/)).toBeTruthy()
+  expect(screen.getByText(/Independent verification offline/)).toBeTruthy()
+  fireEvent.change(screen.getByLabelText('Completed session'),{target:{value:'session-1'}})
+  expect((screen.getByRole('button',{name:'Submit for mentor review'}) as HTMLButtonElement).disabled).toBe(true)
+  expect(mocks.insert).not.toHaveBeenCalled()
+  expect(screen.queryByText(/Supporting evidence reviewed by MELA administration/)).toBeNull()
+})

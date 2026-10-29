@@ -1,4 +1,4 @@
-const CACHE = 'mela-shell-v13-passport-visible'
+const CACHE = 'mela-shell-v14-mentorship-16-cards'
 const scopeUrl = new URL(self.registration.scope)
 const shellUrl = scopeUrl.pathname
 const offlineUrl = `${shellUrl}offline.html`

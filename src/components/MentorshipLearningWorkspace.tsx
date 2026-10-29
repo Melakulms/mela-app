@@ -3,7 +3,7 @@ import {
   addMentorshipGoal, assignmentProgress, mentorshipActionSummary, createMentorshipAssignment,
   deleteMentorshipGoal, loadMentorshipWorkspace, sendMentorshipFeedback, updateMentorshipGoal,
   setMentorshipGoalStatus, submitMentorshipAssignment,
-  type MentorshipWorkspace, type MentorshipGoal,
+  type MentorshipWorkspace, type MentorshipGoal, type MentorshipAssignment,
 } from '../lib/mentorship-workspace'
 import { supabase } from '../lib/supabase'
 import MentorshipGroupInterest from './MentorshipGroupInterest'

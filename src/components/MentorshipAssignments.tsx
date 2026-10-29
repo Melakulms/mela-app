@@ -15,6 +15,8 @@ export default function MentorshipAssignments({role}:{role:AssignmentRole}) {
   const [revision,setRevision]=useState(0)
   const [busy,setBusy]=useState(false)
   const lock=useRef(false)
+  // Invalidates unresolved reads and writes immediately on account changes.
+  const sessionEpoch=useRef(0)
   const [requestId,setRequestId]=useState('')
   const [title,setTitle]=useState('')
   const [instructions,setInstructions]=useState('')
@@ -25,6 +27,8 @@ export default function MentorshipAssignments({role}:{role:AssignmentRole}) {
 
   useEffect(()=>{
     const forget=()=>{
+      sessionEpoch.current+=1
+      setLoading(false)
       setWorkspace(null);setAnswers({});setReviews({});setRequestId('');
       setTitle('');setInstructions('');setDueLocal('');setError('');setNotice('');
     }
@@ -33,26 +37,31 @@ export default function MentorshipAssignments({role}:{role:AssignmentRole}) {
   },[])
   useEffect(()=>{
     let active=true
+    const epoch=++sessionEpoch.current
     setLoading(true);setWorkspace(null);setError('')
     setAnswers({});setReviews({});setRequestId('')
     setTitle('');setInstructions('');setDueLocal('')
     void loadAssignmentWorkspace(role)
-      .then(result=>{if(active)setWorkspace(result)})
-      .catch(reason=>{if(active)setError(reason instanceof Error?reason.message:'Assignments cannot load.')})
-      .finally(()=>{if(active)setLoading(false)})
+      .then(result=>{if(active&&epoch===sessionEpoch.current)setWorkspace(result)})
+      .catch(reason=>{if(active&&epoch===sessionEpoch.current)setError(reason instanceof Error?reason.message:'Assignments cannot load.')})
+      .finally(()=>{if(active&&epoch===sessionEpoch.current)setLoading(false)})
     return()=>{active=false}
   },[role,revision])
 
   const mutate=async (operation:()=>Promise<void>,success:string)=>{
     if(lock.current)return
+    const epoch=sessionEpoch.current
     lock.current=true;setBusy(true);setError('');setNotice('')
     try{
       await operation()
-      setNotice(success)
-      // Reset only after the server confirms success.
-      setRevision(value=>value+1)
+      if(epoch===sessionEpoch.current){
+        setNotice(success)
+        // Reset only after the server confirms success.
+        setRevision(value=>value+1)
+      }
     }catch(reason){
-      setError(reason instanceof Error?reason.message:'Could not save. Your draft is unchanged.')
+      if(epoch===sessionEpoch.current)
+        setError(reason instanceof Error?reason.message:'Could not save. Your draft is unchanged.')
     }finally{lock.current=false;setBusy(false)}
   }
 

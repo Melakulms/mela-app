@@ -26,7 +26,7 @@ afterEach(cleanup)
 
 it('reads only published guidance and renders text safely, with no booking action', async () => {
   render(<MentorshipGuidanceResources />)
-  expect(mocks.from).toHaveBeenCalledWith('mentorship_resources')
+  await waitFor(() => expect(mocks.from).toHaveBeenCalledWith('mentorship_resources'))
   const title = await screen.findByText('Prepare for a mentor session')
   fireEvent.click(title)
   expect(screen.getByText('Do not share passwords.')).toBeTruthy()

@@ -48,7 +48,10 @@ type SubmissionResult = {
   submitted_at: string | null
 }
 
-const errorMessage = (cause: unknown, fallback: string) => cause instanceof Error ? cause.message : fallback
+const errorMessage = (cause: unknown, fallback: string) => {
+  if (cause && typeof cause === 'object' && 'message' in cause && typeof cause.message === 'string') return cause.message
+  return fallback
+}
 
 function attemptLabel(attempt: Attempt) {
   if (attempt.status === 'review_required') return attempt.passed ? `Passed ${attempt.score ?? 0}% · review pending` : `Score ${attempt.score ?? 0}% · review pending`
@@ -182,6 +185,7 @@ function AssessmentSession({ assessment, priorAttempts, onBack, onFinished }: {
   const [result, setResult] = useState<SubmissionResult | null>(null)
   const [now, setNow] = useState(Date.now())
   const lock = useRef(false)
+  const saveQueue = useRef<Promise<void>>(Promise.resolve())
 
   const remainingMs = useMemo(() => {
     if (!attempt) return assessment.duration_minutes * 60_000
@@ -216,14 +220,48 @@ function AssessmentSession({ assessment, priorAttempts, onBack, onFinished }: {
     }
   }, [attempt, result])
 
-  const persistAnswer = useCallback(async (questionId: string, response: unknown) => {
-    if (!attempt) return
-    const { error: saveError } = await supabase.from('assessment_responses').upsert(
-      { attempt_id: attempt.id, question_id: questionId, response },
-      { onConflict: 'attempt_id,question_id' },
-    )
-    if (saveError) setError('Your answer could not be autosaved. It will be retried when you submit.')
+  // Serialize writes so an older autosave cannot overwrite a newer answer.
+  const persistAnswer = useCallback((questionId: string, response: unknown) => {
+    if (!attempt) return Promise.resolve()
+    const save = saveQueue.current.catch(() => {}).then(async () => {
+      const { error: saveError } = await supabase.from('assessment_responses').upsert(
+        { attempt_id: attempt.id, question_id: questionId, response },
+        { onConflict: 'attempt_id,question_id' },
+      )
+      if (saveError) throw saveError
+    })
+    saveQueue.current = save
+    return save.catch(() => {
+      setError('Your answer could not be autosaved. Use Save & exit or Submit to retry.')
+    })
   }, [attempt])
+
+  const saveAllAnswers = async () => {
+    await saveQueue.current.catch(() => {})
+    for (const [questionId, response] of Object.entries(answers)) {
+      const { error: saveError } = await supabase.from('assessment_responses').upsert(
+        { attempt_id: attempt!.id, question_id: questionId, response },
+        { onConflict: 'attempt_id,question_id' },
+      )
+      if (saveError) throw saveError
+    }
+  }
+
+  const saveAndExit = async () => {
+    if (lock.current) return
+    lock.current = true
+    setBusy(true)
+    setError('')
+    try {
+      await saveAllAnswers()
+      onBack()
+    } catch (cause) {
+      setError(errorMessage(cause, 'Could not save your answers. Stay on this page and retry Save & exit.'))
+    } finally {
+      lock.current = false
+      setBusy(false)
+    }
+  }
 
   const openAttempt = async () => {
     if (lock.current) return
@@ -313,14 +351,10 @@ function AssessmentSession({ assessment, priorAttempts, onBack, onFinished }: {
     lock.current = true
     setBusy(true)
     setError('')
+    let submissionSent = false
     try {
-      for (const [questionId, response] of Object.entries(answers)) {
-        const { error: saveError } = await supabase.from('assessment_responses').upsert(
-          { attempt_id: attempt.id, question_id: questionId, response },
-          { onConflict: 'attempt_id,question_id' },
-        )
-        if (saveError) throw saveError
-      }
+      await saveAllAnswers()
+      submissionSent = true
       const { data, error: submitError } = await supabase.rpc('submit_my_assessment_attempt', { p_attempt_id: attempt.id })
       if (submitError) throw submitError
       const submitted = data as SubmissionResult
@@ -329,6 +363,18 @@ function AssessmentSession({ assessment, priorAttempts, onBack, onFinished }: {
         void supabase.functions.invoke('mela-proctor', { body: { action: 'status', attempt_id: attempt.id } }).catch(() => {})
       }
     } catch (cause) {
+      // A lost response can hide a successful commit. Reconcile before retrying.
+      if (submissionSent) {
+        try {
+          const { data: saved, error: readError } = await supabase.from('assessment_attempts')
+            .select('id,status,score,passed,proctor_status,duration_seconds,submitted_at')
+            .eq('id', attempt.id).maybeSingle()
+          if (!readError && saved && ['graded', 'review_required', 'void'].includes(saved.status)) {
+            setResult(saved as SubmissionResult)
+            return
+          }
+        } catch { /* Preserve the original submission error if reconciliation is unavailable. */ }
+      }
       setError(errorMessage(cause, 'Could not submit. Your saved answers remain available to retry.'))
     } finally {
       lock.current = false
@@ -342,7 +388,7 @@ function AssessmentSession({ assessment, priorAttempts, onBack, onFinished }: {
       : result.status === 'void'
         ? 'This attempt was finalized as void because the server time limit was exceeded. No score or verified skill was issued.'
         : result.passed
-          ? `Passed with ${result.score ?? 0}%. Your verified assessment evidence has been processed.`
+          ? `Passed with ${result.score ?? 0}%. Check your Career Passport for issued evidence; a passing score alone does not confirm a credential.`
           : `Submitted with score ${result.score ?? 0}%. This attempt did not meet the passing score.`
     return <div className="dash-main">
       <div className="section-heading"><h1>{assessment.title}</h1></div>
@@ -378,13 +424,14 @@ function AssessmentSession({ assessment, priorAttempts, onBack, onFinished }: {
   return <div className="dash-main">
     <div className="section-heading">
       <h1>{assessment.title}</h1>
-      <button className="btn btn-secondary" disabled={busy} onClick={onBack}>Save & exit</button>
+      <button className="btn btn-secondary" disabled={busy} onClick={saveAndExit}>Save & exit</button>
     </div>
     <div className={expired ? 'banner banner-error' : 'banner banner-info'} role="status">
-      {expired ? 'Time has expired. Finalize the attempt now; the server will mark it void.' : `Time remaining: ${formatRemaining(remainingMs)}`}
+      {expired ? 'Time has expired. Finalize the attempt now; the server determines the final result.' : `Time remaining: ${formatRemaining(remainingMs)}`}
     </div>
     {attempt.proctored && <p className="muted">Integrity monitoring is active for tab/window visibility and network changes. Verification remains pending until proctor review clears the submitted attempt.</p>}
     {error && <div className="banner banner-error" role="alert">{error}</div>}
+    <p className="muted">{questions.filter(question => { const value = answers[question.question_id ?? question.id ?? '']; return value != null && String(value).trim() !== '' }).length} of {questions.length} answered. The timer continues when you leave.</p>
     <div className="list-panel">
       {questions.map((question, index) => {
         const id = question.question_id ?? question.id ?? `question-${index}`

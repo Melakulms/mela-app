@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
 
 type Guide = {
   id: string
@@ -42,6 +41,10 @@ export default function MentorshipGuidanceResources() {
     setBusy(true); setError('')
     void (async () => {
       try {
+        // Load the client when the resource panel is actually used. If an
+        // offline/install session has no API configuration, cached public
+        // guidance still works and does not prevent mentorship navigation.
+        const { supabase } = await import('../lib/supabase')
         const { data, error: apiError } = await supabase
           .from('mentorship_resources')
           .select('id,title,category,description,content,status')

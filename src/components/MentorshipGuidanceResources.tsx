@@ -85,7 +85,7 @@ export default function MentorshipGuidanceResources() {
     {offlineCache && <p className="banner banner-info" role="status">
       Showing saved public guides while the connection is unavailable.
     </p>}
-    {error && <p className="banner banner-error" role="alert">{error}</p>}
+    {error && <p className="banner banner-error" role="status">{error}</p>}
     {!busy && !error && guides.length === 0 && <p>No published guides are available yet.</p>}
     {guides.length > 0 && <div style={{ display: 'grid', gap: '.75rem' }}>
       {guides.map(guide => <details key={guide.id} className="module-card"

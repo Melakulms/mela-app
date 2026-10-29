@@ -14,10 +14,12 @@ import {
 import { useI18n } from '../i18n'
 import MentorshipGuidanceResources from '../components/MentorshipGuidanceResources'
 import MentorshipPreparationStudio from '../components/MentorshipPreparationStudio'
+import MentorshipAssignments from '../components/MentorshipAssignments'
 
 export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack: () => void; stageKey?: string | null; onOpenSafety?: () => void }) {
   const { t } = useI18n()
   const [query, setQuery] = useState('')
+  const [showAssignments,setShowAssignments]=useState(false)
   const [mentors, setMentors] = useState<Mentor[] | null>(null)
   const [requests, setRequests] = useState<MyMentorshipRequest[]>([])
   const [sessions, setSessions] = useState<MentorshipSession[]>([])
@@ -135,6 +137,12 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         <p>Keep passwords, payment details and identity documents private. Report uncomfortable behaviour through Safety & Privacy. A scheduled session does not yet include an in-app video call.</p>
       </details>
       <MentorshipGuidanceResources />
+      {!blockedStage&&<section aria-label="Mentorship assignment entry">
+        <button type="button" className="btn btn-secondary" onClick={()=>setShowAssignments(value=>!value)}>
+          {showAssignments?'Close assignments':'Open my assignments and feedback'}
+        </button>
+        {showAssignments&&<MentorshipAssignments role="learner"/>}
+      </section>}
       {notice && <p className="banner banner-info" role="status">{notice}</p>}
       {error && <div className="banner banner-error" role="alert">{error}</div>}
       {loading && <p className="muted" role="status">Loading mentorship…</p>}

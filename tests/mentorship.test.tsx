@@ -169,7 +169,7 @@ describe('Mentorship', () => {
     expect((await screen.findByRole('alert')).textContent).toContain('Try again')
     expect((screen.getByLabelText('Topic') as HTMLInputElement).value).toBe('Study plan')
     expect((screen.getByLabelText('Preferred session time (optional)') as HTMLInputElement).value).toBe('2099-11-01T10:00')
-    expect(mocks.requestMentor).toHaveBeenCalledWith('mentor-1', 'Study plan', '', '2099-11-01T10:00')
+    expect(mocks.requestMentor).toHaveBeenCalledWith('mentor-1', 'Study plan', '', '2099-11-01T10:00', Intl.DateTimeFormat().resolvedOptions().timeZone || 'Africa/Addis_Ababa')
   })
 
   it('shows follow-up notes and allows a new request after a completed session', async () => {
@@ -213,7 +213,7 @@ describe('Mentorship', () => {
     fireEvent.click(send)
 
     await waitFor(() => expect(mocks.requestMentor).toHaveBeenCalledTimes(1))
-    expect(mocks.requestMentor).toHaveBeenCalledWith('mentor-1', 'CV review', 'Please review my CV.')
+    expect(mocks.requestMentor).toHaveBeenCalledWith('mentor-1', 'CV review', 'Please review my CV.', '', Intl.DateTimeFormat().resolvedOptions().timeZone || 'Africa/Addis_Ababa')
     await waitFor(() => expect(mocks.fetchVerifiedMentorsPage).toHaveBeenCalledTimes(2))
   })
 

@@ -171,7 +171,10 @@ export async function fetchMyMentorshipSessions(): Promise<MentorshipSession[]> 
   }) as MentorshipSession[]
 }
 
-export async function requestMentor(mentorId: string, topic: string, message: string, preferredAt = ''): Promise<void> {
+export async function requestMentor(
+  mentorId: string, topic: string, message: string,
+  preferredAt = '', preferredTimezone?: string
+): Promise<void> {
   const cleanMentorId = mentorId.trim()
   const cleanTopic = topic.trim()
   const cleanMessage = message.trim()
@@ -182,6 +185,11 @@ export async function requestMentor(mentorId: string, topic: string, message: st
   const preferred = preferredAt ? new Date(preferredAt) : null
   if (preferred && (!Number.isFinite(preferred.getTime()) || preferred.getTime() <= Date.now())) throw new Error('Choose a future preferred time.')
 
+  const preferredZone = preferredTimezone?.trim()
+  if (preferredZone) {
+    try { new Intl.DateTimeFormat('en-US', { timeZone: preferredZone }) }
+    catch { throw new Error('Choose a valid IANA time zone for your mentorship request.') }
+  }
   const userId = await requireUserId()
   const { error } = await supabase.from('mentorship_requests').insert({
     mentee_id: userId,
@@ -189,6 +197,7 @@ export async function requestMentor(mentorId: string, topic: string, message: st
     topic: cleanTopic,
     message: cleanMessage || null,
     preferred_at: preferred?.toISOString() ?? null,
+    ...(preferredZone ? { preferred_timezone: preferredZone } : {}),
     status: 'pending',
   })
   if (error) throw error

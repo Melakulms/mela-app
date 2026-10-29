@@ -3,6 +3,10 @@ import { supabase } from '../lib/supabase'
 import { sessionEndTime } from '../lib/mentorship-calendar'
 import MentorshipCalendarButton from './MentorshipCalendarButton'
 import MentorAvailabilityManager from './MentorAvailabilityManager'
+import MentorMfaGate from './MentorMfaGate'
+import MentorNotesEditor from './MentorNotesEditor'
+import MentorBackupAuthenticator from './MentorBackupAuthenticator'
+import { decideMfaGate, getMentorMfaSnapshot } from '../lib/mentor-mfa'
 import { cancelMentorshipSession, completeMentorshipSession, DECLINE_NOTE_MAX, respondToMentorshipRequest, scheduleMentorshipSession, type DeclineReasonCode, type MentorshipSession } from '../lib/mentorship'
 import { DECLINE_REASON_OPTIONS } from '../lib/mentorship-status-copy'
 import { useI18n } from '../i18n'
@@ -21,6 +25,8 @@ export default function MentorLifecycle({ onChanged }: { onChanged: () => void }
   const [scheduledAt, setScheduledAt] = useState('')
   const [duration, setDuration] = useState(30)
   const [completionNotes, setCompletionNotes] = useState<Record<string, string>>({})
+  const [completeGateFor, setCompleteGateFor] = useState<string | null>(null)
+  const [editorFor, setEditorFor] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [loadFailed, setLoadFailed] = useState(false)
   const [requestsError, setRequestsError] = useState('')
@@ -100,6 +106,21 @@ export default function MentorLifecycle({ onChanged }: { onChanged: () => void }
 
   const hasValidFutureTime = scheduledAt !== '' && Number.isFinite(Date.parse(scheduledAt)) &&
     Date.parse(scheduledAt) > Date.now()
+  const finishCompletion = (sessionId: string) => run(`complete-${sessionId}`, async () => {
+    await completeMentorshipSession(sessionId, completionNotes[sessionId] ?? '')
+    setCompletionNotes(current => { const next = { ...current }; delete next[sessionId]; return next })
+    setCompleteGateFor(null)
+  })
+  const completeWithNotes = async (sessionId: string) => {
+    if (!(completionNotes[sessionId] ?? '').trim()) return finishCompletion(sessionId)
+    try {
+      const current = decideMfaGate(await getMentorMfaSnapshot())
+      if (current === 'ready') return finishCompletion(sessionId)
+      setCompleteGateFor(sessionId)
+    } catch {
+      setError('Two-step verification could not be checked. Session completion is paused.')
+    }
+  }
   const schedule = (requestId: string) => run(`schedule-${requestId}`, async () => {
     if (!hasValidFutureTime) throw new Error('Choose a valid future session time in your device time zone.')
     if (loading || sessionsError || requestsError) throw new Error('Refresh your complete request and session history before scheduling.')
@@ -122,6 +143,7 @@ export default function MentorLifecycle({ onChanged }: { onChanged: () => void }
 
   return <section>
     <MentorAvailabilityManager />
+    <MentorBackupAuthenticator />
     <p>Read the learner’s goal before accepting. Add follow-up notes after the session so the learner has a clear next step. Notes are visible to the learner.</p>
     <p className="muted">Session entry times use your device time zone ({Intl.DateTimeFormat().resolvedOptions().timeZone}). You must first publish weekly mentoring hours covering the complete appointment in your chosen availability time zone. The system rejects overlapping appointments. Scheduling does not activate video calls.</p>
     <div className="section-heading"><h2>Mentorship requests</h2><button className="btn btn-secondary" disabled={loading || !!busy} onClick={() => setRevision((value) => value + 1)}>Refresh</button></div>
@@ -172,9 +194,19 @@ export default function MentorLifecycle({ onChanged }: { onChanged: () => void }
             <button className="btn btn-primary" disabled={!!busy || !hasValidFutureTime} onClick={() => schedule(request.id)}>{busy === `schedule-${request.id}` ? 'Scheduling…' : 'Save session'}</button>{' '}
             <button className="btn btn-secondary" disabled={!!busy} onClick={() => { setScheduleFor(null); setScheduledAt('') }}>Cancel</button>
           </div>}
+          {session && (session.status === 'scheduled' || session.status === 'completed') && <div style={{ width: '100%' }}>
+            {completeGateFor === session.id && <MentorMfaGate purpose="complete this session with notes"
+              onReady={() => { void finishCompletion(session.id) }}
+              onCancel={() => setCompleteGateFor(null)} />}
+            {editorFor === session.id
+              ? <MentorNotesEditor sessionId={session.id} onPublished={onChanged}
+                  onClose={() => setEditorFor(null)} />
+              : <button className="btn btn-secondary" disabled={!!busy}
+                  onClick={() => setEditorFor(session.id)}>Draft and publish notes</button>}
+          </div>}
           {session?.status === 'scheduled' && <span>
             <div className="field"><label htmlFor={`mentor-notes-${session.id}`}>Follow-up notes for the learner (optional)</label><textarea id={`mentor-notes-${session.id}`} rows={3} maxLength={2000} disabled={!!busy} value={completionNotes[session.id] ?? ''} onChange={e => setCompletionNotes(current => ({ ...current, [session.id]: e.target.value }))} placeholder="What did you cover? What should the learner do next?" /></div>
-            <button className="btn btn-primary" disabled={!!busy || !Number.isFinite(sessionEndTime(session)) || sessionEndTime(session) > Date.now()} onClick={() => run(`complete-${session.id}`, async () => { await completeMentorshipSession(session.id, completionNotes[session.id] ?? ''); setCompletionNotes(current => { const next = { ...current }; delete next[session.id]; return next }) })}>{busy === `complete-${session.id}` ? 'Saving…' : 'Mark complete'}</button>{' '}
+            <button className="btn btn-primary" disabled={!!busy || !Number.isFinite(sessionEndTime(session)) || sessionEndTime(session) > Date.now()} onClick={() => { void completeWithNotes(session.id) }}>{busy === `complete-${session.id}` ? 'Saving…' : 'Mark complete'}</button>{' '}
             <button className="btn btn-secondary" disabled={!!busy} onClick={() => run(`cancel-${session.id}`, () => cancelMentorshipSession(session.id, 'Cancelled by mentor'))}>{busy === `cancel-${session.id}` ? 'Cancelling…' : 'Cancel session'}</button>
           </span>}
         </div>

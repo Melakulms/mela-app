@@ -1,0 +1,139 @@
+import { useEffect, useRef, useState } from 'react'
+import {
+  decideMfaGate, discardUnfinishedTotp, getMentorMfaSnapshot, mapMfaError,
+  startTotpEnrollment, verifyExistingTotp, verifyTotp, listVerifiedTotpFactors,
+  requestMentorMfaRecovery, type RecoveryReason,
+  type MfaGateState, type TotpEnrollment, type VerifiedTotp,
+} from '../lib/mentor-mfa'
+
+/** Usability gate only. Privileged RPCs still validate signed JWT and AAL2 server-side. */
+export default function MentorMfaGate({ purpose, onReady, onCancel }: {
+  purpose: string
+  onReady: () => void
+  onCancel: () => void
+}) {
+  const [state, setState] = useState<MfaGateState | 'loading' | 'unavailable'>('loading')
+  const [enrollment, setEnrollment] = useState<TotpEnrollment | null>(null)
+  const [code, setCode] = useState('')
+  const [showRecovery, setShowRecovery] = useState(false)
+  const [recoveryReason, setRecoveryReason] = useState<RecoveryReason>('lost_device')
+  const [recoveryNotice, setRecoveryNotice] = useState('')
+  const [factors, setFactors] = useState<VerifiedTotp[]>([])
+  const [factorId, setFactorId] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const once = useRef(false)
+  const onReadyRef = useRef(onReady)
+  onReadyRef.current = onReady
+
+  const finish = () => {
+    if (!once.current) { once.current = true; onReadyRef.current() }
+  }
+  useEffect(() => {
+    let mounted = true
+    getMentorMfaSnapshot().then(s => {
+      if (!mounted) return
+      const next = decideMfaGate(s)
+      if (next === 'ready') {
+        if (!once.current) { once.current = true; onReadyRef.current() }
+      } else {
+        setState(next)
+        if (next === 'verify') {
+          void listVerifiedTotpFactors().then(items => {
+            if (!mounted) return
+            setFactors(items)
+            setFactorId(items[0]?.id ?? '')
+          }).catch(() => { if (mounted) setState('unavailable') })
+        }
+      }
+    }).catch(() => { if (mounted) setState('unavailable') })
+    return () => { mounted = false }
+  }, [])
+
+  const execute = async (fn: () => Promise<void>) => {
+    if (busy) return
+    setBusy(true); setError('')
+    try { await fn(); finish() }
+    catch (cause) { setError(mapMfaError(cause)) }
+    finally { setBusy(false) }
+  }
+
+  const enroll = async (restart = false) => {
+    if (busy) return
+    setBusy(true); setError('')
+    try {
+      if (restart) await discardUnfinishedTotp()
+      const factor = await startTotpEnrollment()
+      setEnrollment(factor); setCode(''); setState('enroll')
+    } catch (cause) { setError(mapMfaError(cause)) }
+    finally { setBusy(false) }
+  }
+
+  if (state === 'loading') return <p role="status">Checking two-step verification…</p>
+  if (state === 'unavailable') return <div className="banner banner-error" role="alert">
+    Two-step verification could not be checked. {purpose} is paused.
+    <button className="btn btn-secondary" onClick={onCancel}>Close</button>
+  </div>
+
+  return <div className="empty-panel" role="group" aria-label="Two-step verification" style={{ textAlign: 'left' }}>
+    <h3>Two-step verification required</h3>
+    <p>To {purpose}, verify with an authenticator app. You can cancel without losing saved notes.</p>
+    {state === 'enroll' && !enrollment && <button className="btn btn-primary" disabled={busy} onClick={() => void enroll()}>
+      Set up authenticator
+    </button>}
+    {state === 'resume_setup' && <button className="btn btn-primary" disabled={busy} onClick={() => void enroll(true)}>
+      Restart unfinished setup
+    </button>}
+    {state === 'enroll' && enrollment && <>
+      <p>Scan this QR code using your authenticator app, or enter the setup key manually.</p>
+      <img src={enrollment.qrCode} alt="Authenticator setup QR code" width={180} height={180} />
+      <p>Setup key: <code style={{ overflowWrap: 'anywhere' }}>{enrollment.secret}</code></p>
+    </>}
+    {state === 'verify' && factors.length > 1 && <div className="field">
+      <label htmlFor="mentor-factor-picker">Choose an authenticator device</label>
+      <select id="mentor-factor-picker" value={factorId} disabled={busy} onChange={e => setFactorId(e.target.value)}>
+        {factors.map(f => <option key={f.id} value={f.id}>{f.friendlyName}</option>)}
+      </select>
+    </div>}
+    {(state === 'verify' || (state === 'enroll' && enrollment)) && <>
+      <label htmlFor="mentor-two-step-code">6-digit authenticator code</label>
+      <input id="mentor-two-step-code" inputMode="numeric" autoComplete="one-time-code" maxLength={6}
+        value={code} disabled={busy} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} />
+      <button className="btn btn-primary" disabled={busy || code.length !== 6} onClick={() => void execute(() =>
+        enrollment ? verifyTotp(enrollment.factorId, code) : verifyExistingTotp(code, factorId || undefined))}>
+        {busy ? 'Verifying…' : 'Verify'}
+      </button>
+    </>}
+    {state === 'verify' && <>
+      <p className="muted">Lost both authenticators? Recovery requires independent staff identity verification. A password alone cannot reset MFA.</p>
+      {!showRecovery ? <button type="button" className="btn btn-secondary" disabled={busy}
+        onClick={() => setShowRecovery(true)}>Request lost-device recovery</button> :
+        <div role="group" aria-label="Authenticator recovery request" className="empty-panel">
+          <label htmlFor="mentor-recovery-reason">Why do you need recovery?</label>
+          <select id="mentor-recovery-reason" value={recoveryReason} disabled={busy}
+            onChange={e => setRecoveryReason(e.target.value as RecoveryReason)}>
+            <option value="lost_device">Phone or authenticator lost</option>
+            <option value="all_factors_unavailable">Both authenticators unavailable</option>
+            <option value="device_compromised">Authenticator device compromised</option>
+          </select>
+          <button type="button" className="btn btn-primary" disabled={busy}
+            onClick={() => void (async () => {
+              if (busy) return
+              setBusy(true); setError('')
+              try {
+                const response = await requestMentorMfaRecovery(recoveryReason)
+                setRecoveryNotice(response)
+                setShowRecovery(false)
+              } catch (cause) {
+                setError(cause instanceof Error ? cause.message : 'Recovery request failed.')
+              } finally { setBusy(false) }
+            })()}>Submit recovery request</button>
+          <button type="button" className="btn btn-secondary" disabled={busy}
+            onClick={() => setShowRecovery(false)}>Not now</button>
+        </div>}
+      {recoveryNotice && <p className="banner banner-info" role="status">{recoveryNotice}</p>}
+    </>}
+    {error && <p role="alert" className="banner banner-error">{error}</p>}
+    <button className="btn btn-secondary" disabled={busy} onClick={onCancel}>Not now</button>
+  </div>
+}

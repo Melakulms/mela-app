@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import {
   cancelMentorshipRequest,
   cancelMentorshipSession,
@@ -14,7 +14,8 @@ import {
 import { useI18n } from '../i18n'
 import MentorshipGuidanceResources from '../components/MentorshipGuidanceResources'
 import MentorshipPreparationStudio from '../components/MentorshipPreparationStudio'
-import MentorshipAssignments from '../components/MentorshipAssignments'
+
+const MentorshipAssignments = lazy(() => import('../components/MentorshipAssignments'))
 
 export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack: () => void; stageKey?: string | null; onOpenSafety?: () => void }) {
   const { t } = useI18n()
@@ -141,7 +142,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         <button type="button" className="btn btn-secondary" onClick={()=>setShowAssignments(value=>!value)}>
           {showAssignments?'Close assignments':'Open my assignments and feedback'}
         </button>
-        {showAssignments&&<MentorshipAssignments role="learner"/>}
+        {showAssignments&&<Suspense fallback={<p role="status">Opening assignments…</p>}><MentorshipAssignments role="learner"/></Suspense>}
       </section>}
       {notice && <p className="banner banner-info" role="status">{notice}</p>}
       {error && <div className="banner banner-error" role="alert">{error}</div>}

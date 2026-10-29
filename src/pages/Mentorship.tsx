@@ -120,6 +120,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         <h1>{t('mentorship')}</h1>
         <button className="btn btn-secondary" onClick={onBack} disabled={!!busy}>{t('back')}</button>
       </div>
+      <MentorshipPreparationStudio />
       <section className="empty-panel" style={{ textAlign: 'left', borderTop: '4px solid #16875f' }}>
         <h2>Build your next step with a mentor</h2>
         <p>Choose a verified mentor, explain your goal, and track your request and session here.</p>
@@ -134,7 +135,6 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         <p>Keep passwords, payment details and identity documents private. Report uncomfortable behaviour through Safety & Privacy. A scheduled session does not yet include an in-app video call.</p>
       </details>
       <MentorshipGuidanceResources />
-      <MentorshipPreparationStudio />
       {notice && <p className="banner banner-info" role="status">{notice}</p>}
       {error && <div className="banner banner-error" role="alert">{error}</div>}
       {loading && <p className="muted" role="status">Loading mentorship…</p>}

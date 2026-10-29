@@ -3,9 +3,8 @@ import TeacherClassrooms from '../components/TeacherClassrooms'
 import TeacherCredentialUpload from '../components/TeacherCredentialUpload'
 import EducatorContentReview from '../components/EducatorContentReview'
 import MentorLifecycle from '../components/MentorLifecycle'
-import MentorshipAssignments from '../components/MentorshipAssignments'
 import ParentLearnerProgress from '../components/ParentLearnerProgress'
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { logoutUser } from '../lib/auth'
 
@@ -123,6 +122,8 @@ function ParentActions({ onLinked }: { onLinked: () => void }) {
   </section>
 }
 
+const MentorshipAssignments = lazy(() => import('../components/MentorshipAssignments'))
+
 export default function RoleDashboard({ role, fullName }: Props) {
   const [revision, setRevision] = useState(0)
   const [showAssignments,setShowAssignments]=useState(false)
@@ -166,7 +167,7 @@ export default function RoleDashboard({ role, fullName }: Props) {
         <button type="button" className="btn btn-secondary" onClick={()=>setShowAssignments(value=>!value)}>
           {showAssignments?'Close assignments':'Open mentor assignments and feedback'}
         </button>
-        {showAssignments&&<MentorshipAssignments role="mentor" />}
+        {showAssignments&&<Suspense fallback={<p role="status">Opening assignments…</p>}><MentorshipAssignments role="mentor" /></Suspense>}
       </section>}
       {role === 'partner' && <div className="banner banner-info" role="status">Partner programs, scholarships and reports require approved institutional membership and server-side permissions. This view shows only your own membership status.</div>}
       {role === 'parent' && <ParentLearnerProgress />}

@@ -3,7 +3,7 @@ import {
   addMentorshipGoal, assignmentProgress, mentorshipActionSummary, createMentorshipAssignment,
   deleteMentorshipGoal, loadMentorshipWorkspace, sendMentorshipFeedback, updateMentorshipGoal,
   setMentorshipGoalStatus, submitMentorshipAssignment,
-  type MentorshipWorkspace, type MentorshipGoal,
+  type MentorshipWorkspace, type MentorshipGoal, type MentorshipAssignment,
 } from '../lib/mentorship-workspace'
 import { supabase } from '../lib/supabase'
 import MentorshipGroupInterest from './MentorshipGroupInterest'
@@ -171,6 +171,27 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
     void run(() => createMentorshipAssignment(relation.id,relation.mentee_id,assignTitle,assignText,assignDue), () => {
       setAssignTitle(''); setAssignText(''); setAssignDue('')
     })
+  }
+
+  // Follow-up revisions are new assignments, not edits to submitted evidence.
+  // The original learner answer and mentor feedback remain immutable.
+  const prepareRevisionTask = (task: MentorshipAssignment, feedbackText: string) => {
+    const relation = accepted.find(item => item.id === task.request_id && item.mentee_id === task.learner_id)
+    if (!relation) {
+      setError('This mentorship is no longer an available accepted relationship. Refresh before assigning further work.')
+      return
+    }
+    setAssignRequest(relation.id)
+    setAssignTitle(('Revision: ' + task.title).slice(0, 160))
+    setAssignText((
+      'Improve your earlier response, explain the changes you made, and use the mentor feedback below.\n\n' +
+      'Mentor feedback: ' + feedbackText + '\n\n' +
+      'Original assignment: ' + task.instructions
+    ).slice(0, 4000))
+    setAssignDue('')
+    setError('')
+    setNotice('A revision assignment draft is ready in the form above. Review it and select Assign to learner to save. The earlier submission and feedback stay unchanged.')
+    document.getElementById('assign-relation')?.focus()
   }
 
   const assignmentDueInvalid = Boolean(assignDue) &&
@@ -349,7 +370,15 @@ export default function MentorshipLearningWorkspace({ mode, stageKey, section = 
                   <button className="btn btn-primary" disabled={busy || (answers[task.id] ?? '').trim().length < 2}
                     onClick={() => void run(() => submitMentorshipAssignment(task.id,answers[task.id] ?? ''), () => setAnswers((v) => { const out = { ...v }; delete out[task.id]; return out }))}>Submit response</button>
                 </div> : <p className="muted">Awaiting learner submission.</p>}
-            {review ? <p><strong>Mentor feedback:</strong> {review.feedback}</p> : answer && mode === 'mentor' && <div className="field">
+            {review && <p><strong>Mentor feedback:</strong> {review.feedback}</p>}
+            {review && mode === 'mentor' && accepted.some(item => item.id === task.request_id && item.mentee_id === task.learner_id) && (
+              <div className="field">
+                <p className="muted">To request another attempt, prepare a new follow-up assignment. The original response and feedback are kept as submitted.</p>
+                <button type="button" className="btn btn-secondary" disabled={busy}
+                  onClick={() => prepareRevisionTask(task, review.feedback)}>Prepare revision task</button>
+              </div>
+            )}
+            {!review && answer && mode === 'mentor' && <div className="field">
               <label htmlFor={`feedback-${task.id}`}>Give constructive feedback</label>
               <p className="muted">Review the learner's actual work. You can insert a feedback structure, then replace each bracketed prompt with your own observations. Templates are not sent automatically.</p>
               <button type="button" className="btn btn-secondary" disabled={busy}

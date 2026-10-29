@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
-      PREVIEW_URL: https://mela-staging-l2bfmdj7n-melakuanteneh1-gmailcoms-projects.vercel.app/
+      PREVIEW_URL: https://mela-staging-fqfgk622a-melakuanteneh1-gmailcoms-projects.vercel.app/
     steps:
       - name: Verify staging preview responds and contains app mount
         shell: bash

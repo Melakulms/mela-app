@@ -47,6 +47,8 @@ jobs:
           grep -R -F -q "Check latest MELA version" dist/assets
           # The 2026-10-29 free mentorship guidance release must reach the actual phone app.
           grep -R -F -q "Mentorship learning resources" dist/assets
+          grep -R -F -q "Explore the 16 mentorship preparation tools" dist/assets
+          grep -R -F -q "PRACTICE ONLY" dist/assets
           grep -R -F -q "Showing saved public guides" dist/assets
           grep -R -F -q "Add education" dist/assets
           printf '{"commit":"%s","published_from":"github-actions"}\n' "$GITHUB_SHA" > dist/mela-release.json

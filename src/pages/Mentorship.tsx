@@ -13,6 +13,7 @@ import {
 } from '../lib/mentorship'
 import { useI18n } from '../i18n'
 import MentorshipGuidanceResources from '../components/MentorshipGuidanceResources'
+import MentorshipPreparationStudio from '../components/MentorshipPreparationStudio'
 
 export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack: () => void; stageKey?: string | null; onOpenSafety?: () => void }) {
   const { t } = useI18n()
@@ -133,6 +134,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         <p>Keep passwords, payment details and identity documents private. Report uncomfortable behaviour through Safety & Privacy. A scheduled session does not yet include an in-app video call.</p>
       </details>
       <MentorshipGuidanceResources />
+      <MentorshipPreparationStudio />
       {notice && <p className="banner banner-info" role="status">{notice}</p>}
       {error && <div className="banner banner-error" role="alert">{error}</div>}
       {loading && <p className="muted" role="status">Loading mentorship…</p>}

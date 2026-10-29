@@ -81,3 +81,32 @@ it('requires real learner work before the mentor feedback editor appears',async(
   fireEvent.click(screen.getByRole('button',{name:'Send feedback'}))
   await waitFor(()=>expect(mocks.review).toHaveBeenCalledWith('task-a','Please cite the official requirements page.'))
 })
+
+it('clears private task data and ignores a late request after account sign-out',async()=>{
+  let resolveFirst:((value:any)=>void)|null=null
+  mocks.load.mockImplementationOnce(()=>new Promise(resolve=>{resolveFirst=resolve}))
+  render(<MentorshipAssignments role="learner"/>)
+  expect(screen.getByText('Loading assignments…')).toBeTruthy()
+  window.dispatchEvent(new Event('mela:session-boundary'))
+  await waitFor(()=>expect(screen.queryByText('Loading assignments…')).toBeNull())
+  expect(screen.queryByText('Secret previous learner assignment')).toBeNull()
+  resolveFirst!({assignments:[{...task,title:'Secret previous learner assignment'}],
+    submissions:[],feedback:[],accepted:[]})
+  await waitFor(()=>expect(screen.queryByText('Secret previous learner assignment')).toBeNull())
+})
+
+it('does not display success or reload old-account data after sign-out during submission',async()=>{
+  let resolveSubmit:((value:unknown)=>void)|null=null
+  mocks.submit.mockImplementationOnce(()=>new Promise(resolve=>{resolveSubmit=resolve}))
+  mocks.load.mockResolvedValue({assignments:[task],submissions:[],feedback:[],accepted:[]})
+  render(<MentorshipAssignments role="learner"/>)
+  const field=await screen.findByLabelText('Your response')
+  fireEvent.change(field,{target:{value:'Finished under the previous learner account.'}})
+  fireEvent.click(screen.getByRole('button',{name:'Submit response'}))
+  expect(mocks.submit).toHaveBeenCalledTimes(1)
+  window.dispatchEvent(new Event('mela:session-boundary'))
+  resolveSubmit!(undefined)
+  await waitFor(()=>expect(screen.queryByText('Your response was submitted.')).toBeNull())
+  expect(screen.queryByText('Compare careers')).toBeNull()
+  expect(mocks.load).toHaveBeenCalledTimes(1)
+})

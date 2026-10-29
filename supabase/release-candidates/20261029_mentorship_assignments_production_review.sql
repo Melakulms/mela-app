@@ -98,6 +98,21 @@ with check (
  and exists(select 1 from public.mentorship_submissions s where s.assignment_id=mentorship_feedback.assignment_id)
 );
 
+-- Independently reviewed ADULT eligibility for college/university learners.
+-- A date of birth alone can be self-reported and must not grant access.
+-- No Data API role may INSERT or UPDATE a clearance; a qualified MFA administrator
+-- must complete an evidence-based review using a separately audited staff workflow.
+-- Until that workflow exists and is tested, adult assignments fail closed.
+create table private.mentorship_assignment_adult_clearances (
+ learner_id uuid primary key references public.profiles(id) on delete cascade,
+ reviewed_by uuid not null references public.profiles(id),
+ review_method text not null check (review_method in ('trusted_identity_document','verified_institutional_record')),
+ reviewed_at timestamptz not null default now(),
+ constraint adult_assignment_clearance_independent check(learner_id<>reviewed_by)
+);
+alter table private.mentorship_assignment_adult_clearances enable row level security;
+revoke all on private.mentorship_assignment_adult_clearances from public,anon,authenticated;
+
 -- Trigger function intentionally lives in the unexposed private schema.
 -- An actor may not bypass RLS by editing a foreign learner id or stored timestamp.
 -- The before-insert checks run with trusted DB privileges to evaluate DOB and
@@ -147,6 +162,10 @@ begin
       (lp.education_stage_key in ('college_tvet','university') and exists(
         select 1 from public.student_profiles s where s.user_id=lp.id
           and s.date_of_birth <= current_date - interval '18 years'
+      ) and exists (
+        select 1 from private.mentorship_assignment_adult_clearances ac
+        where ac.learner_id=lp.id and ac.reviewed_by<>lp.id
+          and ac.reviewed_at<=now()
       ))
       or (lp.education_stage_key='school_11_12' and exists(
         select 1 from public.guardian_relationships gr

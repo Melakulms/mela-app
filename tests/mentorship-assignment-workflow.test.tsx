@@ -116,3 +116,50 @@ it('provides a feedback structure but rejects unchanged template placeholders an
   fireEvent.click(send)
   await waitFor(()=>expect(mocks.feedback).toHaveBeenCalledWith('task-1',expect.stringContaining('add a citation')))
 })
+
+it('prepares a follow-up revision draft without overwriting the original answer or feedback',async()=>{
+  mocks.load.mockResolvedValue({goals:[],groups:[],resources:[],
+    assignments:[{id:'task-1',title:'Career research',request_id:'accepted-request',
+      mentor_id:'verified-mentor',learner_id:'eligible-learner',
+      instructions:'Compare career skills and entry requirements.',due_at:null,created_at:'2026-10-28'}],
+    submissions:[{id:'submission-1',assignment_id:'task-1',learner_id:'eligible-learner',
+      response:'My own original work',created_at:'2026-10-28'}],
+    feedback:[{id:'feedback-1',assignment_id:'task-1',mentor_id:'verified-mentor',
+      feedback:'Include an additional reliable source.',created_at:'2026-10-28'}],
+  })
+  render(<MentorshipLearningWorkspace mode="mentor" section={11}/>)
+  const followUp=await screen.findByRole('button',{name:'Prepare revision task'})
+  expect(screen.getByText(/My own original work/)).toBeTruthy()
+  expect(screen.getByText(/Include an additional reliable source/)).toBeTruthy()
+  expect(mocks.assign).not.toHaveBeenCalled()
+  fireEvent.click(followUp)
+  expect((screen.getByLabelText('Assignment title') as HTMLInputElement).value)
+    .toBe('Revision: Career research')
+  expect((screen.getByLabelText('Accepted mentorship request') as HTMLSelectElement).value)
+    .toBe('accepted-request')
+  expect((screen.getByLabelText('Instructions') as HTMLTextAreaElement).value)
+    .toContain('Include an additional reliable source.')
+  expect(screen.getByText(/earlier submission and feedback stay unchanged/)).toBeTruthy()
+  expect(mocks.assign).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button',{name:'Assign to learner'}))
+  await waitFor(()=>expect(mocks.assign).toHaveBeenCalledWith(
+    'accepted-request','eligible-learner','Revision: Career research',
+    expect.stringContaining('Include an additional reliable source.'),''))
+})
+
+it('does not offer a revision to a mentor whose accepted relationship has disappeared',async()=>{
+  mocks.accepted.mockResolvedValueOnce({data:[],error:null})
+  mocks.load.mockResolvedValue({goals:[],groups:[],resources:[],
+    assignments:[{id:'task-1',title:'Career research',request_id:'formerly-accepted',
+      mentor_id:'verified-mentor',learner_id:'eligible-learner',
+      instructions:'Compare careers',due_at:null,created_at:'2026-10-28'}],
+    submissions:[{id:'s-1',assignment_id:'task-1',learner_id:'eligible-learner',
+      response:'Completed task',created_at:'2026-10-28'}],
+    feedback:[{id:'f-1',assignment_id:'task-1',mentor_id:'verified-mentor',
+      feedback:'Revise with citations',created_at:'2026-10-28'}],
+  })
+  render(<MentorshipLearningWorkspace mode="mentor" section={11}/>)
+  await screen.findByText('Career research')
+  expect(screen.queryByRole('button',{name:'Prepare revision task'})).toBeNull()
+  expect(mocks.assign).not.toHaveBeenCalled()
+})

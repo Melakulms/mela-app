@@ -33,7 +33,7 @@ export default function MentorshipAssignments({role}:{role:AssignmentRole}) {
   },[])
   useEffect(()=>{
     let active=true
-    setLoading(true);setWorkspace(null);setError('');setNotice('')
+    setLoading(true);setWorkspace(null);setError('')
     setAnswers({});setReviews({});setRequestId('')
     setTitle('');setInstructions('');setDueLocal('')
     void loadAssignmentWorkspace(role)
@@ -168,7 +168,7 @@ export default function MentorshipAssignments({role}:{role:AssignmentRole}) {
                 onClick={()=>void mutate(()=>reviewAssignment(task.id,reviews[task.id]||''),'Your feedback was saved.')}>Send feedback</button>
             </div>}
             {canRevise&&<button type="button" className="btn btn-secondary" disabled={busy}
-              onClick={()=>revise(task,feedback.feedback)}>Prepare revision task</button>}
+              onClick={()=>revise(task,feedback?.feedback||'')}>Prepare revision task</button>}
           </article>
         })}</div>}
     </>}

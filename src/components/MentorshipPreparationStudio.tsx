@@ -1,38 +1,88 @@
 import { useState } from 'react'
 import MentorshipPracticeLab from './MentorshipPracticeLab'
 
-export const PREPARATION_SECTIONS = [
-  'Mentorship Home', 'Find a Mentor', 'Mentorship Categories', 'Mentor Profiles',
-  'Smart Mentor Match', 'Mentorship Requests', 'Booking & Scheduling',
-  'Safe Session Preparation', 'My Mentorship', 'Resource Library',
-  'Assignments', 'Progress & Achievements', 'Group Mentorship',
-  'Mentor Workspace', 'Guardian & Safety', 'Central Admin',
+export const MENTORSHIP_SECTION_CARDS = [
+  { title: 'Mentorship Home', summary: 'Set a learning or career goal and choose your next step.' },
+  { title: 'Find a Mentor', summary: 'Prepare useful search terms for a verified mentor.' },
+  { title: 'Mentorship Categories', summary: 'Explore academic, career, scholarship and skills guidance.' },
+  { title: 'Mentor Profiles', summary: 'Learn what qualifications and experience to check.' },
+  { title: 'Smart Mentor Match', summary: 'Describe interests and the help you want.' },
+  { title: 'Mentorship Requests', summary: 'Draft a clear, respectful mentorship request.' },
+  { title: 'Booking & Scheduling', summary: 'Plan questions and a preferred future session time.' },
+  { title: 'Safe Session Preparation', summary: 'Prepare safely without activating video or recording.' },
+  { title: 'My Mentorship', summary: 'Create a weekly learning and improvement plan.' },
+  { title: 'Resource Library', summary: 'Reflect on a guide and put what you learned into action.' },
+  { title: 'Assignments', summary: 'Practise responding to a learning assignment.' },
+  { title: 'Progress & Achievements', summary: 'Reflect on progress without claiming a certificate.' },
+  { title: 'Group Mentorship', summary: 'Plan how to learn in a supervised group.' },
+  { title: 'Mentor Workspace', summary: 'Prepare a teaching plan; private tools require verification.' },
+  { title: 'Guardian & Safety', summary: 'Review privacy, safeguarding and consent rules.' },
+  { title: 'Central Admin', summary: 'Understand how qualified administrators review requests.' },
 ] as const
 
-/** Practice-only companion for the production learning guides.
- * No private mentorship API, storage or role/eligibility action is invoked. */
+export const PREPARATION_SECTIONS = MENTORSHIP_SECTION_CARDS.map(card => card.title)
+
+/** Always-visible public mentorship section cards.
+ * Every card opens local practice ONLY: this component has no data access,
+ * persistence, registration bypass, role assumptions or approval actions.
+ */
 export default function MentorshipPreparationStudio() {
   const [section, setSection] = useState(1)
+
+  const openPractice = (number: number) => {
+    setSection(number)
+    document.getElementById('mentorship-practice-panel')?.scrollIntoView?.({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  }
+
   return (
-    <details className="empty-panel" style={{ textAlign: 'left', borderTop: '4px solid #167b89' }}>
-      <summary style={{ cursor: 'pointer', fontWeight: 700 }}>Explore the 16 mentorship preparation tools</summary>
-      <p>Plan what to learn, choose helpful questions and create a personal practice worksheet for each area.</p>
+    <section aria-labelledby="mentorship-section-list-heading" className="empty-panel"
+      style={{ textAlign: 'left', borderTop: '4px solid #167b89' }}>
+      <h2 id="mentorship-section-list-heading">MELA Mentorship — 16 Sections</h2>
+      <p>Choose any card to explore its preparation tools. All 16 cards are shown here for learners on phones and computers.</p>
       <p className="muted" role="note">
-        These are preparation exercises, not live mentor matching, session booking,
-        guardian approval, certificate issuance or administrator access.
-        Nothing is sent to MELA or saved to your account.
-        Do not enter names, contact details, passwords or confidential documents.
+        These cards open learning exercises only. Live mentor matching, booking,
+        guardian approval, certificates, private mentor tools and administrator
+        actions still require separately verified accounts and safe launch checks.
+        Do not enter names, passwords, contact details or confidential documents.
       </p>
-      <div className="field">
-        <label htmlFor="mentorship-preparation-section">Choose an area to practise</label>
-        <select id="mentorship-preparation-section" value={section}
-          onChange={event => setSection(Number(event.target.value))}>
-          {PREPARATION_SECTIONS.map((name, index) =>
-            <option key={name} value={index + 1}>{index + 1}. {name}</option>
-          )}
-        </select>
+      <div className="module-grid" aria-label="16 mentorship section cards"
+        style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 185px), 1fr))', gap: '.8rem', marginTop: '1rem' }}>
+        {MENTORSHIP_SECTION_CARDS.map((card, index) => {
+          const number = index + 1
+          const selected = section === number
+          return (
+            <button key={card.title} type="button" className="module-card"
+              aria-label={`Open practice: ${card.title}`}
+              aria-pressed={selected}
+              onClick={() => openPractice(number)}
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
+                gap: '.45rem', padding: '1rem', width: '100%', minHeight: '150px',
+                textAlign: 'left', cursor: 'pointer', color: 'var(--ink)',
+                background: 'var(--surface)',
+                border: selected ? '2px solid #167b89' : '1px solid var(--line)',
+                borderRadius: '.85rem',
+              }}>
+              <span className="pill" style={{ fontWeight: 700 }}>Section {number}</span>
+              <strong style={{ fontSize: '1rem', lineHeight: 1.3 }}>{card.title}</strong>
+              <span className="muted" style={{ fontSize: '.85rem', lineHeight: 1.45 }}>{card.summary}</span>
+              <span style={{ fontSize: '.78rem', fontWeight: 650, color: 'var(--ink)', marginTop: 'auto' }}>
+                {selected ? 'Practice selected' : 'Open practice'}
+              </span>
+            </button>
+          )
+        })}
       </div>
-      <MentorshipPracticeLab key={section} section={section} />
-    </details>
+      <div id="mentorship-practice-panel" tabIndex={-1}
+        aria-label={`Mentorship section ${section} practice`}
+        style={{ marginTop: '1rem', scrollMarginTop: '1.5rem' }}>
+        <h3>Section {section}: {MENTORSHIP_SECTION_CARDS[section - 1].title}</h3>
+        <p className="muted">Practice only — not a mentor request, session booking, account action or administrator approval.</p>
+        <MentorshipPracticeLab key={section} section={section} />
+      </div>
+    </section>
   )
 }

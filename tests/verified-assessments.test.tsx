@@ -119,3 +119,73 @@ it('blocks a proctored assessment when camera permission fails', async () => {
   expect(alert.textContent).toContain('Camera permission is required')
   expect(screen.queryByText('1. Choose A')).toBeNull()
 })
+
+async function startSession() {
+  render(<VerifiedAssessments onBack={vi.fn()} />)
+  await screen.findByText('Verified readiness')
+  fireEvent.click(screen.getByRole('button', { name: 'Open' }))
+  fireEvent.click(screen.getByRole('checkbox'))
+  fireEvent.click(screen.getByRole('button', { name: 'Start assessment' }))
+  await screen.findByText('1. Choose A')
+}
+
+it('waits for autosave and the final save before leaving', async () => {
+  await startSession()
+  let release!: () => void
+  const pending = new Promise<void>(resolve => { release = resolve })
+  const upsert = vi.fn().mockImplementationOnce(async () => { await pending; return { error: null } }).mockResolvedValue({ error: null })
+  const original = mock.from.getMockImplementation()!
+  mock.from.mockImplementation((table: string) => table === 'assessment_responses' ? { upsert } : original(table))
+  fireEvent.click(screen.getByRole('radio', { name: 'A' }))
+  await waitFor(() => expect(upsert).toHaveBeenCalledTimes(1))
+  fireEvent.click(screen.getByRole('button', { name: 'Save & exit' }))
+  expect(screen.getByText('1. Choose A')).toBeTruthy()
+  expect(upsert).toHaveBeenCalledTimes(1)
+  release()
+  await screen.findByRole('button', { name: 'Open' })
+  expect(upsert).toHaveBeenCalledTimes(2)
+})
+
+it('keeps answers on screen and displays the backend error if Save & exit fails', async () => {
+  await startSession()
+  const upsert = vi.fn().mockResolvedValue({ error: { message: 'Connection interrupted' } })
+  const original = mock.from.getMockImplementation()!
+  mock.from.mockImplementation((table: string) => table === 'assessment_responses' ? { upsert } : original(table))
+  fireEvent.click(screen.getByRole('radio', { name: 'A' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Save & exit' }))
+  expect(await screen.findByText('Connection interrupted')).toBeTruthy()
+  expect((screen.getByRole('radio', { name: 'A' }) as HTMLInputElement).checked).toBe(true)
+})
+
+it('serializes rapid changes and submits only after the latest answer is saved', async () => {
+  await startSession()
+  let release!: () => void
+  const pending = new Promise<void>(resolve => { release = resolve })
+  const upsert = vi.fn().mockImplementationOnce(async () => { await pending; return { error: null } }).mockResolvedValue({ error: null })
+  const original = mock.from.getMockImplementation()!
+  mock.from.mockImplementation((table: string) => table === 'assessment_responses' ? { upsert } : original(table))
+  fireEvent.click(screen.getByRole('radio', { name: 'A' }))
+  await waitFor(() => expect(upsert).toHaveBeenCalledTimes(1))
+  fireEvent.click(screen.getByRole('radio', { name: 'B' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Submit assessment' }))
+  expect(upsert).toHaveBeenCalledTimes(1)
+  expect(mock.rpc.mock.calls.some(([name]) => name === 'submit_my_assessment_attempt')).toBe(false)
+  release()
+  await screen.findByText(/Proctor review is pending/)
+  expect(upsert.mock.calls.map(([row]) => row.response)).toEqual(['A', 'B', 'B'])
+})
+
+it('recovers a committed result when the submission response is lost', async () => {
+  await startSession()
+  const original = mock.from.getMockImplementation()!
+  mock.from.mockImplementation((table: string) => table === 'assessment_attempts'
+    ? queryBuilder({ id: 'attempt-1', status: 'review_required', score: 100, passed: true })
+    : original(table))
+  const rpc = mock.rpc.getMockImplementation()!
+  mock.rpc.mockImplementation((name: string, ...args: unknown[]) => name === 'submit_my_assessment_attempt'
+    ? Promise.reject(new Error('Network interrupted')) : rpc(name, ...args))
+  fireEvent.click(screen.getByRole('radio', { name: 'A' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Submit assessment' }))
+  expect(await screen.findByText(/Proctor review is pending/)).toBeTruthy()
+  expect(screen.queryByRole('alert')).toBeNull()
+})

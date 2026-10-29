@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { rewriteSupabaseConnectSrc } from '../vite.config'
+import { rewriteSupabaseConnectSrc } from '../scripts/supabase-csp'
 
 const prod = 'duizgtmbptmlbyipreqg.supabase.co'
 const stage = 'tungqfmypuwzeyrtaseh.supabase.co'

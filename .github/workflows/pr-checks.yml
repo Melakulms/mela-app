@@ -26,3 +26,17 @@ jobs:
           test -s dist/ai-year-one.html
           test -s dist/offline-progress.js
           test -s dist/sw.js
+      - name: Confirm production build CSP excludes staging
+        run: |
+          grep -F -q 'https://duizgtmbptmlbyipreqg.supabase.co' dist/index.html
+          ! grep -F -q 'https://tungqfmypuwzeyrtaseh.supabase.co' dist/index.html
+      - name: Build staging with isolated API origins
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://tungqfmypuwzeyrtaseh.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_build_test
+          VITE_MELA_STAGING: 'true'
+      - name: Confirm staging build CSP excludes production
+        run: |
+          grep -F -q "connect-src 'self' https://tungqfmypuwzeyrtaseh.supabase.co wss://tungqfmypuwzeyrtaseh.supabase.co;" dist/index.html
+          ! grep -F -q 'https://duizgtmbptmlbyipreqg.supabase.co' dist/index.html

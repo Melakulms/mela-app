@@ -58,7 +58,7 @@ describe('Password recovery', () => {
   it('opens the recovery screen when Supabase emits PASSWORD_RECOVERY', async () => {
     mocks.fetchOwnProfile.mockResolvedValue(null)
     render(<App />)
-    await screen.findByRole('heading', { name: 'Join the MELA beta' })
+    await screen.findByRole('heading', { name: 'Join MELA' })
     const callback = mocks.onAuthStateChange.mock.calls[0][0]
     await act(async () => callback('PASSWORD_RECOVERY', { user: { id: 'recovery-user' } }))
     expect(screen.getByLabelText('New password')).toBeTruthy()
@@ -66,7 +66,7 @@ describe('Password recovery', () => {
 
   it('uses recovery-code flow for beta usernames instead of email reset', async () => {
     render(<Login onSwitchToRegister={vi.fn()} />)
-    fireEvent.change(screen.getByLabelText('Email or beta username'), { target: { value: 'beta.learner' } })
+    fireEvent.change(screen.getByLabelText('Email or MELA username'), { target: { value: 'beta.learner' } })
     fireEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
     expect(await screen.findByRole('heading', { name: 'Recover beta access' })).toBeTruthy()
     expect(screen.getByLabelText('Recovery code')).toBeTruthy()
@@ -78,7 +78,7 @@ describe('Authentication failures', () => {
   it('restores the login button after a network failure', async () => {
     mocks.loginUser.mockRejectedValue(new Error('offline'))
     render(<Login onSwitchToRegister={vi.fn()} />)
-    fireEvent.change(screen.getByLabelText('Email or beta username'), { target: { value: 'learner@example.invalid' } })
+    fireEvent.change(screen.getByLabelText('Email or MELA username'), { target: { value: 'learner@example.invalid' } })
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Password123456' } })
     fireEvent.click(screen.getByRole('button', { name: 'Log in' }))
     await screen.findByRole('alert')

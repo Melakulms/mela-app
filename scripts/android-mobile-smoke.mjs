@@ -25,7 +25,7 @@ async function step(name, operation) {
 try {
   await step('Public MELA loads the real signup screen on mobile Chromium', async () => {
     await page.goto(baseUrl + '?view=practice', { waitUntil: 'domcontentloaded', timeout: 60000 })
-    await page.getByRole('heading', { name: /join the mela beta/i }).waitFor({ timeout: 30000 })
+    await page.getByRole('heading', { name: /join mela/i }).waitFor({ timeout: 30000 })
     assert.equal(new URL(page.url()).searchParams.get('view'), 'practice')
   })
 
@@ -34,7 +34,7 @@ try {
     await page.getByRole('heading', { name: 'Your offline library', exact: true }).waitFor()
     await page.getByRole('heading', { name: 'Quick maths practice', exact: true }).waitFor()
     await page.getByRole('link', { name: 'Return to MELA', exact: true }).click()
-    await page.getByRole('heading', { name: /join the mela beta/i }).waitFor()
+    await page.getByRole('heading', { name: /join mela/i }).waitFor()
   })
 
   await step('Student, family, teacher and employer are selectable', async () => {
@@ -56,7 +56,7 @@ try {
   await step('Back to MELA Home closes Settings and resets app section', async () => {
     await page.getByRole('link', { name: 'Back to MELA Home' }).first().click()
     await page.waitForURL('**/?view=dashboard')
-    await page.getByRole('heading', { name: /join the mela beta/i }).waitFor()
+    await page.getByRole('heading', { name: /join mela/i }).waitFor()
     assert.equal(await page.locator('#mela-settings-content').isVisible(), false)
     assert.equal(await page.getByRole('heading', { name: 'Settings', exact: true }).isVisible(), false)
     assert.equal(new URL(page.url()).searchParams.get('view'), 'dashboard')
@@ -134,10 +134,10 @@ try {
         await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(data)})
       })
       await signedPage.goto(baseUrl+'?view=dashboard', {waitUntil:'domcontentloaded'})
-      await signedPage.getByRole('heading',{name:/join the mela beta/i}).waitFor()
+      await signedPage.getByRole('heading',{name:/join mela/i}).waitFor()
       const login = async (homeHeading = 'Explore MELA') => {
-        if (!await signedPage.getByLabel('Email or beta username').isVisible()) await signedPage.getByRole('button',{name:'Log in',exact:true}).click()
-        await signedPage.getByLabel('Email or beta username').fill(user.email)
+        if (!await signedPage.getByLabel('Email or MELA username').isVisible()) await signedPage.getByRole('button',{name:'Log in',exact:true}).click()
+        await signedPage.getByLabel('Email or MELA username').fill(user.email)
         await signedPage.getByLabel('Password',{exact:true}).fill('Fixture-password-123')
         await signedPage.getByRole('button',{name:'Log in',exact:true}).click()
         await signedPage.getByRole('heading',{name:homeHeading,exact:true}).waitFor().catch(async error => { console.error('Signed-in test page:', await signedPage.locator('body').innerText()); throw error })
@@ -187,7 +187,7 @@ try {
       await signedPage.getByRole('button',{name:'Open MELA settings'}).click()
       await signedPage.getByRole('heading',{name:'Settings',exact:true}).waitFor()
       await signedPage.getByRole('button',{name:'Log out',exact:true}).click()
-      await signedPage.getByLabel('Email or beta username').waitFor()
+      await signedPage.getByLabel('Email or MELA username').waitFor()
       assert.equal(await signedPage.locator('#mela-settings-content').count(),0)
       await login()
       await signedPage.getByRole('button',{name:'Open MELA settings'}).click()
@@ -206,7 +206,7 @@ try {
       assert.equal(await signedPage.getByRole('heading',{name:'Complete your education profile',exact:true}).count(),0)
       await signedPage.getByRole('button',{name:'Settings & downloads — app version'}).click()
       await signedPage.getByRole('button',{name:'Sign out',exact:true}).click()
-      await signedPage.getByLabel('Email or beta username').waitFor()
+      await signedPage.getByLabel('Email or MELA username').waitFor()
       assert.equal(await signedPage.locator('#mela-settings-content').count(),0)
       await login('MELA Home')
       assert.equal(await signedPage.getByRole('heading',{name:'Complete your education profile',exact:true}).count(),0)
@@ -245,9 +245,9 @@ try {
         await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(data)})
       })
       await teacherPage.goto(baseUrl+'?view=dashboard',{waitUntil:'domcontentloaded'})
-      await teacherPage.getByRole('heading',{name:/join the mela beta/i}).waitFor()
+      await teacherPage.getByRole('heading',{name:/join mela/i}).waitFor()
       await teacherPage.getByRole('button',{name:'Log in',exact:true}).click()
-      await teacherPage.getByLabel('Email or beta username').fill(teacher.email)
+      await teacherPage.getByLabel('Email or MELA username').fill(teacher.email)
       await teacherPage.getByLabel('Password',{exact:true}).fill('Fixture-password-123')
       await teacherPage.getByRole('button',{name:'Log in',exact:true}).click()
       await teacherPage.getByRole('heading',{name:'Teacher profile',exact:true}).waitFor({timeout:30000})

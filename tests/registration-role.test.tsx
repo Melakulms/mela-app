@@ -40,11 +40,11 @@ it.each([
   expect(screen.getByRole('option',{name:label})).toBeTruthy()
   fireEvent.change(screen.getByLabelText('Full name'),{ target: { value:'MELA Test' } })
   fireEvent.change(screen.getByLabelText('Username'),{ target: { value:'mela.test' } })
-  fireEvent.change(screen.getByLabelText('Beta access code'),{ target: { value:'test-invite-token-not-real' } })
+  fireEvent.change(screen.getByLabelText('MELA invitation code'),{ target: { value:'test-invite-token-not-real' } })
   fireEvent.change(screen.getByLabelText('Password',{exact:true}),{ target: { value:'SecurePassword123' } })
   fireEvent.change(screen.getByLabelText('Confirm password'),{ target: { value:'SecurePassword123' } })
   mocks.registerBetaUser.mockResolvedValueOnce({created:true,username:'mela.test',role:value,recovery_code:'MELA-R-test',recovery_notice:'Save code'})
-  fireEvent.click(screen.getByRole('button',{name:'Create beta account'}))
+  fireEvent.click(screen.getByRole('button',{name:'Create MELA account'}))
   await waitFor(() => expect(mocks.registerBetaUser).toHaveBeenCalledWith(expect.objectContaining({role:value,username:'mela.test',accessCode:'test-invite-token-not-real'})))
 })
 

@@ -1,0 +1,39 @@
+name: Assignments staging preview delivery smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/components/MentorshipAssignments.tsx'
+      - 'src/pages/Mentorship.tsx'
+      - 'src/pages/RoleDashboard.tsx'
+      - 'src/lib/mentorship-assignments.ts'
+      - 'tests/mentorship-assignments-isolated.test.tsx'
+      - '.github/workflows/assignments-preview-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  preview-http:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      PREVIEW_URL: https://mela-staging-fqfgk622a-melakuanteneh1-gmailcoms-projects.vercel.app/
+    steps:
+      - name: Verify staging preview responds and contains app mount
+        shell: bash
+        run: |
+          set -euo pipefail
+          html="$(mktemp)"
+          code="$(curl --silent --show-error --location --max-time 40 --output "$html" --write-out '%{http_code}' "$PREVIEW_URL")"
+          if [[ "$code" != "200" ]]; then
+            echo "Preview HTTP $code; not certified as reachable"
+            exit 1
+          fi
+          if ! grep -Eiq '<div[^>]+id=["'\''"]root["'\''"]' "$html"; then
+            echo "Vite root element missing from preview HTML"
+            exit 1
+          fi
+          echo "Anonymous staging preview serves HTML HTTP 200 and app root."
+          echo "This does NOT assert authenticated assignment E2E or database readiness."

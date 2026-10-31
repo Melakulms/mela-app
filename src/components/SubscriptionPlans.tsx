@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 type Plan = { key: 'pro_monthly' | 'premium_monthly'; name: string; amount_etb: number; days: number; referral_etb: number }
 type Order = { id: string; plan_key: string; amount_minor: number; status: string; created_at: string }
@@ -14,7 +14,7 @@ const statusLabels: Record<string,string> = {
 }
 
 /** Prices come from the database, not from the client or Telegram. */
-export default function SubscriptionPlans() {
+export default function SubscriptionPlans({client}:{client:SupabaseClient}) {
   const [plans,setPlans] = useState<Plan[]>([])
   const [orders,setOrders] = useState<Order[]>([])
   const [methods,setMethods] = useState<Method[]>([])
@@ -30,8 +30,8 @@ export default function SubscriptionPlans() {
 
   const refresh = useCallback(async () => {
     const [catalog,history] = await Promise.all([
-      supabase.rpc('mela_billing_user_v1',{p_action:'plans',p_data:{}}),
-      supabase.rpc('mela_billing_user_v1',{p_action:'my_orders',p_data:{}})
+      client.rpc('mela_billing_user_v1',{p_action:'plans',p_data:{}}),
+      client.rpc('mela_billing_user_v1',{p_action:'my_orders',p_data:{}})
     ])
     if (catalog.error) throw catalog.error
     if (history.error) throw history.error
@@ -40,7 +40,7 @@ export default function SubscriptionPlans() {
     setOpen(data?.submissions_open===true)
     setOrders(Array.isArray(history.data)?history.data as Order[]:[])
     if (data?.submissions_open) {
-      const {data:accounts,error:accountError} = await supabase
+      const {data:accounts,error:accountError} = await client
         .from('payment_receiving_accounts').select('method_code,institution_name').eq('active',true)
       if (accountError) throw accountError
       setMethods((accounts??[]) as Method[])
@@ -55,7 +55,7 @@ export default function SubscriptionPlans() {
   const generateLinkCode = async () => {
     setBusy(true);setError('')
     try {
-      const {data,error:problem}=await supabase.rpc('mela_billing_link_code_v1')
+      const {data,error:problem}=await client.rpc('mela_billing_link_code_v1')
       if(problem)throw problem
       setLinkCode(String(data??''))
     }catch(e){setError(e instanceof Error?e.message:'Cannot create a Telegram linking code')}finally{setBusy(false)}
@@ -63,7 +63,7 @@ export default function SubscriptionPlans() {
   const start = async() => {
     setBusy(true);setError('');setMessage('')
     try {
-      const {data,error:problem}=await supabase.rpc('mela_billing_user_v1',{
+      const {data,error:problem}=await client.rpc('mela_billing_user_v1',{
         p_action:'create',p_data:{plan_key:chosen,method_code:method}
       })
       if(problem)throw problem
@@ -74,7 +74,7 @@ export default function SubscriptionPlans() {
     if(!checkout)return
     setBusy(true);setError('');setMessage('')
     try {
-      const {error:problem}=await supabase.rpc('mela_billing_user_v1',{
+      const {error:problem}=await client.rpc('mela_billing_user_v1',{
         p_action:'submit',p_data:{order_id:checkout.id,reference:reference.trim()}
       })
       if(problem)throw problem

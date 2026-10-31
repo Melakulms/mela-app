@@ -21,7 +21,7 @@ it('offers student, family, teacher and company registration when email is expli
   render(<I18nProvider><Register onSwitchToLogin={vi.fn()} /></I18nProvider>)
   expect(screen.getByRole('heading', { name: 'Create your MELA account' })).toBeTruthy()
   expect(screen.getByLabelText('Email address')).toBeTruthy()
-  expect(screen.queryByLabelText('Beta access code')).toBeNull()
+  expect(screen.queryByLabelText('MELA invitation code')).toBeNull()
   const role = screen.getByLabelText('I am registering as') as HTMLSelectElement
   expect(role.value).toBe('student')
   expect(Array.from(role.options).map(option => option.value)).toEqual(['student','parent','teacher','company'])
@@ -65,7 +65,7 @@ it('shows a retryable message when the signup service refuses an account', async
 it('keeps invitation signup for authorized educators and employers', () => {
   render(<I18nProvider><Register onSwitchToLogin={vi.fn()} /></I18nProvider>)
   fireEvent.click(screen.getByRole('button', { name: /Have an invitation code/ }))
-  expect(screen.getByLabelText('Beta access code')).toBeTruthy()
+  expect(screen.getByLabelText('MELA invitation code')).toBeTruthy()
   const options = Array.from((screen.getByLabelText('Account type (required)') as HTMLSelectElement).options).map(o => o.value)
   expect(options).toContain('teacher')
   expect(options).toContain('company')
@@ -112,7 +112,7 @@ it('offers safe invitation signup after a live SMTP failure without disabling ve
   fireEvent.click(screen.getByRole('button', { name: 'Create account' }))
   await screen.findByRole('button', { name: 'Register with an invitation code' })
   fireEvent.click(screen.getByRole('button', { name: 'Register with an invitation code' }))
-  expect(screen.getByLabelText('Beta access code')).toBeTruthy()
+  expect(screen.getByLabelText('MELA invitation code')).toBeTruthy()
   expect(screen.queryByRole('button', { name: 'Register with an invitation code' })).toBeNull()
 })
 
@@ -121,7 +121,7 @@ it('accepts a direct link to the invite-only beta registration screen', () => {
   try {
     window.history.replaceState(null, '', '/mela-app/?signup=invite')
     render(<I18nProvider><Register onSwitchToLogin={vi.fn()} /></I18nProvider>)
-    expect(screen.getByLabelText('Beta access code')).toBeTruthy()
+    expect(screen.getByLabelText('MELA invitation code')).toBeTruthy()
     expect(screen.queryByLabelText('Email address')).toBeNull()
   } finally {
     window.history.replaceState(null, '', current)
@@ -131,7 +131,7 @@ it('accepts a direct link to the invite-only beta registration screen', () => {
 it('defaults to invitation-code signup without asking for email', () => {
   window.history.replaceState(null, '', '/mela-app/')
   render(<I18nProvider><Register onSwitchToLogin={vi.fn()} /></I18nProvider>)
-  expect(screen.getByLabelText('Beta access code')).toBeTruthy()
+  expect(screen.getByLabelText('MELA invitation code')).toBeTruthy()
   expect(screen.queryByLabelText('Email address')).toBeNull()
   expect(screen.getByText(/one-time invitation verifies permission to join MELA/)).toBeTruthy()
 })

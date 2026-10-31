@@ -43,3 +43,20 @@ it('requests a verification and displays the pending status after submission',as
   await screen.findByText('Awaiting reviewer decision')
   expect(mocks.rpc).toHaveBeenCalledWith('submit_passport_verification_request',expect.objectContaining({p_kind:'experience',p_record_id:'x'}))
 })
+
+it('refuses an invalid verification-status response instead of reporting no pending reviews',async()=>{
+  mocks.rpc.mockResolvedValueOnce({data:null,error:null})
+  await expect(fetchMyPassportVerificationRequests()).rejects.toThrow(/Verification status could not be confirmed/)
+})
+
+it('keeps unverified records locked and hides request actions if review status cannot be read',async()=>{
+  mocks.rpc.mockResolvedValueOnce({data:null,error:null})
+  const onPendingChange=vi.fn()
+  render(<PassportVerificationPanel kind="education" onPendingChange={onPendingChange}
+    records={[{id:'record-a',institution:'School',verified:false,is_public:false}]} />)
+  const error=await screen.findByRole('alert')
+  expect(error.textContent).toContain('Verification status could not be confirmed')
+  expect(screen.queryByRole('button',{name:'Request verification'})).toBeNull()
+  expect(onPendingChange).toHaveBeenCalledWith(new Set(['record-a']))
+  expect(screen.getByText(/Requests and record editing must wait/)).toBeTruthy()
+})

@@ -17,6 +17,9 @@ export default function PassportVerificationPanel({kind, records, onPendingChang
   }
   const refresh = () => {
     let active = true
+    // Until the server returns a valid status list, treat all unverified
+    // records as potentially locked. The database is the final authority.
+    onPendingChange?.(new Set(records.filter(record => !record.verified).map(record => record.id)))
     setLoading(true);setError('')
     void fetchMyPassportVerificationRequests().then(rows=>{if(active)publishRequests(rows)}).catch(e=>{if(active)setError(e instanceof Error?e.message:'Could not load verification statuses.')}).finally(()=>{if(active)setLoading(false)})
     return () => {active=false}
@@ -40,7 +43,8 @@ export default function PassportVerificationPanel({kind, records, onPendingChang
     {loading && <p role="status">Checking verification requests…</p>}
     {error && <div role="alert">{error}<button className="btn btn-secondary" disabled={saving} onClick={()=>refresh()}>Retry</button></div>}
     {info && <p role="status">{info}</p>}
-    {!loading && records.map(record=>{
+    {!loading && error && <p role="status">Record verification status is unavailable. Requests and record editing must wait until the status can be checked.</p>}
+    {!loading && !error && records.map(record=>{
       const last = requests.find(r=>r.record_id===record.id&&r.record_kind===kind)
       return <article key={record.id} className="list-row">
         <div>

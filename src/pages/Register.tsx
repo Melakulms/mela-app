@@ -38,7 +38,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
 
   const resendConfirmation = async () => {
     const target = email.trim().toLowerCase()
-    if (!emailSent || confirmationResends >= 1 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(target)) return
+    if (!emailSent || confirmationResends >= 1 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)) return
     setBusy(true)
     setError('')
     try {

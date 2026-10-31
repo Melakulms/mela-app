@@ -1,4 +1,5 @@
 import type { MelaProfile } from '../lib/auth'
+import SubscriptionPlans from '../components/SubscriptionPlans'
 import { SHARED_ACCOUNT_FEATURES, workspaceItems } from '../lib/role-workspaces'
 
 /** Only the authenticated user's loaded profile is displayed; no directory lookups. */
@@ -27,6 +28,7 @@ export default function AccountOverview({ profile, onBack }: {
       <p className="field-hint">The list describes eligibility, not a guarantee that a feature has been activated or a professional account has been approved.</p>
       <ul className="list-panel">{items.map(item => <li key={item.title}><strong>{item.title}</strong> — {item.requirement}</li>)}</ul>
     </>}
+    <SubscriptionPlans />
     <p className="field-hint">Personal records, credentials and children's learning records are never shared with other users simply because they have an account. Verified relationships and backend permissions are required.</p>
     <button type="button" className="btn btn-primary" onClick={onBack}>Back to my workspace</button>{' '}
     <button type="button" className="btn btn-secondary" onClick={() => window.dispatchEvent(new Event('mela:open-settings'))}>Open settings</button>

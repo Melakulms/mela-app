@@ -2,7 +2,7 @@ import { useI18n } from '../i18n'
 import AuthLayout from '../components/AuthLayout'
 import GradeSelectionPreview from '../components/GradeSelectionPreview'
 import { useMemo, useState } from 'react'
-import { registerBetaUser, registerUser, type BetaRegisterResult, type BetaSignupRole } from '../lib/auth'
+import { registerBetaUser, registerUser, resendSignupConfirmation, type BetaRegisterResult, type BetaSignupRole } from '../lib/auth'
 
 export default function Register({ onSwitchToLogin, onRegistered }: {
   onSwitchToLogin: () => void
@@ -15,6 +15,8 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
   const [email, setEmail] = useState('')
   const [emailRole, setEmailRole] = useState<BetaSignupRole>('student')
   const [emailSent, setEmailSent] = useState(false)
+  const [confirmationNotice, setConfirmationNotice] = useState('')
+  const [confirmationResends, setConfirmationResends] = useState(0)
   const [fullName, setFullName] = useState('')
   const [username, setUsername] = useState('')
   const [accessCode, setAccessCode] = useState('')
@@ -34,9 +36,29 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
     number: /\d/.test(password),
   }), [password])
 
+  const resendConfirmation = async () => {
+    const target = email.trim().toLowerCase()
+    if (!emailSent || confirmationResends >= 1 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(target)) return
+    setBusy(true)
+    setError('')
+    try {
+      const { error: resendError } = await resendSignupConfirmation(target)
+      if (resendError) throw resendError
+      setConfirmationNotice('Confirmation requested. If this address has an unverified account and mail delivery is configured, check your inbox and spam folder. A successful request does not guarantee delivery.')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Confirmation request could not be sent.'
+      setError(message)
+      setEmailDeliveryBlocked(/smtp|email|mail|rate|limit|authorized|send/i.test(message))
+    } finally {
+      setConfirmationResends(1)
+      setBusy(false)
+    }
+  }
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setConfirmationNotice('')
     const name = fullName.trim()
     const handle = username.trim().toLowerCase()
 
@@ -56,6 +78,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
         if (!signupData?.user) throw new Error(t('authCreateError'))
         setPassword(''); setConfirmPassword('')
         setEmailSent(true)
+        setConfirmationResends(0)
         onRegistered?.(normalizedEmail)
       } catch (err) {
         const message = err && typeof err === 'object' && 'message' in err && typeof err.message === 'string' ? err.message : ''
@@ -128,7 +151,13 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
             Register with an invitation code
           </button>
         </div>}
-        {emailSent && <div className="banner banner-info" role="status">Your registration request was received. If this is a new email account and email delivery is available, a verification link will be sent. Existing accounts do not receive a new signup email. If you have already registered, use Sign in or Forgot password. A successful request does not guarantee message delivery.</div>}
+        {emailSent && <div className="banner banner-info" role="status">
+          Your registration request was received. If this is a new email account and email delivery is available, a verification link will be sent. Existing accounts do not receive a new signup email. If you have already registered, use Sign in or Forgot password. A successful request does not guarantee message delivery.
+          <button type="button" className="btn btn-secondary btn-block" disabled={busy || confirmationResends >= 1} onClick={() => void resendConfirmation()}>
+            {confirmationResends ? 'Confirmation retry requested' : 'Request confirmation again'}
+          </button>
+          {confirmationNotice && <p role="status">{confirmationNotice}</p>}
+        </div>}
         <form onSubmit={submit}>
           <div className="field">
             <label htmlFor="fullName">{t('authFullName')}</label>

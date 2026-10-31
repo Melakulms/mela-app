@@ -59,7 +59,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
         onRegistered?.(normalizedEmail)
       } catch (err) {
         const message = err && typeof err === 'object' && 'message' in err && typeof err.message === 'string' ? err.message : ''
-        const deliveryProblem = /error sending confirmation email|535\s+5\.7\.8|smtp|email delivery|mail provider/i.test(message)
+        const deliveryProblem = /error sending confirmation email|535\s+5\.7\.8|smtp|email delivery|mail provider|email.?address.?not.?authorized|over_email_send_rate_limit|email rate limit exceeded|failed to send/i.test(message)
         setEmailDeliveryBlocked(deliveryProblem)
         setError(deliveryProblem ? t('authEmailDeliveryIssue') : (message || t('authEmailCreateError')))
       } finally { setBusy(false) }
@@ -120,7 +120,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
       <AuthLayout>
         <span className="auth-wordmark">MELA</span>
         <h1>{t('authEmailJoin')}</h1>
-        <p className="auth-subtitle">{t('authEmailHelp')}</p>
+        <p className="auth-subtitle">{t('authEmailHelp')} Email registration needs a working confirmation-email service. If delivery is blocked during the closed test, choose an administrator invitation instead.</p>
         {error && <div className="banner banner-error" role="alert">{error}</div>}
         {emailDeliveryBlocked && <div className="banner banner-info" role="status">
           For the closed MELA test, you can register without email delivery using a one-time invitation from an authorized MELA administrator.
@@ -128,7 +128,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
             Register with an invitation code
           </button>
         </div>}
-        {emailSent && <div className="banner banner-info" role="status">{t('authEmailSent')}</div>}
+        {emailSent && <div className="banner banner-info" role="status">Your registration request was received. If this is a new email account and email delivery is available, a verification link will be sent. Existing accounts do not receive a new signup email. If you have already registered, use Sign in or Forgot password. A successful request does not guarantee message delivery.</div>}
         <form onSubmit={submit}>
           <div className="field">
             <label htmlFor="fullName">{t('authFullName')}</label>
@@ -172,7 +172,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
     <AuthLayout>
       <span className="auth-wordmark">MELA</span>
       <h1>{t('authJoin')}</h1>
-      <p className="auth-subtitle">{t('authJoinHelp')}</p>
+      <p className="auth-subtitle">{t('authJoinHelp')} Invitation-code beta accounts use a username and recovery code, not email confirmation. No registration email is sent for this signup method.</p>
       <div className="auth-switch"><button type="button" disabled={busy} onClick={() => { setMode('email'); setError('') }}>{t('authSwitchEmail')}</button></div>
 
       {error && <div className="banner banner-error" role="alert">{error}</div>}

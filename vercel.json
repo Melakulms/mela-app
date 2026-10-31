@@ -1,0 +1,35 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/mela-app/",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/mela-app",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/mela-app/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/mela-app/:path*",
+      "destination": "/:path*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/mela-app/",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    }
+  ]
+}

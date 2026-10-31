@@ -83,3 +83,24 @@ it('opens the public handbook offline without needing a session or Javascript bu
   expect(await (await response).text()).toBe('Public handbook')
   expect(w.cache.match).toHaveBeenCalledWith('/mela-app/ai-year-one.html')
 })
+
+
+it('reports offline readiness using the cache populated by the current worker', async () => {
+  const w = worker()
+  let installed!: Promise<unknown>
+  w.listeners.install({ waitUntil: (p: Promise<unknown>) => { installed = p } })
+  await installed
+  const currentCache = w.caches.open.mock.calls[0][0]
+  const html = readFileSync(new URL('../public/offline.html', import.meta.url), 'utf8')
+  const readyCode = html.slice(html.indexOf('async function ready()'), html.indexOf('ready();window.addEventListener'))
+  const status = { textContent: '' }
+  const serviceWorker = { register: vi.fn(async () => {}), ready: Promise.resolve() }
+  await runInNewContext(readyCode + ';ready()', {
+    URL, Promise,
+    location: { href: 'https://example.test/mela-app/offline.html' },
+    navigator: { serviceWorker },
+    document: { getElementById: () => status },
+    caches: { open: async (name: string) => ({ match: async () => name === currentCache ? new Response('Public lesson') : undefined }) },
+  })
+  expect(status.textContent).toBe('Ready for offline use on this device. Public study content only.')
+})

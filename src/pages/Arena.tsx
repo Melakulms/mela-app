@@ -20,8 +20,12 @@ const MODES: { value: ArenaMode; label: string; blurb: string }[] = [
 
 type QueueState = 'idle' | 'searching' | 'matched'
 
-export default function Arena({ onBack }: { onBack: () => void }) {
+export default function Arena({ onBack, stageKey }: { onBack: () => void; stageKey?: string | null }) {
   const { t } = useI18n()
+  // School learners can use all eight local drills, but must not enter live
+  // matchmaking or organizer-led competitions through this screen.
+  // The backend must independently enforce its own safeguarding policies.
+  const schoolPracticeOnly = stageKey?.startsWith('school_') ?? false
   const [hosted, setHosted] = useState<'team_battle' | 'employer_challenge' | 'tournament' | null>(null)
   const [practiceMode,setPracticeMode]=useState<ArenaDemoMode|null>(null)
   const searchLock = useRef(false)
@@ -39,15 +43,18 @@ export default function Arena({ onBack }: { onBack: () => void }) {
       setAssessments((data ?? []) as { id: string; title: string; question_count: number }[])
       if (data?.[0]) setAssessmentId(data[0].id)
     })
-    fetchLeaderboard().then(setLeaderboard).catch((e) => setError(e.message ?? 'Could not load the leaderboard.'))
-    checkMyQueueStatus().then((q) => {
+    fetchLeaderboard().then(setLeaderboard).catch((e) => {
+      setLeaderboard([])
+      setError(e.message ?? 'Could not load the leaderboard. Please try again later.')
+    })
+    if (!schoolPracticeOnly) checkMyQueueStatus().then((q) => {
       if (q?.status === 'matched' && q.matched_match_id) { setMatchId(q.matched_match_id); setQueueState('matched') }
       else if (q?.status === 'waiting') setQueueState('searching')
     }).catch(() => {})
-  }, [])
+  }, [schoolPracticeOnly])
 
   useEffect(() => {
-    if (queueState !== 'searching') return
+    if (schoolPracticeOnly || queueState !== 'searching') return
     let active = true
     let checking = false
     const check = async () => {
@@ -67,9 +74,13 @@ export default function Arena({ onBack }: { onBack: () => void }) {
     void check()
     const timer = window.setInterval(() => void check(), 5000)
     return () => { active = false; window.clearInterval(timer) }
-  }, [queueState])
+  }, [queueState, schoolPracticeOnly])
 
   const startSearching = async (mode: ArenaMode) => {
+    if (schoolPracticeOnly) {
+      setError('Live matchmaking is unavailable for school learners. Choose Try interactive practice instead.')
+      return
+    }
     if (searchLock.current) return
     searchLock.current = true
     setBusy(true)
@@ -129,6 +140,10 @@ export default function Arena({ onBack }: { onBack: () => void }) {
 
       {queueState === 'idle' && (
         <>
+          {schoolPracticeOnly && <section className="banner banner-info" role="status">
+            <strong>School-safe Arena</strong>
+            <p>All eight interactive practice modes are available. Live opponents and organizer-led competitions require separate safeguarding and are not available in school accounts.</p>
+          </section>}
           <section className="banner banner-info" aria-label="Arena practice and real competition status">
             <strong>Eight practice activities available · Real competitions have separate requirements</strong>
             <p>Practice is a learning simulation without real opponents, verified employers, prizes or rankings. Official employer, team and tournament registration stays paused until organizer safeguarding is verified.</p>
@@ -145,11 +160,11 @@ export default function Arena({ onBack }: { onBack: () => void }) {
               <div className="module-card" key={m.value}>
                 <h3>{m.label}</h3>
                 <p>{m.blurb}</p>
-                <button className="btn btn-primary" onClick={() => startSearching(m.value)} disabled={busy || (['quiz_battle', 'speed_quiz'].includes(m.value) && !assessmentId)}>Search for opponent</button>
+                <button className="btn btn-primary" onClick={() => startSearching(m.value)} disabled={busy || schoolPracticeOnly || (['quiz_battle', 'speed_quiz'].includes(m.value) && !assessmentId)}>Search for opponent</button>
                 <button type="button" className="btn btn-secondary" onClick={()=>setPracticeMode(m.value)}>Try interactive practice</button>
               </div>
             ))}
-            {([['team_battle', 'Team Battle', 'Join an organized team competition.'], ['employer_challenge', 'Employer Challenge', 'Demonstrate skills in organizer-led challenges.'], ['tournament', 'Tournaments', 'Explore multi-match competitions.']] as const).map(([kind, label, description]) => <div className="module-card" key={kind}><h3>{label}</h3><p>{description}</p><button className="btn btn-primary" disabled={busy} onClick={() => setHosted(kind)}>Browse {label}</button><button type="button" className="btn btn-secondary" onClick={()=>setPracticeMode(kind)}>Try interactive practice</button></div>)}
+            {([['team_battle', 'Team Battle', 'Join an organized team competition.'], ['employer_challenge', 'Employer Challenge', 'Demonstrate skills in organizer-led challenges.'], ['tournament', 'Tournaments', 'Explore multi-match competitions.']] as const).map(([kind, label, description]) => <div className="module-card" key={kind}><h3>{label}</h3><p>{description}</p><button className="btn btn-primary" disabled={busy || schoolPracticeOnly} onClick={() => setHosted(kind)}>Browse {label}</button><button type="button" className="btn btn-secondary" onClick={()=>setPracticeMode(kind)}>Try interactive practice</button></div>)}
           </div>
           <p className="banner banner-info">Learn and compete without betting. Cash earning and payouts remain unavailable. Ratings and learning progress are not money; no prize or income is guaranteed. Written-answer modes need an organizer’s judge.</p>
         </>

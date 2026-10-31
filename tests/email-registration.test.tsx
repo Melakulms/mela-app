@@ -7,8 +7,8 @@ import Register from '../src/pages/Register'
 const mocks = vi.hoisted(() => ({ registerUser: vi.fn(), registerBetaUser: vi.fn() }))
 vi.mock('../src/lib/auth', () => ({ registerUser: mocks.registerUser, registerBetaUser: mocks.registerBetaUser }))
 
-beforeEach(() => { vi.resetAllMocks(); localStorage.removeItem('mela_language') })
-afterEach(() => { cleanup(); localStorage.removeItem('mela_language') })
+beforeEach(() => { vi.resetAllMocks(); localStorage.removeItem('mela_language'); window.history.replaceState(null, '', '/mela-app/?signup=email') })
+afterEach(() => { cleanup(); localStorage.removeItem('mela_language'); window.history.replaceState(null, '', '/mela-app/') })
 
 function fillEmailForm() {
   fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'MELA Learner' } })
@@ -17,7 +17,7 @@ function fillEmailForm() {
   fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'A long test passphrase 2026' } })
 }
 
-it('offers student, family, teacher and company email registration without an invitation by default', () => {
+it('offers student, family, teacher and company registration when email is explicitly selected', () => {
   render(<I18nProvider><Register onSwitchToLogin={vi.fn()} /></I18nProvider>)
   expect(screen.getByRole('heading', { name: 'Create your MELA account' })).toBeTruthy()
   expect(screen.getByLabelText('Email address')).toBeTruthy()
@@ -126,4 +126,12 @@ it('accepts a direct link to the invite-only beta registration screen', () => {
   } finally {
     window.history.replaceState(null, '', current)
   }
+})
+
+it('defaults to invitation-code signup without asking for email', () => {
+  window.history.replaceState(null, '', '/mela-app/')
+  render(<I18nProvider><Register onSwitchToLogin={vi.fn()} /></I18nProvider>)
+  expect(screen.getByLabelText('Beta access code')).toBeTruthy()
+  expect(screen.queryByLabelText('Email address')).toBeNull()
+  expect(screen.getByText(/one-time invitation verifies permission to join MELA/)).toBeTruthy()
 })

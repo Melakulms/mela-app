@@ -38,6 +38,7 @@ jobs:
           grep -R -F -q "Account type (required)" dist/assets
           grep -R -F -q "Create your MELA account" dist/assets
           grep -R -F -q "No invitation code?" dist/assets
+          grep -R -F -q "Open free study library" dist/assets
           grep -R -F -q "Try interactive practice" dist/assets
           grep -R -F -q "Scholarship research is not an offer" dist/assets
           grep -R -F -q "Installed app version" dist/assets

@@ -120,10 +120,10 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
       <AuthLayout>
         <span className="auth-wordmark">MELA</span>
         <h1>{t('authEmailJoin')}</h1>
-        <p className="auth-subtitle">{t('authEmailHelp')} Email verification is optional. Until confirmation-email delivery is configured, register using a verified administrator invitation instead.</p>
+        <p className="auth-subtitle">{t('authEmailHelp')} Email signup requires a confirmation email. If delivery is unavailable, use an administrator-issued invitation to register without email.</p>
         {error && <div className="banner banner-error" role="alert">{error}</div>}
         {emailDeliveryBlocked && <div className="banner banner-info" role="status">
-          For the closed MELA test, you can register without email delivery using a one-time invitation from an authorized MELA administrator.
+          You can register without email delivery using a one-time invitation from an authorized MELA administrator.
           <button type="button" className="btn btn-primary btn-block" onClick={() => { setMode('invite'); setError(''); setEmailDeliveryBlocked(false) }}>
             Register with an invitation code
           </button>
@@ -173,6 +173,12 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
       <span className="auth-wordmark">MELA</span>
       <h1>{t('authJoin')}</h1>
       <p className="auth-subtitle">{t('authJoinHelp')} An administrator-issued one-time invitation verifies permission to join MELA without an email address. Save the recovery code securely. Guardian consent and professional verification are separate checks.</p>
+      <div className="banner banner-info">
+        <strong>Start learning now — no account needed</strong>
+        <p>Try free maths practice and read the AI foundations handbook. The handbook is a draft awaiting teacher review. These public resources do not save progress to an account.</p>
+        <a className="btn btn-secondary btn-block" href={`${import.meta.env.BASE_URL}offline.html`}>Open free study library</a>
+        <p>No invitation yet? Ask your MELA administrator for a one-time code matching your account type. Never share your password or recovery code.</p>
+      </div>
       <div className="auth-switch"><button type="button" disabled={busy} onClick={() => { setMode('email'); setError('') }}>{t('authSwitchEmail')}</button></div>
 
       {error && <div className="banner banner-error" role="alert">{error}</div>}

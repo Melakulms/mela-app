@@ -58,7 +58,7 @@ describe('Password recovery', () => {
   it('opens the recovery screen when Supabase emits PASSWORD_RECOVERY', async () => {
     mocks.fetchOwnProfile.mockResolvedValue(null)
     render(<App />)
-    await screen.findByRole('heading', { name: 'Create your MELA account' })
+    await screen.findByRole('heading', { name: 'Join the MELA beta' })
     const callback = mocks.onAuthStateChange.mock.calls[0][0]
     await act(async () => callback('PASSWORD_RECOVERY', { user: { id: 'recovery-user' } }))
     expect(screen.getByLabelText('New password')).toBeTruthy()

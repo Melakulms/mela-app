@@ -9,13 +9,13 @@ vi.mock('../src/lib/auth', () => ({ registerBetaUser: mocks.registerBetaUser, re
 
 beforeEach(() => {
   vi.resetAllMocks()
+  window.history.replaceState(null, '', '/mela-app/')
   localStorage.removeItem('mela_language')
 })
 afterEach(() => { cleanup(); localStorage.removeItem('mela_language') })
 
 function openForm() {
   const view = render(<I18nProvider><Register onSwitchToLogin={vi.fn()}/></I18nProvider>)
-  fireEvent.click(screen.getByRole('button', { name: /Have an invitation code/ }))
   const role = screen.getByLabelText('Account type (required)') as HTMLSelectElement
   return { ...view, role }
 }
@@ -47,3 +47,9 @@ it.each([
   fireEvent.click(screen.getByRole('button',{name:'Create beta account'}))
   await waitFor(() => expect(mocks.registerBetaUser).toHaveBeenCalledWith(expect.objectContaining({role:value,username:'mela.test',accessCode:'test-invite-token-not-real'})))
 })
+
+ it('offers public learning before an invitation is available', () => {
+  openForm()
+  expect(screen.getByRole('link', { name: 'Open free study library' }).getAttribute('href')).toBe('/offline.html')
+  expect(mocks.registerBetaUser).not.toHaveBeenCalled()
+ })

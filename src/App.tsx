@@ -353,7 +353,7 @@ export default function App() {
           {studentView === 'mentorship' && <Mentorship stageKey={profile.education_stage_key} onOpenSafety={() => setStudentView('safety')} onBack={() => setStudentView('dashboard')} />}
           {studentView === 'passport' && <CareerPassport stageKey={profile.education_stage_key} gradeLevel={profile.grade_level} onNavigate={setStudentView} onBack={() => setStudentView('dashboard')} />}
           {studentView === 'coach' && <AiCareerCoach key={profile.id} userId={profile.id} onBack={() => setStudentView('dashboard')} />}
-          {studentView === 'arena' && <Arena onBack={() => setStudentView('dashboard')} />}
+          {studentView === 'arena' && <Arena stageKey={profile.education_stage_key} onBack={() => setStudentView('dashboard')} />}
           {studentView === 'profile' && <Profile profile={profile} onProfileUpdated={reloadProfile} />}
           {studentView === 'scholarships' && <EthioScholarConnect onBack={() => setStudentView('dashboard')} />}
           {studentView === 'mastery' && <LearnerTools view="mastery" onNavigate={setStudentView} onBack={() => setStudentView('dashboard')} />}

@@ -342,7 +342,7 @@ export default function App() {
       <main id="main-content" tabIndex={-1}>
       <ErrorBoundary key={studentView}><Suspense fallback={<div className="page-loading" role="status">{t('loadingPage')}</div>}>
       {!isStudent && showAccount ? (
-        <AccountOverview profile={profile} onBack={() => setShowAccount(false)} />
+        <AccountOverview profile={profile} client={supabase} onBack={() => setShowAccount(false)} />
       ) : isStudent ? (
         <>
           {studentView === 'practice' && <Practice onOpenProfile={() => setStudentView('profile')} onBack={() => setStudentView('dashboard')} onOpenQuestionBank={() => setStudentView('question-bank')} stageKey={profile.education_stage_key} />}

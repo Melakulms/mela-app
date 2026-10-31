@@ -17,7 +17,7 @@ it.each(['am','om','ti','so'] as const)('localizes every public authentication m
 })
 it.each(['am','om','ti','so'] as const)('switches login language without losing the entered identifier for %s',language=>{
  render(<I18nProvider><Login onSwitchToRegister={vi.fn()} /></I18nProvider>)
- fireEvent.change(screen.getByLabelText('Email or beta username'),{target:{value:'learner'}})
+ fireEvent.change(screen.getByLabelText('Email or MELA username'),{target:{value:'learner'}})
  fireEvent.change(screen.getByLabelText('Preferred language'),{target:{value:language}})
  expect(screen.getByRole('heading',{name:translate(language,'authWelcome')})).toBeTruthy()
  expect((screen.getByLabelText(translate(language,'authIdentifier')) as HTMLInputElement).value).toBe('learner')

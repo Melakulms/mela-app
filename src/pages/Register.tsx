@@ -10,7 +10,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
 }) {
   const { t } = useI18n()
   const [mode, setMode] = useState<'email' | 'invite'>(() =>
-    new URLSearchParams(window.location.search).get('signup') === 'invite' ? 'invite' : 'email')
+    new URLSearchParams(window.location.search).get('signup') === 'email' ? 'email' : 'invite')
   const [emailDeliveryBlocked, setEmailDeliveryBlocked] = useState(false)
   const [email, setEmail] = useState('')
   const [emailRole, setEmailRole] = useState<BetaSignupRole>('student')
@@ -120,7 +120,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
       <AuthLayout>
         <span className="auth-wordmark">MELA</span>
         <h1>{t('authEmailJoin')}</h1>
-        <p className="auth-subtitle">{t('authEmailHelp')}</p>
+        <p className="auth-subtitle">{t('authEmailHelp')} Email verification is optional. Until confirmation-email delivery is configured, register using a verified administrator invitation instead.</p>
         {error && <div className="banner banner-error" role="alert">{error}</div>}
         {emailDeliveryBlocked && <div className="banner banner-info" role="status">
           For the closed MELA test, you can register without email delivery using a one-time invitation from an authorized MELA administrator.
@@ -172,7 +172,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
     <AuthLayout>
       <span className="auth-wordmark">MELA</span>
       <h1>{t('authJoin')}</h1>
-      <p className="auth-subtitle">{t('authJoinHelp')}</p>
+      <p className="auth-subtitle">{t('authJoinHelp')} An administrator-issued one-time invitation verifies permission to join MELA without an email address. Save the recovery code securely. Guardian consent and professional verification are separate checks.</p>
       <div className="auth-switch"><button type="button" disabled={busy} onClick={() => { setMode('email'); setError('') }}>{t('authSwitchEmail')}</button></div>
 
       {error && <div className="banner banner-error" role="alert">{error}</div>}

@@ -5,6 +5,7 @@ import { educationStageFor } from '../lib/education-profile'
 import { ChapterStudyResources } from '../components/SchoolChapterLibrary'
 import { eligibleSchoolPrograms, type CurriculumSubject } from '../lib/curriculum-access'
 import { explainQuestionSessionError, isQuestionAvailabilityError } from '../lib/question-practice-ui'
+import SchoolPracticeHistory from '../components/SchoolPracticeHistory'
 
 type Program = {
   program_key: string
@@ -207,6 +208,7 @@ export default function QuestionBank({ onBack, onOpenProfile, workspace = false 
       {!sessionId ? (
         <>
           <section className="list-panel question-card" aria-label="Practice guide"><h2>Learn, practise, review, repeat</h2><p>Explore your subjects and chapters, read the lesson, then practise at any available difficulty. Use focused questions or a full worksheet, flag questions to revisit, and review explanations after submission.</p><p>{programs.length} enrolled subject programs · {chapters.length} chapters in this subject</p></section>
+          {grade !== null && programs.length > 0 && <SchoolPracticeHistory programs={programs} />}
           {grade && grade >= 11 && <div className="field"><label htmlFor="track">Enrolled academic stream</label><select id="track" disabled={busy} value={track} onChange={e => { const next = e.target.value; setTrack(next); setProgram(programs.find(p => p.track_key === next)?.program_key ?? ''); setError('') }}>{[...new Set(programs.map(p => p.track_key))].map(key => <option key={key} value={key}>{key.replaceAll('_', ' ')}</option>)}</select><p className="field-hint">Your enrolled subjects determine your stream. A stream correction needs verified MELA support.</p></div>}
           <div className="field">
             <label htmlFor="program">Subject</label>

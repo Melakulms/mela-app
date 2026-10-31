@@ -23,6 +23,7 @@ export default function SubscriptionPlans() {
   const [method,setMethod] = useState('')
   const [checkout,setCheckout] = useState<Checkout|null>(null)
   const [reference,setReference] = useState('')
+  const [linkCode,setLinkCode] = useState('')
   const [busy,setBusy] = useState(false)
   const [error,setError] = useState('')
   const [message,setMessage] = useState('')
@@ -51,6 +52,14 @@ export default function SubscriptionPlans() {
     return ()=>{cancelled=true}
   },[refresh])
 
+  const generateLinkCode = async () => {
+    setBusy(true);setError('')
+    try {
+      const {data,error:problem}=await supabase.rpc('mela_billing_link_code_v1')
+      if(problem)throw problem
+      setLinkCode(String(data??''))
+    }catch(e){setError(e instanceof Error?e.message:'Cannot create a Telegram linking code')}finally{setBusy(false)}
+  }
   const start = async() => {
     setBusy(true);setError('');setMessage('')
     try {
@@ -102,6 +111,12 @@ export default function SubscriptionPlans() {
       <p className="field-hint">Entering a reference is not proof of payment. Do not share a PIN, password, or one-time code.</p>
       <button type="button" className="btn btn-primary" disabled={busy||reference.trim().length<6} onClick={()=>void submit()}>Submit for manual verification</button>
     </div>}
+    <div className="list-panel">
+      <h3>Link @Mela_edu_bot securely</h3>
+      <p>Link your Telegram private chat to your signed-in MELA account. The code expires after five minutes and works only once. The bot can display payment status; it cannot approve payments.</p>
+      <button type="button" className="btn btn-secondary" disabled={busy} onClick={()=>void generateLinkCode()}>Create one-time Telegram link code</button>
+      {linkCode&&<p role="status">Send <strong>/link {linkCode}</strong> to @Mela_edu_bot in a private chat. Do not share this code with anyone else.</p>}
+    </div>
     {orders.length>0&&<div><h3>Recent payment orders</h3>
       <ul>{orders.map(order=><li key={order.id}>{order.plan_key==='pro_monthly'?'Pro':'Premium'} · {order.amount_minor/100} ETB — {statusLabels[order.status]??order.status}</li>)}</ul>
     </div>}

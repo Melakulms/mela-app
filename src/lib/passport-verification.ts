@@ -19,5 +19,6 @@ export async function requestPassportVerification(kind: PassportVerificationKind
 export async function fetchMyPassportVerificationRequests(): Promise<PassportVerificationStatus[]> {
   const { data, error } = await supabase.rpc('get_my_passport_verification_requests')
   if (error) throw error
-  return Array.isArray(data) ? data as PassportVerificationStatus[] : []
+  if (!Array.isArray(data)) throw new Error('Verification status could not be confirmed. Retry before changing records.')
+  return data as PassportVerificationStatus[]
 }

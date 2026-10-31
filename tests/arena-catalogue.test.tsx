@@ -31,3 +31,22 @@ it.each(['employer_challenge','tournament'] as const)('keeps %s joining disabled
  expect(onMatch).not.toHaveBeenCalled();expect(mocks.rpc).not.toHaveBeenCalled()
  expect(screen.getByText(/Joining is paused/)).toBeTruthy()
 })
+
+
+it('keeps Grade 1–12 learners in school-safe Arena practice with no live matchmaking', async () => {
+  render(<Arena onBack={vi.fn()} stageKey="school_1_6" />)
+  await screen.findByRole('option', { name: 'Math quiz · 8 questions' })
+  expect(screen.getByText('School-safe Arena')).toBeTruthy()
+  for (const button of screen.getAllByRole('button', { name: 'Search for opponent' })) {
+    expect((button as HTMLButtonElement).disabled).toBe(true)
+  }
+  for (const name of ['Browse Team Battle', 'Browse Employer Challenge', 'Browse Tournaments']) {
+    expect((screen.getByRole('button', { name }) as HTMLButtonElement).disabled).toBe(true)
+  }
+  const practice = screen.getAllByRole('button', { name: 'Try interactive practice' })
+  expect(practice).toHaveLength(8)
+  expect((practice[7] as HTMLButtonElement).disabled).toBe(false)
+  fireEvent.click(practice[7])
+  await screen.findByRole('heading', { name: /Tournament.*Interactive demo/i })
+  expect(mocks.join).not.toHaveBeenCalled()
+})

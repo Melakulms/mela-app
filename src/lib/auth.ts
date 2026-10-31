@@ -19,6 +19,15 @@ export async function registerUser({ email, password, fullName, role }: Register
   })
 }
 
+/** Request signup confirmation only through Supabase Auth; do not disclose user existence. */
+export async function resendSignupConfirmation(email: string) {
+  return supabase.auth.resend({
+    type: 'signup',
+    email: email.trim().toLowerCase(),
+    options: { emailRedirectTo: authRedirectUrl() },
+  })
+}
+
 export type BetaSignupRole = 'student' | 'parent' | 'teacher' | 'company'
 
 export interface BetaRegisterInput {

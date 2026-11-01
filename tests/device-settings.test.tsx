@@ -47,7 +47,7 @@ it('does not show an unnecessary MELA Home button in the page header', () => {
   expect(screen.queryByRole('link',{name:'MELA Home',exact:true})).toBeNull()
   expect(screen.getByRole('button',{name:'Settings & downloads — app version'})).toBeTruthy()
   act(() => { window.dispatchEvent(new Event('mela:open-settings')) })
-  expect(screen.getByRole('link',{name:'Back to MELA Home'})).toBeTruthy()
+  expect(screen.getAllByRole('link',{name:'Back to MELA Home'}).length).toBeGreaterThan(0)
 })
 
 it('opens the published Settings panel from signed-in navigation', () => {

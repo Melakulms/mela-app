@@ -133,5 +133,18 @@ it('defaults to invitation-code signup without asking for email', () => {
   render(<I18nProvider><Register onSwitchToLogin={vi.fn()} /></I18nProvider>)
   expect(screen.getByLabelText('MELA invitation code')).toBeTruthy()
   expect(screen.queryByLabelText('Email address')).toBeNull()
-  expect(screen.getByText(/one-time invitation verifies permission to join MELA/)).toBeTruthy()
+  expect(screen.getByText(/Register without email using a private Telegram verification code/)).toBeTruthy()
+})
+
+it('opens a Telegram link only after a valid username and explicit role are chosen', () => {
+  window.history.replaceState(null, '', '/mela-app/')
+  render(<I18nProvider><Register onSwitchToLogin={vi.fn()} /></I18nProvider>)
+  expect(screen.queryByRole('link', {name:'Get Telegram verification code'})).toBeNull()
+  fireEvent.change(screen.getByLabelText('Username'),{target:{value:'mela.learner'}})
+  expect(screen.queryByRole('link', {name:'Get Telegram verification code'})).toBeNull()
+  fireEvent.change(screen.getByLabelText('Account type (required)'),{target:{value:'student'}})
+  const link=screen.getByRole('link',{name:'Get Telegram verification code'}) as HTMLAnchorElement
+  expect(link.href).toContain('https://t.me/Mela_edu_bot?start=reg_student_')
+  expect(link.rel).toContain('noopener')
+  expect(mocks.registerBetaUser).not.toHaveBeenCalled()
 })

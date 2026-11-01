@@ -9,13 +9,14 @@ export interface RegisterInput {
   password: string
   fullName: string
   role: BetaSignupRole
+  invitationCode?: string
 }
 
-export async function registerUser({ email, password, fullName, role }: RegisterInput) {
+export async function registerUser({ email, password, fullName, role, invitationCode }: RegisterInput) {
   return supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: authRedirectUrl(), data: { full_name: fullName, role, preferred_language: 'English' } },
+    options: { emailRedirectTo: authRedirectUrl(), data: { full_name: fullName, role, preferred_language: 'English', ...(invitationCode ? { invitation_code: invitationCode.trim().toUpperCase() } : {}) } },
   })
 }
 
@@ -27,6 +28,7 @@ export interface BetaRegisterInput {
   password: string
   fullName: string
   accessCode: string
+  invitationCode?: string
 }
 
 export interface BetaRegisterResult {
@@ -62,7 +64,7 @@ async function invokeBetaAuth<T>(body: Record<string, unknown>): Promise<T> {
   return data as T
 }
 
-export async function registerBetaUser({ username, password, fullName, accessCode, role }: BetaRegisterInput) {
+export async function registerBetaUser({ username, password, fullName, accessCode, role, invitationCode }: BetaRegisterInput) {
   return invokeBetaAuth<BetaRegisterResult>({
     action: 'signup',
     username: username.trim().toLowerCase(),
@@ -70,6 +72,7 @@ export async function registerBetaUser({ username, password, fullName, accessCod
     full_name: fullName.trim(),
     access_code: accessCode.trim(),
     requested_role: role,
+    ...(invitationCode ? { invitation_code: invitationCode.trim().toUpperCase() } : {}),
   })
 }
 

@@ -30,6 +30,8 @@ export function validateRegistrationEligibility(input: {
 export function registrationAttestation(ageBand: Exclude<RegistrationAgeBand, ''>, marketingConsent: boolean) {
   return {
     age_band: ageBand,
+    terms_accepted: true,
+    privacy_acknowledged: true,
     terms_acknowledged_version: REGISTRATION_POLICY_VERSION,
     privacy_acknowledged_version: REGISTRATION_POLICY_VERSION,
     marketing_opt_in: marketingConsent,

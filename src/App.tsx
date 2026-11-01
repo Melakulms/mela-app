@@ -12,6 +12,8 @@ import ResetPassword from './pages/ResetPassword'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import VerifyEmail from './pages/VerifyEmail'
+import { hasVerifiedContact } from './lib/contact-verification'
+import ContactVerification from './pages/ContactVerification'
 const StudentDashboard = lazy(() => import('./pages/StudentDashboard'))
 const Practice = lazy(() => import('./pages/Practice'))
 const OpportunityHub = lazy(() => import('./pages/OpportunityHub'))
@@ -247,7 +249,14 @@ export default function App() {
   }
 
   if (profileLoading || !profile || profile.id !== session.user.id) return <div className="centered-loading">{t('settingUpAccount')}</div>
-  if (profile.account_status === 'pending_verification' || !profile.email_verified) {
+  // A synthetic email marked confirmed by a trusted invitation service is
+  // NOT a verified contact. Only a real Supabase Auth-confirmed email or phone
+  // unlocks access. Telegram alone is insufficient.
+  if (!hasVerifiedContact(session.user)) {
+    return <ContactVerification onRefresh={reloadProfile} onSignOut={() => { void signOut() }} />
+  }
+
+  if (profile.account_status === 'pending_verification') {
     return <VerifyEmail onRefresh={reloadProfile} email={profile.email ?? pendingEmail} onUseDifferentAccount={() => { setPendingEmail(''); setAuthView('login') }} />
   }
 

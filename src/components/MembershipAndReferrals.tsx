@@ -37,6 +37,10 @@ export default function MembershipAndReferrals({ userId }:{userId:string}) {
   const [planKey,setPlanKey]=useState('')
   const [accountId,setAccountId]=useState('')
   const [reference,setReference]=useState('')
+  const [telegramCode,setTelegramCode]=useState('')
+  const [telegramOrderId,setTelegramOrderId]=useState('')
+  const [telegramCodeExpires,setTelegramCodeExpires]=useState('')
+  const [telegramCommandCopied,setTelegramCommandCopied]=useState(false)
   const [error,setError]=useState('')
   const [notice,setNotice]=useState('')
   const [busy,setBusy]=useState(false)
@@ -111,12 +115,42 @@ export default function MembershipAndReferrals({ userId }:{userId:string}) {
       const {data,error}=await supabase.rpc('payment_command_v1',{p_action:'submit',p_data:{order_id:openOrder.id,reference:reference.trim().toUpperCase()}})
       if(error)throw error
       if(!data || !['pending','awaiting_payment'].includes(data.status))throw new Error('The submission was not recorded as pending.')
-      setReference('')
+      setReference('');setTelegramCode('');setTelegramOrderId('')
       setNotice('Reference received for independent review. No subscription or commission has been activated.')
       reload()
     }catch(e){setError(messageOf(e))}
     finally{setBusy(false)}
   }
+  // The private code is issued by the authenticated MELA service for the
+  // exact order and expires after 15 minutes. Only the code hash is stored.
+  const issueTelegramOrderCode=async()=>{
+    if(!openOrder||openOrder.reference||!catalog.enabled)return
+    if(!/^[A-Za-z0-9][A-Za-z0-9-]{5,63}$/.test(reference.trim())){
+      setError('Enter the actual 6–64 character bank transfer reference first.');return
+    }
+    setBusy(true);setError('');setNotice('');setTelegramCode('');setTelegramOrderId('')
+    try{
+      const {data,error}=await supabase.rpc('mela_issue_telegram_order_code_v1',{p_order_id:openOrder.id})
+      if(error)throw error
+      if(!data||data.order_id!==openOrder.id||!/^[A-F0-9]{64}$/.test(data.code)
+          ||data.amount_minor!==openOrder.amount_minor||data.currency!=='ETB'
+          ||data.recipient!==openOrder.recipient)throw new Error('MELA could not confirm a secure code for the exact order. Do not transfer money.')
+      setTelegramCode(data.code)
+      setTelegramOrderId(openOrder.id)
+      setTelegramCodeExpires(data.expires_at)
+      setTelegramCommandCopied(false)
+      setNotice('Private Telegram order code created. The payment remains unverified; only Central Admin may confirm money received.')
+    }catch(e){setError(messageOf(e))}
+    finally{setBusy(false)}
+  }
+  const telegramCommand=telegramCode && openOrder?.id===telegramOrderId && /^[A-Za-z0-9][A-Za-z0-9-]{5,63}$/.test(reference.trim())
+    ? `/order ${telegramOrderId} ${telegramCode} ${reference.trim().toUpperCase()}`:''
+  const copyTelegramCommand=async()=>{
+    if(!telegramCommand)return
+    try{await navigator.clipboard.writeText(telegramCommand);setTelegramCommandCopied(true)}
+    catch{setError('Copy unavailable. Select the private command and copy it manually.')}
+  }
+
   const copyReferral=async()=>{
     if(!referralUrl)return
     try{await navigator.clipboard.writeText(referralUrl);setNotice('Invitation link copied. You earn nothing for registration alone.')}catch{setError('Copy unavailable. Long-press the invitation link to copy it.')}
@@ -162,7 +196,17 @@ export default function MembershipAndReferrals({ userId }:{userId:string}) {
     {openOrder&&<div className="field">
       <label htmlFor="membership-reference">Transfer reference for pending order</label>
       <input id="membership-reference" value={reference} onChange={e=>setReference(e.target.value)} maxLength={64} placeholder="Actual transfer reference" />
-      <button className="btn btn-secondary" type="button" disabled={busy} onClick={()=>void submitReference()}>Submit reference for review</button>
+      <button className="btn btn-secondary" type="button" disabled={busy} onClick={()=>void submitReference()}>Submit reference in MELA for review</button>
+      {catalog.enabled&&openOrder.status==='awaiting_payment'&&!openOrder.reference&&<>
+        <button type="button" className="btn btn-secondary" disabled={busy} onClick={()=>void issueTelegramOrderCode()}>Generate private Telegram order code</button>
+        {telegramCommand&&<div className="field" aria-label="MELA private Telegram payment reference command">
+          <label htmlFor="telegram-order-command">Private Telegram command (expires {telegramCodeExpires?new Date(telegramCodeExpires).toLocaleTimeString(): 'soon'})</label>
+          <textarea id="telegram-order-command" readOnly value={telegramCommand} onFocus={e=>e.currentTarget.select()} rows={3} />
+          <button type="button" className="btn btn-secondary" onClick={()=>void copyTelegramCommand()}>{telegramCommandCopied?'Command copied':'Copy private Telegram command'}</button>
+          <a className="btn btn-secondary" target="_blank" rel="noopener noreferrer" href="https://t.me/Mela_edu_bot">Open @Mela_edu_bot</a>
+          <p className="field-hint">Send the command only in your private bot chat. It reports the reference on this specific MELA order; it does NOT prove payment or activate your subscription. No password, PIN or Telegram login code is required.</p>
+        </div>}
+      </>}
       <p className="field-hint">A bank or Telebirr receipt must be independently matched by a verified reviewer before any paid access or referral reward is activated.</p>
     </div>}
     <h3>Invite friends</h3>

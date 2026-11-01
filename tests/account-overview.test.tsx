@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import {afterEach,expect,it,vi} from 'vitest'
 import {cleanup,fireEvent,render,screen} from '@testing-library/react'
+vi.mock('../src/components/MembershipAndReferrals', () => ({ default: () => <div data-testid="membership-panel-mock" /> }))
 import AccountOverview from '../src/pages/AccountOverview'
 import {isLearnerAppRole,workspaceItems} from '../src/lib/role-workspaces'
 import type {MelaProfile} from '../src/lib/auth'

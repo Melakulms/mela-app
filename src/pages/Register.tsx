@@ -19,6 +19,10 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
   const [fullName, setFullName] = useState('')
   const [username, setUsername] = useState('')
   const [accessCode, setAccessCode] = useState('')
+  const [invitationCode, setInvitationCode] = useState(() => {
+    const value = new URLSearchParams(window.location.search).get('ref')?.trim().toUpperCase() ?? ''
+    return /^[A-Z0-9-]{4,40}$/.test(value) ? value : ''
+  })
   const [role, setRole] = useState<BetaSignupRole | ''>('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -43,6 +47,9 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
     setError('')
     const name = fullName.trim()
     const handle = username.trim().toLowerCase()
+    if (invitationCode && !/^[A-Z0-9-]{4,40}$/.test(invitationCode.trim().toUpperCase())) {
+      setError('Referral code must contain 4–40 letters, numbers or hyphens.'); return
+    }
 
     if (mode === 'email') {
       const normalizedEmail = email.trim().toLowerCase()
@@ -55,6 +62,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
       try {
         const { data: signupData, error: signupError } = await registerUser({
           email: normalizedEmail, password, fullName: name, role: emailRole,
+          ...(invitationCode ? { invitationCode } : {}),
         })
         if (signupError) throw signupError
         if (!signupData?.user) throw new Error(t('authCreateError'))
@@ -85,7 +93,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
 
     setBusy(true)
     try {
-      const result = await registerBetaUser({ username: handle, password, fullName: name, accessCode, role })
+      const result = await registerBetaUser({ username: handle, password, fullName: name, accessCode, role, ...(invitationCode ? { invitationCode } : {}) })
       setCreated(result)
       setPassword('')
       setConfirmPassword('')
@@ -163,6 +171,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
             <label htmlFor="confirmPassword">{t('authConfirm')}</label>
             <input id="confirmPassword" type={showPassword ? 'text' : 'password'} required minLength={12} autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} disabled={busy} />
           </div>
+          <div className="field"><label htmlFor="email-referral">Referral code (optional)</label><input id="email-referral" maxLength={40} value={invitationCode} autoCapitalize="characters" onChange={e => setInvitationCode(e.target.value.trim().toUpperCase())} disabled={busy} /><span className="field-hint">The inviter is recorded only when this is a valid MELA referral code. Registration alone does not earn a commission.</span></div>
           {emailRole === 'student' && <GradeSelectionPreview />}
           <button className="btn btn-primary btn-block" type="submit" disabled={busy}>{busy ? t('authCreating') : t('authEmailSubmit')}</button>
         </form>
@@ -188,6 +197,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
       {error && <div className="banner banner-error" role="alert">{error}</div>}
 
       <form onSubmit={submit}>
+        <div className="field"><label htmlFor="mela-referral">Referral code (optional)</label><input id="mela-referral" maxLength={40} value={invitationCode} autoCapitalize="characters" onChange={e => setInvitationCode(e.target.value.trim().toUpperCase())} disabled={busy} /><span className="field-hint">A MELA invitation link fills this automatically. Referral rewards require a first independently verified paid subscription, not registration.</span></div>
         <div className="field">
           <label htmlFor="fullName">{t('authFullName')}</label>
           <input id="fullName" required minLength={2} maxLength={100} autoComplete="name" value={fullName} onChange={(e) => setFullName(e.target.value)} disabled={busy} />

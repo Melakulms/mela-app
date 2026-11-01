@@ -1,6 +1,7 @@
 import { clearCoachHistories } from './coach-history'
 import { supabase, AUTH_STORAGE_KEY } from './supabase'
 import { authRedirectUrl } from './auth-redirect'
+import { registrationAttestation, validateRegistrationEligibility, type RegistrationAgeBand } from './registration-requirements'
 
 export type MelaRole = 'student' | 'parent' | 'teacher' | 'employer' | 'company' | 'mentor' | 'admin' | 'super_admin'
 
@@ -10,19 +11,29 @@ export interface RegisterInput {
   fullName: string
   role: BetaSignupRole
   invitationCode?: string
+  ageBand: Exclude<RegistrationAgeBand, ''>
+  acceptedTerms: boolean
+  acceptedPrivacy: boolean
+  marketingConsent: boolean
 }
 
-export async function registerUser({ email, password, fullName, role, invitationCode }: RegisterInput) {
+export async function registerUser({ email, password, fullName, role, invitationCode, ageBand, acceptedTerms, acceptedPrivacy, marketingConsent }: RegisterInput) {
+  const failure = validateRegistrationEligibility({ role, ageBand, acceptedTerms, acceptedPrivacy })
+  if (failure) throw new Error(failure)
   return supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: authRedirectUrl(), data: { full_name: fullName, role, preferred_language: 'English', ...(invitationCode ? { invitation_code: invitationCode.trim().toUpperCase() } : {}) } },
+    options: { emailRedirectTo: authRedirectUrl(), data: { full_name: fullName, role, preferred_language: 'English', ...registrationAttestation(ageBand, marketingConsent), ...(invitationCode ? { invitation_code: invitationCode.trim().toUpperCase() } : {}) } },
   })
 }
 
 export type BetaSignupRole = 'student' | 'parent' | 'teacher' | 'company'
 
 export interface BetaRegisterInput {
+  ageBand: Exclude<RegistrationAgeBand, ''>
+  acceptedTerms: boolean
+  acceptedPrivacy: boolean
+  marketingConsent: boolean
   role: BetaSignupRole
   username: string
   password: string
@@ -64,8 +75,12 @@ async function invokeBetaAuth<T>(body: Record<string, unknown>): Promise<T> {
   return data as T
 }
 
-export async function registerBetaUser({ username, password, fullName, accessCode, role, invitationCode }: BetaRegisterInput) {
+export async function registerBetaUser({ username, password, fullName, accessCode, role, invitationCode, ageBand, acceptedTerms, acceptedPrivacy, marketingConsent }: BetaRegisterInput) {
+  const failure = validateRegistrationEligibility({ role, ageBand, acceptedTerms, acceptedPrivacy })
+  if (failure) throw new Error(failure)
   return invokeBetaAuth<BetaRegisterResult>({
+    ...registrationAttestation(ageBand, marketingConsent),
+    adult_confirmed: ageBand === '18_plus',
     action: 'signup',
     username: username.trim().toLowerCase(),
     password,

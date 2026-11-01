@@ -1,69 +1,187 @@
-/* MELA Motion — shared across every learner view and all account roles.
-   Uses one-shot opacity/transform transitions only: no downloads, timers, or
-   continuous animation. The app remains fully usable on older Android phones. */
+/* MELA Motion 2: visible visual identity throughout the live learner app.
+   Static brand accents remain visible after the short entrance animations.
+   Avoid layout shifts, external media, timers, or scroll-triggered JS. */
+
 @keyframes mela-view-enter {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: .62; transform: translate3d(0, 12px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 @keyframes mela-panel-enter {
-  from { opacity: 0; transform: translate3d(0, 9px, 0); }
+  from { opacity: .58; transform: translate3d(0, 16px, 0); }
   to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 @keyframes mela-tile-enter {
-  from { transform: translate3d(0, 7px, 0); }
+  from { transform: translate3d(0, 12px, 0); }
   to { transform: translate3d(0, 0, 0); }
 }
 @keyframes mela-mark-enter {
-  from { transform: rotate(-7deg) scale(.92); }
+  from { transform: rotate(-12deg) scale(.84); }
   to { transform: rotate(0) scale(1); }
 }
+@keyframes mela-star-twinkle {
+  0%, 65%, 100% { opacity: .64; transform: rotate(0) scale(1); }
+  76% { opacity: 1; transform: rotate(14deg) scale(1.24); }
+  86% { opacity: .82; transform: rotate(0) scale(1); }
+}
+@keyframes mela-preview-enter {
+  from { opacity: .4; transform: translate3d(-16px, 0, 0) scale(.9); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
 
-/* Respect BOTH Android's accessibility setting and MELA's in-app controls.
-   No animations are necessary for navigation or payment/assessment actions. */
+/* Permanent branded details: the old update disappeared after 230 ms.
+   These accents make the update identifiable even if the opening animation
+   is missed. Restrict decoration to page chrome, not financial forms. */
+.auth-layout .auth-card {
+  position: relative;
+  border-top: 3px solid var(--gold);
+  box-shadow: 0 12px 34px rgba(8, 20, 43, .13);
+}
+.auth-layout .auth-card::before {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  top: -3px;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  border-radius: 20px 20px 0 0;
+  background: linear-gradient(90deg, var(--gold), #60cabc 53%, var(--gold));
+}
+.auth-layout .auth-card::after {
+  content: '✦';
+  position: absolute;
+  top: .55rem;
+  right: .85rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--gold);
+  pointer-events: none;
+}
+.app-topbar::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  pointer-events: none;
+  background: linear-gradient(90deg, var(--gold), #55bead, var(--gold));
+}
+.app-topbar .auth-wordmark::after {
+  content: '✦';
+  display: inline-block;
+  font-size: .7rem;
+  line-height: 1;
+  margin-left: .2rem;
+  color: var(--gold);
+  pointer-events: none;
+}
+.dash-main > .section-heading h2::after,
+.dashboard-main .dash-greeting h1::after {
+  content: '';
+  display: block;
+  width: 46px;
+  height: 3px;
+  border-radius: 10px;
+  margin-top: .4rem;
+  background: linear-gradient(90deg, var(--gold), #55bead);
+}
+.module-grid > button.module-card:not(:disabled)::after {
+  content: '✦';
+  position: absolute;
+  right: .8rem;
+  top: .5rem;
+  font-size: .95rem;
+  line-height: 1;
+  color: rgba(255, 255, 255, .84);
+  pointer-events: none;
+}
+html:not(.mela-low-data) .dashboard-hero {
+  border-left: 4px solid var(--gold);
+  box-shadow: 0 10px 24px rgba(8, 20, 43, .10);
+}
+html:not(.mela-low-data) .bottom-nav button.active {
+  box-shadow: inset 0 -3px var(--gold);
+}
+
+/* Replayable motion demonstration in Settings. It keeps an attractive
+   static appearance if animations are disabled. */
+.mela-motion-preview {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 88px;
+  margin: .8rem 0;
+  padding: .9rem 1rem;
+  border: 1px solid var(--gold);
+  border-radius: 14px;
+  background: linear-gradient(120deg, var(--surface), var(--gold-soft));
+  color: var(--ink);
+  overflow: hidden;
+}
+.mela-motion-preview .mela-preview-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  height: 52px;
+  width: 52px;
+  border-radius: 16px;
+  background: var(--gold);
+  color: #201a0c;
+  font-size: 1.8rem;
+  line-height: 1;
+}
+.mela-motion-preview strong,
+.mela-motion-preview small { display: block; }
+.mela-motion-preview strong { font: 700 1.15rem 'Public Sans', system-ui, sans-serif; }
+.mela-motion-preview small { margin-top: .15rem; color: var(--muted); font-size: .8rem; }
+.mela-motion-preview-controls { display: flex; align-items: center; flex-wrap: wrap; gap: .8rem; }
+.mela-motion-preview-controls .btn { min-height: 44px; }
+
+/* Animate only transforms/opacity on a handful of foreground elements;
+   cap entrance sequencing to six tiles, no animated giant background. */
 @media (prefers-reduced-motion: no-preference) {
   html:not(.mela-reduced-motion):not(.mela-low-data) #main-content > * {
-    animation: mela-view-enter 230ms ease-out backwards;
+    animation: mela-view-enter 540ms cubic-bezier(.22, 1, .36, 1) backwards;
   }
-
-  html:not(.mela-reduced-motion):not(.mela-low-data) .auth-shell .auth-story {
-    animation: mela-panel-enter 390ms cubic-bezier(.22, 1, .36, 1) backwards;
-  }
+  html:not(.mela-reduced-motion):not(.mela-low-data) .auth-shell .auth-story,
   html:not(.mela-reduced-motion):not(.mela-low-data) .auth-shell .auth-card {
-    animation: mela-panel-enter 420ms cubic-bezier(.22, 1, .36, 1) backwards;
+    animation: mela-panel-enter 600ms cubic-bezier(.22, 1, .36, 1) backwards;
   }
   html:not(.mela-reduced-motion):not(.mela-low-data) .auth-story .auth-wordmark svg {
-    animation: mela-mark-enter 480ms cubic-bezier(.22, 1, .36, 1) backwards;
+    animation: mela-mark-enter 650ms cubic-bezier(.22, 1, .36, 1) backwards;
   }
-
-  /* Works for every feature opened from the dashboard, including the
-     educator, guardian, employer, and mentor account workspaces. */
-  html:not(.mela-reduced-motion):not(.mela-low-data) .dash-main > .list-panel:nth-of-type(-n+3),
-  html:not(.mela-reduced-motion):not(.mela-low-data) .dash-main > .stat-strip,
   html:not(.mela-reduced-motion):not(.mela-low-data) .settings-center,
   html:not(.mela-reduced-motion):not(.mela-low-data) .profile-access-intro,
-  html:not(.mela-reduced-motion):not(.mela-low-data) .dashboard-main .dashboard-hero {
-    animation: mela-panel-enter 300ms cubic-bezier(.22, 1, .36, 1) backwards;
+  html:not(.mela-reduced-motion):not(.mela-low-data) .dashboard-main .dashboard-hero,
+  html:not(.mela-reduced-motion):not(.mela-low-data) .dash-main > .list-panel:nth-of-type(-n+3),
+  html:not(.mela-reduced-motion):not(.mela-low-data) .dash-main > .stat-strip {
+    animation: mela-panel-enter 520ms cubic-bezier(.22, 1, .36, 1) backwards;
   }
-
-  /* A short, capped stagger, not a long sequence for large lists or search
-     results. Transform-only animation preserves disabled-card opacity. */
   html:not(.mela-reduced-motion):not(.mela-low-data) .module-grid > .module-card:nth-child(-n+6) {
-    animation: mela-tile-enter 260ms cubic-bezier(.22, 1, .36, 1) backwards;
+    animation: mela-tile-enter 460ms cubic-bezier(.22, 1, .36, 1) backwards;
   }
-  html:not(.mela-reduced-motion):not(.mela-low-data) .module-grid > .module-card:nth-child(2) { animation-delay: 35ms; }
-  html:not(.mela-reduced-motion):not(.mela-low-data) .module-grid > .module-card:nth-child(3) { animation-delay: 70ms; }
-  html:not(.mela-reduced-motion):not(.mela-low-data) .module-grid > .module-card:nth-child(4) { animation-delay: 105ms; }
-  html:not(.mela-reduced-motion):not(.mela-low-data) .module-grid > .module-card:nth-child(5) { animation-delay: 140ms; }
-  html:not(.mela-reduced-motion):not(.mela-low-data) .module-grid > .module-card:nth-child(6) { animation-delay: 175ms; }
+  html:not(.mela-reduced-motion):not(.mela-low-data) .module-grid > .module-card:nth-child(2) { animation-delay: 60ms; }
+  html:not(.mela-reduced-motion):not(.mela-low-data) .module-grid > .module-card:nth-child(3) { animation-delay: 120ms; }
+  html:not(.mela-reduced-motion):not(.mela-low-data) .module-grid > .module-card:nth-child(4) { animation-delay: 180ms; }
+  html:not(.mela-reduced-motion):not(.mela-low-data) .module-grid > .module-card:nth-child(5) { animation-delay: 240ms; }
+  html:not(.mela-reduced-motion):not(.mela-low-data) .module-grid > .module-card:nth-child(6) { animation-delay: 300ms; }
+
+  /* Small decorative star, not a looping full-screen animation. */
+  html:not(.mela-reduced-motion):not(.mela-low-data) .auth-layout .auth-card::after,
+  html:not(.mela-reduced-motion):not(.mela-low-data) .app-topbar .auth-wordmark::after {
+    animation: mela-star-twinkle 6s ease-in-out infinite;
+  }
+  html:not(.mela-reduced-motion):not(.mela-low-data) .mela-motion-preview .mela-preview-mark {
+    animation: mela-preview-enter 680ms cubic-bezier(.22, 1, .36, 1) backwards;
+  }
 
   html:not(.mela-reduced-motion):not(.mela-low-data) :is(.btn, .role-option, .bottom-nav button, .settings-jump button, button.module-card) {
-    transition: transform 150ms ease-out, box-shadow 150ms ease-out, border-color 150ms ease-out, background-color 150ms ease-out;
+    transition: transform 170ms ease-out, box-shadow 170ms ease-out, border-color 170ms ease-out, background-color 170ms ease-out;
   }
-
   html:not(.mela-reduced-motion):not(.mela-low-data) :is(.btn, .role-option, .bottom-nav button, .settings-jump button, button.module-card):not(:disabled):active {
-    transform: scale(.985);
+    transform: scale(.975);
   }
-
   @media (hover: hover) and (pointer: fine) {
     html:not(.mela-reduced-motion):not(.mela-low-data) :is(.btn, .role-option, .settings-jump button):not(:disabled):hover {
       transform: translateY(-2px);
@@ -75,11 +193,13 @@
   }
 }
 
-/* The device's reduced-motion preference is already guarded in phase6.css.
-   Also honor the explicit in-app switch immediately, without a page reload. */
+/* Both system and in-app accessibility settings completely disable motion. */
 html.mela-reduced-motion *,
 html.mela-reduced-motion *::before,
-html.mela-reduced-motion *::after {
+html.mela-reduced-motion *::after,
+html.mela-low-data *,
+html.mela-low-data *::before,
+html.mela-low-data *::after {
   animation: none !important;
   transition: none !important;
   scroll-behavior: auto !important;

@@ -1,10 +1,9 @@
 import { parseRegistration } from './registration.ts';
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-// MELA production Telegram: informational commands only.
-// No collection, payment verification, entitlements, test payments, or account linking.
+// MELA production Telegram supports registration and (only when explicitly enabled)
+// order-linked, manually reviewed payment references. Bank claims never auto-approve.
 const PROJECT_URL = "https://duizgtmbptmlbyipreqg.supabase.co";
-const STAGING_WEBHOOK = "https://tungqfmypuwzeyrtaseh.supabase.co/functions/v1/mela-telegram-bot";
 const FUNCTION_NAME = "mela-telegram-bot";
 const BOT_USERNAME = "mela_edu_bot";
 const enc = new TextEncoder();
@@ -161,7 +160,7 @@ function reply(input:string):string {
  if(cmd==="/plans") return "MELA upcoming subscriptions (not yet available for purchase)\n\nFree Core: free\nPro: 50 ETB / 30 days\nPremium: 100 ETB / 30 days\n\nPlanned referral reward after a new member's FIRST independently verified paid subscription: Pro 20 ETB; Premium 40 ETB. No reward for sign-up alone.\n\nThese plans are not active in production checkout yet. Do NOT transfer money based on this message. Only follow a verified in-app payment order once MELA enables the new checkout.";
  if(cmd==="/start") return "Welcome to MELA Education! 🇪🇹\n\nFor email-free registration, open https://melakulms.github.io/mela-app/ and choose Get Telegram verification code, or send /register USERNAME ROLE in this chat (ROLE: student, parent, teacher, company). Use /plans for upcoming subscriptions. For payment, create a verified order in MELA and use its Telegram link when checkout is enabled. /status still checks existing payment cases. Free Core remains free.";
  if(cmd==="/privacy") return "For registration MELA stores a hash of your Telegram account ID, chosen username, verification time and code hash to prevent duplicate registration. For payments MELA stores your Telegram chat ID, claimed name, payment references, amount, service description and review result to verify payments and resolve disputes. Only your chat can request its status; the authorized reviewer uses MFA. Never send PINs, passwords, OTPs, identity documents or screenshots.";
- if(cmd==="/review") return "MELA reviewer sign-in (authorized administrator only):\nhttps://mela-private-payment-test.cloudyjelly10.chatgpt.site";
+ if(cmd==="/review") return "Authorized finance reviewers: open the official MELA Central Admin Payments screen, sign in and complete MFA. Never follow third-party payment-review links from Telegram.";
  return "MELA Education Bot\n/start — Welcome\n/register USERNAME ROLE — Private one-time registration code\n/plans — Upcoming Pro and Premium prices (not yet purchasable)\n/pay — Linked-order payment instructions\n/verify REFERENCE — Claim a transfer for your linked order (when enabled)\n/status — Your payment review status\n/privacy — Data notice\n/review — Administrator review screen\n\nApproval follows manual confirmation in the receiving account. References alone do not approve payments.";
 }
 
@@ -232,7 +231,7 @@ Deno.serve(async (req:Request):Promise<Response>=>{
       const registrationCode = typeof message.text === 'string' && parseRegistration(message.text)
         ? /\n([a-f0-9]{64})\n/.exec(answer)?.[1] : undefined;
       await telegram(cfg.token,"sendMessage",{
-        chat_id:chat.id,text:answer,protect_content:!registrationCode,
+        chat_id:chat.id,text:answer,protect_content:true,
         ...(registrationCode ? {reply_markup:{inline_keyboard:[[{text:'Copy verification code',copy_text:{text:registrationCode}}]]}} : {}),
       });
       return sendJson({ok:true});

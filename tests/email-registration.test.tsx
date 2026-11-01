@@ -163,3 +163,22 @@ it('provides the exact copyable Telegram command when Android deep links fail', 
   fireEvent.change(screen.getByLabelText('Username'), {target:{value:''}})
   expect(screen.queryByLabelText('Manual Telegram command')).toBeNull()
 })
+
+it('keeps a valid invitation code from the referral link during email registration', async () => {
+  window.history.replaceState(null, '', '/mela-app/?signup=email&ref=MELA-TEST123')
+  mocks.registerUser.mockResolvedValue({ data: { user: { id: 'new-account' }, session: null }, error: null })
+  render(<I18nProvider><Register onSwitchToLogin={vi.fn()} /></I18nProvider>)
+  fillEmailForm()
+  expect((screen.getByLabelText('Referral code (optional)') as HTMLInputElement).value).toBe('MELA-TEST123')
+  fireEvent.click(screen.getByRole('button', { name: 'Create account' }))
+  await waitFor(() => expect(mocks.registerUser).toHaveBeenCalledWith(expect.objectContaining({
+    invitationCode: 'MELA-TEST123',
+    email: 'learner@example.com',
+  })))
+})
+
+it('ignores an invalid referral URL instead of storing untrusted text', () => {
+  window.history.replaceState(null, '', '/mela-app/?signup=invite&ref=%3Cscript%3E')
+  render(<I18nProvider><Register onSwitchToLogin={vi.fn()} /></I18nProvider>)
+  expect((screen.getByLabelText('Referral code (optional)') as HTMLInputElement).value).toBe('')
+})

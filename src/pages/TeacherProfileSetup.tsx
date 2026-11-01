@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { parseSafeList, saveRoleProfile } from '../lib/role-profile-save'
+import {loadProfileDraft,saveProfileDraft,clearProfileDraft} from '../lib/profile-onboarding-drafts'
 
 const GRADES=[...Array.from({length:12},(_,i)=>String(i+1)),'college_tvet','university']
 export default function TeacherProfileSetup({fullName,email,onComplete}: {fullName:string|null;email:string|null;onComplete:()=>void}) {
@@ -16,6 +17,8 @@ export default function TeacherProfileSetup({fullName,email,onComplete}: {fullNa
   const [bio,setBio]=useState('')
   const [busy,setBusy]=useState(false)
   const [error,setError]=useState('')
+  const [draftBusy,setDraftBusy]=useState(false)
+  const [draftNotice,setDraftNotice]=useState('')
   useEffect(()=>{
     let active=true
     void(async()=>{
@@ -30,6 +33,30 @@ export default function TeacherProfileSetup({fullName,email,onComplete}: {fullNa
     })()
     return ()=>{active=false}
   },[])
+  useEffect(()=>{
+    let active=true
+    void loadProfileDraft('teacher').then(draft=>{
+      if(!active||!draft)return
+      if(typeof draft.name==='string')setName(draft.name)
+      if(typeof draft.institution==='string')setInstitution(draft.institution)
+      if(typeof draft.qualification==='string')setQualification(draft.qualification)
+      if(typeof draft.subjects==='string')setSubjects(draft.subjects)
+      if(Array.isArray(draft.grades))setGrades(draft.grades)
+      if(typeof draft.years==='string')setYears(draft.years)
+      if(typeof draft.skills==='string')setSkills(draft.skills)
+      if(typeof draft.bio==='string')setBio(draft.bio)
+      setDraftNotice('Saved teacher profile draft restored.')
+    }).catch(()=>{if(active)setDraftNotice('Could not load your previous draft; you can still complete the form.')})
+    return ()=>{active=false}
+  },[])
+  const saveDraft=async()=>{
+    setError('');setDraftBusy(true)
+    try {
+      await saveProfileDraft('teacher',{name,institution,qualification,subjects,grades,years,skills,bio})
+      setDraftNotice('Draft saved privately. Your account remains a teacher applicant until verified.')
+    } catch(cause){setError(cause instanceof Error?cause.message:'Could not save draft.')}
+    finally{setDraftBusy(false)}
+  }
   const addCurriculumSubject=(title:string)=>{
     if(!title)return
     const current=parseSafeList(subjects)
@@ -52,6 +79,7 @@ export default function TeacherProfileSetup({fullName,email,onComplete}: {fullNa
         grade_levels:grades,teaching_experience_years:experience,
         skills:parseSafeList(skills),certifications:[],biography:bio.trim(),teaching_interests:[],
       }})
+      await clearProfileDraft('teacher').catch(()=>{})
       onComplete()
     }catch(cause){setError(cause instanceof Error?cause.message:'Unable to save teacher profile.')}
     finally{setBusy(false)}
@@ -61,6 +89,7 @@ export default function TeacherProfileSetup({fullName,email,onComplete}: {fullNa
     <h1>Teacher profile</h1>
     <p className="auth-subtitle">Enter your teaching qualifications, institution, actual subjects and grades. Saving a profile never grants authority to review or approve questions.</p>
     {error && <div className="banner banner-error" role="alert">{error}</div>}
+    {draftNotice && <p className="field-hint" role="status">{draftNotice}</p>}
     <form onSubmit={e=>void submit(e)}>
       <div className="field"><label htmlFor="teacher-name">Full name (required)</label><input id="teacher-name" required minLength={2} maxLength={100} value={name} onChange={e=>setName(e.target.value)} disabled={busy}/></div>
       <div className="field"><label htmlFor="teacher-school">School / teaching institution (required)</label><input id="teacher-school" required maxLength={160} value={institution} onChange={e=>setInstitution(e.target.value)} disabled={busy}/></div>
@@ -87,7 +116,8 @@ export default function TeacherProfileSetup({fullName,email,onComplete}: {fullNa
       <div className="field"><label htmlFor="teacher-skills">Specialist skills (optional)</label><input id="teacher-skills" maxLength={400} value={skills} onChange={e=>setSkills(e.target.value)} disabled={busy}/></div>
       <div className="field"><label htmlFor="teacher-bio">Teaching experience summary (optional)</label><textarea id="teacher-bio" maxLength={1500} value={bio} onChange={e=>setBio(e.target.value)} disabled={busy}/></div>
       <p className="field-hint">Administrator approval, teacher credentials and subject assignments must be independently verified before question-review access.</p>
-      <button type="submit" className="btn btn-primary btn-block" disabled={busy}>{busy?'Saving teacher profile…':'Save teacher profile'}</button>
+      <button type="submit" className="btn btn-primary btn-block" disabled={busy||draftBusy}>{busy?'Saving teacher profile…':'Save teacher profile'}</button>
+      <button type="button" className="btn btn-secondary btn-block" disabled={busy||draftBusy} onClick={()=>void saveDraft()}>{draftBusy?'Saving draft…':'Save draft and finish later'}</button>
     </form>
     <p className="field-hint">Signed-in account: {email ?? 'verified teacher account'}</p>
   </div></div>

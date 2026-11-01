@@ -41,11 +41,14 @@ it.each([
   fireEvent.change(screen.getByLabelText('Full name'),{ target: { value:'MELA Test' } })
   fireEvent.change(screen.getByLabelText('Username'),{ target: { value:'mela.test' } })
   fireEvent.change(screen.getByLabelText('MELA invitation code'),{ target: { value:'test-invite-token-not-real' } })
+  fireEvent.change(screen.getByLabelText('Age group (required)'),{target:{value:'18_plus'}})
+  fireEvent.click(screen.getByLabelText('I acknowledge MELA\'s Terms of Service (required)'))
+  fireEvent.click(screen.getByLabelText('I acknowledge MELA\'s Privacy Notice (required)'))
   fireEvent.change(screen.getByLabelText('Password',{exact:true}),{ target: { value:'SecurePassword123' } })
   fireEvent.change(screen.getByLabelText('Confirm password'),{ target: { value:'SecurePassword123' } })
   mocks.registerBetaUser.mockResolvedValueOnce({created:true,username:'mela.test',role:value,recovery_code:'MELA-R-test',recovery_notice:'Save code'})
   fireEvent.click(screen.getByRole('button',{name:'Create MELA account'}))
-  await waitFor(() => expect(mocks.registerBetaUser).toHaveBeenCalledWith(expect.objectContaining({role:value,username:'mela.test',accessCode:'test-invite-token-not-real'})))
+  await waitFor(() => expect(mocks.registerBetaUser).toHaveBeenCalledWith(expect.objectContaining({role:value,username:'mela.test',accessCode:'test-invite-token-not-real',ageBand:'18_plus',acceptedTerms:true,acceptedPrivacy:true,marketingConsent:false})))
 })
 
  it('offers public learning before an invitation is available', () => {

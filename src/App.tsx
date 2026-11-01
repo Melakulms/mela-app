@@ -12,6 +12,8 @@ import ResetPassword from './pages/ResetPassword'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import VerifyEmail from './pages/VerifyEmail'
+import { hasVerifiedContact, hasTrustedTelegramSignup } from './lib/contact-verification'
+import ContactVerification from './pages/ContactVerification'
 const StudentDashboard = lazy(() => import('./pages/StudentDashboard'))
 const Practice = lazy(() => import('./pages/Practice'))
 const OpportunityHub = lazy(() => import('./pages/OpportunityHub'))
@@ -247,7 +249,20 @@ export default function App() {
   }
 
   if (profileLoading || !profile || profile.id !== session.user.id) return <div className="centered-loading">{t('settingUpAccount')}</div>
-  if (profile.account_status === 'pending_verification' || !profile.email_verified) {
+  // Telegram proves control of a bot account, not email/phone ownership.
+  // Preserve the existing email-free basic onboarding for accounts whose
+  // Telegram proof was written to immutable app_metadata by the backend.
+  // Protected features still require their independent server-side gates.
+  if (!hasVerifiedContact(session.user) && !hasTrustedTelegramSignup(session.user)) {
+    // Ordinary email signups retain their resend/confirmation screen.
+    // Placeholder-email invitation accounts need a different real-contact flow.
+    if (session.user.email && !session.user.email.toLowerCase().endsWith('@beta.mela.invalid')) {
+      return <VerifyEmail onRefresh={reloadProfile} email={session.user.email} onUseDifferentAccount={() => { void signOut() }} />
+    }
+    return <ContactVerification onRefresh={reloadProfile} onSignOut={() => { void signOut() }} />
+  }
+
+  if (profile.account_status === 'pending_verification') {
     return <VerifyEmail onRefresh={reloadProfile} email={profile.email ?? pendingEmail} onUseDifferentAccount={() => { setPendingEmail(''); setAuthView('login') }} />
   }
 

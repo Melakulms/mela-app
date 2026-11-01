@@ -1,4 +1,6 @@
+import {lazy, Suspense, useState} from 'react'
 import type { MelaProfile } from '../lib/auth'
+const AdditionalRoleApplications = lazy(()=>import('../components/AdditionalRoleApplications'))
 import MembershipAndReferrals from '../components/MembershipAndReferrals'
 import { SHARED_ACCOUNT_FEATURES, workspaceItems } from '../lib/role-workspaces'
 
@@ -8,6 +10,7 @@ export default function AccountOverview({ profile, onBack }: {
   onBack: () => void
 }) {
   const items = workspaceItems(profile.role)
+  const [showApplications,setShowApplications]=useState(false)
   return <section className="dash-main" aria-label="My MELA account">
     <span className="eyebrow">MELA · PERSONAL ACCOUNT</span>
     <h1>My account</h1>
@@ -29,6 +32,12 @@ export default function AccountOverview({ profile, onBack }: {
       <p className="field-hint">The list describes eligibility, not a guarantee that a feature has been activated or a professional account has been approved.</p>
       <ul className="list-panel">{items.map(item => <li key={item.title}><strong>{item.title}</strong> — {item.requirement}</li>)}</ul>
     </>}
+    <section className="list-panel" aria-label="Apply for additional roles">
+      <h2>One account, additional roles</h2>
+      <p>Want to mentor learners or represent a partner organization? Apply using your existing account. Independent verification is required for every additional professional role.</p>
+      <button type="button" className="btn btn-secondary" onClick={()=>setShowApplications(value=>!value)} aria-expanded={showApplications}>{showApplications?'Close role applications':'Apply for another role'}</button>
+      {showApplications&&<Suspense fallback={<p role="status">Loading role applications…</p>}><AdditionalRoleApplications userId={profile.id}/></Suspense>}
+    </section>
     <p className="field-hint">Personal records, credentials and children's learning records are never shared with other users simply because they have an account. Verified relationships and backend permissions are required.</p>
     <button type="button" className="btn btn-primary" onClick={onBack}>Back to my workspace</button>{' '}
     <button type="button" className="btn btn-secondary" onClick={() => window.dispatchEvent(new Event('mela:open-settings'))}>Open settings</button>

@@ -124,6 +124,37 @@ Deno.serve(async (req) => {
       // The invitation remains the only source of the new user's role.
       const requestedRole = String((body as any).requested_role ?? '').trim().toLowerCase()
       const invitationCode = String((body as any).invitation_code ?? '').trim().toUpperCase()
+      const ageBand = String((body as any).age_band ?? '')
+      const termsAccepted = (body as any).terms_accepted === true
+      const privacyAcknowledged = (body as any).privacy_acknowledged === true
+      const termsVersion = String((body as any).terms_acknowledged_version ?? '')
+      const privacyVersion = String((body as any).privacy_acknowledged_version ?? '')
+      const marketingOptIn = (body as any).marketing_opt_in === true
+      // Self-declared age is useful for initial routing, NOT proof of adulthood
+      // for earning, professional or other regulated privileges.
+      if (!['under_13', '13_17', '18_plus'].includes(ageBand)) {
+        return json(req, {error:'Choose your age group.'}, 400)
+      }
+      if (requestedRole !== 'student' && ageBand !== '18_plus') {
+        return json(req, {error:'This account type requires an adult applicant.'}, 403)
+      }
+      if (!termsAccepted || !privacyAcknowledged || !termsVersion || !privacyVersion) {
+        return json(req, {error:'Terms and Privacy Notice acknowledgement is required.'}, 400)
+      }
+      // The actual policy versions come from trusted, active server records.
+      const {data:requiredPolicies,error:policyError} = await admin.from('policy_documents')
+        .select('policy_key,version')
+        .eq('status','active')
+        .eq('required_for_access',true)
+        .in('policy_key',['terms','privacy'])
+      const termsPolicy = requiredPolicies?.find((row:any)=>row.policy_key==='terms')
+      const privacyPolicy = requiredPolicies?.find((row:any)=>row.policy_key==='privacy')
+      if (policyError || !termsPolicy || !privacyPolicy) {
+        return json(req,{error:'Registration policies are temporarily unavailable. No invitation was used.'},503)
+      }
+      if (termsVersion !== termsPolicy.version || privacyVersion !== privacyPolicy.version) {
+        return json(req,{error:'Registration policies have changed. Reload the latest MELA registration form.'},409)
+      }
       if (invitationCode && !/^[A-Z0-9-]{4,40}$/.test(invitationCode)) {
         return json(req, {error: 'Invalid referral code.'}, 400)
       }
@@ -181,6 +212,8 @@ Deno.serve(async (req) => {
           preferred_language: 'English',
           username,
           beta_account: true,
+          age_band: ageBand,
+          marketing_opt_in: marketingOptIn,
         },
       })
 
@@ -195,9 +228,16 @@ Deno.serve(async (req) => {
 
       const profileUpdate = await admin.from('profiles').update({ username, auth_provider: 'beta_invite' }).eq('id', userId)
       const recoveryInsert = await admin.from('beta_auth_recovery').insert({ user_id: userId, recovery_hash: recoveryHash })
+      // Immutable, versioned acknowledgements are recorded by this trusted
+      // handler, not merely left in user-editable auth metadata.
+      const acknowledgements = [
+        {user_id:userId,policy_key:'terms',policy_version:termsPolicy.version,accepted:true,accepted_at:now,language:'English',metadata:{source:'invite_registration'}},
+        {user_id:userId,policy_key:'privacy',policy_version:privacyPolicy.version,accepted:true,accepted_at:now,language:'English',metadata:{source:'invite_registration'}},
+      ]
+      const acknowledgementInsert = await admin.from('user_policy_acknowledgements').insert(acknowledgements)
       const inviteFinalize = await admin.from('beta_access_invites').update({ used_by: userId }).eq('id', invite.id).is('used_by', null)
 
-      if (profileUpdate.error || recoveryInsert.error || inviteFinalize.error) {
+      if (profileUpdate.error || recoveryInsert.error || acknowledgementInsert.error || inviteFinalize.error) {
         await admin.auth.admin.deleteUser(userId).catch(() => undefined)
         await admin.from('beta_access_invites').update({ used_at: null, used_by: null }).eq('id', invite.id)
         return json(req, { error: 'Could not finish creating the beta account.' }, 500)

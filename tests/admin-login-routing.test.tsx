@@ -28,7 +28,7 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 
 async function signIn(role: string, overrides = {}) {
-  const session = { user: { id: 'test-user' } }
+  const session = { user: { id: 'test-user', email: 'test@example.invalid', email_confirmed_at: '2026-11-01T00:00:00Z' } }
   mocks.fetchOwnProfile.mockResolvedValue({ id: 'test-user', role, account_status: 'active', email_verified: true, education_onboarding_completed: true, profile_completion: 100, preferred_language: 'English', ...overrides })
   mocks.loginUser.mockImplementation(async () => {
     const callback = mocks.onAuthStateChange.mock.calls.at(-1)![0]
@@ -58,7 +58,7 @@ it.each([['student', 'Student home'], ['employer', 'Employer home'], ['mentor', 
   expect(replace).not.toHaveBeenCalled()
 })
 it('keeps an already signed-in admin on the user app during session restoration', async () => {
-  mocks.getSession.mockResolvedValue({ data: { session: { user: { id: 'admin-user' } } }, error: null })
+  mocks.getSession.mockResolvedValue({ data: { session: { user: { id: 'admin-user', email: 'admin@example.invalid', email_confirmed_at: '2026-11-01T00:00:00Z' } } }, error: null })
   mocks.fetchOwnProfile.mockResolvedValue({ id: 'admin-user', role: 'admin', account_status: 'active', email_verified: true, preferred_language: 'English' })
   render(<App />)
   await screen.findByText('Sign in or register with a MELA user account to continue.')
@@ -77,7 +77,7 @@ it('allows a user to sign in after restoring a non-user account', async () => {
   await screen.findByText('Sign in or register with a MELA user account to continue.')
   mocks.fetchOwnProfile.mockResolvedValue({ id: 'student-user', role: 'student', account_status: 'active', email_verified: true, education_onboarding_completed: true, preferred_language: 'English' })
   mocks.loginUser.mockImplementation(async () => {
-    mocks.onAuthStateChange.mock.calls.at(-1)![0]('SIGNED_IN', { user: { id: 'student-user' } })
+    mocks.onAuthStateChange.mock.calls.at(-1)![0]('SIGNED_IN', { user: { id: 'student-user', email: 'student@example.invalid', email_confirmed_at: '2026-11-01T00:00:00Z' } })
     return { error: null }
   })
   fireEvent.change(screen.getByLabelText('Email or MELA username'), { target: { value: 'student@example.invalid' } })

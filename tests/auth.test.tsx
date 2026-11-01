@@ -146,7 +146,7 @@ it('preserves a retryable profile error during token refresh', async () => {
 
 it('closes global Settings across sign-out and sign-in and returns to learner home', async () => {
   const {default: DeviceSettings} = await import('../src/components/DeviceSettings')
-  const session = {user:{id:'returning-learner'}}
+  const session = {user:{id:'returning-learner',email:'student@example.invalid',email_confirmed_at:'2026-11-01T00:00:00Z'}}
   mocks.getSession.mockResolvedValue({data:{session},error:null})
   mocks.fetchOwnProfile.mockResolvedValue({id:'returning-learner',role:'student',account_status:'active',email_verified:true,education_onboarding_completed:true,preferred_language:'English'})
   mocks.logoutUser.mockImplementation(async () => {

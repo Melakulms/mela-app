@@ -11,6 +11,7 @@ import { AUTH_STORAGE_KEY } from './lib/supabase'
 import './styles.css'
 import './phase6.css'
 import './pwa-update.css'
+import './mela-motion.css'
 
 // Historical admin deployments shared this origin and persisted a privileged
 // Supabase session. Remove that legacy credential before rendering any MELA UI.

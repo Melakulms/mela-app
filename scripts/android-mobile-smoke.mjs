@@ -29,6 +29,20 @@ try {
     assert.equal(new URL(page.url()).searchParams.get('view'), 'practice')
   })
 
+  await step('MELA brand accents are visible on mobile even after opening animation finishes', async () => {
+    const visuals = await page.locator('.auth-layout .auth-card').evaluate(card => {
+      const style = getComputedStyle(card)
+      const stripe = getComputedStyle(card, '::before')
+      const star = getComputedStyle(card, '::after')
+      return {borderTopWidth: style.borderTopWidth, stripe: stripe.backgroundImage,
+        star: star.content, starAnimation: star.animationName}
+    })
+    assert.equal(visuals.borderTopWidth, '3px', JSON.stringify(visuals))
+    assert.match(visuals.stripe, /linear-gradient/, JSON.stringify(visuals))
+    assert.ok(visuals.star.includes('✦'), JSON.stringify(visuals))
+    assert.ok(visuals.starAnimation.includes('mela-star-twinkle'), JSON.stringify(visuals))
+  })
+
   await step('Public study library is available without registration', async () => {
     await page.getByRole('link', { name: 'Open free study library', exact: true }).click()
     await page.getByRole('heading', { name: 'Your offline library', exact: true }).waitFor()
@@ -51,6 +65,21 @@ try {
     const before = page.url()
     await page.locator('.settings-jump').getByRole('button', { name: 'Learning' }).click()
     assert.equal(page.url(), before)
+  })
+
+  await step('Android can replay MELA animations and switch reduced motion off and on', async () => {
+    const replay = page.getByRole('button', {name:'Replay MELA animation'})
+    await replay.scrollIntoViewIfNeeded()
+    const preview = page.getByRole('img', {name:'MELA animated gold star and brand card'})
+    assert.equal(await preview.isVisible(), true)
+    await replay.click()
+    const animated = await preview.locator('.mela-preview-mark').evaluate(mark => getComputedStyle(mark).animationName)
+    assert.ok(animated.includes('mela-preview-enter'), animated)
+    await page.getByRole('checkbox', {name:'Reduce animation'}).check()
+    const stopped = await preview.locator('.mela-preview-mark').evaluate(mark => getComputedStyle(mark).animationName)
+    assert.equal(stopped, 'none')
+    assert.match(await page.locator('.mela-motion-preview-panel').innerText(), /Animation is off/)
+    await page.getByRole('checkbox', {name:'Reduce animation'}).uncheck()
   })
 
   await step('Back to MELA Home closes Settings and resets app section', async () => {

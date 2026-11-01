@@ -13,6 +13,10 @@ it('loads a shared motion layer for the whole learner app, not registration alon
   expect(motion).toContain('.dash-main > .list-panel')
   expect(motion).toContain('.settings-center')
   expect(motion).toContain('.profile-access-intro')
+  expect(motion).toContain('border-top: 3px solid var(--gold)')
+  expect(motion).toContain('.app-topbar::before')
+  expect(motion).toContain('.bottom-nav button.active')
+  expect(motion).toContain('.mela-motion-preview .mela-preview-mark')
 })
 
 it('keeps animation bounded and safe for old Android devices', () => {
@@ -20,7 +24,9 @@ it('keeps animation bounded and safe for old Android devices', () => {
   expect(motion).toContain(':not(.mela-reduced-motion):not(.mela-low-data)')
   expect(motion).toContain('html.mela-reduced-motion *')
   expect(motion).toContain('animation: none !important')
-  expect(motion).not.toMatch(/animation(?:-iteration-count)?:[^;]*infinite/i)
+  expect(motion).toContain('animation: mela-star-twinkle 6s ease-in-out infinite')
+  expect((motion.match(/animation: [^;]*infinite/g) ?? []).length).toBe(1)
+  expect(motion).toContain('html.mela-low-data *')
   expect(motion).not.toContain('background-attachment: fixed')
   expect(motion).not.toContain('will-change:')
 })

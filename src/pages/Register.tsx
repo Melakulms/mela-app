@@ -27,6 +27,9 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
   const [error, setError] = useState('')
   const [created, setCreated] = useState<BetaRegisterResult | null>(null)
   const [copied, setCopied] = useState(false)
+  const [telegramCommandCopied, setTelegramCommandCopied] = useState(false)
+  const telegramLink = telegramRegistrationLink(username, role)
+  const telegramStartCommand = telegramLink ? `/start ${new URL(telegramLink).searchParams.get('start')}` : ''
 
   const passwordChecks = useMemo(() => ({
     length: password.length >= 12,
@@ -192,13 +195,13 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
 
         <div className="field">
           <label htmlFor="username">{t('authUsername')}</label>
-          <input id="username" required minLength={3} maxLength={32} autoComplete="username" spellCheck={false} value={username} onChange={(e) => setUsername(e.target.value)} disabled={busy} />
+          <input id="username" required minLength={3} maxLength={32} autoComplete="username" spellCheck={false} value={username} onChange={(e) => { setUsername(e.target.value); setTelegramCommandCopied(false) }} disabled={busy} />
           <span className="field-hint">{t('authUsernameRule')}</span>
         </div>
 
         <div className="field">
           <label htmlFor="registration-role">Account type (required)</label>
-          <select id="registration-role" required value={role} onChange={event => {setRole(event.target.value as BetaSignupRole);setError('')}} disabled={busy}>
+          <select id="registration-role" required value={role} onChange={event => {setRole(event.target.value as BetaSignupRole);setError('');setTelegramCommandCopied(false)}} disabled={busy}>
             <option value="" disabled>Select an account type</option>
             <option value="student">Student / learner</option>
             <option value="parent">Parent / family or guardian</option>
@@ -212,9 +215,18 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
         <div className="banner banner-info">
           <strong>Verify with Telegram — no email needed</strong>
           <p>1. Choose your username and account type. 2. Open the bot and tap Start. 3. Copy its private code into the field below within 10 minutes, then create your account.</p>
-          {telegramRegistrationLink(username, role)
-            ? <a className="btn btn-secondary btn-block" href={telegramRegistrationLink(username, role)!} target="_blank" rel="noopener noreferrer">Get Telegram verification code</a>
+          {telegramLink
+            ? <a className="btn btn-secondary btn-block" href={telegramLink} target="_blank" rel="noopener noreferrer">Get Telegram verification code</a>
             : <p>Enter a valid username and select an account type to open Telegram verification.</p>}
+          {telegramStartCommand && <div className="field">
+            <label htmlFor="telegram-manual-command">Manual Telegram command</label>
+            <input id="telegram-manual-command" readOnly value={telegramStartCommand} onFocus={event => event.currentTarget.select()} />
+            <button className="btn btn-secondary btn-block" type="button" disabled={busy} onClick={async () => {
+              try { await navigator.clipboard.writeText(telegramStartCommand); setTelegramCommandCopied(true); setError('') }
+              catch { setTelegramCommandCopied(false); setError('Automatic copying failed. Long-press the command above to copy it manually.') }
+            }}>{telegramCommandCopied ? 'Command copied' : 'Copy Telegram command'}</button>
+            <span className="field-hint">If the Telegram button does not work, open @Mela_edu_bot yourself, paste the entire command, and tap Send. The bot should reply with your private one-time code. Never send your MELA password to Telegram.</span>
+          </div>}
           <p>One Telegram account can verify one MELA account. No Telegram? Use an administrator invitation. Keep your recovery code for password recovery.</p>
         </div>
         <div className="field">

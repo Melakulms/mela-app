@@ -18,8 +18,10 @@ function messageOf(error:unknown):string {
   return error instanceof Error ? error.message : 'This service could not be loaded. Try again.'
 }
 function validPlan(p:Plan) {
-  return (p.plan_key==='normal_monthly' || p.plan_key==='pro_monthly' || p.plan_key==='premium_monthly')
-    && p.currency==='ETB' && (p.price_minor===5000 || p.price_minor===10000)
+  return p.currency==='ETB' && (
+    ((p.plan_key==='normal_monthly'||p.plan_key==='pro_monthly') && p.price_minor===5000) ||
+    (p.plan_key==='premium_monthly' && p.price_minor===10000)
+  )
 }
 function money(amount:number) {return (amount/100).toFixed(0)+' ETB'}
 

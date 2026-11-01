@@ -12,7 +12,7 @@ import ResetPassword from './pages/ResetPassword'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import VerifyEmail from './pages/VerifyEmail'
-import { hasVerifiedContact } from './lib/contact-verification'
+import { hasVerifiedContact, hasTrustedTelegramSignup } from './lib/contact-verification'
 import ContactVerification from './pages/ContactVerification'
 const StudentDashboard = lazy(() => import('./pages/StudentDashboard'))
 const Practice = lazy(() => import('./pages/Practice'))
@@ -249,10 +249,11 @@ export default function App() {
   }
 
   if (profileLoading || !profile || profile.id !== session.user.id) return <div className="centered-loading">{t('settingUpAccount')}</div>
-  // A synthetic email marked confirmed by a trusted invitation service is
-  // NOT a verified contact. Only a real Supabase Auth-confirmed email or phone
-  // unlocks access. Telegram alone is insufficient.
-  if (!hasVerifiedContact(session.user)) {
+  // Telegram proves control of a bot account, not email/phone ownership.
+  // Preserve the existing email-free basic onboarding for accounts whose
+  // Telegram proof was written to immutable app_metadata by the backend.
+  // Protected features still require their independent server-side gates.
+  if (!hasVerifiedContact(session.user) && !hasTrustedTelegramSignup(session.user)) {
     // Ordinary email signups retain their resend/confirmation screen.
     // Placeholder-email invitation accounts need a different real-contact flow.
     if (session.user.email && !session.user.email.toLowerCase().endsWith('@beta.mela.invalid')) {

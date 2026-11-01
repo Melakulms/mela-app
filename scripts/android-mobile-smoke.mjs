@@ -201,7 +201,11 @@ try {
       await signedPage.getByRole('heading',{name:'MELA Home',exact:true}).waitFor()
       await signedPage.getByRole('button',{name:'Complete my profile',exact:true}).click()
       await signedPage.getByRole('heading',{name:'Complete your education profile',exact:true}).waitFor()
-      await signedPage.getByRole('link',{name:'MELA Home',exact:true}).click()
+      // The public header no longer needs a redundant Home button. The
+      // Settings panel still provides a working return to signed-in Home.
+      assert.equal(await signedPage.getByRole('link',{name:'MELA Home',exact:true}).count(),0)
+      await signedPage.getByRole('button',{name:'Settings & downloads — app version'}).click()
+      await signedPage.getByRole('link',{name:'Back to MELA Home',exact:true}).first().click()
       await signedPage.getByRole('heading',{name:'MELA Home',exact:true}).waitFor()
       assert.equal(await signedPage.getByRole('heading',{name:'Complete your education profile',exact:true}).count(),0)
       await signedPage.getByRole('button',{name:'Settings & downloads — app version'}).click()

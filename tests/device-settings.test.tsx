@@ -40,6 +40,16 @@ it('shows a clear update control without falsely promising to deploy development
   expect(screen.getByText(/does not install unreleased development features/)).toBeTruthy()
 })
 
+it('does not show an unnecessary MELA Home button in the page header', () => {
+  const {container} = renderSettings(false)
+  const navigation = container.querySelector('nav.settings-buttons')
+  expect(navigation?.querySelector('a')).toBeNull()
+  expect(screen.queryByRole('link',{name:'MELA Home',exact:true})).toBeNull()
+  expect(screen.getByRole('button',{name:'Settings & downloads — app version'})).toBeTruthy()
+  act(() => { window.dispatchEvent(new Event('mela:open-settings')) })
+  expect(screen.getAllByRole('link',{name:'Back to MELA Home'}).length).toBeGreaterThan(0)
+})
+
 it('opens the published Settings panel from signed-in navigation', () => {
   const {container}=renderSettings(false)
   expect(container.querySelector('#mela-settings-content')).toBeNull()

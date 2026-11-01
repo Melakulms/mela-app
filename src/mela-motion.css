@@ -1,0 +1,84 @@
+/* MELA Motion — shared across every learner view and all account roles.
+   Uses one-shot opacity/transform transitions only: no downloads, timers, or
+   continuous animation. The app remains fully usable on older Android phones. */
+@keyframes mela-view-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes mela-panel-enter {
+  from { opacity: 0; transform: translate3d(0, 9px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes mela-tile-enter {
+  from { transform: translate3d(0, 7px, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+@keyframes mela-mark-enter {
+  from { transform: rotate(-7deg) scale(.92); }
+  to { transform: rotate(0) scale(1); }
+}
+
+/* Respect BOTH Android's accessibility setting and MELA's in-app controls.
+   No animations are necessary for navigation or payment/assessment actions. */
+@media (prefers-reduced-motion: no-preference) {
+  html:not(.mela-reduced-motion):not(.mela-low-data) #main-content > * {
+    animation: mela-view-enter 230ms ease-out both;
+  }
+
+  html:not(.mela-reduced-motion):not(.mela-low-data) .auth-shell .auth-story {
+    animation: mela-panel-enter 390ms cubic-bezier(.22, 1, .36, 1) both;
+  }
+  html:not(.mela-reduced-motion):not(.mela-low-data) .auth-shell .auth-card {
+    animation: mela-panel-enter 420ms cubic-bezier(.22, 1, .36, 1) both;
+  }
+  html:not(.mela-reduced-motion):not(.mela-low-data) .auth-story .auth-wordmark svg {
+    animation: mela-mark-enter 480ms cubic-bezier(.22, 1, .36, 1) both;
+  }
+
+  /* Works for every feature opened from the dashboard, including the
+     educator, guardian, employer, and mentor account workspaces. */
+  html:not(.mela-reduced-motion):not(.mela-low-data) .settings-center,
+  html:not(.mela-reduced-motion):not(.mela-low-data) .profile-access-intro,
+  html:not(.mela-reduced-motion):not(.mela-low-data) .dashboard-main .dashboard-hero {
+    animation: mela-panel-enter 300ms cubic-bezier(.22, 1, .36, 1) both;
+  }
+
+  /* A short, capped stagger, not a long sequence for large lists or search
+     results. Transform-only animation preserves disabled-card opacity. */
+  html:not(.mela-reduced-motion):not(.mela-low-data) .dashboard-main .module-grid > .module-card:nth-child(-n+6) {
+    animation: mela-tile-enter 260ms cubic-bezier(.22, 1, .36, 1) backwards;
+  }
+  html:not(.mela-reduced-motion):not(.mela-low-data) .dashboard-main .module-grid > .module-card:nth-child(2) { animation-delay: 35ms; }
+  html:not(.mela-reduced-motion):not(.mela-low-data) .dashboard-main .module-grid > .module-card:nth-child(3) { animation-delay: 70ms; }
+  html:not(.mela-reduced-motion):not(.mela-low-data) .dashboard-main .module-grid > .module-card:nth-child(4) { animation-delay: 105ms; }
+  html:not(.mela-reduced-motion):not(.mela-low-data) .dashboard-main .module-grid > .module-card:nth-child(5) { animation-delay: 140ms; }
+  html:not(.mela-reduced-motion):not(.mela-low-data) .dashboard-main .module-grid > .module-card:nth-child(6) { animation-delay: 175ms; }
+
+  html:not(.mela-reduced-motion):not(.mela-low-data) :is(.btn, .role-option, .bottom-nav button, .settings-jump button, button.module-card) {
+    transition: transform 150ms ease-out, box-shadow 150ms ease-out, border-color 150ms ease-out, background-color 150ms ease-out;
+  }
+
+  html:not(.mela-reduced-motion):not(.mela-low-data) :is(.btn, .role-option, .bottom-nav button, .settings-jump button, button.module-card):not(:disabled):active {
+    transform: scale(.985);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    html:not(.mela-reduced-motion):not(.mela-low-data) :is(.btn, .role-option, .settings-jump button):not(:disabled):hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 16px rgba(0, 0, 0, .12);
+    }
+    html:not(.mela-reduced-motion):not(.mela-low-data) button.module-card:not(:disabled):hover {
+      transform: translateY(-3px);
+    }
+  }
+}
+
+/* The device's reduced-motion preference is already guarded in phase6.css.
+   Also honor the explicit in-app switch immediately, without a page reload. */
+html.mela-reduced-motion *,
+html.mela-reduced-motion *::before,
+html.mela-reduced-motion *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}

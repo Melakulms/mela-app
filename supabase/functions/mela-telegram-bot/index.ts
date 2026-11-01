@@ -189,7 +189,12 @@ Deno.serve(async (req:Request):Promise<Response>=>{
       answer=e instanceof Error ? e.message : "Payment service unavailable. Please try again later.";
     }
     try {
-      await telegram(cfg.token,"sendMessage",{chat_id:chat.id,text:answer,protect_content:true});
+      const registrationCode = typeof message.text === 'string' && parseRegistration(message.text)
+        ? /\n([a-f0-9]{64})\n/.exec(answer)?.[1] : undefined;
+      await telegram(cfg.token,"sendMessage",{
+        chat_id:chat.id,text:answer,protect_content:!registrationCode,
+        ...(registrationCode ? {reply_markup:{inline_keyboard:[[{text:'Copy verification code',copy_text:{text:registrationCode}}]]}} : {}),
+      });
       return sendJson({ok:true});
     } catch {
       return sendJson({ok:false,error:"reply_failed"},502);

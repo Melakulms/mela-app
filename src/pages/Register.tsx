@@ -2,6 +2,8 @@ import { useI18n } from '../i18n'
 import { telegramRegistrationLink } from '../lib/telegram-registration'
 import AuthLayout from '../components/AuthLayout'
 import GradeSelectionPreview from '../components/GradeSelectionPreview'
+import RegistrationEligibility from '../components/RegistrationEligibility'
+import { validateRegistrationEligibility, type RegistrationAgeBand } from '../lib/registration-requirements'
 import { useMemo, useState } from 'react'
 import { registerBetaUser, registerUser, type BetaRegisterResult, type BetaSignupRole } from '../lib/auth'
 
@@ -14,6 +16,10 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
     new URLSearchParams(window.location.search).get('signup') === 'email' ? 'email' : 'invite')
   const [emailDeliveryBlocked, setEmailDeliveryBlocked] = useState(false)
   const [email, setEmail] = useState('')
+  const [ageBand, setAgeBand] = useState<RegistrationAgeBand>('')
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false)
+  const [marketingConsent, setMarketingConsent] = useState(false)
   const [emailRole, setEmailRole] = useState<BetaSignupRole>('student')
   const [emailSent, setEmailSent] = useState(false)
   const [fullName, setFullName] = useState('')
@@ -52,6 +58,8 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
     }
 
     if (mode === 'email') {
+      const eligibilityError = validateRegistrationEligibility({role: emailRole, ageBand, acceptedTerms, acceptedPrivacy})
+      if (eligibilityError) { setError(eligibilityError); return }
       const normalizedEmail = email.trim().toLowerCase()
       if (name.length < 2) { setError(t('authNameRequired')); return }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) { setError(t('authEmailInvalid')); return }
@@ -62,6 +70,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
       try {
         const { data: signupData, error: signupError } = await registerUser({
           email: normalizedEmail, password, fullName: name, role: emailRole,
+          ageBand: ageBand as Exclude<RegistrationAgeBand, ''>, acceptedTerms, acceptedPrivacy, marketingConsent,
           ...(invitationCode ? { invitationCode } : {}),
         })
         if (signupError) throw signupError
@@ -79,6 +88,8 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
     }
 
     if (!role) { setError('Select your account type before creating your MELA account.'); return }
+    const eligibilityError = validateRegistrationEligibility({role, ageBand, acceptedTerms, acceptedPrivacy})
+    if (eligibilityError) { setError(eligibilityError); return }
     if (name.length < 2) { setError(t('authNameRequired')); return }
     if (!/^[a-z0-9][a-z0-9._-]{2,31}$/.test(handle)) {
       setError(t('authUsernameRule'))
@@ -93,7 +104,9 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
 
     setBusy(true)
     try {
-      const result = await registerBetaUser({ username: handle, password, fullName: name, accessCode, role, ...(invitationCode ? { invitationCode } : {}) })
+      const result = await registerBetaUser({ username: handle, password, fullName: name, accessCode, role,
+        ageBand: ageBand as Exclude<RegistrationAgeBand, ''>, acceptedTerms, acceptedPrivacy, marketingConsent,
+        ...(invitationCode ? { invitationCode } : {}) })
       setCreated(result)
       setPassword('')
       setConfirmPassword('')
@@ -173,6 +186,10 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
           </div>
           <div className="field"><label htmlFor="email-referral">Referral code (optional)</label><input id="email-referral" maxLength={40} value={invitationCode} autoCapitalize="characters" onChange={e => setInvitationCode(e.target.value.trim().toUpperCase())} disabled={busy} /><span className="field-hint">The inviter is recorded only when this is a valid MELA referral code. Registration alone does not earn a commission.</span></div>
           {emailRole === 'student' && <GradeSelectionPreview />}
+          <RegistrationEligibility role={emailRole} ageBand={ageBand} onAgeBandChange={setAgeBand}
+            terms={acceptedTerms} onTermsChange={setAcceptedTerms}
+            privacy={acceptedPrivacy} onPrivacyChange={setAcceptedPrivacy}
+            marketing={marketingConsent} onMarketingChange={setMarketingConsent} disabled={busy} />
           <button className="btn btn-primary btn-block" type="submit" disabled={busy}>{busy ? t('authCreating') : t('authEmailSubmit')}</button>
         </form>
         <div className="auth-switch">{t('authExisting')} <button type="button" onClick={onSwitchToLogin}>{t('authLogin')}</button></div>
@@ -185,7 +202,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
     <AuthLayout>
       <span className="auth-wordmark">MELA</span>
       <h1>{t('authJoin')}</h1>
-      <p className="auth-subtitle">{t('authJoinHelp')} Register without email using a private Telegram verification code or an administrator invitation. Telegram verifies account control, not legal identity. Guardian consent and professional verification are separate checks.</p>
+      <p className="auth-subtitle">{t('authJoinHelp')} Register without email using a private Telegram verification code or an administrator invitation. This verifies invitation control only; it is not verified email, phone ownership, or legal identity. Additional verification is required for protected features. Guardian consent and professional verification are separate checks.</p>
       <div className="banner banner-info">
         <strong>Start learning now — no account needed</strong>
         <p>Try free maths practice and read the AI foundations handbook. The handbook is a draft awaiting teacher review. These public resources do not save progress to an account.</p>
@@ -258,6 +275,10 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
         </div>
 
         {role === 'student' && <GradeSelectionPreview />}
+        <RegistrationEligibility role={role || 'student'} ageBand={ageBand} onAgeBandChange={setAgeBand}
+            terms={acceptedTerms} onTermsChange={setAcceptedTerms}
+            privacy={acceptedPrivacy} onPrivacyChange={setAcceptedPrivacy}
+            marketing={marketingConsent} onMarketingChange={setMarketingConsent} disabled={busy} />
         <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
           {busy ? t('authCreating') : t('authCreate')}
         </button>

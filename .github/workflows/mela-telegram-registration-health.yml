@@ -1,0 +1,31 @@
+name: MELA Telegram registration health
+
+on:
+  schedule:
+    - cron: '13 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      APP_URL: https://melakulms.github.io/mela-app/
+      SUPABASE_URL: https://duizgtmbptmlbyipreqg.supabase.co
+      SUPABASE_PUBLISHABLE_KEY: sb_publishable_flQNx6AE3_dbPDHfYGNwWQ_7cMSsAng
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify MELA learner app is reachable
+        run: bash scripts/production-smoke.sh app
+      - name: Verify production auth is healthy
+        run: bash scripts/production-smoke.sh auth
+      - name: Verify Telegram invitation registration service
+        run: bash scripts/production-smoke.sh beta-auth
+      - name: Verify bot webhook is registered and responsive
+        run: bash scripts/production-smoke.sh telegram-registration
+      - name: Check published release marker
+        run: |
+          curl --fail --silent --show-error --retry 3 --max-time 20             https://melakulms.github.io/mela-app/mela-release.json             | python -c 'import json,sys; d=json.load(sys.stdin); assert len(d.get("commit","")) == 40 and d.get("published_from") == "github-actions"; print("MELA release marker present")'

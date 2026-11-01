@@ -123,6 +123,10 @@ Deno.serve(async (req) => {
       // The selected account type is a consistency check, never a grant of authority.
       // The invitation remains the only source of the new user's role.
       const requestedRole = String((body as any).requested_role ?? '').trim().toLowerCase()
+      const invitationCode = String((body as any).invitation_code ?? '').trim().toUpperCase()
+      if (invitationCode && !/^[A-Z0-9-]{4,40}$/.test(invitationCode)) {
+        return json(req, {error: 'Invalid referral code.'}, 400)
+      }
 
       if (!validUsername(username)) return json(req, { error: 'Username must be 3–32 characters using letters, numbers, dot, dash, or underscore.' }, 400)
       if (fullName.length < 2 || fullName.length > 100) return json(req, { error: 'Please enter your full name.' }, 400)
@@ -172,6 +176,7 @@ Deno.serve(async (req) => {
         app_metadata: binding ? { mela_verification_method: 'telegram', telegram_verified_at: now } : { mela_verification_method: 'administrator_invitation' },
         user_metadata: {
           full_name: fullName,
+          ...(invitationCode ? { invitation_code: invitationCode } : {}),
           role: invite.role,
           preferred_language: 'English',
           username,

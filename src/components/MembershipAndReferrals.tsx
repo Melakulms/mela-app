@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 // entitlements are set and checked by the server. References are not receipts.
 type Plan = { id:string; plan_key:string; name:string; tier:string; price_minor:number; currency:string; billing_period_days:number|null }
 type Subscription = { status:string; starts_at:string|null; expires_at:string|null; plan_id:string }
+type PaidMembership = { status:string; starts_at:string; expires_at:string; plan_id:string }
 type Referral = { registered_user_id:string }
 type Commission = { registered_user_id:string|null; amount:number; status:string }
 type PaymentProduct = { id:string; title:string; amount_minor:number; currency:string }
@@ -25,6 +26,7 @@ function money(amount:number) {return (amount/100).toFixed(0)+' ETB'}
 export default function MembershipAndReferrals({ userId }:{userId:string}) {
   const [plans,setPlans]=useState<Plan[]>([])
   const [subscriptions,setSubscriptions]=useState<Subscription[]>([])
+  const [paidMemberships,setPaidMemberships]=useState<PaidMembership[]>([])
   const [referralCode,setReferralCode]=useState('')
   const [referralCount,setReferralCount]=useState(0)
   const [commissions,setCommissions]=useState<Commission[]>([])
@@ -45,9 +47,10 @@ export default function MembershipAndReferrals({ userId }:{userId:string}) {
     async function load(){
       setError('');setLoaded(false)
       try{
-        const [p,s,c,r,com,cat,ord]=await Promise.all([
+        const [p,s,paid,c,r,com,cat,ord]=await Promise.all([
           supabase.from('subscription_plans').select('id,plan_key,name,tier,price_minor,currency,billing_period_days').eq('active',true),
           supabase.from('user_subscriptions').select('status,starts_at,expires_at,plan_id').eq('user_id',userId),
+          supabase.from('mela_paid_memberships').select('status,starts_at,expires_at,plan_id').eq('user_id',userId),
           supabase.from('referral_codes').select('code').eq('owner_user_id',userId).eq('active',true).limit(1).maybeSingle(),
           supabase.from('registration_referrals').select('registered_user_id').eq('inviter_user_id',userId),
           supabase.from('invitation_commissions').select('registered_user_id,amount,status').eq('inviter_user_id',userId),
@@ -55,9 +58,10 @@ export default function MembershipAndReferrals({ userId }:{userId:string}) {
           supabase.rpc('payment_command_v1',{p_action:'my_orders',p_data:{}}),
         ])
         if(!active)return
-        for(const result of [p,s,c,r,com])if(result.error)throw result.error
+        for(const result of [p,s,paid,c,r,com])if(result.error)throw result.error
         setPlans(((p.data??[]) as Plan[]).filter(validPlan).sort((a,b)=>a.price_minor-b.price_minor))
         setSubscriptions((s.data??[]) as Subscription[])
+        setPaidMemberships((paid.data??[]) as PaidMembership[])
         setReferralCode(c.data?.code??'')
         setReferralCount(((r.data??[]) as Referral[]).length)
         setCommissions((com.data??[]) as Commission[])
@@ -116,7 +120,8 @@ export default function MembershipAndReferrals({ userId }:{userId:string}) {
     try{await navigator.clipboard.writeText(referralUrl);setNotice('Invitation link copied. You earn nothing for registration alone.')}catch{setError('Copy unavailable. Long-press the invitation link to copy it.')}
   }
 
-  const activeSub=subscriptions.find(s=>['premium_active','pro_active'].includes(s.status)&&(!s.expires_at||new Date(s.expires_at)>new Date()))
+  const activeSub=paidMemberships.find(s=>s.status==='active' && new Date(s.expires_at)>new Date())
+    ?? subscriptions.find(s=>s.status==='premium_active'&&(!s.expires_at||new Date(s.expires_at)>new Date()))
   const activePlan=plans.find(p=>p.id===activeSub?.plan_id)
 
   return <section className="list-panel" aria-label="Plans, payments and referrals">

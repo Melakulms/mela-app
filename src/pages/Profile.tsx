@@ -2,7 +2,8 @@ import JoinClassroom from '../components/JoinClassroom'
 import GradeSelectionPreview from '../components/GradeSelectionPreview'
 import StudentOnboarding from './StudentOnboarding'
 import { supabase } from '../lib/supabase'
-import { useEffect, useState } from 'react'
+import {lazy, Suspense, useEffect, useState} from 'react'
+const AdditionalRoleApplications = lazy(()=>import('../components/AdditionalRoleApplications'))
 import { fetchEnabledLanguages, type PlatformLanguage } from '../lib/languages'
 import { updatePreferredLanguage, logoutUser, type MelaProfile } from '../lib/auth'
 import MembershipAndReferrals from '../components/MembershipAndReferrals'
@@ -19,6 +20,7 @@ export default function Profile({ profile, onProfileUpdated }: { profile: MelaPr
   const [savedEducation, setSavedEducation] = useState<{subjects:string[];learning_interests:string[];goals:string[];preferred_learning_areas:string[];skills:string[]} | null>(null)
   const [educationReadError, setEducationReadError] = useState('')
   const [error, setError] = useState('')
+  const [showRoleApplications,setShowRoleApplications]=useState(false)
 
   useEffect(() => {
     fetchEnabledLanguages().then(setLanguages).catch(() => {})
@@ -110,6 +112,14 @@ export default function Profile({ profile, onProfileUpdated }: { profile: MelaPr
 
       {profile.role === 'student' && <MembershipAndReferrals userId={profile.id} />}
       {profile.role === 'student' && <GradeSelectionPreview />}
+
+      {profile.role==='student'&&['college_tvet','university'].includes(profile.education_stage_key??'')&&
+        <section className="list-panel" aria-label="Apply for professional roles">
+          <h2>Professional role applications</h2>
+          <p>Eligible adult students can apply to mentor learners or represent a partner organization without registering another MELA account. Independent verification is always required.</p>
+          <button type="button" className="btn btn-secondary" aria-expanded={showRoleApplications} onClick={()=>setShowRoleApplications(value=>!value)}>{showRoleApplications?'Close role applications':'Apply for another role'}</button>
+          {showRoleApplications&&<Suspense fallback={<p role="status">Loading role applications…</p>}><AdditionalRoleApplications userId={profile.id}/></Suspense>}
+        </section>}
 
       <div className="section-heading"><h2>{t('language')}</h2></div>
       <div className="field">

@@ -111,6 +111,12 @@ begin
     values(new.user_id,v_plan.id,new.id,now(),now()+interval '30 days')
     on conflict(order_id) do nothing returning id into v_member_id;
   if v_member_id is null then return new; end if;
+  -- Learning entitlements must expire with the paid 30-day membership.
+  update public.mela_user_learning_entitlements
+    set ends_at=now()+interval '30 days',updated_at=now()
+    where user_id=new.user_id and source='payment' and source_reference=new.id::text
+       and product_key=v_key and status='active';
+  if not found then raise exception 'Paid learning entitlement was not recorded'; end if;
 
   -- A returning buyer never generates a second first-purchase award.
   if exists(select 1 from public.mela_paid_memberships where user_id=new.user_id and id<>v_member_id)

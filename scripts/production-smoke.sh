@@ -6,6 +6,7 @@ SUPABASE_URL="${SUPABASE_URL:-https://duizgtmbptmlbyipreqg.supabase.co}"
 SUPABASE_PUBLISHABLE_KEY="${SUPABASE_PUBLISHABLE_KEY:-}"
 AUTH_STATUS_URL="${AUTH_STATUS_URL:-$SUPABASE_URL/functions/v1/mela-auth-status}"
 BETA_AUTH_URL="${BETA_AUTH_URL:-$SUPABASE_URL/functions/v1/mela-beta-auth}"
+TELEGRAM_BOT_HEALTH_URL="${TELEGRAM_BOT_HEALTH_URL:-$SUPABASE_URL/functions/v1/mela-telegram-bot/health}"
 TARGET="${1:-all}"
 
 if [[ -z "$SUPABASE_PUBLISHABLE_KEY" ]]; then
@@ -82,6 +83,35 @@ print('Beta authentication service is live in invite-only, no-email mode.')
 PY
 }
 
+check_telegram_registration() {
+  echo "Checking Telegram registration bot and its actual live webhook"
+  local payload
+  payload="$(curl "${curl_common[@]}" -H "Accept: application/json" "$TELEGRAM_BOT_HEALTH_URL")"
+  TELEGRAM_REGISTRATION_PAYLOAD="$payload" python - <<'PY'
+import json, os, sys
+try:
+    data = json.loads(os.environ['TELEGRAM_REGISTRATION_PAYLOAD'])
+except Exception as exc:
+    raise SystemExit(f'Telegram registration health response was not valid JSON: {exc}')
+required = {
+    'ok': True,
+    'configured': True,
+    'registration_verification': 'telegram_one_time_code',
+    'webhook_status': 'registered_here',
+}
+failures = [f'{key}={data.get(key)!r} (expected {value!r})'
+            for key, value in required.items() if data.get(key) != value]
+if not str(data.get('bot', '')).lower() == '@mela_edu_bot':
+    failures.append('The connected Telegram bot identity did not match MELA')
+if failures:
+    for item in failures:
+        print('::error::' + item, file=sys.stderr)
+    raise SystemExit(1)
+print('Production Telegram bot is configured with the correct webhook and code verification route.')
+print('Pending updates:', data.get('pending_updates', 'unknown'))
+PY
+}
+
 check_data() {
   echo "Checking application Data API access through platform_languages"
   curl "${curl_common[@]}" --output /dev/null \
@@ -122,8 +152,9 @@ case "$TARGET" in
   auth) check_auth ;;
   auth-settings) check_auth_settings ;;
   beta-auth) check_beta_auth ;;
+  telegram-registration) check_telegram_registration ;;
   data) check_data ;;
   privacy) check_privacy ;;
-  all) check_app; check_auth; check_auth_settings; check_beta_auth; check_data; check_privacy ;;
+  all) check_app; check_auth; check_auth_settings; check_beta_auth; check_telegram_registration; check_data; check_privacy ;;
   *) echo "Unknown smoke target: $TARGET" >&2; exit 2 ;;
 esac

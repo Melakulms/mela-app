@@ -157,7 +157,8 @@ it('provides the exact copyable Telegram command when Android deep links fail', 
   const directLink = screen.getByRole('link',{name:'Get Telegram verification code'}) as HTMLAnchorElement
   const command = screen.getByLabelText('Manual Telegram command') as HTMLInputElement
   expect(command.readOnly).toBe(true)
-  expect(command.value).toEqual('/start ' + new URL(directLink.href).searchParams.get('start'))
+  expect(command.value).toEqual('/register mela.learner student')
+  expect(directLink.href).toContain('start=reg_student_')
   expect(screen.getByRole('button',{name:'Copy Telegram command'})).toBeTruthy()
   fireEvent.change(screen.getByLabelText('Username'), {target:{value:''}})
   expect(screen.queryByLabelText('Manual Telegram command')).toBeNull()

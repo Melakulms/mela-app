@@ -29,7 +29,7 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
   const [copied, setCopied] = useState(false)
   const [telegramCommandCopied, setTelegramCommandCopied] = useState(false)
   const telegramLink = telegramRegistrationLink(username, role)
-  const telegramStartCommand = telegramLink ? `/start ${new URL(telegramLink).searchParams.get('start')}` : ''
+  const telegramStartCommand = telegramLink ? `/register ${username.trim().toLowerCase()} ${role}` : ''
 
   const passwordChecks = useMemo(() => ({
     length: password.length >= 12,

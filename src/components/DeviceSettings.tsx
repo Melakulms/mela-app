@@ -187,7 +187,7 @@ export default function DeviceSettings() {
   }
 
   return <section className="device-settings" id="mela-settings">
-    <nav aria-label="MELA main navigation" className="settings-buttons"><a className="btn btn-primary" href={`${import.meta.env.BASE_URL}?view=dashboard`} onClick={backHome}>MELA Home</a>
+    <nav aria-label="MELA settings" className="settings-buttons">
     <button type="button" className="btn btn-secondary" aria-expanded={isOpen} aria-controls="mela-settings-content" onClick={() => {
       if (wasOpen.current) backHome()
       else markSettingsOpen()

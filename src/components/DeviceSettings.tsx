@@ -24,6 +24,7 @@ export default function DeviceSettings() {
   const [updateNotice, setUpdateNotice] = useState('')
   const [showResetConfirmation, setShowResetConfirmation] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
+  const [motionPreviewRun, setMotionPreviewRun] = useState(0)
   const wasOpen = useRef(false)
   const settingsHistoryEntry = useRef(false)
 
@@ -241,6 +242,25 @@ export default function DeviceSettings() {
         <label className="settings-switch"><input type="checkbox" aria-label="High contrast" checked={preferences.highContrast} onChange={e => changeSettings({highContrast:e.target.checked})} /><span><strong>High contrast</strong><small>Stronger borders, labels and focus rings</small></span></label>
         <label className="settings-switch"><input type="checkbox" aria-label="Reduce animation" checked={preferences.reducedMotion} onChange={e => changeSettings({reducedMotion:e.target.checked})} /><span><strong>Reduce animation</strong><small>Limit animation and movement</small></span></label>
         <label className="settings-switch"><input type="checkbox" aria-label="Simpler visual effects" checked={preferences.lowData} onChange={e => changeSettings({lowData:e.target.checked})} /><span><strong>Simpler visual effects</strong><small>Reduce decorative gradients and animation; lessons still need internet access</small></span></label>
+
+        <div className="mela-motion-preview-panel" aria-label="MELA animation demonstration">
+          <h3>MELA motion preview</h3>
+          <p className="settings-hint">See MELA's updated look here. Page transitions also appear when you open Practice, Arena, Career Passport, Mentorship and other sections.</p>
+          <div key={motionPreviewRun} className="mela-motion-preview" role="img" aria-label="MELA animated gold star and brand card">
+            <span className="mela-preview-mark" aria-hidden="true">✦</span>
+            <span><strong>MELA in motion</strong><small>Learn · Grow · Go Further</small></span>
+          </div>
+          <div className="mela-motion-preview-controls">
+            <button type="button" className="btn btn-secondary" onClick={() => setMotionPreviewRun(value => value + 1)}>Replay MELA animation</button>
+            <p className="settings-hint" role="status">
+              {preferences.reducedMotion || preferences.lowData
+                ? 'Animation is off in MELA settings. Turn off Reduce animation and Simpler visual effects to see it.'
+                : typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+                  ? 'Your Android or browser settings request reduced motion, so this preview stays still.'
+                  : 'Animation enabled. Tap Replay to watch the star move.'}
+            </p>
+          </div>
+        </div>
       </section>
 
       <section id="settings-learning" className="settings-group" aria-labelledby="settings-learning-heading">

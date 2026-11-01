@@ -37,6 +37,8 @@ export default function MembershipAndReferrals({ userId }:{userId:string}) {
   const [planKey,setPlanKey]=useState('')
   const [accountId,setAccountId]=useState('')
   const [reference,setReference]=useState('')
+  const [telegramOrderUrl,setTelegramOrderUrl]=useState('')
+  const [telegramOrderId,setTelegramOrderId]=useState('')
   const [error,setError]=useState('')
   const [notice,setNotice]=useState('')
   const [busy,setBusy]=useState(false)
@@ -98,9 +100,26 @@ export default function MembershipAndReferrals({ userId }:{userId:string}) {
       if(error)throw error
       if(!data?.id || data.amount_minor!==selected.price_minor || data.currency!=='ETB' || data.recipient!==account.recipient)
         throw new Error('The order was not confirmed with the correct amount and recipient. Do not transfer money.')
-      setNotice('Order created. Pay only the exact server-confirmed amount and recipient shown in your order, then submit the reference.')
+      setTelegramOrderUrl('');setTelegramOrderId('')
+      setNotice('Order created. Check the exact recipient and amount shown in MELA before any transfer.')
       reload()
     }catch(e){setError(messageOf(e))}
+    finally{setBusy(false)}
+  }
+
+  const linkTelegramOrder=async()=>{
+    if(!openOrder || openOrder.reference || !catalog.enabled)return
+    setBusy(true);setError('');setNotice('')
+    try{
+      const {data,error}=await supabase.rpc('mela_telegram_order_link_v1',{p_order_id:openOrder.id})
+      if(error)throw error
+      if(!data || typeof data.url!=='string'
+        || !/^https:\/\/t\.me\/Mela_edu_bot\?start=pay_[a-f0-9]{48}$/.test(data.url))
+        throw new Error('MELA could not issue a secure Telegram order link.')
+      setTelegramOrderUrl(data.url)
+      setTelegramOrderId(openOrder.id)
+      setNotice('Private Telegram link created for this order. It expires shortly and does not verify payment.')
+    }catch(e){setTelegramOrderUrl('');setTelegramOrderId('');setError(messageOf(e))}
     finally{setBusy(false)}
   }
 
@@ -160,6 +179,11 @@ export default function MembershipAndReferrals({ userId }:{userId:string}) {
       {money(o.amount_minor)} · {o.status} · {o.provider} · {o.recipient} {o.reason&&<small>{o.reason}</small>}
     </li>)}</ul>}
     {openOrder&&<div className="field">
+      {!openOrder.reference&&catalog.enabled&&<>
+        <button className="btn btn-secondary" type="button" disabled={busy} onClick={()=>void linkTelegramOrder()}>Get private Telegram link for this order</button>
+        {telegramOrderUrl&&telegramOrderId===openOrder.id&&<a className="btn btn-secondary" href={telegramOrderUrl} target="_blank" rel="noopener noreferrer">Open @Mela_edu_bot with this order</a>}
+        <p className="field-hint">The single-use link expires after 15 minutes. Telegram only submits your bank reference; an MFA-authorized administrator must verify the actual incoming transfer.</p>
+      </>}
       <label htmlFor="membership-reference">Transfer reference for pending order</label>
       <input id="membership-reference" value={reference} onChange={e=>setReference(e.target.value)} maxLength={64} placeholder="Actual transfer reference" />
       <button className="btn btn-secondary" type="button" disabled={busy} onClick={()=>void submitReference()}>Submit reference for review</button>

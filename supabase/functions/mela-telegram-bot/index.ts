@@ -93,6 +93,40 @@ async function livePaymentReply(text:string,message:any,updateId:number):Promise
  return null;
 }
 
+/** The Telegram bot only records a reference for an already authenticated,
+ * server-priced order. Bank settlement and subscriber/commission approval happen
+ * later through the MFA-protected MELA Central Admin review.
+ */
+async function linkedOrderReply(text:string,chatId:number,updateId:number):Promise<string|null> {
+ const command=text.trim().split(/\s+/)[0].toLowerCase().split('@')[0];
+ if(command!=='/order')return null;
+ const parts=text.trim().split(/\s+/);
+ const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
+ if(parts.length!==4||!uuid.test(parts[1]??'')||!/^[a-f0-9]{64}$/i.test(parts[2]??'')||!/^[A-Z0-9][A-Z0-9-]{5,63}$/i.test(parts[3]??'')){
+   return 'To report an existing MELA subscription order, open your MELA membership page, create a verified order when checkout is available, and copy its private Telegram order code. Then send /order ORDER_ID CODE TRANSFER_REFERENCE in this private chat. Do not send your password or a PIN.';
+ }
+ const key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')||'';
+ if(!key)throw new Error('MELA order verification is temporarily unavailable.');
+ const response=await fetch(PROJECT_URL+'/rest/v1/rpc/mela_submit_telegram_order_v1',{
+   method:'POST',
+   headers:{apikey:key,authorization:'Bearer '+key,'content-type':'application/json'},
+   body:JSON.stringify({p_order_id:parts[1],p_code:parts[2].toUpperCase(),p_reference:parts[3].toUpperCase(),p_chat_id:String(chatId),p_update_id:updateId}),
+   signal:AbortSignal.timeout(10000),
+ });
+ const result=await response.json();
+ if(!response.ok){
+   if(result.code==='42501')throw new Error('MELA could not authorize the private order code. Open your own order and request a new code.');
+   if(typeof result.message==='string' && /payment collection is not open|receiving account is not verified|subscription is unavailable|code was already used|Invalid or expired private order code|reference was already submitted/i.test(result.message)){
+     throw new Error(result.message.slice(0,180));
+   }
+   throw new Error('MELA could not link that transfer reference to your order. Check the code, reference and expiry in your MELA account.');
+ }
+ if(result?.status!=='pending')throw new Error('MELA did not confirm an awaiting-review order. No subscription was granted.');
+ return 'MELA order reference recorded.\nOrder: '+String(result.order_id)+
+  '\nStatus: AWAITING ADMIN BANK VERIFICATION.\n'+
+  'This does NOT prove payment. MELA must match the actual receiving-account transfer, amount, recipient and payer before activating a subscription or any referral commission. Do not pay twice for the same order.';
+}
+
 async function registrationReply(text:string, chatId:number):Promise<string|null> {
   const registration=parseRegistration(text);
   if(!registration) {
@@ -185,7 +219,7 @@ Deno.serve(async (req:Request):Promise<Response>=>{
     let answer:string;
     try {
       answer=typeof message.text==="string" && message.text.length<=4096
-        ? (await registrationReply(message.text,chat.id)) ?? (await livePaymentReply(message.text,message,update.update_id)) ?? reply(message.text)
+        ? (await registrationReply(message.text,chat.id)) ?? (await linkedOrderReply(message.text,chat.id,update.update_id)) ?? (await livePaymentReply(message.text,message,update.update_id)) ?? reply(message.text)
         : "Attachments are not accepted. Send /verify to submit a transaction reference. Never send credentials or identity documents.";
     } catch(e) {
       answer=e instanceof Error ? e.message : "Payment service unavailable. Please try again later.";

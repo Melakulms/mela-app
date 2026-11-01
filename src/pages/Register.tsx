@@ -1,4 +1,5 @@
 import { useI18n } from '../i18n'
+import { telegramRegistrationLink } from '../lib/telegram-registration'
 import AuthLayout from '../components/AuthLayout'
 import GradeSelectionPreview from '../components/GradeSelectionPreview'
 import { useMemo, useState } from 'react'
@@ -172,12 +173,12 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
     <AuthLayout>
       <span className="auth-wordmark">MELA</span>
       <h1>{t('authJoin')}</h1>
-      <p className="auth-subtitle">{t('authJoinHelp')} An administrator-issued one-time invitation verifies permission to join MELA without an email address. Save the recovery code securely. Guardian consent and professional verification are separate checks.</p>
+      <p className="auth-subtitle">{t('authJoinHelp')} Register without email using a private Telegram verification code or an administrator invitation. Telegram verifies account control, not legal identity. Guardian consent and professional verification are separate checks.</p>
       <div className="banner banner-info">
         <strong>Start learning now — no account needed</strong>
         <p>Try free maths practice and read the AI foundations handbook. The handbook is a draft awaiting teacher review. These public resources do not save progress to an account.</p>
         <a className="btn btn-secondary btn-block" href={`${import.meta.env.BASE_URL}offline.html`}>Open free study library</a>
-        <p>No invitation yet? Ask your MELA administrator for a one-time code matching your account type. Never share your password or recovery code.</p>
+        <p>No invitation yet? Enter your username and account type below, then get a verification code from our Telegram bot. Never send your password or recovery code to the bot.</p>
       </div>
       <div className="auth-switch"><button type="button" disabled={busy} onClick={() => { setMode('email'); setError('') }}>{t('authSwitchEmail')}</button></div>
 
@@ -204,14 +205,22 @@ export default function Register({ onSwitchToLogin, onRegistered }: {
             <option value="teacher">Teacher / educator</option>
             <option value="company">Employer / organization</option>
           </select>
-          <span className="field-hint">Your administrator must issue an invitation for this same account type. A mismatch is rejected without using your code. Teacher and employer privileges require independent verification.</span>
+          <span className="field-hint">Your Telegram code or administrator invitation must match this account type. A mismatch is rejected without using your code. Teacher and employer privileges require independent verification.</span>
           {role === 'student' && <span className="field-hint" role="status">After signing in, complete mandatory registration setup by selecting your school grade (1–12) or college/university level. Practice uses the saved grade, not a separate grade picker.</span>}
         </div>
 
+        <div className="banner banner-info">
+          <strong>Verify with Telegram — no email needed</strong>
+          <p>1. Choose your username and account type. 2. Open the bot and tap Start. 3. Copy its private code into the field below within 10 minutes, then create your account.</p>
+          {telegramRegistrationLink(username, role)
+            ? <a className="btn btn-secondary btn-block" href={telegramRegistrationLink(username, role)!} target="_blank" rel="noopener noreferrer">Get Telegram verification code</a>
+            : <p>Enter a valid username and select an account type to open Telegram verification.</p>}
+          <p>One Telegram account can verify one MELA account. No Telegram? Use an administrator invitation. Keep your recovery code for password recovery.</p>
+        </div>
         <div className="field">
           <label htmlFor="accessCode">{t('authAccessCode')}</label>
           <input id="accessCode" required autoComplete="off" spellCheck={false} value={accessCode} onChange={(e) => setAccessCode(e.target.value)} disabled={busy} />
-          <span className="field-hint">{t('authCodeHelp')}</span>
+          <span className="field-hint">Paste your Telegram verification code or administrator invitation here. Telegram codes expire after 10 minutes and work only once for the chosen username.</span>
         </div>
 
         <div className="field">

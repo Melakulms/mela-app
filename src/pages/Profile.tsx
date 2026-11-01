@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useEffect, useState } from 'react'
 import { fetchEnabledLanguages, type PlatformLanguage } from '../lib/languages'
 import { updatePreferredLanguage, logoutUser, type MelaProfile } from '../lib/auth'
+import MembershipAndReferrals from '../components/MembershipAndReferrals'
 import { useI18n } from '../i18n'
 
 export default function Profile({ profile, onProfileUpdated }: { profile: MelaProfile; onProfileUpdated: () => void }) {
@@ -107,6 +108,7 @@ export default function Profile({ profile, onProfileUpdated }: { profile: MelaPr
         <p className="field-hint">A school grade or education-stage change needs verified correction by MELA support so competitions and child-safety controls remain accurate.</p>
       </section>}
 
+      {profile.role === 'student' && <MembershipAndReferrals userId={profile.id} />}
       {profile.role === 'student' && <GradeSelectionPreview />}
 
       <div className="section-heading"><h2>{t('language')}</h2></div>

@@ -94,7 +94,7 @@ async function livePaymentReply(text:string,message:any,updateId:number):Promise
 async function registrationReply(text:string, chatId:number):Promise<string|null> {
   const registration=parseRegistration(text);
   if(!registration) {
-    if (/^\/(?:register|start\s+reg_)/i.test(text)) return 'To verify registration, open https://melakulms.github.io/mela-app/ and enter your username and account type, then tap Get Telegram verification code.';
+    if (/^\/(?:register|start\s+reg_)/i.test(text)) return 'Open MELA and choose your username and account type. Then send /register USERNAME ROLE, where ROLE is student, parent, teacher or company. Never send your password.';
     return null;
   }
   const key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')||'';
@@ -119,10 +119,10 @@ async function registrationReply(text:string, chatId:number):Promise<string|null
 function reply(input:string):string {
  const cmd=input.trim().split(/\s+/)[0].toLowerCase().split("@")[0];
  if(cmd==="/plans") return "MELA upcoming subscriptions (not yet available for purchase)\n\nFree Core: free\nPro: 50 ETB / 30 days\nPremium: 100 ETB / 30 days\n\nPlanned referral reward after a new member's FIRST independently verified paid subscription: Pro 20 ETB; Premium 40 ETB. No reward for sign-up alone.\n\nThese plans are not active in production checkout yet. Do NOT transfer money based on this message. Only follow a verified in-app payment order once MELA enables the new checkout.";
- if(cmd==="/start") return "Welcome to MELA Education! 🇪🇹\n\nFor email-free registration, open https://melakulms.github.io/mela-app/ and choose Get Telegram verification code. Use /plans for upcoming subscriptions. Use /pay for current payment instructions, /verify to submit a transfer, and /status to check its review. Payments are reviewed manually. Free Core remains free.";
+ if(cmd==="/start") return "Welcome to MELA Education! 🇪🇹\n\nFor email-free registration, open https://melakulms.github.io/mela-app/ and choose Get Telegram verification code, or send /register USERNAME ROLE in this chat (ROLE: student, parent, teacher, company). Use /plans for upcoming subscriptions. Use /pay for current payment instructions, /verify to submit a transfer, and /status to check its review. Payments are reviewed manually. Free Core remains free.";
  if(cmd==="/privacy") return "For registration MELA stores a hash of your Telegram account ID, chosen username, verification time and code hash to prevent duplicate registration. For payments MELA stores your Telegram chat ID, claimed name, payment references, amount, service description and review result to verify payments and resolve disputes. Only your chat can request its status; the authorized reviewer uses MFA. Never send PINs, passwords, OTPs, identity documents or screenshots.";
  if(cmd==="/review") return "MELA reviewer sign-in (authorized administrator only):\nhttps://mela-private-payment-test.cloudyjelly10.chatgpt.site";
- return "MELA Education Bot\n/start — Welcome\n/plans — Upcoming Pro and Premium prices (not yet purchasable)\n/pay — Receiving accounts and payment instructions\n/verify — Submit a real payment reference\n/status — Your payment review status\n/privacy — Data notice\n/review — Administrator review screen\n\nApproval follows manual confirmation in the receiving account. References alone do not approve payments.";
+ return "MELA Education Bot\n/start — Welcome\n/register USERNAME ROLE — Private one-time registration code\n/plans — Upcoming Pro and Premium prices (not yet purchasable)\n/pay — Receiving accounts and payment instructions\n/verify — Submit a real payment reference\n/status — Your payment review status\n/privacy — Data notice\n/review — Administrator review screen\n\nApproval follows manual confirmation in the receiving account. References alone do not approve payments.";
 }
 
 Deno.serve(async (req:Request):Promise<Response>=>{

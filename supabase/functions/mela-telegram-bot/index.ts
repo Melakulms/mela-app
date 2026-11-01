@@ -78,6 +78,8 @@ async function livePaymentReply(text:string,message:any,updateId:number):Promise
   return 'MELA payment instructions\n\n'+accounts+'\n\nPay only for a MELA service and amount already agreed with MELA. Foundational Free Core remains free. Confirm the recipient name in your banking app before transferring.\n\nAfter transferring, send /verify for submission instructions. Payment approval is manual after checking the actual incoming money. Never send your PIN, password, OTP or receipt screenshot.';
  }
  if(cmd==='/verify'){
+  const paymentState=await paymentRpc('health');
+  if(!paymentState.enabled)return 'New Telegram payment submissions are paused because they are not linked to a verified MELA subscription order. Do not transfer money based on bot instructions. Existing cases can still be checked using /status.';
   const parsed=parseSubmission(text);
   if(!parsed)return 'Submit your real payment using this format:\n\n/verify telebirr AMOUNT REFERENCE PAYER NAME - SERVICE\n\nUse dashen instead of telebirr for Dashen Bank. Replace AMOUNT with the birr you paid, REFERENCE with the actual transaction reference, and add the payer name and service.\n\nExample format only (do not copy the example reference):\n/verify telebirr 50 YOURREF123 Melaku Anteneh - agreed course\n\nA submitted reference is not approval. MELA checks the receiving account manually. Send /status to follow progress.';
   const data=await paymentRpc('submit',{...parsed,chat_id:String(message.chat.id),update_id:updateId,claimant:[message.from.first_name,message.from.last_name,message.from.username?'@'+message.from.username:''].filter(Boolean).join(' ')});
@@ -85,7 +87,7 @@ async function livePaymentReply(text:string,message:any,updateId:number):Promise
  }
  if(cmd==='/status'){
   const rows=await paymentRpc('status',{chat_id:String(message.chat.id)});
-  if(!rows.length)return 'No payment submissions in this Telegram chat yet. Use /verify after making an agreed payment.';
+  if(!rows.length)return 'No prior payment submissions were found in this Telegram chat. New unlinked Telegram payment submissions are paused. Check MELA for its official subscription checkout status.';
   return 'Your latest MELA payment submissions\n\n'+rows.map((r:any)=>`${r.amount_minor/100} ETB · ${r.provider}\nReference: ${r.reference}\nStatus: ${r.status==='verified'?'Manually verified':r.status==='pending'?'Awaiting manual review':'Rejected'}\nCase: ${r.id}${r.reason?'\nReason: '+r.reason:''}`).join('\n\n')+'\n\nVerified means MELA confirmed receipt. Service delivery is handled by MELA; this bot does not automatically enrol you in a course.';
  }
  return null;
@@ -119,10 +121,10 @@ async function registrationReply(text:string, chatId:number):Promise<string|null
 function reply(input:string):string {
  const cmd=input.trim().split(/\s+/)[0].toLowerCase().split("@")[0];
  if(cmd==="/plans") return "MELA upcoming subscriptions (not yet available for purchase)\n\nFree Core: free\nPro: 50 ETB / 30 days\nPremium: 100 ETB / 30 days\n\nPlanned referral reward after a new member's FIRST independently verified paid subscription: Pro 20 ETB; Premium 40 ETB. No reward for sign-up alone.\n\nThese plans are not active in production checkout yet. Do NOT transfer money based on this message. Only follow a verified in-app payment order once MELA enables the new checkout.";
- if(cmd==="/start") return "Welcome to MELA Education! 🇪🇹\n\nFor email-free registration, open https://melakulms.github.io/mela-app/ and choose Get Telegram verification code, or send /register USERNAME ROLE in this chat (ROLE: student, parent, teacher, company). Use /plans for upcoming subscriptions. Use /pay for current payment instructions, /verify to submit a transfer, and /status to check its review. Payments are reviewed manually. Free Core remains free.";
+ if(cmd==="/start") return "Welcome to MELA Education! 🇪🇹\n\nFor email-free registration, open https://melakulms.github.io/mela-app/ and choose Get Telegram verification code, or send /register USERNAME ROLE in this chat (ROLE: student, parent, teacher, company). Use /plans for upcoming subscriptions. New unlinked Telegram payments are paused until MELA provides a verified in-app order. /status still checks existing payment cases. Free Core remains free.";
  if(cmd==="/privacy") return "For registration MELA stores a hash of your Telegram account ID, chosen username, verification time and code hash to prevent duplicate registration. For payments MELA stores your Telegram chat ID, claimed name, payment references, amount, service description and review result to verify payments and resolve disputes. Only your chat can request its status; the authorized reviewer uses MFA. Never send PINs, passwords, OTPs, identity documents or screenshots.";
  if(cmd==="/review") return "MELA reviewer sign-in (authorized administrator only):\nhttps://mela-private-payment-test.cloudyjelly10.chatgpt.site";
- return "MELA Education Bot\n/start — Welcome\n/register USERNAME ROLE — Private one-time registration code\n/plans — Upcoming Pro and Premium prices (not yet purchasable)\n/pay — Receiving accounts and payment instructions\n/verify — Submit a real payment reference\n/status — Your payment review status\n/privacy — Data notice\n/review — Administrator review screen\n\nApproval follows manual confirmation in the receiving account. References alone do not approve payments.";
+ return "MELA Education Bot\n/start — Welcome\n/register USERNAME ROLE — Private one-time registration code\n/plans — Upcoming Pro and Premium prices (not yet purchasable)\n/pay — Payment readiness (new unlinked transfers are paused)\n/verify — Paused until verified account-linked orders are ready\n/status — Your payment review status\n/privacy — Data notice\n/review — Administrator review screen\n\nApproval follows manual confirmation in the receiving account. References alone do not approve payments.";
 }
 
 Deno.serve(async (req:Request):Promise<Response>=>{

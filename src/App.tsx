@@ -253,6 +253,11 @@ export default function App() {
   // NOT a verified contact. Only a real Supabase Auth-confirmed email or phone
   // unlocks access. Telegram alone is insufficient.
   if (!hasVerifiedContact(session.user)) {
+    // Ordinary email signups retain their resend/confirmation screen.
+    // Placeholder-email invitation accounts need a different real-contact flow.
+    if (session.user.email && !session.user.email.toLowerCase().endsWith('@beta.mela.invalid')) {
+      return <VerifyEmail onRefresh={reloadProfile} email={session.user.email} onUseDifferentAccount={() => { void signOut() }} />
+    }
     return <ContactVerification onRefresh={reloadProfile} onSignOut={() => { void signOut() }} />
   }
 

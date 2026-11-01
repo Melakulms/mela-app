@@ -11,6 +11,9 @@ beforeEach(() => { vi.resetAllMocks(); localStorage.removeItem('mela_language');
 afterEach(() => { cleanup(); localStorage.removeItem('mela_language'); window.history.replaceState(null, '', '/mela-app/') })
 
 function fillEmailForm() {
+  fireEvent.change(screen.getByLabelText('Age group (required)'),{target:{value:'18_plus'}})
+  fireEvent.click(screen.getByLabelText('I acknowledge MELA\'s Terms of Service (required)'))
+  fireEvent.click(screen.getByLabelText('I acknowledge MELA\'s Privacy Notice (required)'))
   fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'MELA Learner' } })
   fireEvent.change(screen.getByLabelText('Email address'), { target: { value: ' Learner@Example.com ' } })
   fireEvent.change(screen.getByLabelText('Password', { exact: true }), { target: { value: 'A long test passphrase 2026' } })
@@ -39,6 +42,7 @@ it('creates a family email account without a username or invitation code', async
   await waitFor(() => expect(mocks.registerUser).toHaveBeenCalledWith({
     email: 'learner@example.com', fullName: 'MELA Learner',
     password: 'A long test passphrase 2026', role: 'parent',
+    ageBand: '18_plus', acceptedTerms: true, acceptedPrivacy: true, marketingConsent: false,
   }))
   expect(onRegistered).toHaveBeenCalledWith('learner@example.com')
   expect(mocks.registerBetaUser).not.toHaveBeenCalled()
@@ -99,6 +103,7 @@ it.each([
     password:'A long test passphrase 2026',
     fullName:'MELA Learner',
     role:value,
+    ageBand:'18_plus',acceptedTerms:true,acceptedPrivacy:true,marketingConsent:false,
   }))
   expect(onRegistered).toHaveBeenCalledWith('learner@example.com')
   expect(mocks.registerBetaUser).not.toHaveBeenCalled()

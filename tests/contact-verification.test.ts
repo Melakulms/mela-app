@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest'
-import {hasVerifiedContact,validContactPhone} from '../src/lib/contact-verification'
+import {hasTrustedTelegramSignup,hasVerifiedContact,validContactPhone} from '../src/lib/contact-verification'
 
 describe('real contact verification',()=>{
   it('never accepts a synthetic confirmed beta email',()=>{
@@ -19,5 +19,19 @@ describe('real contact verification',()=>{
     expect(validContactPhone('+251911000000')).toBe(true)
     expect(validContactPhone('0911000000')).toBe(false)
     expect(validContactPhone('+251 abc')).toBe(false)
+  })
+})
+
+describe('email-free Telegram account control',()=>{
+  it('allows a real server-attested Telegram signup without pretending its synthetic email is verified',()=>{
+    const user={email:'learner@beta.mela.invalid',
+      app_metadata:{mela_verification_method:'telegram',telegram_verified_at:'2026-11-01T10:07:00Z'}}
+    expect(hasTrustedTelegramSignup(user)).toBe(true)
+    expect(hasVerifiedContact({...user,email_confirmed_at:'2026-11-01T10:07:00Z',phone:'',phone_confirmed_at:undefined})).toBe(false)
+  })
+  it('rejects a forged client metadata claim, missing timestamp, and invitation-only accounts',()=>{
+    expect(hasTrustedTelegramSignup({email:'learner@beta.mela.invalid',app_metadata:{provider:'email'}})).toBe(false)
+    expect(hasTrustedTelegramSignup({email:'learner@beta.mela.invalid',app_metadata:{mela_verification_method:'telegram'}})).toBe(false)
+    expect(hasTrustedTelegramSignup({email:'learner@beta.mela.invalid',app_metadata:{mela_verification_method:'administrator_invitation',telegram_verified_at:'2026-11-01T10:07:00Z'}})).toBe(false)
   })
 })

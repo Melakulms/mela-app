@@ -160,6 +160,20 @@ it('supports Escape from Settings without signing the user out', () => {
   expect(container.querySelector('#mela-settings-content')).toBeNull()
 })
 
+it('shows a replayable animation preview and respects the MELA reduced-motion setting', () => {
+  renderSettings()
+  const demo = screen.getByRole('img', {name:'MELA animated gold star and brand card'})
+  expect(screen.getByText('MELA in motion')).toBeTruthy()
+  expect(screen.getByText(/Animation enabled/)).toBeTruthy()
+  fireEvent.click(screen.getByRole('button',{name:'Replay MELA animation'}))
+  expect(screen.getByRole('img', {name:'MELA animated gold star and brand card'})).not.toBe(demo)
+  fireEvent.click(screen.getByRole('checkbox',{name:'Reduce animation'}))
+  expect(document.documentElement.classList.contains('mela-reduced-motion')).toBe(true)
+  expect(screen.getByText(/Animation is off in MELA settings/)).toBeTruthy()
+  fireEvent.click(screen.getByRole('checkbox',{name:'Simpler visual effects'}))
+  expect(document.documentElement.classList.contains('mela-low-data')).toBe(true)
+})
+
 it('changes Settings sections without adding Android Back history entries', () => {
   renderSettings()
   const before = window.location.href

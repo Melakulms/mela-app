@@ -1,0 +1,60 @@
+name: Diagnose MELA live registration delivery
+
+on:
+  push:
+    branches:
+      - diagnose/registration-live-20261101
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-registration-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Inspect public mobile site and release marker
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3 --max-time 25 "https://melakulms.github.io/mela-app/" -o /tmp/mela-entry.html
+          test -s /tmp/mela-entry.html
+          curl -fsSL --retry 3 --max-time 25 "https://melakulms.github.io/mela-app/mela-release.json?registration-check=20261101" -o /tmp/mela-release.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/mela-release.json'))
+          commit=d.get('commit')
+          print('Live GitHub Pages commit:', commit or '(missing)')
+          assert commit == '45fe1f72894af348598fdc1c6401782daeccbf25', 'Unexpected public release commit'
+          PY
+
+      - name: Inspect production Telegram webhook registration (read-only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3 --max-time 30 "https://duizgtmbptmlbyipreqg.supabase.co/functions/v1/mela-telegram-bot/health" -o /tmp/mela-telegram-prod.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/mela-telegram-prod.json'))
+          for field in ['configured','bot','webhook_status','registration_verification','pending_updates']:
+              print('Production Telegram',field,repr(d.get(field)))
+          assert d.get('ok') is True, 'Production bot health endpoint not healthy'
+          assert d.get('configured') is True, 'Production bot secret/configuration missing'
+          assert d.get('bot') == '@mela_edu_bot', 'Production bot identity mismatch'
+          assert d.get('webhook_status') == 'registered_here', 'Telegram updates are NOT delivered to production webhook'
+          assert d.get('registration_verification') == 'telegram_one_time_code', 'Registration mode missing'
+          PY
+
+      - name: Inspect staging webhook status without changing webhook
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3 --max-time 30 "https://tungqfmypuwzeyrtaseh.supabase.co/functions/v1/mela-telegram-bot/health" -o /tmp/mela-telegram-staging.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/mela-telegram-staging.json'))
+          for field in ['configured','bot','webhook_status','payments_enabled']:
+              print('Staging Telegram',field,repr(d.get(field)))
+          PY

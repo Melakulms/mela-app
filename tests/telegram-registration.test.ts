@@ -10,6 +10,13 @@ describe('Telegram registration binding', () => {
     expect(payload).toMatch(/^[A-Za-z0-9_-]+$/)
     expect(parseRegistration('/start '+payload)).toEqual({username:'student.name-01_2',role})
   })
+  it.each(['student','parent','teacher','company'])('accepts a manual /register command for %s',role=>{
+    expect(parseRegistration('/register Mela.Student '+role)).toEqual({username:'mela.student',role})
+    expect(parseRegistration('/register@Mela_edu_bot mela.student '+role)).toEqual({username:'mela.student',role})
+  })
+  it.each(['/register','/register mela.student','/register mela.student admin','/register mela.student student extra','/register <script> student'])('rejects malformed manual commands %s',value=>{
+    expect(parseRegistration(value)).toBeNull()
+  })
   it('supports maximum length usernames',()=>{
     const link=telegramRegistrationLink('a'.repeat(32),'company')!
     expect(parseRegistration('/start '+new URL(link).searchParams.get('start'))?.username).toBe('a'.repeat(32))

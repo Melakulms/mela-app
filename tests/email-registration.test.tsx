@@ -148,3 +148,18 @@ it('opens a Telegram link only after a valid username and explicit role are chos
   expect(link.rel).toContain('noopener')
   expect(mocks.registerBetaUser).not.toHaveBeenCalled()
 })
+
+it('provides the exact copyable Telegram command when Android deep links fail', () => {
+  window.history.replaceState(null, '', '/mela-app/')
+  render(<I18nProvider><Register onSwitchToLogin={vi.fn()} /></I18nProvider>)
+  fireEvent.change(screen.getByLabelText('Username'), {target:{value:'mela.learner'}})
+  fireEvent.change(screen.getByLabelText('Account type (required)'), {target:{value:'student'}})
+  const directLink = screen.getByRole('link',{name:'Get Telegram verification code'}) as HTMLAnchorElement
+  const command = screen.getByLabelText('Manual Telegram command') as HTMLInputElement
+  expect(command.readOnly).toBe(true)
+  expect(command.value).toEqual('/register mela.learner student')
+  expect(directLink.href).toContain('start=reg_student_')
+  expect(screen.getByRole('button',{name:'Copy Telegram command'})).toBeTruthy()
+  fireEvent.change(screen.getByLabelText('Username'), {target:{value:''}})
+  expect(screen.queryByLabelText('Manual Telegram command')).toBeNull()
+})

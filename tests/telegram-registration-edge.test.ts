@@ -12,7 +12,7 @@ async function run(binding: {username:string}|null, bindingError:unknown=null, o
     const result=table==='policy_documents'?[{policy_key:'terms',version:'2026-08-14'},{policy_key:'privacy',version:'2026-08-14'}]:table==='platform_feature_flags'?{enabled:true}:table==='telegram_registration_bindings'?binding:table==='beta_access_invites'?{id:'invite',role:'student'}:null
     const query:any={select:()=>query,eq:()=>query,is:()=>query,gt:()=>query,in:()=>query,update:()=>query,insert:()=>query,
       maybeSingle:async()=>({data:result,error:table==='telegram_registration_bindings'?bindingError:null}),
-      then:(resolve:any)=>Promise.resolve({error:null}).then(resolve)}
+      then:(resolve:any)=>Promise.resolve({data:result,error:null}).then(resolve)}
     return query
   }}
   let handler!:(req:Request)=>Promise<Response>

@@ -31,10 +31,10 @@ begin
     return jsonb_build_object(
       'enabled',coalesce((select enabled from mela_payments.settings where singleton),false)
         and coalesce((select enabled from public.platform_feature_flags where feature_key='payments'),false)
-        and exists (select 1 from mela_payments.accounts a
-          join mela_payments.account_verifications v on v.account_id=a.id
-          where a.active and v.revoked_at is null
-            and v.provider=a.provider and v.recipient=a.recipient),
+        and exists (select 1 from mela_payments.accounts bank
+          join mela_payments.account_verifications v on v.account_id=bank.id
+          where bank.active and v.revoked_at is null
+            and v.provider=bank.provider and v.recipient=bank.recipient),
       'products',case when
         coalesce((select enabled from mela_payments.settings where singleton),false)
         and coalesce((select enabled from public.platform_feature_flags where feature_key='payments'),false)
@@ -45,11 +45,11 @@ begin
         coalesce((select enabled from mela_payments.settings where singleton),false)
         and coalesce((select enabled from public.platform_feature_flags where feature_key='payments'),false)
         then coalesce((select jsonb_agg(to_jsonb(x)) from
-          (select a.id,a.provider,a.recipient,a.label
-           from mela_payments.accounts a
-           join mela_payments.account_verifications v on v.account_id=a.id
-           where a.active and v.revoked_at is null
-             and a.recipient=v.recipient and a.provider=v.provider) x),'[]'::jsonb)
+          (select bank.id,bank.provider,bank.recipient,bank.label
+           from mela_payments.accounts bank
+           join mela_payments.account_verifications v on v.account_id=bank.id
+           where bank.active and v.revoked_at is null
+             and bank.recipient=v.recipient and bank.provider=v.provider) x),'[]'::jsonb)
         else '[]'::jsonb end
     );
   elsif p_action='my_orders' then

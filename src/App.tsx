@@ -12,6 +12,7 @@ import ResetPassword from './pages/ResetPassword'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import VerifyEmail from './pages/VerifyEmail'
+const UserInformationSetup = lazy(() => import('./pages/UserInformationSetup'))
 const StudentDashboard = lazy(() => import('./pages/StudentDashboard'))
 const Practice = lazy(() => import('./pages/Practice'))
 const OpportunityHub = lazy(() => import('./pages/OpportunityHub'))
@@ -80,6 +81,8 @@ export default function App() {
   const [employerRegistration, setEmployerRegistration] = useState<{ status: string; company_name: string | null } | null>(null)
   const [editingEmployerProfile, setEditingEmployerProfile] = useState(false)
   const [showAccount, setShowAccount] = useState(false)
+  const [informationUser, setInformationUser] = useState('')
+  const [editingInformation, setEditingInformation] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -96,6 +99,7 @@ export default function App() {
         !window.location.hash.includes('access_token')
       if (event === 'SIGNED_OUT' || ordinaryRestore || (event === 'SIGNED_IN' && nextUserId !== observedUserId.current)) {
         clearCoachHistories()
+        setInformationUser(''); setEditingInformation(false)
         setProfile(null); setEmployerRegistration(null); setShowAccount(false); setEditingEmployerProfile(false)
         setActionError(''); setPendingEmail('')
         window.dispatchEvent(new Event('mela:session-boundary'))
@@ -265,6 +269,11 @@ export default function App() {
       : <Register onSwitchToLogin={() => setAuthView('login')} onRegistered={(email) => setPendingEmail(email)} />}
   </>
 
+  if (informationUser !== profile.id + ':' + profile.role) return <Suspense fallback={<div className="centered-loading">Loading your information…</div>}>
+    <UserInformationSetup key={profile.id + ':' + profile.role} profile={profile} editMode={editingInformation}
+      onComplete={() => {setInformationUser(profile.id + ':' + profile.role);setEditingInformation(false)}} onSignOut={() => {void signOut()}}/>
+  </Suspense>
+
   const isStudent = profile.role === 'student'
 
   if (isStudent && !profile.education_onboarding_completed) {
@@ -329,6 +338,7 @@ export default function App() {
               <option key={l.language_code} value={l.language_name}>{l.native_name}</option>
             ))}
           </select>
+          <button type="button" className="btn btn-secondary" onClick={() => {setEditingInformation(true);setInformationUser('')}}>My information</button>
           <span className="pill-stat coins">🪙 {profile.coin_balance}</span>
           <span className={`pill-stat ${online ? 'online' : 'offline'}`} role="status">{online ? <Wifi size={13} /> : <WifiOff size={13} />}{online ? t('connected') : t('offline')}</span>
           <button type="button" className="btn btn-secondary" onClick={() => { if (isStudent) setStudentView('profile'); else setShowAccount(true) }} aria-label="Open my MELA account"><UserRound size={16} aria-hidden="true" /> My account</button>
@@ -392,5 +402,6 @@ export default function App() {
     </div>
   )
 }
+
 
 

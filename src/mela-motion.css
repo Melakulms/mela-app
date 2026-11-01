@@ -37,6 +37,8 @@
 
   /* Works for every feature opened from the dashboard, including the
      educator, guardian, employer, and mentor account workspaces. */
+  html:not(.mela-reduced-motion):not(.mela-low-data) .dash-main > .list-panel:nth-of-type(-n+3),
+  html:not(.mela-reduced-motion):not(.mela-low-data) .dash-main > .stat-strip,
   html:not(.mela-reduced-motion):not(.mela-low-data) .settings-center,
   html:not(.mela-reduced-motion):not(.mela-low-data) .profile-access-intro,
   html:not(.mela-reduced-motion):not(.mela-low-data) .dashboard-main .dashboard-hero {
@@ -45,14 +47,14 @@
 
   /* A short, capped stagger, not a long sequence for large lists or search
      results. Transform-only animation preserves disabled-card opacity. */
-  html:not(.mela-reduced-motion):not(.mela-low-data) .dashboard-main .module-grid > .module-card:nth-child(-n+6) {
+  html:not(.mela-reduced-motion):not(.mela-low-data) .module-grid > .module-card:nth-child(-n+6) {
     animation: mela-tile-enter 260ms cubic-bezier(.22, 1, .36, 1) backwards;
   }
-  html:not(.mela-reduced-motion):not(.mela-low-data) .dashboard-main .module-grid > .module-card:nth-child(2) { animation-delay: 35ms; }
-  html:not(.mela-reduced-motion):not(.mela-low-data) .dashboard-main .module-grid > .module-card:nth-child(3) { animation-delay: 70ms; }
-  html:not(.mela-reduced-motion):not(.mela-low-data) .dashboard-main .module-grid > .module-card:nth-child(4) { animation-delay: 105ms; }
-  html:not(.mela-reduced-motion):not(.mela-low-data) .dashboard-main .module-grid > .module-card:nth-child(5) { animation-delay: 140ms; }
-  html:not(.mela-reduced-motion):not(.mela-low-data) .dashboard-main .module-grid > .module-card:nth-child(6) { animation-delay: 175ms; }
+  html:not(.mela-reduced-motion):not(.mela-low-data) .module-grid > .module-card:nth-child(2) { animation-delay: 35ms; }
+  html:not(.mela-reduced-motion):not(.mela-low-data) .module-grid > .module-card:nth-child(3) { animation-delay: 70ms; }
+  html:not(.mela-reduced-motion):not(.mela-low-data) .module-grid > .module-card:nth-child(4) { animation-delay: 105ms; }
+  html:not(.mela-reduced-motion):not(.mela-low-data) .module-grid > .module-card:nth-child(5) { animation-delay: 140ms; }
+  html:not(.mela-reduced-motion):not(.mela-low-data) .module-grid > .module-card:nth-child(6) { animation-delay: 175ms; }
 
   html:not(.mela-reduced-motion):not(.mela-low-data) :is(.btn, .role-option, .bottom-nav button, .settings-jump button, button.module-card) {
     transition: transform 150ms ease-out, box-shadow 150ms ease-out, border-color 150ms ease-out, background-color 150ms ease-out;

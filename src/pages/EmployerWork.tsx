@@ -47,10 +47,9 @@ export default function EmployerWork({ employerId, onBack }: { employerId:string
     setLoading(true);setError('')
     void (async()=>{
       try {
-        const [auth,flag,payout,taskResult,contractResult]=await Promise.all([
+        const [auth,readiness,taskResult,contractResult]=await Promise.all([
           supabase.auth.getUser(),
-          supabase.rpc('platform_feature_available',{p_feature_key:'earn_work'}),
-          supabase.rpc('platform_feature_available',{p_feature_key:'payouts'}),
+          supabase.rpc('mela_earn_work_readiness_v1'),
           supabase.from('marketplace_tasks').select('id,title,description,status,budget_amount,currency,deadline')
             .eq('employer_id',employerId).order('created_at',{ascending:false}).limit(100),
           supabase.from('freelance_contracts').select('id,task_id,freelancer_id,status,terms,agreed_amount,currency,funding_status,created_at')
@@ -74,8 +73,8 @@ export default function EmployerWork({ employerId, onBack }: { employerId:string
         if(!active)return
         setOwnId(auth.data.user.id)
         // A failed flag read is not permission to create contracts or move money.
-        setEnabled(!flag.error && flag.data===true)
-        setPayoutsEnabled(!payout.error && payout.data===true)
+        setEnabled(!readiness.error && readiness.data?.enabled===true)
+        setPayoutsEnabled(!readiness.error && readiness.data?.payouts_enabled===true)
         setTasks(taskRows);setContracts(contractRows);setBids((proposalResult.data??[]) as WorkBid[])
         setMilestones(stepRows);setReviews(reviewRows)
       }catch(cause){if(active){setEnabled(false);setPayoutsEnabled(false);setError(cause instanceof Error?cause.message:'Could not load employer work.')}}

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect } from 'react'
+import { useSectionDrilldown } from '../hooks/useSectionDrilldown'
 import MentorshipPracticeLab from './MentorshipPracticeLab'
 
 export const MENTORSHIP_SECTION_CARDS = [
@@ -26,22 +27,30 @@ export const PREPARATION_SECTIONS = MENTORSHIP_SECTION_CARDS.map(card => card.ti
  * Every card opens local practice ONLY: this component has no data access,
  * persistence, registration bypass, role assumptions or approval actions.
  */
-export default function MentorshipPreparationStudio() {
-  const [section, setSection] = useState(1)
+export default function MentorshipPreparationStudio({ onOpenChange }: { onOpenChange?: (open: boolean) => void }) {
+  const [section, openSection, closeSection] = useSectionDrilldown('section')
+  const parsed = Number(section)
+  const activeSection = Number.isInteger(parsed) && parsed >= 1 && parsed <= MENTORSHIP_SECTION_CARDS.length ? parsed : null
+  useEffect(() => { onOpenChange?.(activeSection !== null) }, [activeSection, onOpenChange])
 
-  const openPractice = (number: number) => {
-    setSection(number)
-    document.getElementById('mentorship-practice-panel')?.scrollIntoView?.({
-      behavior: 'smooth',
-      block: 'start',
-    })
-  }
+  // A selected card becomes its own focused screen; the complete index is hidden.
+  if (activeSection !== null) return (
+    <section className="empty-panel" aria-label={`Mentorship section ${activeSection} practice`} style={{ textAlign: 'left' }}>
+      <div className="section-heading">
+        <div><span className="eyebrow">Section {activeSection} of 16</span><h2>{MENTORSHIP_SECTION_CARDS[activeSection - 1].title}</h2></div>
+        <button type="button" className="btn btn-secondary" onClick={closeSection}>Back to 16 sections</button>
+      </div>
+      <p>{MENTORSHIP_SECTION_CARDS[activeSection - 1].summary}</p>
+      <p className="muted">This is a local practice exercise, not a real mentor request, session booking or administrator approval. Do not enter confidential information.</p>
+      <MentorshipPracticeLab key={activeSection} section={activeSection} />
+    </section>
+  )
 
   return (
     <section aria-labelledby="mentorship-section-list-heading" className="empty-panel"
       style={{ textAlign: 'left', borderTop: '4px solid #167b89' }}>
       <h2 id="mentorship-section-list-heading">MELA Mentorship — 16 Sections</h2>
-      <p>Choose any card to explore its preparation tools. All 16 cards are shown here for learners on phones and computers.</p>
+      <p>Choose a section to open its own practice screen. Use Back to 16 sections to choose another.</p>
       <p className="muted" role="note">
         These cards open learning exercises only. Live mentor matching, booking,
         guardian approval, certificates, private mentor tools and administrator
@@ -52,12 +61,12 @@ export default function MentorshipPreparationStudio() {
         style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 185px), 1fr))', gap: '.8rem', marginTop: '1rem' }}>
         {MENTORSHIP_SECTION_CARDS.map((card, index) => {
           const number = index + 1
-          const selected = section === number
+          const selected = false
           return (
             <button key={card.title} type="button" className="module-card"
               aria-label={`Open practice: ${card.title}`}
               aria-pressed={selected}
-              onClick={() => openPractice(number)}
+              onClick={() => openSection(String(number))}
               style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
                 gap: '.45rem', padding: '1rem', width: '100%', minHeight: '150px',
@@ -76,13 +85,7 @@ export default function MentorshipPreparationStudio() {
           )
         })}
       </div>
-      <div id="mentorship-practice-panel" tabIndex={-1}
-        aria-label={`Mentorship section ${section} practice`}
-        style={{ marginTop: '1rem', scrollMarginTop: '1.5rem' }}>
-        <h3>Section {section}: {MENTORSHIP_SECTION_CARDS[section - 1].title}</h3>
-        <p className="muted">Practice only — not a mentor request, session booking, account action or administrator approval.</p>
-        <MentorshipPracticeLab key={section} section={section} />
-      </div>
+
     </section>
   )
 }

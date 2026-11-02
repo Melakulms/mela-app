@@ -1,39 +1,33 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import MentorshipPreparationStudio, { MENTORSHIP_SECTION_CARDS, PREPARATION_SECTIONS } from '../src/components/MentorshipPreparationStudio'
 
-beforeEach(() => { window.localStorage.clear() })
-afterEach(() => { cleanup(); vi.restoreAllMocks() })
+beforeEach(() => { window.history.replaceState(null, '', '/mela-app/?view=mentorship'); window.localStorage.clear() })
+afterEach(() => { cleanup(); vi.restoreAllMocks(); window.history.replaceState(null, '', '/mela-app/') })
 
-it('shows exactly 16 section cards immediately, with no collapsed panel or dropdown', () => {
+it('shows all 16 section cards on the index, without repeating a practice panel', () => {
   render(<MentorshipPreparationStudio />)
   expect(screen.getByRole('heading', { name: 'MELA Mentorship — 16 Sections' })).toBeTruthy()
   const sectionList = screen.getByLabelText('16 mentorship section cards')
-  const buttons = Array.from(sectionList.querySelectorAll('button'))
-  expect(buttons).toHaveLength(16)
+  expect(sectionList.querySelectorAll('button')).toHaveLength(16)
   expect(MENTORSHIP_SECTION_CARDS).toHaveLength(16)
   expect(PREPARATION_SECTIONS).toHaveLength(16)
-  expect(screen.queryByText('Explore the 16 mentorship preparation tools')).toBeNull()
-  expect(screen.queryByLabelText('Choose an area to practise')).toBeNull()
-  expect(sectionList.closest('details')).toBeNull()
-  for (let i = 0; i < 16; i++) {
-    const btn = screen.getByRole('button', { name: 'Open practice: ' + PREPARATION_SECTIONS[i] })
-    expect(btn.getAttribute('aria-pressed')).toBe(i === 0 ? 'true' : 'false')
-    expect(btn.textContent).toContain('Section ' + (i + 1))
-  }
-  expect(screen.getByLabelText('Practice tools for section 1')).toBeTruthy()
-  expect(screen.getByText(/Live mentor matching, booking/)).toBeTruthy()
+  expect(screen.queryByLabelText('Practice tools for section 1')).toBeNull()
+  for (const name of PREPARATION_SECTIONS) expect(screen.getByRole('button', { name: 'Open practice: ' + name })).toBeTruthy()
 })
 
-it('opens every visible card and shows the corresponding practice tool', () => {
+it('opens each card in a focused screen and returns to the index with browser Back', () => {
   render(<MentorshipPreparationStudio />)
   for (let i = 1; i <= 16; i++) {
-    const button = screen.getByRole('button', { name: 'Open practice: ' + PREPARATION_SECTIONS[i - 1] })
-    fireEvent.click(button)
-    expect(button.getAttribute('aria-pressed')).toBe('true')
-    expect(screen.getByRole('heading', { name: 'Section ' + i + ': ' + PREPARATION_SECTIONS[i - 1] })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Open practice: ' + PREPARATION_SECTIONS[i - 1] }))
+    expect(window.location.search).toContain('section=' + i)
+    expect(screen.queryByLabelText('16 mentorship section cards')).toBeNull()
+    expect(screen.getByRole('heading', { name: PREPARATION_SECTIONS[i - 1] })).toBeTruthy()
     expect(screen.getByLabelText('Practice tools for section ' + i)).toBeTruthy()
+    act(() => { window.history.replaceState(null, '', '/mela-app/?view=mentorship'); window.dispatchEvent(new PopStateEvent('popstate')) })
+    expect(screen.getByLabelText('16 mentorship section cards')).toBeTruthy()
+    expect(screen.queryByLabelText('Practice tools for section ' + i)).toBeNull()
   }
 })
 
@@ -54,9 +48,7 @@ it('generates local worksheet with no network calls or persisted account updates
     expect(result.value).toContain('not saved to MELA')
     expect(fetchSpy).not.toHaveBeenCalled()
     expect(storageSpy).not.toHaveBeenCalled()
-  } finally {
-    globalThis.fetch = priorFetch
-  }
+  } finally { globalThis.fetch = priorFetch }
 })
 
 it('rejects a past preferred date instead of claiming a real booking', () => {
@@ -70,11 +62,11 @@ it('rejects a past preferred date instead of claiming a real booking', () => {
   expect(screen.queryByLabelText('Worksheet text for copying')).toBeNull()
 })
 
-it('switching cards clears unsent practice text instead of leaking it to another section', () => {
+it('switching away and returning clears unsent practice text', () => {
   render(<MentorshipPreparationStudio />)
-  fireEvent.change(screen.getByLabelText('My learning or career goal'), { target: { value: 'Sensitive private draft' } })
-  fireEvent.click(screen.getByRole('button', { name: 'Open practice: Mentor Profiles' }))
   fireEvent.click(screen.getByRole('button', { name: 'Open practice: Mentorship Home' }))
-  const subject = screen.getByLabelText('My learning or career goal') as HTMLInputElement
-  expect(subject.value).toBe('')
+  fireEvent.change(screen.getByLabelText('My learning or career goal'), { target: { value: 'Unsaved draft' } })
+  act(() => { window.history.replaceState(null, '', '/mela-app/?view=mentorship'); window.dispatchEvent(new PopStateEvent('popstate')) })
+  fireEvent.click(screen.getByRole('button', { name: 'Open practice: Mentorship Home' }))
+  expect((screen.getByLabelText('My learning or career goal') as HTMLInputElement).value).toBe('')
 })

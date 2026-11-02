@@ -1,4 +1,5 @@
 import ResourceDirectory from '../components/ResourceDirectory'
+import { useSectionDrilldown } from '../hooks/useSectionDrilldown'
 import { safeExternalUrl } from '../lib/external-url'
 import { useEffect, useRef, useState } from 'react'
 import { fetchOpenOpportunities, fetchMyApplications, applyToOpportunity, type Opportunity, type MyApplication } from '../lib/opportunities'
@@ -12,6 +13,7 @@ export default function OpportunityHub({ onBack }: { onBack: () => void }) {
   const [error, setError] = useState(''), [notice, setNotice] = useState('')
   const [applying, setApplying] = useState<string | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
+  const [focusedId, openDetails, backToList] = useSectionDrilldown('section')
   const [coverNote, setCoverNote] = useState('')
   const [query, setQuery] = useState(''), [type, setType] = useState(''), [scope, setScope] = useState('all')
   const [revision, setRevision] = useState(0)
@@ -38,20 +40,46 @@ export default function OpportunityHub({ onBack }: { onBack: () => void }) {
   }
 
   const visible = (opportunities ?? []).filter(o => (!type || o.opportunity_type === type) && (scope !== 'remote' || o.is_remote) && `${o.title} ${o.organization_name ?? ''} ${o.location ?? ''} ${o.summary ?? ''}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
-  const selectedOpportunity = opportunities?.find(o => o.id === selected)
+  const focused = opportunities?.find(o => o.id === focusedId)
+  if (focused) {
+    const official = safeExternalUrl(focused.external_url)
+    const application = applications.find(a => a.opportunity_id === focused.id)
+    const expired = !!focused.deadline && focused.deadline.slice(0, 10) < new Date().toISOString().slice(0, 10)
+    return <div className="dash-main">
+      <div className="section-heading"><h1>{focused.title}</h1><button className="btn btn-secondary" type="button" disabled={applying !== null} onClick={() => { setSelected(null); backToList() }}>Back to opportunities</button></div>
+      {error && <div className="banner banner-error" role="alert">{error}</div>}
+      {notice && <p role="status" className="banner banner-info">{notice}</p>}
+      <section className="list-panel" aria-label="Opened opportunity details">
+        <p>{focused.organization_name}{focused.location ? ` · ${focused.location}` : ''}{focused.is_remote ? ' · Remote' : ''}{focused.deadline ? ` · Deadline ${focused.deadline}` : ''}</p>
+        <p style={{ whiteSpace: 'pre-wrap' }}>{focused.description ?? focused.summary ?? 'No further description has been published.'}</p>
+        {focused.employment_type_label && <p>Employment type: {focused.employment_type_label}</p>}
+        {focused.education_level && <p>Education: {focused.education_level}</p>}
+        {focused.experience_level && <p>Experience: {focused.experience_level}</p>}
+        {!!focused.requirements?.length && <><h2>Requirements</h2><ul>{focused.requirements.map((item, index) => <li key={index}>{item}</li>)}</ul></>}
+        {!!focused.skills_required?.length && <p>Skills: {focused.skills_required.join(', ')}</p>}
+        {focused.application_instructions && <p>Application instructions: {focused.application_instructions}</p>}
+        {focused.stipend_or_reward && <p>Reward: {focused.stipend_or_reward}</p>}
+        {application && <p role="status">Application status: {application.status.replaceAll('_', ' ')}</p>}
+        {expired && <p role="status">Applications closed.</p>}
+        {!expired && (focused.application_method === 'external' || focused.application_method === 'both') && (official
+          ? <a className="btn btn-secondary" href={official} target="_blank" rel="noopener noreferrer">Official application site</a>
+          : <p>Official link unavailable.</p>)}
+        {!expired && !application && (focused.application_method === 'mela' || focused.application_method === 'both') &&
+          (selected === focused.id ? <form onSubmit={event => { event.preventDefault(); void apply(focused.id) }}>
+            <h2>Apply through MELA</h2>
+            <div className="field"><label htmlFor="cover-note">Application note (optional)</label><textarea id="cover-note" rows={6} maxLength={5000} value={coverNote} disabled={applying !== null} onChange={e => setCoverNote(e.target.value)} placeholder="Explain your experience and why you are interested." /></div>
+            <button type="submit" className="btn btn-primary" disabled={applying !== null}>{applying ? 'Submitting…' : 'Submit application'}</button>
+            <button type="button" className="btn btn-secondary" disabled={applying !== null} onClick={() => { setSelected(null); setCoverNote('') }}>Cancel application</button>
+          </form> : <button className="btn btn-primary" type="button" onClick={() => setSelected(focused.id)}>Apply through MELA</button>)}
+        {!['external', 'both', 'mela'].includes(focused.application_method ?? '') && <p>Application instructions are not available yet.</p>}
+      </section>
+    </div>
+  }
   return <div className="dash-main"><ResourceDirectory />
     <div className="section-heading"><h1>{t('opportunityHub')}</h1><button className="btn btn-secondary" disabled={applying !== null} onClick={onBack}>{t('back')}</button></div>
     {error && <div className="banner banner-error" role="alert">{error}<button className="btn btn-secondary" disabled={applying !== null} onClick={() => setRevision(value => value + 1)}>Retry opportunities</button></div>}
     {notice && <p role="status">{notice}</p>}
     {!opportunities && !error && <p role="status">Loading opportunities…</p>}
-    {selectedOpportunity && <section className="list-panel" aria-labelledby="application-heading">
-      <h2 id="application-heading">Apply to {selectedOpportunity.title}</h2><p>{selectedOpportunity.summary}</p>
-      <form onSubmit={event => { event.preventDefault(); void apply(selectedOpportunity.id) }}>
-        <div className="field"><label htmlFor="cover-note">Application note (optional)</label><textarea id="cover-note" rows={6} maxLength={5000} value={coverNote} disabled={applying !== null} onChange={e => setCoverNote(e.target.value)} placeholder="Explain your experience and why you are interested." /></div>
-        <button className="btn btn-primary" disabled={applying !== null}>{applying ? 'Submitting…' : 'Submit application'}</button>
-        <button type="button" className="btn btn-secondary" disabled={applying !== null} onClick={() => { setSelected(null); setCoverNote('') }}>Cancel application</button>
-      </form>
-    </section>}
     {opportunities && <>
       <div className="field"><label htmlFor="opportunity-search">Search opportunities</label><input id="opportunity-search" type="search" disabled={selected !== null} value={query} onChange={e => setQuery(e.target.value)} /></div>
       <div className="field"><label htmlFor="opportunity-type">Opportunity type</label><select id="opportunity-type" value={type} onChange={e => setType(e.target.value)}><option value="">All types</option>{Array.from(new Set(opportunities.map(o => o.opportunity_type).filter((value): value is string => !!value))).map(value => <option key={value} value={value}>{value}</option>)}</select></div>
@@ -64,12 +92,12 @@ export default function OpportunityHub({ onBack }: { onBack: () => void }) {
         return <div className="list-row" key={o.id}><div>
           <h2 className="list-row-title">{o.title}</h2><p className="list-row-meta">{o.organization_name}{o.location ? ` · ${o.location}` : ''}{o.is_remote ? ' · Remote' : ''}{o.deadline ? ` · Deadline ${o.deadline}` : ''}</p>
           <p>{o.summary}</p>
-          <details><summary>Full opportunity details</summary><p style={{ whiteSpace: 'pre-wrap' }}>{o.description ?? o.summary ?? 'No further description has been published.'}</p>{o.employment_type_label && <p>{o.employment_type_label}</p>}{o.education_level && <p>Education: {o.education_level}</p>}{o.experience_level && <p>Experience: {o.experience_level}</p>}{!!o.requirements?.length && <><h3>Requirements</h3><ul>{o.requirements.map((item, index) => <li key={index}>{item}</li>)}</ul></>}{!!o.skills_required?.length && <p>Skills: {o.skills_required.join(', ')}</p>}{o.application_instructions && <><h3>Application instructions</h3><p>{o.application_instructions}</p></>}</details>
+          <button className="btn btn-secondary" type="button" onClick={() => { setSelected(null); openDetails(o.id) }}>View full details</button>
           {o.opportunity_type && <p>Type: {o.opportunity_type}</p>}{o.stipend_or_reward && <p>Reward: {o.stipend_or_reward}</p>}
           {application && <p>Status: {application.status.replaceAll('_', ' ')}</p>}
           {expired ? <span className="pill">Applications closed</span> : <>
             {(o.application_method === 'external' || o.application_method === 'both') && (official ? <a className="btn btn-secondary" href={official} target="_blank" rel="noopener noreferrer">Official application site</a> : <span>Official link unavailable</span>)}
-            {(o.application_method === 'mela' || o.application_method === 'both') && !application && <button className="btn btn-primary" disabled={selected !== null || applying !== null} onClick={() => { setSelected(o.id); setCoverNote(''); setError(''); setNotice('') }}>Apply through MELA</button>}
+            {(o.application_method === 'mela' || o.application_method === 'both') && !application && <button className="btn btn-primary" disabled={selected !== null || applying !== null} onClick={() => { openDetails(o.id); setSelected(o.id); setCoverNote(''); setError(''); setNotice('') }}>Apply through MELA</button>}
             {!['external', 'both', 'mela'].includes(o.application_method ?? '') && <span>Application instructions are not available yet.</span>}
           </>}
         </div></div>

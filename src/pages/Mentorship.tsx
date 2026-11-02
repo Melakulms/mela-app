@@ -33,6 +33,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
   const [busy, setBusy] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [revision, setRevision] = useState(0)
+  const [preparationOpen, setPreparationOpen] = useState(false)
   const actionLock = useRef(false)
 
   useEffect(() => {
@@ -120,7 +121,8 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
         <h1>{t('mentorship')}</h1>
         <button className="btn btn-secondary" onClick={onBack} disabled={!!busy}>{t('back')}</button>
       </div>
-      <MentorshipPreparationStudio />
+      <MentorshipPreparationStudio onOpenChange={setPreparationOpen} />
+      {!preparationOpen && <>
       <section className="empty-panel" style={{ textAlign: 'left', borderTop: '4px solid #16875f' }}>
         <h2>Build your next step with a mentor</h2>
         <p>Choose a verified mentor, explain your goal, and track your request and session here.</p>
@@ -247,6 +249,7 @@ export default function Mentorship({ onBack, stageKey, onOpenSafety }: { onBack:
           </div>
         })}
       </div>}
+      </>}
     </div>
   )
 }

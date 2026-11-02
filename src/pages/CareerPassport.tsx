@@ -1,4 +1,5 @@
 import PassportRecords from '../components/PassportRecords'
+import { useSectionDrilldown } from '../hooks/useSectionDrilldown'
 import PassportReleaseStatus from '../components/PassportReleaseStatus'
 import type { RecordKind } from '../lib/passport-records'
 import { passportRecordEditorsEnabled } from '../lib/passport-environment'
@@ -29,9 +30,11 @@ export default function CareerPassport({ onBack, onNavigate, stageKey, gradeLeve
   const [copied, setCopied] = useState('')
   const [revision, setRevision] = useState(0)
   const [preferredKind, setPreferredKind] = useState<RecordKind>('education')
+  const [passportSection, openPassportSection, closePassportSection] = useSectionDrilldown('section')
+  const recordKind = passportSection === 'education' || passportSection === 'experience' || passportSection === 'projects' ? passportSection : null
   const openRecords = (kind: RecordKind) => {
     setPreferredKind(kind)
-    document.getElementById('passport-records')?.scrollIntoView?.({behavior: 'smooth', block: 'start'})
+    openPassportSection(kind)
   }
 
   useEffect(() => {
@@ -66,12 +69,13 @@ export default function CareerPassport({ onBack, onNavigate, stageKey, gradeLeve
   return (
     <div className="dash-main">
       <div className="section-heading">
-        <h1>{t('careerPassport')}</h1>
-        <button className="btn btn-secondary" onClick={onBack}>{t('back')}</button>
+        <h1>{passportSection ? `Career Passport · ${passportSection}` : t('careerPassport')}</h1>
+        <button className="btn btn-secondary" onClick={passportSection ? closePassportSection : onBack}>{passportSection ? 'Back to Career Passport' : t('back')}</button>
       </div>
       {error && <div className="banner banner-error" role="alert">{error}<button className="btn btn-secondary" onClick={() => setRevision((value) => value + 1)}>Retry</button></div>}
       <PassportReleaseStatus />
 
+      {!passportSection && <>
       <p>Your learning record brings together skills, achievements and MELA course credentials. A profile score measures profile completeness; it is not proof of professional qualification.</p>
       <section className="list-panel question-card" aria-label="Career Passport new tools">
         <strong>Career Passport · Education, Experience and Verification</strong>
@@ -83,7 +87,9 @@ export default function CareerPassport({ onBack, onNavigate, stageKey, gradeLeve
         </div>
         <p className="field-hint">To request verification, first save an education or experience record, then select “Request verification” beside that record.</p>
       </section>
-      <PassportRecords preferredKind={preferredKind} onSaved={() => setRevision(v => v + 1)} allowCareerEditing={passportRecordEditorsEnabled(import.meta.env.VITE_SUPABASE_URL)} allowProjectVisibility={false} />
+      </>}
+      {(!passportSection || recordKind) && <PassportRecords preferredKind={recordKind ?? preferredKind} onSaved={() => setRevision(v => v + 1)} allowCareerEditing={passportRecordEditorsEnabled(import.meta.env.VITE_SUPABASE_URL)} allowProjectVisibility={false} />}
+      {!passportSection && <>
       {loading && <p role="status">Loading your career passport…</p>}
       {Object.keys(sectionErrors).length > 0 && <div className="banner banner-error" role="alert"><p>{Object.values(sectionErrors).join(' ')} Other available sections are shown below.</p><button className="btn btn-secondary" disabled={loading} onClick={() => setRevision(v => v + 1)}>Retry unavailable sections</button></div>}
       {score && (
@@ -142,6 +148,8 @@ export default function CareerPassport({ onBack, onNavigate, stageKey, gradeLeve
           ))}
         </div>
       )}
+      </>}
+
     </div>
   )
 }

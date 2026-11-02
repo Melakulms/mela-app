@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import ContractDisputes from '../src/components/ContractDisputes'
-const mocks=vi.hoisted(()=>({fetchMyContracts:vi.fn(),raiseContractDispute:vi.fn()}))
+const mocks=vi.hoisted(()=>({fetchMyContracts:vi.fn(),fetchMyMilestones:vi.fn(),fetchMyReviews:vi.fn(),raiseContractDispute:vi.fn(),respondToContract:vi.fn(),submitWorkMilestone:vi.fn(),submitContractReview:vi.fn()}))
 vi.mock('../src/lib/contracts',()=>mocks)
-beforeEach(()=>{vi.resetAllMocks();mocks.fetchMyContracts.mockResolvedValue([{id:'contract-id',status:'active',agreed_amount:100,currency:'ETB'}])})
+beforeEach(()=>{vi.resetAllMocks();mocks.fetchMyContracts.mockResolvedValue([{id:'contract-id',status:'active',agreed_amount:100,currency:'ETB'}]);mocks.fetchMyMilestones.mockResolvedValue([]);mocks.fetchMyReviews.mockResolvedValue([])})
 afterEach(cleanup)
 it('requires a reason and refreshes the held contract after a successful dispute',async()=>{
   mocks.raiseContractDispute.mockResolvedValue(undefined)

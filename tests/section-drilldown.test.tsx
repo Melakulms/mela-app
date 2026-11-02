@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { act, afterEach, beforeEach, expect, it } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, expect, it } from 'vitest'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { useSectionDrilldown } from '../src/hooks/useSectionDrilldown'
 import { useStudentNavigation } from '../src/hooks/useStudentNavigation'
 

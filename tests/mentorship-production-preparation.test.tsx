@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { act, afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import MentorshipPreparationStudio, { MENTORSHIP_SECTION_CARDS, PREPARATION_SECTIONS } from '../src/components/MentorshipPreparationStudio'
 
 beforeEach(() => { window.history.replaceState(null, '', '/mela-app/?view=mentorship'); window.localStorage.clear() })

@@ -7,7 +7,7 @@ describe('verified credentials with pending MELA account status', () => {
     const onRefresh = vi.fn()
     const onSignOut = vi.fn()
     render(<PendingRegistrationReview role="student" onRefresh={onRefresh} onSignOut={onSignOut} />)
-    expect(screen.getByRole('heading', {name:'Contact verified — account review pending'})).toBeTruthy()
+    expect(screen.getByRole('heading', {name:'Sign-in verified — account review pending'})).toBeTruthy()
     expect(screen.getByText(/do not need to request another confirmation email/i)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', {name:'Check account status'}))
     fireEvent.click(screen.getByRole('button', {name:'Sign out'}))

@@ -64,7 +64,7 @@ it('retains the original distinct backgrounds for every MELA section, not white-
   const theme = readFileSync('src/styles.css','utf8')
   const professional = readFileSync('src/mela-professional.css','utf8')
   const dashboard = readFileSync('src/pages/StudentDashboard.tsx','utf8')
-  const modules = [...dashboard.matchAll(/\{ key: '[a-z_]+', labelKey: '[a-zA-Z]+', blurbKey: '[a-zA-Z]+', view: '[a-z-]+', icon: [A-Za-z]+, cls: '(mc-[a-z_]+)'/g)]
+  const modules = [...dashboard.matchAll(/\{ key: '[a-z_]+', labelKey: '[a-zA-Z]+', blurbKey: '[a-zA-Z]+', view: '[a-z-]+', icon: [A-Za-z]+, cls: '(mc-[a-z_-]+)'/g)]
     .map(match => match[1])
   expect(modules).toHaveLength(18)
   for (const selector of new Set(modules)) {

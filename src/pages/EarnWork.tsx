@@ -165,7 +165,7 @@ export default function EarnWork({ onBack, stageKey }: { onBack: () => void; sta
     <p className="field-hint">MELA coins, proposal budgets and unverified escrow are not withdrawable money. No payout is promised by applying.</p>
     {loaded && !schoolLearner && <section className="list-panel" aria-label="Paid work identity eligibility">
       <h2>Adult work eligibility</h2>
-      <p><strong>Review status:</strong> {eligibilityStatus.replaceAll('_',' ')}</p>
+      <p><strong>Review status:</strong> {eligibilityStatus.replace(/_/g, ' ')}</p>
       {eligibilityStatus === 'approved'
         ? <p>Your adult eligibility was reviewed. Applications remain subject to available verified jobs and MELA's work controls.</p>
         : eligibilityStatus === 'pending'

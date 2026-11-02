@@ -14,6 +14,7 @@ import Register from './pages/Register'
 import VerifyEmail from './pages/VerifyEmail'
 import { hasVerifiedContact, hasTrustedTelegramSignup } from './lib/contact-verification'
 import ContactVerification from './pages/ContactVerification'
+import PendingRegistrationReview from './pages/PendingRegistrationReview'
 const StudentDashboard = lazy(() => import('./pages/StudentDashboard'))
 const Practice = lazy(() => import('./pages/Practice'))
 const OpportunityHub = lazy(() => import('./pages/OpportunityHub'))
@@ -263,8 +264,11 @@ export default function App() {
     return <ContactVerification onRefresh={reloadProfile} onSignOut={() => { void signOut() }} />
   }
 
+  // A signed-in user reaches this branch only after Auth contact verification
+  // or the trusted Telegram sign-up check above. Re-requesting email confirmation
+  // cannot fix a pending profile review/synchronization state.
   if (profile.account_status === 'pending_verification') {
-    return <VerifyEmail onRefresh={reloadProfile} email={profile.email ?? pendingEmail} onUseDifferentAccount={() => { setPendingEmail(''); setAuthView('login') }} />
+    return <PendingRegistrationReview role={profile.role} onRefresh={reloadProfile} onSignOut={() => { void signOut() }} />
   }
 
   if (profile.account_status !== 'active') {

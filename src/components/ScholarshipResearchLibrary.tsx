@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import universityCatalog from '../data/university-directory-research.json'
 import programmeCatalog from '../data/scholarship-programme-research.json'
 import { safeExternalUrl } from '../lib/external-url'
@@ -39,6 +39,7 @@ export default function ScholarshipResearchLibrary({ view }: { view: View }) {
   const [level, setLevel] = useState('')
   const [page, setPage] = useState(0)
   const [expanded, setExpanded] = useState<string | null>(null)
+  useEffect(() => { setExpanded(null) }, [view])
   const universityRows: University[] = universityCatalog.universities
   const programmes: Programme[] = programmeCatalog.programmes
   const countries = useMemo(() => [...new Set(
@@ -62,6 +63,23 @@ export default function ScholarshipResearchLibrary({ view }: { view: View }) {
   const currentPage = Math.min(page, pageCount - 1)
   const start = currentPage * PAGE_SIZE
   const resetPage = () => { setPage(0); setExpanded(null) }
+
+  const selectedProgramme = view === 'programmes' ? programmeResults.find(item => item.program_key === expanded) : undefined
+  if (selectedProgramme) return <section className="list-panel" aria-label="Opened scholarship programme">
+    <div className="section-heading"><h2>{selectedProgramme.title}</h2><button type="button" className="btn btn-secondary" onClick={() => setExpanded(null)}>Back to programmes</button></div>
+    <p>{selectedProgramme.country} · {selectedProgramme.degree_level} · Research cycle: {selectedProgramme.cycle}</p>
+    <DeadlineNote programme={selectedProgramme}/>
+    <p><strong>Funding research:</strong> {selectedProgramme.funding_summary}</p>
+    <p><strong>Nationality research:</strong> {selectedProgramme.nationality_evidence}. Not a verified decision about an individual learner.</p>
+    <p><strong>Conditions to check:</strong></p>
+    <ul>{selectedProgramme.essential_requirements.map((condition,i)=><li key={i}>{condition}</li>)}</ul>
+    <p><strong>Suggested preparation:</strong></p>
+    <ol>{selectedProgramme.application_steps.map((step,i)=><li key={i}>{step}</li>)}</ol>
+    {selectedProgramme.notes && <p className="muted">Research note: {selectedProgramme.notes}</p>}
+    <OfficialSource url={selectedProgramme.scholarship_url} label="Official programme source"/>
+    {selectedProgramme.application_url && <OfficialSource url={selectedProgramme.application_url} label="Official application instructions"/>}
+    <p className="banner banner-info">Research guidance only. This is not a verified scholarship, confirmed eligibility, or submitted application. Recheck current provider requirements before sharing personal information.</p>
+  </section>
 
   return <section className="list-panel" aria-label={view === 'universities' ? '200 university research links' : 'Scholarship programme research'}>
     <div className="section-heading">
@@ -118,16 +136,9 @@ export default function ScholarshipResearchLibrary({ view }: { view: View }) {
           <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
             <OfficialSource url={item.scholarship_url} label="Official programme source" />
             {item.application_url && <OfficialSource url={item.application_url} label="Official application instructions" />}
-            <button type="button" className="btn btn-secondary" aria-expanded={expanded===item.program_key} onClick={()=>setExpanded(expanded===item.program_key?null:item.program_key)}>Requirements and preparation</button>
+            <button type="button" className="btn btn-secondary" aria-expanded={expanded===item.program_key} onClick={()=>setExpanded(item.program_key)}>Requirements and preparation</button>
           </div>
-          {expanded===item.program_key && <div>
-            <p><strong>Conditions to check:</strong></p>
-            <ul>{item.essential_requirements.map((condition,i)=><li key={i}>{condition}</li>)}</ul>
-            <p><strong>Suggested preparation:</strong></p>
-            <ol>{item.application_steps.map((step,i)=><li key={i}>{step}</li>)}</ol>
-            {item.notes && <p className="muted">Research note: {item.notes}</p>}
-            <p className="muted">This is research guidance only. It does not save an application or confirm eligibility.</p>
-          </div>}
+
         </article>)}
     {resultsCount > PAGE_SIZE && <nav aria-label="Research page navigation" style={{display:'flex',gap:10,alignItems:'center',justifyContent:'space-between',marginTop:16}}>
       <button className="btn btn-secondary" disabled={currentPage===0} onClick={()=>{setPage(p=>Math.max(0,p-1));setExpanded(null)}}>Previous</button>

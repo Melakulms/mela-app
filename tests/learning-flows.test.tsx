@@ -22,7 +22,7 @@ afterEach(cleanup)
 async function openMaterial() {
   render(<StudyMaterials stageKey="secondary" gradeLevel={9} onBack={vi.fn()} />)
   fireEvent.click(await screen.findByRole('button', { name: /Mathematics/ }))
-  fireEvent.click(screen.getByRole('button', { name: 'Open unit' }))
+  fireEvent.click(screen.getByRole('button', { name: /Unit 1: Numbers/ }))
   expect(screen.queryByRole('button', { name: /Mathematics/ })).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Open material' }))
 }

@@ -102,23 +102,47 @@ function ParentActions({ onLinked }: { onLinked: () => void }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [linked, setLinked] = useState(false)
+  const [consents, setConsents] = useState(false)
+  const [linkStatuses, setLinkStatuses] = useState<string[]>([])
+  const [linkError, setLinkError] = useState('')
+  const [revision, setRevision] = useState(0)
+  useEffect(() => {
+    let active = true
+    void (async () => {
+      try {
+        const {data:auth,error:authError} = await supabase.auth.getUser()
+        if(authError || !auth.user) throw new Error('Please sign in again.')
+        const {data,error:readError} = await supabase.from('guardian_relationships')
+          .select('status').eq('guardian_user_id',auth.user.id)
+        if(readError) throw readError
+        if(active) {setLinkStatuses((data??[]).map(row=>String(row.status)));setLinkError('')}
+      } catch(e){if(active)setLinkError(e instanceof Error?e.message:'Cannot load guardian status.')}
+    })()
+    return () => { active=false }
+  },[revision])
   const redeem = async (event: React.FormEvent) => {
     event.preventDefault()
+    if(!consents) {setError('Confirm that you wish to request a guardian connection.');return}
     setBusy(true); setError(''); setLinked(false)
     try {
-      const { error } = await supabase.rpc('redeem_parent_link_invite_v35', { p_token: token.trim() })
+      const { error } = await supabase.rpc('redeem_parent_link_invite_v36', { p_token: token.trim() })
       if (error) throw error
-      setToken(''); setLinked(true); onLinked()
-    } catch (error) { setError(error instanceof Error ? error.message : 'Could not connect this learner.') }
+      setToken(''); setConsents(false); setLinked(true); setRevision(value=>value+1); onLinked()
+    } catch (error) { setError(error instanceof Error ? error.message : 'Could not submit the guardian link request.') }
     finally { setBusy(false) }
   }
-  return <section><div className="section-heading"><h2>Connect your learner</h2></div>
-    <p className="muted">Ask your learner to generate a parent link code in their MELA profile. Codes expire after 30 minutes and can be used once.</p>
+  return <section><div className="section-heading"><h2>Request a guardian link</h2></div>
+    <p className="muted">Ask your learner to generate a private one-time parent code in their MELA profile. Codes expire in 30 minutes. The code only submits a link request; an authorized safeguarding reviewer must independently verify the relationship before student records open.</p>
     {error && <div className="banner banner-error" role="alert">{error}</div>}
-    {linked && <div className="banner banner-info" role="status">Your learner is connected.</div>}
+    {linkError && <div className="banner banner-error" role="alert">{linkError}</div>}
+    {linked && <div className="banner banner-info" role="status">Link request submitted for independent verification. Learning progress remains private until approval.</div>}
+    {linkStatuses.length>0 && <p role="status">Guardian links: {linkStatuses.filter(s=>s==='verified').length} verified, {linkStatuses.filter(s=>s==='pending').length} awaiting review, {linkStatuses.filter(s=>s==='rejected'||s==='revoked').length} rejected or revoked.</p>}
     <form onSubmit={redeem}><div className="field"><label htmlFor="learner-link-code">Learner link code</label>
-      <input id="learner-link-code" value={token} onChange={e => setToken(e.target.value)} required autoComplete="off" disabled={busy} />
-    </div><button className="btn btn-primary" disabled={busy}>{busy ? 'Connecting…' : 'Connect learner'}</button></form>
+      <input id="learner-link-code" value={token} onChange={e => setToken(e.target.value)} required minLength={64} maxLength={64} autoComplete="off" disabled={busy} />
+    </div>
+    <label htmlFor="guardian-link-consent"><input id="guardian-link-consent" type="checkbox" checked={consents} onChange={e=>setConsents(e.target.checked)} disabled={busy}/>{' '}I request a guardian connection to this learner. I understand independent verification is required and that a code alone does not verify my identity or grant access.</label>
+    <button className="btn btn-primary" disabled={busy || !consents || token.trim().length!==64}>{busy ? 'Submitting…' : 'Request link review'}</button></form>
+    <button className="btn btn-secondary" onClick={()=>setRevision(value=>value+1)} disabled={busy}>Check link status</button>
   </section>
 }
 

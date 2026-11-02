@@ -1,6 +1,7 @@
 import {lazy, Suspense, useState} from 'react'
 import type { MelaProfile } from '../lib/auth'
 const AdditionalRoleApplications = lazy(()=>import('../components/AdditionalRoleApplications'))
+const PolicySummaryReviewPanel = lazy(()=>import('../components/PolicySummaryReviewPanel'))
 import MembershipAndReferrals from '../components/MembershipAndReferrals'
 import { SHARED_ACCOUNT_FEATURES, workspaceItems } from '../lib/role-workspaces'
 
@@ -24,6 +25,7 @@ export default function AccountOverview({ profile, onBack }: {
       <div className="list-row"><span className="list-row-title">Preferred language</span><span className="list-row-meta">{profile.preferred_language}</span></div>
       {profile.role === 'student' && <div className="list-row"><span className="list-row-title">My education level</span><span className="list-row-meta">{profile.grade_level ? `Grade ${profile.grade_level}` : profile.education_stage_key || 'Not selected'}</span></div>}
     </div>
+    <Suspense fallback={<p role="status">Loading policy review records…</p>}><PolicySummaryReviewPanel userId={profile.id}/></Suspense>
     <MembershipAndReferrals userId={profile.id} />
     <div className="section-heading"><h2>Features everyone shares</h2></div>
     <ul className="list-panel">{SHARED_ACCOUNT_FEATURES.map(item => <li key={item}>{item}</li>)}</ul>

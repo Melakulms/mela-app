@@ -21,6 +21,8 @@ afterEach(cleanup)
 async function openMaterial() {
   render(<StudyMaterials stageKey="secondary" gradeLevel={9} onBack={vi.fn()} />)
   fireEvent.click(await screen.findByRole('button', { name: /Mathematics/ }))
+  fireEvent.click(screen.getByRole('button', { name: 'Open unit' }))
+  expect(screen.queryByRole('button', { name: /Mathematics/ })).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Open material' }))
 }
 it('opens available study content as safe text and returns to the library', async () => {
@@ -29,7 +31,7 @@ it('opens available study content as safe text and returns to the library', asyn
   await screen.findByRole('article')
   expect(screen.getByRole('article').textContent).toContain('<script>alert(1)</script>')
   fireEvent.click(screen.getByRole('button', { name: 'Back to materials' }))
-  expect(screen.getByRole('heading', { name: 'Study Materials' })).toBeTruthy()
+  expect(screen.getByRole('heading', { name: 'Mathematics' })).toBeTruthy()
 })
 it('respects a locked server response even when the library previously showed access', async () => {
   mocks.fetchLearningMaterial.mockResolvedValue({ title: 'Notes', locked: true, content_markdown: 'Protected content' })

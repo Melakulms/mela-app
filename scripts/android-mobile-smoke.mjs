@@ -144,13 +144,13 @@ try {
     try {
       const signedPage = await signedContext.newPage()
       signedPage.on('pageerror', error => { throw error })
-      const user = { id:'11111111-1111-4111-8111-111111111111', email:'navigation@example.invalid', aud:'authenticated', role:'authenticated', app_metadata:{provider:'email'}, user_metadata:{} }
+      const user = { id:'11111111-1111-4111-8111-111111111111', email:'navigation@example.invalid', aud:'authenticated', role:'authenticated', email_confirmed_at:new Date().toISOString(), app_metadata:{provider:'email'}, user_metadata:{} }
       const encode = value => Buffer.from(JSON.stringify(value)).toString('base64url')
       const exp = Math.floor(Date.now()/1000)+3600
       const session = { access_token: `${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:user.id,exp,role:'authenticated',aal:'aal1'})}.fixture`, refresh_token:'fixture-only', expires_at:exp, expires_in:3600, token_type:'bearer', user }
       let hasSubjects = true
       const profile = {...user, full_name:'Navigation Test', account_status:'active', email_verified:true, profile_completion:100, coin_balance:0, education_onboarding_completed:true, education_stage_key:'university', grade_level:null, preferred_language:'English', role:'student'}
-      const dashboard = {profile, passport:{profile_score:100,badge_count:0},practice:{stats:{current_streak_days:0}},arena:{arena_achievements:0},feature_flags:{}}
+      const dashboard = {profile, passport:{profile_score:100,badge_count:0},practice:{stats:{current_streak_days:0}},arena:{arena_achievements:0},feature_flags:{mentorship:true}}
       await signedPage.route('https://duizgtmbptmlbyipreqg.supabase.co/**', async route => {
         const path = new URL(route.request().url()).pathname
         let data = []
@@ -173,6 +173,20 @@ try {
         assert.equal(await signedPage.locator('#mela-settings-content').count(),0)
       }
       await login()
+
+      // A real mobile tap must open one mentorship section, not keep all 16 cards visible.
+      const mentorshipCard = signedPage.locator('button.module-card.mc-mentorship')
+      await mentorshipCard.waitFor({timeout:20000})
+      await mentorshipCard.click()
+      await signedPage.getByRole('heading',{name:'MELA Mentorship — 16 Sections'}).waitFor({timeout:30000})
+      await signedPage.getByRole('button',{name:'Open practice: Mentorship Requests'}).click()
+      await signedPage.getByRole('heading',{name:'Mentorship Requests',exact:true}).waitFor()
+      assert.equal(await signedPage.getByLabel('16 mentorship section cards').count(),0,'The full 16-card list should be hidden after opening a section')
+      assert.equal(new URL(signedPage.url()).searchParams.get('section'),'6')
+      await signedPage.getByRole('button',{name:'Back to 16 sections'}).click()
+      await signedPage.getByLabel('16 mentorship section cards').waitFor()
+      await signedPage.locator('.bottom-nav button').first().click()
+      await signedPage.getByRole('heading',{name:'Explore MELA',exact:true}).waitFor()
 
       // Verify the exact production features requested by the owner, using
       // isolated mock authentication rather than real production accounts.
@@ -253,7 +267,7 @@ try {
     try {
       const teacherPage=await teacherContext.newPage()
       teacherPage.on('pageerror', error=>{ throw error })
-      const teacher={id:'22222222-2222-4222-8222-222222222222',email:'teacher-fixture@example.invalid',aud:'authenticated',role:'authenticated',app_metadata:{provider:'email'},user_metadata:{}}
+      const teacher={id:'22222222-2222-4222-8222-222222222222',email:'teacher-fixture@example.invalid',aud:'authenticated',role:'authenticated',email_confirmed_at:new Date().toISOString(), app_metadata:{provider:'email'},user_metadata:{}}
       const encode=value=>Buffer.from(JSON.stringify(value)).toString('base64url')
       const exp=Math.floor(Date.now()/1000)+3600
       const session={access_token:`${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:teacher.id,exp,role:'authenticated',aal:'aal1'})}.fixture`,refresh_token:'fixture-only',expires_at:exp,expires_in:3600,token_type:'bearer',user:teacher}

@@ -1,5 +1,6 @@
 import { useI18n } from '../i18n'
 import { useEffect, useState } from 'react'
+import { useSectionDrilldown } from '../hooks/useSectionDrilldown'
 import {
   fetchMySafetyCenter,
   refreshSchoolSafetyStatus,
@@ -10,6 +11,8 @@ import {
   type SafetyProfile,
   type SafetyReport,
 } from '../lib/safety'
+
+const schoolStageForList = (profile: SafetyProfile | null) => profile?.education_stage_key?.startsWith('school_') ?? false
 
 const REPORT_REASONS = [
   ['bullying_or_harassment', 'Bullying or harassment'],
@@ -37,6 +40,14 @@ export default function SafetyCenter({ onBack }: { onBack: () => void }) {
   const [guardianEmail, setGuardianEmail] = useState('')
   const [guardianRelationship, setGuardianRelationship] = useState('')
   const [guardianPhone, setGuardianPhone] = useState('')
+  const [safetySection, openSafetySection, closeSafetySection] = useSectionDrilldown('section')
+  const availableSections = [
+    { id: 'report', label: 'Report a safety concern', description: 'Send a confidential report to MELA reviewers' },
+    { id: 'protection', label: 'Protection status', description: 'Check your account safety restrictions' },
+    ...(schoolStageForList(profile) ? [{ id: 'guardian', label: 'Guardian consent', description: 'Request or review guardian verification' }] : []),
+    { id: 'reports', label: 'My recent reports', description: 'See the status of your reports' },
+    { id: 'policies', label: 'Current policy records', description: 'Review recorded policy versions' },
+  ]
 
   useEffect(() => {
     let active = true
@@ -86,8 +97,8 @@ export default function SafetyCenter({ onBack }: { onBack: () => void }) {
   return (
     <div className="dash-main">
       <div className="section-heading">
-        <div><h1>{t('safetyPrivacy')}</h1><p>Report concerns, review your protection status, and manage guardian consent.</p></div>
-        <button className="btn btn-secondary" onClick={onBack} disabled={busy}>{t('back')}</button>
+        <div><h1>{t('safetyPrivacy')}</h1><p>{safetySection ? availableSections.find(item => item.id === safetySection)?.label ?? 'Safety controls' : 'Choose a safety tool to open it.'}</p></div>
+        <button className="btn btn-secondary" onClick={safetySection ? closeSafetySection : onBack} disabled={busy}>{safetySection ? 'Back to safety tools' : t('back')}</button>
       </div>
 
       <div className="banner banner-info" role="note">
@@ -97,8 +108,13 @@ export default function SafetyCenter({ onBack }: { onBack: () => void }) {
       {success && <div className="banner banner-info" role="status">{success}</div>}
       {loading && <p role="status">Loading safety controls…</p>}
 
+      {!loading && !safetySection && <div className="module-grid" aria-label="Safety tools">{availableSections.map(item => (
+        <button key={item.id} className="module-card" type="button" onClick={() => openSafetySection(item.id)}>
+          <h2>{item.label}</h2><p>{item.description}</p><span className="pill">Open tool</span>
+        </button>
+      ))}</div>}
       {!loading && <>
-        <section aria-labelledby="safety-report-heading">
+        {safetySection === 'report' && <section aria-labelledby="safety-report-heading">
           <div className="section-heading"><h2 id="safety-report-heading">Report a safety concern</h2></div>
           <div className="field">
             <label htmlFor="safety-reason">What happened?</label>
@@ -112,18 +128,18 @@ export default function SafetyCenter({ onBack }: { onBack: () => void }) {
             <span className="field-hint">{details.length}/4000</span>
           </div>
           <button className="btn btn-primary" onClick={sendReport} disabled={busy || details.trim().length < 10}>{busy ? 'Submitting…' : 'Submit report'}</button>
-        </section>
+        </section>}
 
-        <section aria-labelledby="protection-heading">
+        {safetySection === 'protection' && <section aria-labelledby="protection-heading">
           <div className="section-heading"><h2 id="protection-heading">Protection status</h2></div>
           <div className="list-panel">
             <div className="list-row"><div><div className="list-row-title">Account safety status</div><div className="list-row-meta">{profile?.learner_safety_status ?? 'not available'}</div></div></div>
             <div className="list-row"><div><div className="list-row-title">Private work messaging</div><div className="list-row-meta">{schoolStage ? 'Blocked for school-stage learners' : 'Available only inside authorized work flows'}</div></div></div>
             <div className="list-row"><div><div className="list-row-title">Video calls</div><div className="list-row-meta">Disabled until the production safeguarding and media path is approved</div></div></div>
           </div>
-        </section>
+        </section>}
 
-        {schoolStage && <section aria-labelledby="guardian-heading">
+        {schoolStage && safetySection === 'guardian' && <section aria-labelledby="guardian-heading">
           <div className="section-heading"><h2 id="guardian-heading">Guardian consent</h2></div>
           {verifiedGuardian ? <div className="banner banner-info" role="status">Verified guardian relationship: {verifiedGuardian.relationship}.</div> : pendingGuardian ? <div className="banner banner-info" role="status">Guardian verification is pending for {pendingGuardian.guardian_email ?? 'the submitted guardian'}.</div> : <p>No verified guardian relationship is on file yet.</p>}
           {!verifiedGuardian && <>
@@ -135,20 +151,20 @@ export default function SafetyCenter({ onBack }: { onBack: () => void }) {
           </>}
         </section>}
 
-        <section aria-labelledby="reports-heading">
+        {safetySection === 'reports' && <section aria-labelledby="reports-heading">
           <div className="section-heading"><h2 id="reports-heading">My recent reports</h2></div>
           {reports.length === 0 ? <div className="empty-panel">You have not submitted a safety report.</div> : <div className="list-panel">
             {reports.map((report) => <div className="list-row" key={report.id}><div><div className="list-row-title">{REPORT_REASONS.find(([value]) => value === report.reason)?.[1] ?? report.reason}</div><div className="list-row-meta">Submitted {new Date(report.created_at).toLocaleDateString()} · {report.status.replaceAll('_', ' ')}</div></div><span className="pill">{report.status}</span></div>)}
           </div>}
-        </section>
+        </section>}
 
-        <section aria-labelledby="policy-heading">
+        {safetySection === 'policies' && <section aria-labelledby="policy-heading">
           <div className="section-heading"><h2 id="policy-heading">Current policy records</h2></div>
           <div className="list-panel">
             {policies.map((policy) => <div className="list-row" key={`${policy.policy_key}-${policy.version}`}><div><div className="list-row-title">{policy.title}</div><div className="list-row-meta">Version {policy.version}{policy.explicit_consent ? ' · explicit consent' : ''}{policy.revocable ? ' · revocable' : ''}</div></div></div>)}
           </div>
           <p className="field-hint">Policy text and legal suitability remain subject to qualified Ethiopian legal review before unrestricted launch.</p>
-        </section>
+        </section>}
       </>}
     </div>
   )

@@ -11,6 +11,7 @@ vi.mock('../src/lib/dashboard', () => mocks)
 vi.mock('../src/pages/QuestionBank', () => ({default: () => 'Practice workspace'}))
 vi.mock('../src/components/EnrolledCurriculumSummary', () => ({default: () => 'My registered curriculum'}))
 beforeEach(() => {
+  window.history.replaceState(null, '', '/mela-app/')
   vi.resetAllMocks()
   mocks.fetchLearningLibrary.mockResolvedValue({ programs: [{ program_key: 'program', title: 'Mathematics', subject_title: 'Math', units: [{ id: 'unit', unit_number: 1, title: 'Numbers', materials: [{ material_key: 'notes', title: 'Notes', can_access: true }] }] }] })
   mocks.fetchTopics.mockResolvedValue([{ id: 'topic', subject: 'Math', topic: 'Numbers' }])

@@ -124,5 +124,5 @@ export default function PendingEmployerApplication({onRefresh,onSignOut}:{
       <button type="button" className="btn btn-secondary btn-block" onClick={onRefresh} disabled={busy}>Check approval status</button>
       <button type="button" className="btn btn-secondary btn-block" onClick={onSignOut} disabled={busy}>Sign out</button>
     </>}
-  </main>
+  </div></main>
 }

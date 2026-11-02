@@ -144,7 +144,7 @@ try {
     try {
       const signedPage = await signedContext.newPage()
       signedPage.on('pageerror', error => { throw error })
-      const user = { id:'11111111-1111-4111-8111-111111111111', email:'navigation@example.invalid', aud:'authenticated', role:'authenticated', app_metadata:{provider:'email'}, user_metadata:{} }
+      const user = { id:'11111111-1111-4111-8111-111111111111', email:'navigation@example.invalid', aud:'authenticated', role:'authenticated', email_confirmed_at:new Date().toISOString(), app_metadata:{provider:'email'}, user_metadata:{} }
       const encode = value => Buffer.from(JSON.stringify(value)).toString('base64url')
       const exp = Math.floor(Date.now()/1000)+3600
       const session = { access_token: `${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:user.id,exp,role:'authenticated',aal:'aal1'})}.fixture`, refresh_token:'fixture-only', expires_at:exp, expires_in:3600, token_type:'bearer', user }
@@ -253,7 +253,7 @@ try {
     try {
       const teacherPage=await teacherContext.newPage()
       teacherPage.on('pageerror', error=>{ throw error })
-      const teacher={id:'22222222-2222-4222-8222-222222222222',email:'teacher-fixture@example.invalid',aud:'authenticated',role:'authenticated',app_metadata:{provider:'email'},user_metadata:{}}
+      const teacher={id:'22222222-2222-4222-8222-222222222222',email:'teacher-fixture@example.invalid',aud:'authenticated',role:'authenticated',email_confirmed_at:new Date().toISOString(), app_metadata:{provider:'email'},user_metadata:{}}
       const encode=value=>Buffer.from(JSON.stringify(value)).toString('base64url')
       const exp=Math.floor(Date.now()/1000)+3600
       const session={access_token:`${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:teacher.id,exp,role:'authenticated',aal:'aal1'})}.fixture`,refresh_token:'fixture-only',expires_at:exp,expires_in:3600,token_type:'bearer',user:teacher}

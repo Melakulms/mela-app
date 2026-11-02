@@ -7,6 +7,7 @@ vi.mock('../src/lib/opportunities', () => ({ fetchOpenOpportunities: mock.opport
 vi.mock('../src/lib/academy', () => ({ fetchCourses: mock.courses, fetchMyEnrollments: mock.enrollments, enrollInCourse: mock.enroll }))
 vi.mock('../src/components/CourseReader', () => ({ default: ({ course }: any) => <h1>Lessons for {course.title}</h1> }))
 beforeEach(() => {
+  window.history.replaceState(null, '', '/mela-app/')
   vi.resetAllMocks()
   mock.opportunities.mockResolvedValue([{ id: 'opportunity', title: 'Engineering internship', organization_name: 'Company', opportunity_type: 'internship', location: 'Addis Ababa', is_remote: false, summary: 'Work alongside engineers.', description: 'Build real systems with a team.', requirements: ['Basic programming'], application_instructions: 'Prepare your profile first.', stipend_or_reward: 'Travel support', application_method: 'both', external_url: 'https://example.org/apply', deadline: '2099-12-01' }])
   mock.applications.mockResolvedValue([])

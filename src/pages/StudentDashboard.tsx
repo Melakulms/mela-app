@@ -151,7 +151,9 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
       </div>
       <div key={`modules-${motionReplay}`} className="module-grid">
         {visibleModules.map((m) => {
-          const enabled = ['arena','scholarships','study_materials','mastery','opportunity_graph','mela_next','wallet','safety_center'].includes(m.key) ? true : (feature_flags[m.key] ?? m.enabled ?? false)
+          const enabled = // Earn & Work stays navigable for existing proposals, contracts and disputes.
+          // Creation and paid actions remain guarded by the signed-in server readiness RPC.
+          ['arena','scholarships','study_materials','mastery','opportunity_graph','mela_next','wallet','safety_center','earn_work'].includes(m.key) ? true : (feature_flags[m.key] ?? m.enabled ?? false)
           const isBuilt = !!m.view
           const Icon = m.icon
           return (

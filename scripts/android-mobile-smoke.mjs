@@ -186,6 +186,22 @@ try {
       assert.equal(wideHeroStyles.display,'grid','MELA professional hero must use grid')
       assert.ok(wideHeroStyles.background.includes('gradient'), 'Professional violet hero must be visible')
       assert.equal(await signedPage.locator('button.module-card').count(),18, 'All MELA tools must remain in the home grid')
+      const tileStyles=await signedPage.locator('button.module-card').evaluateAll(cards=>cards.map(card=>{
+        const heading=card.querySelector('h3')
+        const description=card.querySelector('p')
+        return {
+          color:getComputedStyle(card).backgroundColor,
+          gradient:getComputedStyle(card).backgroundImage,
+          headingSize:heading?parseFloat(getComputedStyle(heading).fontSize):0,
+          descriptionSize:description?parseFloat(getComputedStyle(description).fontSize):0,
+        }
+      }))
+      assert.ok(new Set(tileStyles.map(card=>card.color)).size >= 12,
+        'Every MELA section must retain its original colored visual identity')
+      assert.ok(tileStyles.every(card=>card.gradient.includes('gradient')),
+        'No dashboard tile should revert to a plain white background')
+      assert.ok(tileStyles.every(card=>card.headingSize>=17.5 && card.descriptionSize>=15.9),
+        'Section titles and descriptions must remain readable on Android')
       assert.equal(await signedPage.locator('.mela-dashboard-stats .stat-value').first().innerText(),'100',
         'Professional progress cards must use the signed-in dashboard data')
       const desktopSize = signedPage.viewportSize()
@@ -196,7 +212,7 @@ try {
         viewport:window.innerWidth,
       }))
       assert.ok(smallHero.right <= smallHero.viewport+2, 'Hero must fit older Android phone width')
-      assert.equal(smallHero.columns.trim().split(/\\s+/).length,1, 'Small Android hero must stack into one column')
+      assert.equal(smallHero.columns.trim().split(/\s+/).length,1, 'Small Android hero must stack into one column')
       if(desktopSize) await signedPage.setViewportSize(desktopSize)
       await mkdir('android-smoke-artifacts', { recursive: true })
       await signedPage.screenshot({path:'android-smoke-artifacts/professional-mela-home.png',fullPage:true})

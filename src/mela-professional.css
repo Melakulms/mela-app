@@ -20,6 +20,7 @@
   min-height: 100dvh;
 }
 html[data-mela-theme='dark'] .app-shell.mela-professional {
+  --mela-violet: #d0afff;
   --bg: #11101d; --surface: #1c192b; --surface-2: #252038;
   --line: #413752; --ink: #f8f3ff; --muted: #c1b5d4;
   --gold: #cfb0ff; --gold-soft: #302044;
@@ -27,6 +28,7 @@ html[data-mela-theme='dark'] .app-shell.mela-professional {
 }
 @media (prefers-color-scheme: dark) {
   html[data-mela-theme='system'] .app-shell.mela-professional {
+    --mela-violet: #d0afff;
     --bg: #11101d; --surface: #1c192b; --surface-2: #252038;
     --line: #413752; --ink: #f8f3ff; --muted: #c1b5d4;
     --gold: #cfb0ff; --gold-soft: #302044;
@@ -92,7 +94,7 @@ html[data-mela-theme='dark'] .app-shell.mela-professional {
 .mela-professional .app-topbar .btn-secondary:hover { border-color: var(--gold); }
 .mela-professional .icon-btn { color: var(--muted); }
 .mela-professional :is(.btn-primary) {
-  background: var(--mela-violet); color: #fff; border-color: var(--mela-violet);
+  background: #6325b6; color: #fff; border-color: #6325b6;
   box-shadow: 0 4px 12px rgba(79,25,156,.08);
 }
 .mela-professional .btn-primary:hover:not(:disabled) { background: #5820a7; }
@@ -132,7 +134,9 @@ html[data-mela-theme='dark'] .app-shell.mela-professional {
   color: var(--mela-violet); font-size: .72rem;
   font-weight: 800; letter-spacing: .12em;
 }
-.mela-professional .mela-featured-hero {
+/* This must outrank global light/system-theme .dashboard-hero rules.
+   Keep white hero text legible in all themes. */
+html .mela-professional .dashboard-hero.mela-featured-hero {
   display: grid; grid-template-columns: minmax(0,1fr) minmax(175px,.52fr);
   align-items: center; min-height: 232px; gap: .8rem;
   padding: clamp(1.35rem,4vw,2.25rem);
@@ -323,4 +327,15 @@ html:not(.mela-low-data) .mela-professional .bottom-nav button.active {
     transform: translateY(-2px);
     transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
   }
+}
+
+/* Low-data theme removes gradient images globally: retain a dark, readable
+   hero surface without an image, animation or extra network request. */
+html.mela-low-data .mela-professional .dashboard-hero.mela-featured-hero {
+  background-color: #54258f;
+  background-image: none;
+}
+.mela-professional .dashboard-main .module-card .module-icon {
+  background: var(--surface-2);
+  border-color: var(--line);
 }

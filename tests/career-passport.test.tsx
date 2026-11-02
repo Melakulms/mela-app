@@ -51,6 +51,6 @@ it('shows new Career Passport actions at the top and switches record types',asyn
   expect(screen.getByTestId('passport-record-kind-prop').textContent).toBe('experience')
   expect(screen.queryByRole('button',{name:'My projects'})).toBeNull()
   fireEvent.click(screen.getByRole('button',{name:'Back to Career Passport'}))
-  fireEvent.click(screen.getByRole('button',{name:'My projects'}))
+  fireEvent.click(await screen.findByRole('button',{name:'My projects'}))
   expect(screen.getByTestId('passport-record-kind-prop').textContent).toBe('projects')
 })

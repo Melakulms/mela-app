@@ -5,6 +5,7 @@ import EarnWork from '../src/pages/EarnWork'
 const mock = vi.hoisted(() => ({
   enabled: false, tasks: [] as any[], proposals: [] as any[],
   getUser: vi.fn(), rpc: vi.fn(), insert: vi.fn(),
+  eqs: [] as {table: string; field: string; value: unknown}[],
 }))
 vi.mock('../src/lib/supabase', () => ({
   supabase: {
@@ -13,7 +14,7 @@ vi.mock('../src/lib/supabase', () => ({
     from: (table: string) => {
       const query: any = {}
       query.select = () => query
-      query.eq = () => query
+      query.eq = (field: string, value: unknown) => { mock.eqs.push({table, field, value}); return query }
       query.order = () => query
       query.limit = () => Promise.resolve({
         data: table === 'marketplace_tasks' ? mock.tasks : mock.proposals, error: null,
@@ -40,6 +41,7 @@ const saved = { id: 'proposal-1', task_id: 'old-task', status: 'accepted', propo
   proposed_amount: 100, estimated_days: 3, submitted_at: '2026-11-01' }
 beforeEach(() => {
   vi.clearAllMocks()
+  mock.eqs = []
   mock.enabled = false; mock.tasks = [task]; mock.proposals = [saved]
   mock.getUser.mockResolvedValue({ data: { user: { id: 'learner-1' } }, error: null })
   mock.rpc.mockImplementation((action: string) =>
@@ -90,6 +92,7 @@ it('validates a non-school proposal and sends it only after the server feature g
     task_id:'task-1',user_id:'learner-1', status:'pending', proposed_amount:150.5, estimated_days:3,
   })))
   expect(mock.rpc).toHaveBeenCalledWith('mela_earn_work_readiness_v1')
+  expect(mock.eqs).toContainEqual({table:'marketplace_submissions',field:'user_id',value:'learner-1'})
 })
 
 it('shows a useful empty state for currently assigned production tasks', async () => {

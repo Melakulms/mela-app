@@ -17,6 +17,7 @@ vi.mock('../src/lib/safety', () => ({
 }))
 
 beforeEach(() => {
+  window.history.replaceState(null, '', '/mela-app/?view=safety')
   vi.resetAllMocks()
   mocks.fetchMySafetyCenter.mockResolvedValue({
     profile: { education_stage_key: 'school_11_12', learner_safety_status: 'guardian_required' },

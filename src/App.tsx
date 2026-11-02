@@ -334,10 +334,10 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className="app-shell mela-professional">
       <a className="skip-link" href="#main-content">{t('skipToContent')}</a>
       <header className="app-topbar">
-        <span className="auth-wordmark"><GraduationCap size={26} /> MELA</span>
+        <span className="auth-wordmark mela-wordmark"><span className="mela-wordmark-icon"><BookOpen size={21} aria-hidden="true" /></span><span className="mela-wordmark-text">MELA<small>Learn · Practice · Grow</small></span></span>
         <div className="app-topbar-right">
           <select aria-label={t('preferredLanguage')} disabled={savingLanguage || !languages.length} className="lang-select" value={profile.preferred_language} onChange={(e) => changeLanguage(e.target.value)}>
             {!languages.some(l => l.language_name === profile.preferred_language) && <option value={profile.preferred_language}>{profile.preferred_language}</option>}
@@ -347,8 +347,8 @@ export default function App() {
           </select>
           <span className="pill-stat coins">🪙 {profile.coin_balance}</span>
           <span className={`pill-stat ${online ? 'online' : 'offline'}`} role="status">{online ? <Wifi size={13} /> : <WifiOff size={13} />}{online ? t('connected') : t('offline')}</span>
-          <button type="button" className="btn btn-secondary" onClick={() => { if (isStudent) setStudentView('profile'); else setShowAccount(true) }} aria-label="Open my MELA account"><UserRound size={16} aria-hidden="true" /> My account</button>
-          <button type="button" className="btn btn-secondary app-settings-button" onClick={() => window.dispatchEvent(new Event('mela:open-settings'))} aria-label="Open MELA settings"><SettingsIcon size={16} aria-hidden="true" /> Settings</button>
+          <button type="button" className="btn btn-secondary" onClick={() => { if (isStudent) setStudentView('profile'); else setShowAccount(true) }} aria-label="Open my MELA account"><UserRound size={16} aria-hidden="true" /><span className="mela-topbar-label">My account</span></button>
+          <button type="button" className="btn btn-secondary app-settings-button" onClick={() => window.dispatchEvent(new Event('mela:open-settings'))} aria-label="Open MELA settings"><SettingsIcon size={16} aria-hidden="true" /><span className="mela-topbar-label">Settings</span></button>
           <button className="icon-btn" onClick={signOut} disabled={signingOut} aria-label={t('logout')}><LogOut size={18} /></button>
         </div>
       </header>

@@ -138,6 +138,6 @@ export default function SchoolChapterLibrary({ programKey, grade, stageKey, onOp
       </select>
     </div>}
     {chapter && <ChapterStudyResources chapterId={chapter.id} chapterTitle={chapter.title} grade={grade} stageKey={stageKey} />}
-    {!chapter && onOpenPractice && <button type="button" className="btn btn-primary" onClick={onOpenPractice}>Practice my registered grade's questions</button>}
+    {onOpenPractice && <button type="button" className="btn btn-primary" onClick={onOpenPractice}>Practice my registered grade's questions</button>}
   </section>
 }

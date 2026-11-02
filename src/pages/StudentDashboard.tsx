@@ -52,11 +52,12 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
   const [query, setQuery] = useState('')
   const [badgeError, setBadgeError] = useState(false)
   const [devicePreferences, setDevicePreferences] = useState(readDevicePreferences)
-  const [showAllTools, setShowAllTools] = useState(false)
+  const [showAllTools, setShowAllTools] = useState(true)
+  const [motionReplay, setMotionReplay] = useState(0)
   const { dailyStudyMinutes, focusMode } = devicePreferences
 
   useEffect(() => {
-    const changed = () => { setDevicePreferences(readDevicePreferences()); setShowAllTools(false) }
+    const changed = () => { setDevicePreferences(readDevicePreferences()); setShowAllTools(true) }
     window.addEventListener('mela:device-preferences-changed', changed)
     return () => window.removeEventListener('mela:device-preferences-changed', changed)
   }, [])
@@ -94,7 +95,9 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
 
   const { profile, passport, practice, arena, feature_flags } = data
   const normalizedQuery = query.trim().toLocaleLowerCase()
-  const visibleModules = MODULES.filter(m => visibleInFocusMode(m.key, focusMode, showAllTools) && `${t(m.labelKey)} ${t(m.blurbKey)}`.toLocaleLowerCase().includes(normalizedQuery))
+  const visibleModules = MODULES.filter(m => visibleInFocusMode(m.key, focusMode, showAllTools || normalizedQuery.length > 0) && `${t(m.labelKey)} ${t(m.blurbKey)}`.toLocaleLowerCase().includes(normalizedQuery))
+  const motionBlocked = devicePreferences.reducedMotion || devicePreferences.lowData ||
+    (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true)
 
   return (
     <div className="dash-main dashboard-main">
@@ -130,17 +133,23 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
         <div><span className="stat-value">{arena.arena_achievements}</span><span className="stat-label">{t('arena')}</span></div>
       </div>
 
-      <section className="dashboard-hero"><div><span className="eyebrow">{t('keepMomentum')}</span><h2>{t('learnToday')}</h2><p>{t('explorePrompt')}</p></div>{feature_flags.practice && <button className="btn btn-primary" onClick={() => onNavigate('practice')}>{t('startPracticing')} <BookOpen size={18} /></button>}</section>
+      <section key={`hero-${motionReplay}`} className="dashboard-hero"><div><span className="eyebrow">{t('keepMomentum')}</span><h2>{t('learnToday')}</h2><p>{t('explorePrompt')}</p></div>{feature_flags.practice && <button className="btn btn-primary" onClick={() => onNavigate('practice')}>{t('startPracticing')} <BookOpen size={18} /></button>}</section>
       <div className="section-heading"><div><h2>{t('exploreMela')}</h2><p>{t('exploreMelaHelp')}</p></div></div>
       {focusMode && <section className="focus-mode-notice" aria-label="Student focus mode">
-        <div><strong>Focus mode is on</strong><p>Core learning and safety tools are shown first. Every other feature remains available.</p></div>
+        <div><strong>Focus mode is on</strong><p>{showAllTools ? "All MELA tools are visible. Choose focused tools only when you want a shorter list." : "Showing learning and safety tools first. You can return to all tools at any time."}</p></div>
         <button type="button" className="btn btn-secondary" onClick={() => setShowAllTools(current => !current)}>
           {showAllTools ? 'Show focused tools' : 'Show all tools'}
         </button>
       </section>}
       <div className="field module-search"><label htmlFor="module-search">{t('findLearningTool')}</label><input id="module-search" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder={t('searchLearningTools')} /></div>
       {visibleModules.length === 0 && <div className="empty-panel" role="status">{t('noToolsMatch')} “{query}”. <button className="password-toggle" onClick={() => setQuery('')}>{t('clearSearch')}</button></div>}
-      <div className="module-grid">
+      <div className="dashboard-tools-status">
+        <span role="status">Showing {visibleModules.length} of {MODULES.length} MELA tools. Availability depends on your account and administrator settings.</span>
+        {motionBlocked
+          ? <button type="button" className="btn btn-secondary" onClick={() => window.dispatchEvent(new Event("mela:open-settings"))}>Animation off — check Settings</button>
+          : <button type="button" className="btn btn-secondary" onClick={() => setMotionReplay(run => run + 1)}>Replay dashboard animation</button>}
+      </div>
+      <div key={`modules-${motionReplay}`} className="module-grid">
         {visibleModules.map((m) => {
           const enabled = ['arena','scholarships','study_materials','mastery','opportunity_graph','mela_next','wallet','safety_center'].includes(m.key) ? true : (feature_flags[m.key] ?? m.enabled ?? false)
           const isBuilt = !!m.view

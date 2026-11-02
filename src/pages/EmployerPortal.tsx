@@ -1,4 +1,5 @@
 import ContractDisputes from '../components/ContractDisputes'
+import EmployerWork from './EmployerWork'
 import { launchCategories } from '../lib/opportunity-input'
 import { useEffect, useState } from 'react'
 import {
@@ -14,6 +15,7 @@ export default function EmployerPortal({ role }: { role: string }) {
   const [employer, setEmployer] = useState<MyEmployer | null>(null)
   const [opportunities, setOpportunities] = useState<MyOpportunity[]>([])
   const [showCreate, setShowCreate] = useState(false)
+  const [showWork, setShowWork] = useState(false)
   const [viewingApplicants, setViewingApplicants] = useState<string | null>(null)
   const [applicants, setApplicants] = useState<Applicant[] | null>(null)
 
@@ -72,6 +74,8 @@ export default function EmployerPortal({ role }: { role: string }) {
     return <div className="dash-main"><div className="banner banner-error">{error || 'Your employer account could not be found.'}</div></div>
   }
 
+  if (showWork) return <EmployerWork employerId={employer.id} onBack={() => setShowWork(false)} />
+
   if (showCreate) return <div className="dash-main">
     <div className="section-heading"><h1>Post an opportunity</h1><button type="button" className="btn btn-secondary" onClick={() => setShowCreate(false)}>Back to employer dashboard</button></div>
     <CreateOpportunityForm employerId={employer.id} onCancel={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); void load() }} />
@@ -110,6 +114,8 @@ export default function EmployerPortal({ role }: { role: string }) {
       {error && <div className="banner banner-error">{error}</div>}
 
 
+      <div className="list-panel"><h2>Earn & Work</h2><p>Review freelance tasks, proposals and contract milestones. Paid work remains gated by MELA production controls.</p>
+        <button className="btn btn-secondary" type="button" onClick={() => setShowWork(true)}>Open employer Earn & Work</button></div>
       <ContractDisputes />
       <div className="section-heading"><h2>Your opportunities</h2></div>
       {opportunities.length === 0 ? (

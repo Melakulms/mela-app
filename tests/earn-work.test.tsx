@@ -23,6 +23,10 @@ vi.mock('../src/lib/supabase', () => ({
     },
   },
 }))
+vi.mock('../src/components/MembershipAndReferrals', () => ({
+  default: ({ userId }: { userId: string }) =>
+    <p>Membership and referrals loaded for {userId}</p>,
+}))
 vi.mock('../src/components/ContractDisputes', () => ({
   default: ({ workEnabled }: {workEnabled:boolean}) =>
     <p>Contracts loaded (work actions {workEnabled ? 'available' : 'paused'})</p>,
@@ -92,4 +96,15 @@ it('shows a useful empty state for currently assigned production tasks', async (
   mock.tasks = []
   render(<EarnWork stageKey="university" onBack={vi.fn()} />)
   expect(await screen.findByText('No open employer tasks are available right now.')).toBeTruthy()
+})
+
+it('opens referrals as a dedicated screen without losing existing work records', async () => {
+  render(<EarnWork stageKey="university" onBack={vi.fn()} />)
+  await screen.findByText(/New paid work is currently paused/)
+  fireEvent.click(screen.getByRole('button',{name:'Membership & referral earnings'}))
+  expect(screen.getByText(/Membership and referrals loaded for learner-1/)).toBeTruthy()
+  expect(screen.getByText(/independently verified first Pro/)).toBeTruthy()
+  expect(screen.queryByText('No open employer tasks are available right now.')).toBeNull()
+  fireEvent.click(screen.getByRole('button',{name:'My proposals (1)'}))
+  expect(screen.getByRole('button',{name:'View proposal'})).toBeTruthy()
 })

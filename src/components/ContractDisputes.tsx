@@ -16,8 +16,8 @@ export default function ContractDisputes({ currentUserId, workEnabled = false }:
   const [focused, setFocused] = useState<string | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [reason, setReason] = useState('')
-  const [deliverable, setDeliverable] = useState('')
-  const [deliveryNote, setDeliveryNote] = useState('')
+  // Keep drafts independent: each milestone must submit only its own evidence.
+  const [deliveryDrafts, setDeliveryDrafts] = useState<Record<string, { url: string; note: string }>>({})
   const [rating, setRating] = useState('5')
   const [reviewComment, setReviewComment] = useState('')
   const [error, setError] = useState('')
@@ -78,7 +78,7 @@ export default function ContractDisputes({ currentUserId, workEnabled = false }:
       const steps = milestones.filter(milestone => milestone.contract_id === contract.id)
       const alreadyReviewed = reviews.some(review => review.contract_id === contract.id && review.reviewer_user_id === currentUserId)
       const canRespond = isFreelancer && workEnabled && contract.status === 'proposed'
-      const canDeliver = isFreelancer && workEnabled && contract.status === 'active'
+      const canDeliver = isFreelancer && workEnabled && contract.status === 'active' && contract.funding_status === 'held'
       return <div className="list-row" key={contract.id}>
         <div style={{width:'100%'}}>
           <strong>Contract {contract.id.slice(0, 8)}</strong>
@@ -90,6 +90,7 @@ export default function ContractDisputes({ currentUserId, workEnabled = false }:
           {focused === contract.id && <>
             {contract.terms && <p><strong>Agreed terms:</strong> {contract.terms}</p>}
             {contract.status === 'proposed' && !workEnabled && <p className="banner banner-info">New paid work decisions are paused. Do not begin work or send money.</p>}
+            {isFreelancer && contract.status === 'active' && contract.funding_status !== 'held' && <p className="banner banner-info" role="status">Milestone delivery is not available until held escrow funding is confirmed. Do not begin paid work based only on an accepted contract.</p>}
             {canRespond && <>
               <p>Review these terms before accepting. Acceptance does not mean payment is funded.</p>
               <button className="btn btn-primary" type="button" disabled={saving}
@@ -107,11 +108,14 @@ export default function ContractDisputes({ currentUserId, workEnabled = false }:
               {canDeliver && ['pending','in_progress','rejected'].includes(step.status) &&
                 <div className="field">
                   <label htmlFor={`deliverable-${step.id}`}>HTTPS deliverable link for {step.title}</label>
-                  <input id={`deliverable-${step.id}`} type="url" value={deliverable} maxLength={2000} onChange={e => setDeliverable(e.target.value)} placeholder="https://…" />
+                  <input id={`deliverable-${step.id}`} type="url" value={deliveryDrafts[step.id]?.url ?? ''} maxLength={2000} onChange={e => setDeliveryDrafts(current => ({ ...current, [step.id]: { url: e.target.value, note: current[step.id]?.note ?? '' } }))} placeholder="https://…" />
                   <label htmlFor={`delivery-note-${step.id}`}>Delivery note (optional)</label>
-                  <textarea id={`delivery-note-${step.id}`} value={deliveryNote} maxLength={2000} onChange={e => setDeliveryNote(e.target.value)} />
-                  <button className="btn btn-primary" type="button" disabled={saving || !/^https:\/\//i.test(deliverable.trim())}
-                    onClick={() => void perform(async () => { await submitWorkMilestone(step.id, deliverable, deliveryNote);setDeliverable('');setDeliveryNote('') }, 'Delivery submitted for employer review. It is not a payment confirmation.')}>Submit milestone</button>
+                  <textarea id={`delivery-note-${step.id}`} value={deliveryDrafts[step.id]?.note ?? ''} maxLength={2000} onChange={e => setDeliveryDrafts(current => ({ ...current, [step.id]: { url: current[step.id]?.url ?? '', note: e.target.value } }))} />
+                  <button className="btn btn-primary" type="button" disabled={saving || !/^https:\/\//i.test((deliveryDrafts[step.id]?.url ?? '').trim())}
+                    onClick={() => void perform(async () => {
+                      await submitWorkMilestone(step.id, deliveryDrafts[step.id]?.url ?? '', deliveryDrafts[step.id]?.note ?? '')
+                      setDeliveryDrafts(current => { const next = { ...current }; delete next[step.id]; return next })
+                    }, 'Delivery submitted for employer review. It is not a payment confirmation.')}>Submit milestone</button>
                 </div>}
             </div>)}
             {isFreelancer && contract.status === 'completed' && !alreadyReviewed &&

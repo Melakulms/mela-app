@@ -42,6 +42,9 @@ export function useStudentNavigation() {
     if (next === view) return
     const url = new URL(window.location.href)
     url.searchParams.set('view', next)
+    // Subsection routes are scoped to their module, never carried to another one.
+    url.searchParams.delete('section')
+    url.searchParams.delete('subsection')
     window.history.pushState(null, '', url)
     setView(next)
   }

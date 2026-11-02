@@ -207,8 +207,8 @@ export default function QuestionBank({ onBack, onOpenProfile, workspace = false 
       {!loading && !error && programs.length === 0 && <div className="empty-panel">No subjects are available for your curriculum yet. Check back soon or update your education details in Profile.</div>}
       {!sessionId ? (
         <>
-          <section className="list-panel question-card" aria-label="Practice guide"><h2>Learn, practise, review, repeat</h2><p>Explore your subjects and chapters, read the lesson, then practise at any available difficulty. Use focused questions or a full worksheet, flag questions to revisit, and review explanations after submission.</p><p>{programs.length} enrolled subject programs · {chapters.length} chapters in this subject</p></section>
-          {grade !== null && programs.length > 0 && <SchoolPracticeHistory programs={programs} />}
+          {!chapter && <section className="list-panel question-card" aria-label="Practice guide"><h2>Learn, practise, review, repeat</h2><p>Explore your subjects and chapters, read the lesson, then practise at any available difficulty. Use focused questions or a full worksheet, flag questions to revisit, and review explanations after submission.</p><p>{programs.length} enrolled subject programs · {chapters.length} chapters in this subject</p></section>}
+          {!chapter && grade !== null && programs.length > 0 && <SchoolPracticeHistory programs={programs} />}
           {grade && grade >= 11 && <div className="field"><label htmlFor="track">Enrolled academic stream</label><select id="track" disabled={busy} value={track} onChange={e => { const next = e.target.value; setTrack(next); setProgram(programs.find(p => p.track_key === next)?.program_key ?? ''); setError('') }}>{[...new Set(programs.map(p => p.track_key))].map(key => <option key={key} value={key}>{key.replaceAll('_', ' ')}</option>)}</select><p className="field-hint">Your enrolled subjects determine your stream. A stream correction needs verified MELA support.</p></div>}
           <div className="field">
             <label htmlFor="program">Subject</label>
@@ -216,10 +216,11 @@ export default function QuestionBank({ onBack, onOpenProfile, workspace = false 
               {visiblePrograms.map(p => <option key={p.program_key} value={p.program_key}>{p.subject_title}</option>)}
             </select>
           </div>
-          {visiblePrograms.length > 1 && <div aria-label="Explore subjects" style={{display:'flex', flexWrap:'wrap', gap:8, marginBottom:16}}>{visiblePrograms.map(p => <button type="button" key={p.program_key} className="btn btn-secondary" disabled={busy} aria-pressed={program === p.program_key} onClick={() => { setProgram(p.program_key); setError('') }}>{p.subject_title}</button>)}</div>}
+          {!chapter && visiblePrograms.length > 1 && <div aria-label="Explore subjects" style={{display:'flex', flexWrap:'wrap', gap:8, marginBottom:16}}>{visiblePrograms.map(p => <button type="button" key={p.program_key} className="btn btn-secondary" disabled={busy} aria-pressed={program === p.program_key} onClick={() => { setProgram(p.program_key); setError('') }}>{p.subject_title}</button>)}</div>}
           {detailLoading && <p role="status">Loading chapters…</p>}
           {detailError && <div role="alert">{detailError}<button className="btn btn-secondary" onClick={() => setRevision(v => v + 1)}>Reload subjects</button></div>}
           {inventory && <p className="muted">{inventory.mastery_count} automatically validated or educator-verified candidates; {inventory.review_required_count} awaiting review. Some questions require an entitlement, and automated validation is not professional teacher approval.</p>}
+          {chapter && <div className="section-heading"><h2>{chapters.find(c => c.chapter_id === chapter)?.chapter_title ?? 'Selected chapter'}</h2><button type="button" className="btn btn-secondary" onClick={() => { setChapter(''); setTopic(''); setDifficulty(''); setError('') }}>Back to chapters</button></div>}
           <div className="field"><label htmlFor="chapter">Chapter</label><select id="chapter" disabled={busy || detailLoading} value={chapter} onChange={e => { setChapter(e.target.value); setTopic(''); setError('') }}><option value="">All chapters</option>{chapters.map(c => <option key={c.chapter_id} value={c.chapter_id}>{c.chapter_title} ({c.mastery_count} validated)</option>)}</select></div>
           {chapter && grade !== null && chapters.some(c => c.chapter_id === chapter) && <ChapterStudyResources
             chapterId={chapter}
@@ -241,7 +242,7 @@ export default function QuestionBank({ onBack, onOpenProfile, workspace = false 
           <p className="field-hint">Sessions contain up to 30 questions. Continue with another round after reviewing your results to practise for longer.</p>
           {chapter && <p className="field-hint">This practice session uses the selected chapter. Read the free lesson and guided practice first. Question availability and entitlements remain checked by the server.</p>}
           <button className="btn btn-primary" onClick={() => void start()} disabled={busy || !program || detailLoading || !!detailError || loading}>{busy ? 'Loading questions…' : 'Start practice'}</button>
-          {chapters.length > 0 && <section aria-label="Explore chapters" className="list-panel question-card">
+          {!chapter && chapters.length > 0 && <section aria-label="Explore chapters" className="list-panel question-card">
             <h2>Explore every chapter</h2><div className="field"><label htmlFor="chapter-search">Find a chapter</label><input type="search" id="chapter-search" value={chapterSearch} onChange={e => setChapterSearch(e.target.value)} /></div>
             {chapters.filter(c => c.chapter_title.toLowerCase().includes(chapterSearch.toLowerCase().trim())).map(c => <div key={c.chapter_id} className="list-row"><div><strong>{c.chapter_title}</strong><p>{c.topics.length} topics · {c.mastery_count} validated candidates</p></div><button type="button" className="btn btn-secondary" disabled={busy} aria-pressed={chapter === c.chapter_id} onClick={() => { setChapter(c.chapter_id); setTopic(''); setError(''); document.getElementById('chapter')?.focus() }}>Study and practise</button></div>)}
             {!chapters.some(c => c.chapter_title.toLowerCase().includes(chapterSearch.toLowerCase().trim())) && <p role="status">No chapters match your search.</p>}

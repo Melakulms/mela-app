@@ -101,39 +101,67 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
 
   return (
     <div className="dash-main dashboard-main">
-      <div className="dash-greeting">
-        <div><span className="eyebrow">{t('learningSpace')}</span><h1>{t('hello')}, {profile.full_name?.split(' ')[0] ?? t('there')} <span className="greeting-dot">.</span></h1><p>{t('dailyProgress')}</p></div>
+      <div className="dash-greeting mela-welcome">
+        <div><span className="eyebrow">{t('learningSpace')}</span>
+          <h1>{t('hello')}, {profile.full_name?.split(' ')[0] ?? t('there')} <span className="mela-wave" aria-hidden="true">👋</span></h1>
+          <p>{t('dailyProgress')}</p>
+        </div>
+        <span className="mela-welcome-tag"><Sparkles size={15} aria-hidden="true" /> Learn · Practice · Grow</span>
       </div>
 
-      <section className="list-panel question-card" aria-label="Career Passport education experience and verification update">
-        <span className="eyebrow">CAREER PASSPORT · NEW</span>
-        <h2>My education, experience &amp; verification</h2>
-        <p>Add your education or experience privately, keep portfolio projects, and ask MELA administrators to verify saved claims. Start here even when Focus Mode hides other tools.</p>
-        {feature_flags.career_passport === false
-          ? <p role="status">Career Passport is temporarily disabled by MELA administration.</p>
-          : <button className="btn btn-primary" type="button" onClick={() => onNavigate('passport')}>Open Career Passport updates</button>}
+      <section key={`hero-${motionReplay}`} className="dashboard-hero mela-featured-hero" aria-label="Your MELA learning journey">
+        <div className="mela-hero-copy">
+          <span className="eyebrow">MELA · YOUR NEXT CHAPTER</span>
+          <h2>One place for learning, skills and opportunity.</h2>
+          <p>Explore your courses, practise your skills and build your future with tools connected to your MELA account.</p>
+          <div className="mela-hero-actions">
+            {feature_flags.practice && <button type="button" className="btn mela-hero-primary" onClick={() => onNavigate('practice')}>{t('startPracticing')} <BookOpen size={17} aria-hidden="true" /></button>}
+            {feature_flags.career_passport !== false && <button type="button" className="btn mela-hero-secondary" aria-label="Open Career Passport updates" onClick={() => onNavigate('passport')}>Career Passport <ShieldCheck size={17} aria-hidden="true" /></button>}
+          </div>
+        </div>
+        <div className="mela-hero-art" aria-hidden="true">
+          <div className="mela-hero-orbit"><GraduationCap size={48} strokeWidth={1.6}/></div>
+          <span className="mela-hero-spark mela-hero-spark-one"><Sparkles size={21}/></span>
+          <span className="mela-hero-spark mela-hero-spark-two"><Trophy size={22}/></span>
+          <span className="mela-hero-spark mela-hero-spark-three"><BookOpen size={23}/></span>
+        </div>
       </section>
 
-      <section className="list-panel" aria-label="Grades 1–12 practice update">
-        <strong>My registered grade &amp; subjects</strong>
-        <p>See your real saved grade and enrolled curriculum subjects before practicing. The Grades 1–12 test preview is separate and does not change your enrollment.</p>
-        <button className="btn btn-primary" type="button" onClick={() => onNavigate('practice')}>View my registered curriculum</button>
-      </section>
-
-      <section className="settings-group" aria-label="My study target">
-        <h2>My daily study target</h2>
-        <p><strong>{dailyStudyMinutes} minutes</strong> of study per day. Change it in MELA Settings on this device.</p>
-        <p className="settings-hint">This is a personal goal, not a timer, a recorded lesson completion or a teacher-approved result.</p>
-        <button type="button" className="btn btn-secondary" onClick={() => window.dispatchEvent(new Event('mela:open-settings'))}>Edit study target</button>
-      </section>
-      <div className="stat-strip">
+      <div className="stat-strip mela-dashboard-stats" aria-label="Your saved MELA progress">
         <div><span className="stat-value">{passport.profile_score}</span><span className="stat-label">{t('score')}</span></div>
         <div><span className="stat-value">{passport.badge_count}</span><span className="stat-label">{t('badges')}</span></div>
         <div><span className="stat-value">{practice.stats.current_streak_days}</span><span className="stat-label">{t('streak')}</span></div>
         <div><span className="stat-value">{arena.arena_achievements}</span><span className="stat-label">{t('arena')}</span></div>
       </div>
 
-      <section key={`hero-${motionReplay}`} className="dashboard-hero"><div><span className="eyebrow">{t('keepMomentum')}</span><h2>{t('learnToday')}</h2><p>{t('explorePrompt')}</p></div>{feature_flags.practice && <button className="btn btn-primary" onClick={() => onNavigate('practice')}>{t('startPracticing')} <BookOpen size={18} /></button>}</section>
+      <section className="mela-quick-start" aria-label="Quick access to MELA features">
+        <div className="section-heading"><h2>Quick access</h2></div>
+        <div className="mela-quick-grid">
+          <button type="button" className="mela-quick-card" onClick={() => onNavigate('passport')} disabled={feature_flags.career_passport === false}>
+            <span className="mela-quick-icon quick-passport"><ShieldCheck size={22}/></span>
+            <span><strong>Career Passport</strong><small>My skills and experience</small></span>
+            <span aria-hidden="true" className="mela-quick-arrow">›</span>
+          </button>
+          <button type="button" className="mela-quick-card" onClick={() => onNavigate('practice')} disabled={!feature_flags.practice}>
+            <span className="mela-quick-icon quick-practice"><BookOpen size={22}/></span>
+            <span><strong>My grade &amp; subjects</strong><small>Practise your curriculum</small></span>
+            <span aria-hidden="true" className="mela-quick-arrow">›</span>
+          </button>
+          <button type="button" className="mela-quick-card" onClick={() => onNavigate('opportunities')} disabled={!feature_flags.opportunities}>
+            <span className="mela-quick-icon quick-opportunity"><Briefcase size={22}/></span>
+            <span><strong>Opportunities</strong><small>Explore available programs</small></span>
+            <span aria-hidden="true" className="mela-quick-arrow">›</span>
+          </button>
+        </div>
+      </section>
+
+      <section className="mela-daily-goal" aria-label="My study target">
+        <div className="mela-daily-goal-mark"><GraduationCap size={23} aria-hidden="true" /></div>
+        <div><strong>My daily study target</strong>
+          <p><b>{dailyStudyMinutes} minutes</b> each day · a personal goal, not a recorded completion.</p>
+        </div>
+        <button type="button" className="btn btn-secondary" onClick={() => window.dispatchEvent(new Event('mela:open-settings'))}>Edit</button>
+      </section>
       <div className="section-heading"><div><h2>{t('exploreMela')}</h2><p>{t('exploreMelaHelp')}</p></div></div>
       {focusMode && <section className="focus-mode-notice" aria-label="Student focus mode">
         <div><strong>Focus mode is on</strong><p>{showAllTools ? "All MELA tools are visible. Choose focused tools only when you want a shorter list." : "Showing learning and safety tools first. You can return to all tools at any time."}</p></div>
@@ -168,8 +196,11 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
                 <h3>{t(m.labelKey)}</h3>
                 <p>{t(m.blurbKey)}</p>
               </div>
-              {!enabled && <span className="soon">{t('notEnabledYet')}</span>}
-              {enabled && !isBuilt && <span className="soon">{t('comingSoon')}</span>}
+              <span className="mela-module-footer">
+                {!enabled ? <span className="soon">{t('notEnabledYet')}</span>
+                  : !isBuilt ? <span className="soon">{t('comingSoon')}</span>
+                  : <span className="mela-module-open">Open feature <span aria-hidden="true">→</span></span>}
+              </span>
             </button>
           )
         })}

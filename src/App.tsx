@@ -2,7 +2,7 @@ import { initialAuthCallbackError, hasAuthCallbackError, clearAuthCallbackError 
 import { clearCoachHistories } from './lib/coach-history'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { Wifi, WifiOff, LogOut, Settings as SettingsIcon, LayoutDashboard, BookOpen, Swords, Globe, UserRound, GraduationCap } from 'lucide-react'
+import { Wifi, WifiOff, LogOut, Settings as SettingsIcon, LayoutDashboard, BookOpen, Swords, Globe, UserRound } from 'lucide-react'
 import { supabase } from './lib/supabase'
 import { observeSession } from './lib/session-observer'
 import { fetchOwnProfile, logoutUser, updatePreferredLanguage, type MelaProfile } from './lib/auth'

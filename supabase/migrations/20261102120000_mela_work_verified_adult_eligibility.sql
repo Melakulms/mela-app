@@ -145,7 +145,7 @@ create policy mela_work_verified_adult_proposals
     and exists (
       select 1 from public.earn_work_eligibility_reviews r
       join public.profiles p on p.id=r.user_id
-      where r.user_id=user_id and r.status='approved' and r.adult_verified
+      where r.user_id=marketplace_submissions.user_id and r.status='approved' and r.adult_verified
         and p.role='student'::public.user_role and p.account_status='active'
         and p.education_stage_key is not null
         and p.education_stage_key not like 'school_%'

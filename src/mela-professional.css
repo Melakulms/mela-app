@@ -376,6 +376,8 @@ html.mela-low-data .mela-professional .dashboard-hero.mela-featured-hero {
 .auth-layout .learning-path strong,.auth-layout .learning-path span,.auth-layout .learning-path svg { color:#fff; }
 .auth-layout .auth-card {
   background:var(--surface); border:1px solid var(--line);
+  /* Preserve the auth-card top accent from mela-motion.css, which loads earlier. */
+  border-top:3px solid var(--gold);
   border-radius:22px; width:100%;max-width:480px;
   padding:clamp(1.1rem,3vw,2rem);
   box-shadow:0 10px 30px rgba(61,23,100,.08);

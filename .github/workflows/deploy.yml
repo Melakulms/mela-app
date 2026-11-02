@@ -43,6 +43,11 @@ jobs:
           grep -R -F -q "Scholarship research is not an offer" dist/assets
           grep -R -F -q "Installed app version" dist/assets
           grep -R -F -q "Open Career Passport updates" dist/assets
+          # This release must contain the real responsive MELA design,
+          # not merely a merged PR with unchanged GitHub Pages content.
+          grep -R -F -q "One place for learning, skills and opportunity." dist/assets
+          grep -R -F -q "mela-featured-hero" dist/assets
+          grep -R -F -q "mela-professional" dist/assets
           grep -R -F -q "Request record verification" dist/assets
           grep -R -F -q "Career Passport · Production protection update" dist/assets
           grep -R -F -q "Check latest MELA version" dist/assets

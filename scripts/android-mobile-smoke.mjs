@@ -174,6 +174,33 @@ try {
       }
       await login()
 
+      // Verify the shipped mobile design, not just source-code or compiled class names.
+      const professional = signedPage.locator('.app-shell.mela-professional')
+      await professional.waitFor()
+      await signedPage.getByRole('heading',{name:'One place for learning, skills and opportunity.'}).waitFor()
+      const hero = signedPage.locator('.dashboard-hero.mela-featured-hero')
+      const wideHeroStyles = await hero.evaluate(node => ({
+        display:getComputedStyle(node).display,
+        background:getComputedStyle(node).backgroundImage,
+      }))
+      assert.equal(wideHeroStyles.display,'grid','MELA professional hero must use grid')
+      assert.ok(wideHeroStyles.background.includes('gradient'), 'Professional violet hero must be visible')
+      assert.equal(await signedPage.locator('button.module-card').count(),18, 'All MELA tools must remain in the home grid')
+      assert.equal(await signedPage.locator('.mela-dashboard-stats .stat-value').first().innerText(),'100',
+        'Professional progress cards must use the signed-in dashboard data')
+      const desktopSize = signedPage.viewportSize()
+      await signedPage.setViewportSize({width:360,height:760})
+      const smallHero = await hero.evaluate(node => ({
+        columns:getComputedStyle(node).gridTemplateColumns,
+        right:node.getBoundingClientRect().right,
+        viewport:window.innerWidth,
+      }))
+      assert.ok(smallHero.right <= smallHero.viewport+2, 'Hero must fit older Android phone width')
+      assert.equal(smallHero.columns.trim().split(/\\s+/).length,1, 'Small Android hero must stack into one column')
+      if(desktopSize) await signedPage.setViewportSize(desktopSize)
+      await mkdir('android-smoke-artifacts', { recursive: true })
+      await signedPage.screenshot({path:'android-smoke-artifacts/professional-mela-home.png',fullPage:true})
+
       // A real mobile tap must open one mentorship section, not keep all 16 cards visible.
       const mentorshipCard = signedPage.locator('button.module-card.mc-mentorship')
       await mentorshipCard.waitFor({timeout:20000})

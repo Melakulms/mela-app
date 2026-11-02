@@ -1,0 +1,326 @@
+/* Professional MELA visual system — UI only.
+   Live content, role authorization and server feature flags stay authoritative.
+   Scoped to authenticated app pages. Respects contrast, language and motion settings. */
+.app-shell.mela-professional {
+  --mela-violet: #6a27c5;
+  --mela-violet-deep: #4a148d;
+  --mela-violet-soft: #eee4ff;
+  --bg: #f8f6fd;
+  --surface: #ffffff;
+  --surface-2: #f4effc;
+  --line: #e5dff0;
+  --ink: #231637;
+  --muted: #635a72;
+  --gold: #6823bd;
+  --gold-soft: #efe5ff;
+  --radius: 18px;
+  --radius-sm: 11px;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100dvh;
+}
+html[data-mela-theme='dark'] .app-shell.mela-professional {
+  --bg: #11101d; --surface: #1c192b; --surface-2: #252038;
+  --line: #413752; --ink: #f8f3ff; --muted: #c1b5d4;
+  --gold: #cfb0ff; --gold-soft: #302044;
+  --mela-violet-soft: #38244f;
+}
+@media (prefers-color-scheme: dark) {
+  html[data-mela-theme='system'] .app-shell.mela-professional {
+    --bg: #11101d; --surface: #1c192b; --surface-2: #252038;
+    --line: #413752; --ink: #f8f3ff; --muted: #c1b5d4;
+    --gold: #cfb0ff; --gold-soft: #302044;
+    --mela-violet-soft: #38244f;
+  }
+}
+.mela-professional #main-content { flex: 1; min-width: 0; }
+.mela-professional :is(.dash-main,.page-loading) {
+  color: var(--ink);
+}
+.mela-professional .dash-main { max-width: 940px; padding: clamp(1rem, 2.5vw, 1.7rem) clamp(.8rem, 3vw, 1.5rem) 7.5rem; }
+.mela-professional .dashboard-main { max-width: 1120px; }
+.mela-professional h1,.mela-professional h2,.mela-professional h3 {
+  color: var(--ink);
+  font-family: system-ui, 'Noto Sans Ethiopic', sans-serif;
+  letter-spacing: -.025em;
+}
+.mela-professional p { color: var(--muted); }
+.mela-professional .app-topbar {
+  background: var(--surface);
+  color: var(--ink);
+  padding: .7rem clamp(.8rem, 3vw, 1.8rem);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 2px 14px rgba(58,24,105,.05);
+  gap: .5rem;
+}
+.mela-professional .app-topbar::before {
+  height: 2px;
+  background: linear-gradient(90deg,#6722bf,#a66bef,#f4c561);
+}
+.mela-professional .mela-wordmark {
+  color: var(--mela-violet);
+  font-family: system-ui, sans-serif;
+  font-size: 1.3rem;
+  font-weight: 900;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  gap: .5rem;
+  letter-spacing: -.04em;
+}
+.mela-professional .mela-wordmark::after { display: none; }
+.mela-professional .mela-wordmark-icon {
+  display: grid; place-items: center;
+  width: 37px; height: 37px; border-radius: 11px;
+  background: linear-gradient(145deg, #6b20ce, #9b4bea); color: white;
+  box-shadow: 0 5px 14px rgba(102,37,194,.17);
+}
+.mela-professional .mela-wordmark-text { display: grid; line-height: 1; }
+.mela-professional .mela-wordmark-text small {
+  font-size: .57rem; color: var(--muted); font-weight: 650;
+  letter-spacing: .03em; margin-top: .22rem;
+}
+.mela-professional .app-topbar-right { gap: .45rem; }
+.mela-professional :is(.pill-stat,.lang-select) {
+  background: var(--surface-2); color: var(--ink); border-color: var(--line);
+}
+.mela-professional .app-topbar .btn-secondary {
+  background: var(--surface); border: 1px solid var(--line); color: var(--ink);
+  padding: .6rem .75rem; border-radius: 12px;
+}
+.mela-professional .app-topbar .btn-secondary:hover { border-color: var(--gold); }
+.mela-professional .icon-btn { color: var(--muted); }
+.mela-professional :is(.btn-primary) {
+  background: var(--mela-violet); color: #fff; border-color: var(--mela-violet);
+  box-shadow: 0 4px 12px rgba(79,25,156,.08);
+}
+.mela-professional .btn-primary:hover:not(:disabled) { background: #5820a7; }
+.mela-professional .btn-secondary {
+  background: var(--surface-2); color: var(--ink); border-color: var(--line);
+}
+.mela-professional .btn-secondary:hover:not(:disabled) { border-color: var(--mela-violet); }
+.mela-professional .list-panel,.mela-professional .settings-group {
+  background: var(--surface); border-color: var(--line);
+  border-radius: var(--radius);
+}
+.mela-professional :is(.field input,.field textarea,.field select,textarea) {
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.mela-professional .field input:focus-visible,
+.mela-professional .field textarea:focus-visible { outline-color: var(--gold); }
+.mela-professional :is(.banner-info,.empty-panel) {
+  background: var(--surface-2); color: var(--ink); border-color: var(--line);
+}
+.mela-professional .banner-error { color: #922b36; background: #fff0f1; border-color: #edbdc4; }
+.mela-professional .dash-greeting h1 { font-size: clamp(1.55rem, 3.2vw, 2.4rem); }
+.mela-professional .dash-greeting h1::after { display: none; }
+.mela-professional .mela-welcome {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: .75rem; margin: .4rem 0 1.2rem;
+}
+.mela-professional .mela-welcome h1 { margin: .12rem 0; }
+.mela-professional .mela-welcome p { margin: .2rem 0 0; }
+.mela-professional .mela-wave { font-size: .82em; }
+.mela-professional .mela-welcome-tag {
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: .32rem;
+  background: var(--mela-violet-soft); color: var(--mela-violet);
+  padding: .5rem .65rem; border-radius: 999px; font-size: .76rem; font-weight: 800;
+}
+.mela-professional .eyebrow {
+  color: var(--mela-violet); font-size: .72rem;
+  font-weight: 800; letter-spacing: .12em;
+}
+.mela-professional .mela-featured-hero {
+  display: grid; grid-template-columns: minmax(0,1fr) minmax(175px,.52fr);
+  align-items: center; min-height: 232px; gap: .8rem;
+  padding: clamp(1.35rem,4vw,2.25rem);
+  background: linear-gradient(115deg,#55209c 0%,#7333d1 52%,#9b56e6 100%);
+  border: 0; border-radius: 24px; color: #fff;
+  position: relative; overflow: hidden; margin: 0 0 1rem;
+  box-shadow: 0 16px 34px rgba(83,31,149,.16);
+}
+.mela-professional .mela-featured-hero::before {
+  content: ''; position: absolute; pointer-events: none;
+  width: 240px; height: 240px; right: -75px; top: -120px;
+  border: 35px solid rgba(255,255,255,.09); border-radius: 100%;
+}
+.mela-professional .mela-featured-hero :is(.eyebrow,h2,p) { color: #fff; }
+.mela-professional .mela-featured-hero h2 {
+  font-size: clamp(1.48rem, 3.6vw, 2.25rem); max-width: 23ch; line-height: 1.15;
+  margin: .5rem 0 .65rem; font-weight: 850;
+}
+.mela-professional .mela-featured-hero p {
+  color: #f4eaff; font-size: .92rem; line-height: 1.55; max-width: 49ch;
+}
+.mela-professional .mela-hero-actions {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin-top: 1.1rem;
+}
+.mela-professional .mela-hero-actions .btn {
+  min-height: 44px; border-radius: 12px; gap: .4rem; padding: .65rem 1rem;
+  font-size: .85rem;
+}
+.mela-professional .mela-hero-primary {
+  background: #fff; color: #4e1895; border: 1px solid #fff;
+}
+.mela-professional .mela-hero-secondary {
+  background: rgba(255,255,255,.11); color: #fff;
+  border: 1px solid rgba(255,255,255,.65);
+}
+.mela-professional .mela-hero-art {
+  position: relative; width: min(100%,220px); height: 174px;
+  margin: auto; display: grid; place-items: center;
+}
+.mela-professional .mela-hero-orbit {
+  width: 125px; height: 125px; border-radius: 32px;
+  display: grid; place-items: center; color: #6320c5;
+  background: linear-gradient(145deg,#fff,#f3e1ff);
+  transform: rotate(-9deg);
+  box-shadow: 0 18px 34px rgba(30,11,74,.23);
+}
+.mela-professional .mela-hero-orbit svg { transform: rotate(9deg); }
+.mela-professional .mela-hero-spark {
+  display: grid; place-items: center; position: absolute; width: 44px; height: 44px;
+  border-radius: 14px; color: #fff;
+  background: rgba(255,255,255,.25); border: 1px solid rgba(255,255,255,.4);
+}
+.mela-professional .mela-hero-spark-one { top: 2px; right: 8px; }
+.mela-professional .mela-hero-spark-two { left: 5px; bottom: 4px; color:#ffea99; }
+.mela-professional .mela-hero-spark-three { right: 0; bottom: 2px; }
+.mela-professional .mela-dashboard-stats {
+  display: grid; grid-template-columns: repeat(4,minmax(0,1fr));
+  background: var(--surface); border: 1px solid var(--line);
+  margin: 1rem 0; border-radius: 17px;
+  box-shadow: 0 6px 18px rgba(48,20,96,.035);
+}
+.mela-professional .mela-dashboard-stats > div { padding: .85rem .3rem; min-width: 0; }
+.mela-professional .mela-dashboard-stats .stat-value {
+  font: 850 clamp(1.18rem,2.8vw,1.75rem) system-ui,sans-serif;
+  color: var(--mela-violet);
+}
+.mela-professional .mela-dashboard-stats .stat-label { color: var(--muted); }
+.mela-professional .mela-quick-start .section-heading { margin: 1.2rem 0 .8rem; }
+.mela-professional .mela-quick-grid {
+  display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .7rem;
+}
+.mela-professional .mela-quick-card {
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 16px; padding: .85rem; display: flex; align-items: center;
+  gap: .7rem; text-align: left; min-width: 0; cursor: pointer;
+  box-shadow: 0 4px 15px rgba(48,20,96,.035);
+}
+.mela-professional .mela-quick-card:hover:not(:disabled) { border-color: var(--mela-violet); }
+.mela-professional .mela-quick-card:disabled { opacity: .55; cursor: not-allowed; }
+.mela-professional .mela-quick-card strong,.mela-professional .mela-quick-card small { display: block; }
+.mela-professional .mela-quick-card strong { color: var(--ink); font-size: .9rem; line-height: 1.25; }
+.mela-professional .mela-quick-card small { color: var(--muted); margin-top: .2rem; font-size: .72rem; }
+.mela-professional .mela-quick-arrow { margin-left: auto; color: var(--mela-violet); font-size: 1.5rem; }
+.mela-professional .mela-quick-icon {
+  display: grid; place-items: center; flex-shrink: 0;
+  width: 43px; height: 43px; border-radius: 14px;
+}
+.mela-professional .quick-passport { color: #5f27b1; background: #f0e6ff; }
+.mela-professional .quick-practice { color: #1474be; background: #e1f2ff; }
+.mela-professional .quick-opportunity { color: #bf7114; background: #fff1d5; }
+.mela-professional .mela-daily-goal {
+  display: flex; align-items: center; gap: .8rem; margin: .9rem 0;
+  padding: .75rem 1rem; border-radius: 15px;
+  background: var(--surface-2); border: 1px solid var(--line);
+}
+.mela-professional .mela-daily-goal-mark {
+  display: grid; place-items: center; width: 42px; height: 42px;
+  flex-shrink: 0; border-radius: 14px; color: var(--mela-violet);
+  background: var(--surface);
+}
+.mela-professional .mela-daily-goal > div:nth-child(2) { flex: 1; min-width: 0; }
+.mela-professional .mela-daily-goal strong { font-size: .88rem; }
+.mela-professional .mela-daily-goal p { font-size: .77rem; margin: .15rem 0 0; }
+.mela-professional .mela-daily-goal .btn { min-height: 42px; font-size: .8rem; }
+.mela-professional .section-heading h2 { font-size: clamp(1.08rem,2.4vw,1.4rem); font-weight: 800; }
+.mela-professional .section-heading h2::after { background: linear-gradient(90deg,#7f3fe1,#b387ee); }
+.mela-professional .dashboard-main .module-grid {
+  display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: .8rem;
+}
+.mela-professional .dashboard-main .module-card {
+  background: var(--surface); border: 1px solid var(--line);
+  color: var(--ink); min-height: 158px; padding: 1rem;
+  border-radius: 18px; box-shadow: 0 6px 18px rgba(55,25,90,.045);
+}
+.mela-professional .dashboard-main .module-card:not(:disabled):hover {
+  border-color: var(--module-start); box-shadow: 0 9px 21px rgba(55,25,90,.1);
+}
+.mela-professional .dashboard-main .module-card .module-icon {
+  width: 46px; height: 46px; border-radius: 15px;
+  color: var(--module-start); background: color-mix(in srgb, var(--module-start) 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--module-start) 12%, var(--surface));
+}
+.mela-professional .dashboard-main .module-card h3 {
+  color: var(--ink); font-size: .95rem; line-height: 1.2; margin: .6rem 0 .35rem;
+}
+.mela-professional .dashboard-main .module-card p {
+  color: var(--muted); font-size: .78rem; line-height: 1.45;
+}
+.mela-professional .dashboard-main .module-card::after { display: none; }
+.mela-professional .dashboard-main .module-card:disabled { opacity: .62; filter: none; }
+.mela-professional .mela-module-footer { display: block; padding-top: .75rem; }
+.mela-professional .mela-module-open { font-size: .72rem; font-weight: 800; color: var(--mela-violet); }
+.mela-professional .mela-module-open span { margin-left: .12rem; }
+.mela-professional .dashboard-main .soon { font-size: .69rem; color: var(--muted); }
+.mela-professional .module-search input { background: var(--surface); }
+.mela-professional .dashboard-tools-status { color: var(--muted); }
+.mela-professional .bottom-nav {
+  background: var(--surface); border-top: 1px solid var(--line);
+  box-shadow: 0 -4px 16px rgba(69,29,125,.06);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.mela-professional .bottom-nav button { color: var(--muted); font-size: .71rem; }
+.mela-professional .bottom-nav button.active { color: var(--mela-violet); font-weight: 800; }
+.mela-professional .bottom-nav button.active svg { color: var(--mela-violet); }
+html:not(.mela-low-data) .mela-professional .bottom-nav button.active {
+  box-shadow: inset 0 -3px var(--mela-violet);
+}
+.mela-professional .badge-item,.mela-professional .empty-panel,.mela-professional .focus-mode-notice { border-radius: 15px; }
+@media (max-width: 900px) {
+  .mela-professional .dashboard-main .module-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .mela-professional .mela-quick-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 620px) {
+  .mela-professional .mela-featured-hero { grid-template-columns: minmax(0,1fr) 110px; padding: 1.15rem; min-height: 205px; }
+  .mela-professional .mela-featured-hero h2 { font-size: 1.35rem; }
+  .mela-professional .mela-hero-art { width: 104px; height: 128px; }
+  .mela-professional .mela-hero-orbit { width: 88px; height: 88px; border-radius: 23px; }
+  .mela-professional .mela-hero-orbit svg { width: 40px; height: 40px; }
+  .mela-professional .mela-hero-spark { width: 29px; height: 29px; border-radius: 9px; }
+  .mela-professional .mela-hero-spark svg { width: 15px; height: 15px; }
+  .mela-professional .mela-hero-spark-one { top: 0; right: -1px; }
+  .mela-professional .mela-welcome-tag { display: none; }
+  .mela-professional .dashboard-main .module-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: .65rem; }
+  .mela-professional .dashboard-main .module-card { min-height: 155px; padding: .8rem; }
+  .mela-professional .mela-quick-grid { grid-template-columns: 1fr; gap: .5rem; }
+  .mela-professional .mela-quick-card { min-height: 65px; }
+  .mela-professional .app-topbar .mela-topbar-label { display: none; }
+  .mela-professional .app-topbar .btn-secondary { padding: .35rem .55rem; min-width: 40px; }
+  .mela-professional .app-topbar .pill-stat.online { display: none; }
+  .mela-professional .mela-wordmark-icon { width: 32px; height: 32px; }
+  .mela-professional .mela-wordmark-text small { font-size: .5rem; }
+  .mela-professional .mela-wordmark { font-size: 1.1rem; }
+}
+@media (max-width: 390px) {
+  .mela-professional .mela-featured-hero { grid-template-columns: 1fr; }
+  .mela-professional .mela-hero-art { display: none; }
+  .mela-professional .mela-dashboard-stats .stat-value { font-size: 1.15rem; }
+  .mela-professional .mela-hero-actions .btn { padding: .5rem .65rem; }
+  .mela-professional .app-topbar .lang-select { max-width: 88px; }
+  .mela-professional .mela-daily-goal { flex-wrap: wrap; }
+}
+/* CSS-only entrance motion, never needed for navigation or access. */
+@media (prefers-reduced-motion: no-preference) {
+  html:not(.mela-reduced-motion):not(.mela-low-data) .mela-professional .mela-hero-art {
+    animation: mela-panel-enter 650ms ease-out both;
+  }
+  html:not(.mela-reduced-motion):not(.mela-low-data) .mela-professional .dashboard-main .module-card:not(:disabled):hover {
+    transform: translateY(-2px);
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+}

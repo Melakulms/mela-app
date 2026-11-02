@@ -144,7 +144,7 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
       <div className="field module-search"><label htmlFor="module-search">{t('findLearningTool')}</label><input id="module-search" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder={t('searchLearningTools')} /></div>
       {visibleModules.length === 0 && <div className="empty-panel" role="status">{t('noToolsMatch')} “{query}”. <button className="password-toggle" onClick={() => setQuery('')}>{t('clearSearch')}</button></div>}
       <div className="dashboard-tools-status">
-        <span role="status">Showing {visibleModules.length} of {MODULES.length} MELA tools. Availability depends on your account and administrator settings.</span>
+        <span>Showing {visibleModules.length} of {MODULES.length} MELA tools. Availability depends on your account and administrator settings.</span>
         {motionBlocked
           ? <button type="button" className="btn btn-secondary" onClick={() => window.dispatchEvent(new Event("mela:open-settings"))}>Animation off — check Settings</button>
           : <button type="button" className="btn btn-secondary" onClick={() => setMotionReplay(run => run + 1)}>Replay dashboard animation</button>}

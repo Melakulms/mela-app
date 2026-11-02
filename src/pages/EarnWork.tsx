@@ -49,7 +49,7 @@ export default function EarnWork({ onBack, stageKey }: { onBack: () => void; sta
       try {
         const [auth, flag, available, mine] = await Promise.all([
           supabase.auth.getUser(),
-          supabase.rpc('platform_feature_available', { p_feature_key: 'earn_work' }),
+          supabase.rpc('mela_earn_work_readiness_v1'),
           supabase.from('marketplace_tasks')
             .select('id,title,description,task_type,budget_amount,reward_coins,currency,deadline,status,skills_required')
             .eq('status', 'open').order('deadline', { ascending: true }).limit(100),
@@ -64,7 +64,7 @@ export default function EarnWork({ onBack, stageKey }: { onBack: () => void; sta
         if (!active) return
         setUserId(auth.data.user.id)
         // Fail closed: unavailable or invalid configuration never opens paid work.
-        setWorkEnabled(!flag.error && flag.data === true)
+        setWorkEnabled(!flag.error && flag.data?.enabled === true && flag.data?.school_learner !== true)
         setTasks((available.data ?? []) as Task[])
         setProposals((mine.data ?? []) as Proposal[])
       } catch (cause) {

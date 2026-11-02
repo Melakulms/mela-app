@@ -35,6 +35,7 @@ describe('SafetyCenter', () => {
   it('submits a safety report and refreshes status', async () => {
     render(<SafetyCenter onBack={vi.fn()} />)
     await screen.findByText('Safety & privacy')
+    fireEvent.click(await screen.findByRole('button', { name: /Report a safety concern/ }))
     fireEvent.change(screen.getByLabelText('Describe the concern'), { target: { value: 'Someone repeatedly sent unsafe messages to me.' } })
     fireEvent.click(screen.getByRole('button', { name: 'Submit report' }))
     await waitFor(() => expect(mocks.submitSafetyReport).toHaveBeenCalledWith('bullying_or_harassment', 'Someone repeatedly sent unsafe messages to me.'))
@@ -43,7 +44,8 @@ describe('SafetyCenter', () => {
 
   it('keeps guardian verification server-controlled', async () => {
     render(<SafetyCenter onBack={vi.fn()} />)
-    await screen.findByText('Guardian consent')
+    fireEvent.click(await screen.findByRole('button', { name: /Guardian consent/ }))
+    await screen.findByLabelText('Guardian email')
     fireEvent.change(screen.getByLabelText('Guardian email'), { target: { value: 'guardian@example.com' } })
     fireEvent.change(screen.getByLabelText('Relationship'), { target: { value: 'Parent' } })
     fireEvent.click(screen.getByRole('button', { name: 'Request guardian consent' }))

@@ -157,7 +157,7 @@ try {
         if (path === '/auth/v1/user') data = user
         else if (path === '/auth/v1/token') data = session
         else if (path === '/auth/v1/logout') { await route.fulfill({status:204}); return }
-        else if (path === '/rest/v1/profiles') data = [profile]
+        else if (path === '/rest/v1/profiles') data = [{...profile, education_onboarding_completed: hasSubjects}]
         else if (path === '/rest/v1/student_profiles') data = [{subjects:hasSubjects?['mathematics']:[]}]
         else if (path === '/rest/v1/rpc/get_my_dashboard_v36') data = dashboard
         await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(data)})
@@ -238,10 +238,11 @@ try {
       await signedPage.getByRole('heading',{name:'Explore MELA',exact:true}).waitFor().catch(async error => { console.error('Signed-in test page:', await signedPage.locator('body').innerText()); throw error })
       assert.equal(await signedPage.locator('#mela-settings-content').count(),0)
       assert.equal(new URL(signedPage.url()).searchParams.get('view'),'dashboard')
-      // Reproduce the real account condition: complete flag but no saved subjects.
+      // A learner without saved subjects must remain behind the education setup gate.
+      // The fixture synchronizes the server-controlled completion flag with saved subjects.
       hasSubjects = false
       await signedPage.reload({waitUntil:'domcontentloaded'})
-      await signedPage.getByRole('heading',{name:'MELA Home',exact:true}).waitFor()
+      await signedPage.getByRole('heading',{name:'Complete your education profile',exact:true}).waitFor()
       await signedPage.getByRole('button',{name:'Complete my profile',exact:true}).click()
       await signedPage.getByRole('heading',{name:'Complete your education profile',exact:true}).waitFor()
       // The public header no longer needs a redundant Home button. The
@@ -249,14 +250,16 @@ try {
       assert.equal(await signedPage.getByRole('link',{name:'MELA Home',exact:true}).count(),0)
       await signedPage.getByRole('button',{name:'Settings & downloads — app version'}).click()
       await signedPage.getByRole('link',{name:'Back to MELA Home',exact:true}).first().click()
-      await signedPage.getByRole('heading',{name:'MELA Home',exact:true}).waitFor()
-      assert.equal(await signedPage.getByRole('heading',{name:'Complete your education profile',exact:true}).count(),0)
+      await signedPage.getByRole('heading',{name:'Complete your education profile',exact:true}).waitFor()
+      assert.equal(await signedPage.getByRole('heading',{name:'Complete your education profile',exact:true}).count(),1,
+        'Returning Home must not bypass required education setup')
       await signedPage.getByRole('button',{name:'Settings & downloads — app version'}).click()
       await signedPage.getByRole('button',{name:'Sign out',exact:true}).click()
       await signedPage.getByLabel('Email or MELA username').waitFor()
       assert.equal(await signedPage.locator('#mela-settings-content').count(),0)
-      await login('MELA Home')
-      assert.equal(await signedPage.getByRole('heading',{name:'Complete your education profile',exact:true}).count(),0)
+      // After relogin, the learner still cannot bypass required curriculum setup.
+      await login('Complete your education profile')
+      assert.equal(await signedPage.getByRole('heading',{name:'Complete your education profile',exact:true}).count(),1)
 
     } finally { await signedContext.close() }
   })

@@ -46,7 +46,7 @@ it('keeps milestone links and notes separate when submitting funded work', async
   fireEvent.click(await screen.findByRole('button', {name:'Open contract'}))
   fireEvent.change(screen.getByLabelText('HTTPS deliverable link for Translation'), {
     target:{value:'https://example.com/translation'} })
-  fireEvent.change(screen.getByLabelText('Delivery note (optional)', {selector:'textarea'}), {
+  fireEvent.change(screen.getAllByLabelText('Delivery note (optional)')[0], {
     target:{value:'Translation draft'} })
   fireEvent.change(screen.getByLabelText('HTTPS deliverable link for Review'), {
     target:{value:'https://example.com/review'} })

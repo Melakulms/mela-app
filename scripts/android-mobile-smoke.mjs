@@ -198,6 +198,7 @@ try {
       assert.ok(smallHero.right <= smallHero.viewport+2, 'Hero must fit older Android phone width')
       assert.equal(smallHero.columns.trim().split(/\\s+/).length,1, 'Small Android hero must stack into one column')
       if(desktopSize) await signedPage.setViewportSize(desktopSize)
+      await mkdir('android-smoke-artifacts', { recursive: true })
       await signedPage.screenshot({path:'android-smoke-artifacts/professional-mela-home.png',fullPage:true})
 
       // A real mobile tap must open one mentorship section, not keep all 16 cards visible.

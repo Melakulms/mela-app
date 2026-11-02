@@ -72,6 +72,32 @@ export default function EmployerPortal({ role }: { role: string }) {
     return <div className="dash-main"><div className="banner banner-error">{error || 'Your employer account could not be found.'}</div></div>
   }
 
+  if (showCreate) return <div className="dash-main">
+    <div className="section-heading"><h1>Post an opportunity</h1><button type="button" className="btn btn-secondary" onClick={() => setShowCreate(false)}>Back to employer dashboard</button></div>
+    <CreateOpportunityForm employerId={employer.id} onCancel={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); void load() }} />
+  </div>
+
+  if (viewingApplicants) return <div className="dash-main">
+    <>
+          <div className="section-heading"><h2>Applicants · {opportunities.find(o => o.id === viewingApplicants)?.title ?? 'Selected opportunity'}</h2><button type="button" className="btn btn-secondary" onClick={() => { setViewingApplicants(null); setApplicants(null); setError('') }}>Back to opportunities</button></div>
+          {!applicants && <p className="muted">Loading…</p>}
+          {applicants && applicants.length === 0 && <div className="empty-panel">No applications yet.</div>}
+          {applicants && applicants.length > 0 && (
+            <div className="list-panel">
+              {applicants.map((a) => (
+                <div className="list-row" key={a.id}>
+                  <div>
+                    <div className="list-row-title">{a.full_name ?? 'Applicant'}</div>
+                    <div className="list-row-meta">{a.email}</div>
+                  </div>
+                  <span className="pill">{a.status}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+  </div>
+
   return (
     <div className="dash-main">
       <div className="section-heading">
@@ -83,13 +109,6 @@ export default function EmployerPortal({ role }: { role: string }) {
       )}
       {error && <div className="banner banner-error">{error}</div>}
 
-      {showCreate && (
-        <CreateOpportunityForm
-          onCancel={() => setShowCreate(false)}
-          onCreated={() => { setShowCreate(false); load() }}
-          employerId={employer.id}
-        />
-      )}
 
       <ContractDisputes />
       <div className="section-heading"><h2>Your opportunities</h2></div>
@@ -109,26 +128,7 @@ export default function EmployerPortal({ role }: { role: string }) {
         </div>
       )}
 
-      {viewingApplicants && (
-        <>
-          <div className="section-heading"><h2>Applicants</h2></div>
-          {!applicants && <p className="muted">Loading…</p>}
-          {applicants && applicants.length === 0 && <div className="empty-panel">No applications yet.</div>}
-          {applicants && applicants.length > 0 && (
-            <div className="list-panel">
-              {applicants.map((a) => (
-                <div className="list-row" key={a.id}>
-                  <div>
-                    <div className="list-row-title">{a.full_name ?? 'Applicant'}</div>
-                    <div className="list-row-meta">{a.email}</div>
-                  </div>
-                  <span className="pill">{a.status}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
+
     </div>
   )
 }

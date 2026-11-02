@@ -178,7 +178,7 @@ export default function EarnWork({ onBack, stageKey }: { onBack: () => void; sta
             I am at least 18 and agree to MELA's adult-work eligibility policy. My declaration will be independently reviewed.</label>}
           <button type="button" className="btn btn-secondary" disabled={busy || (!policyAccepted && !adultDeclaration)} onClick={() => void requestReview()}>Request adult work verification</button>
         </> : <p>Paid work eligibility is unavailable to this account. Complete the appropriate profile or contact support.</p>}
-    </section>
+    </section>}
     <div className="module-grid" role="group" aria-label="Earn & Work sections">
       <button type="button" className="btn btn-secondary" aria-pressed={section==='browse'} onClick={() => changeSection('browse')}>Available work</button>
       <button type="button" className="btn btn-secondary" aria-pressed={section==='proposals'} onClick={() => changeSection('proposals')}>My proposals ({proposals.length})</button>

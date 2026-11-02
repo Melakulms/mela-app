@@ -149,7 +149,7 @@ export default function SafetyCenter({ onBack }: { onBack: () => void }) {
             <button className="btn btn-secondary" onClick={requestGuardian} disabled={busy || !guardianEmail.trim() || guardianRelationship.trim().length < 2}>{busy ? 'Saving…' : 'Request guardian consent'}</button>
             <p className="field-hint">Submitting this request does not verify consent. Verification is controlled by the authorized safeguarding/admin workflow.</p>
           </>}
-        </section>}}
+        </section>}
 
         {safetySection === 'reports' && <section aria-labelledby="reports-heading">
           <div className="section-heading"><h2 id="reports-heading">My recent reports</h2></div>

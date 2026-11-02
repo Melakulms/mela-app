@@ -11,9 +11,9 @@ export default function PendingRegistrationReview({ role, onRefresh, onSignOut }
   const professional = ['teacher', 'mentor', 'employer', 'company', 'partner', 'admin', 'super_admin'].includes(role)
   return <main className="auth-shell"><div className="auth-card" style={{maxWidth:700}}>
     <span className="auth-wordmark">MELA</span>
-    <h1>Contact verified — account review pending</h1>
+    <h1>Sign-in verified — account review pending</h1>
     <p className="auth-subtitle" role="status">
-      Your sign-in verification is complete, but your MELA account is still marked as pending.
+      Your sign-in method has been accepted, but your MELA account is still marked as pending.
       You do not need to request another confirmation email.
     </p>
     {professional

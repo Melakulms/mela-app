@@ -290,7 +290,7 @@ html:not(.mela-low-data) .mela-professional .bottom-nav button.active {
   .mela-professional .mela-quick-grid { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 620px) {
-  .mela-professional .mela-featured-hero { grid-template-columns: minmax(0,1fr) 110px; padding: 1.15rem; min-height: 205px; }
+  html .mela-professional .dashboard-hero.mela-featured-hero { grid-template-columns: minmax(0,1fr) 110px; padding: 1.15rem; min-height: 205px; }
   .mela-professional .mela-featured-hero h2 { font-size: 1.35rem; }
   .mela-professional .mela-hero-art { width: 104px; height: 128px; }
   .mela-professional .mela-hero-orbit { width: 88px; height: 88px; border-radius: 23px; }
@@ -311,7 +311,7 @@ html:not(.mela-low-data) .mela-professional .bottom-nav button.active {
   .mela-professional .mela-wordmark { font-size: 1.1rem; }
 }
 @media (max-width: 390px) {
-  .mela-professional .mela-featured-hero { grid-template-columns: 1fr; }
+  html .mela-professional .dashboard-hero.mela-featured-hero { grid-template-columns: 1fr; }
   .mela-professional .mela-hero-art { display: none; }
   .mela-professional .mela-dashboard-stats .stat-value { font-size: 1.15rem; }
   .mela-professional .mela-hero-actions .btn { padding: .5rem .65rem; }

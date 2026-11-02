@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { withdrawMyProposal } from '../lib/contracts'
 import ContractDisputes from '../components/ContractDisputes'
 import MembershipAndReferrals from '../components/MembershipAndReferrals'
+import { ArrowRight, BriefcaseBusiness, FileText, Handshake, WalletCards } from 'lucide-react'
 
 type Task = {
   id: string; title: string; description: string | null; task_type: string | null;
@@ -179,12 +180,43 @@ export default function EarnWork({ onBack, stageKey }: { onBack: () => void; sta
           <button type="button" className="btn btn-secondary" disabled={busy || (!policyAccepted && !adultDeclaration)} onClick={() => void requestReview()}>Request adult work verification</button>
         </> : <p>Paid work eligibility is unavailable to this account. Complete the appropriate profile or contact support.</p>}
     </section>}
-    <div className="module-grid" role="group" aria-label="Earn & Work sections">
-      <button type="button" className="btn btn-secondary" aria-pressed={section==='browse'} onClick={() => changeSection('browse')}>Available work</button>
-      <button type="button" className="btn btn-secondary" aria-pressed={section==='proposals'} onClick={() => changeSection('proposals')}>My proposals ({proposals.length})</button>
-      <button type="button" className="btn btn-secondary" aria-pressed={section==='contracts'} onClick={() => changeSection('contracts')}>My contracts</button>
-      <button type="button" className="btn btn-secondary" aria-pressed={section==='rewards'} onClick={() => changeSection('rewards')}>Membership & referral earnings</button>
-    </div>
+    <section className="mela-work-menu" aria-labelledby="mela-work-navigation-heading">
+      <div className="mela-section-intro">
+        <span className="eyebrow">EXPLORE YOUR WORKSPACE</span>
+        <h2 id="mela-work-navigation-heading">Earn & Work tools</h2>
+        <p>Choose a card below to open the matching work area.</p>
+      </div>
+      <div className="mela-subsection-grid" role="group" aria-label="Earn & Work sections">
+        <button type="button" className="mela-subsection-card" aria-label="Available work"
+          aria-pressed={section==='browse'} onClick={() => changeSection('browse')}>
+          <span className="mela-subsection-icon" aria-hidden="true"><BriefcaseBusiness size={25}/></span>
+          <strong className="mela-subsection-title">Available work</strong>
+          <span className="mela-subsection-description">See tasks posted by employers and review their requirements.</span>
+          <span className="mela-subsection-action" aria-hidden="true">Open work <ArrowRight size={19}/></span>
+        </button>
+        <button type="button" className="mela-subsection-card" aria-label={'My proposals (' + proposals.length + ')'}
+          aria-pressed={section==='proposals'} onClick={() => changeSection('proposals')}>
+          <span className="mela-subsection-icon" aria-hidden="true"><FileText size={25}/></span>
+          <strong className="mela-subsection-title">My proposals ({proposals.length})</strong>
+          <span className="mela-subsection-description">Review applications you submitted and see their status.</span>
+          <span className="mela-subsection-action" aria-hidden="true">Open proposals <ArrowRight size={19}/></span>
+        </button>
+        <button type="button" className="mela-subsection-card" aria-label="My contracts"
+          aria-pressed={section==='contracts'} onClick={() => changeSection('contracts')}>
+          <span className="mela-subsection-icon" aria-hidden="true"><Handshake size={25}/></span>
+          <strong className="mela-subsection-title">My contracts</strong>
+          <span className="mela-subsection-description">Review existing work agreements, milestones and disputes.</span>
+          <span className="mela-subsection-action" aria-hidden="true">Open contracts <ArrowRight size={19}/></span>
+        </button>
+        <button type="button" className="mela-subsection-card" aria-label="Membership & referral earnings"
+          aria-pressed={section==='rewards'} onClick={() => changeSection('rewards')}>
+          <span className="mela-subsection-icon" aria-hidden="true"><WalletCards size={25}/></span>
+          <strong className="mela-subsection-title">Membership & referral earnings</strong>
+          <span className="mela-subsection-description">View your membership and verified referral records.</span>
+          <span className="mela-subsection-action" aria-hidden="true">Open membership <ArrowRight size={19}/></span>
+        </button>
+      </div>
+    </section>
     {error && <div className="banner banner-error" role="alert">{error}<button type="button" className="btn btn-secondary" onClick={reload} disabled={busy}>Retry</button></div>}
     {notice && <p role="status">{notice}</p>}
     {section === 'browse' && loaded && (selectedTask ? <section className="list-panel" aria-label="Selected work task">

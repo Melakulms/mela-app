@@ -34,6 +34,7 @@ const EmployerProfileSetup = lazy(() => import('./pages/EmployerProfileSetup'))
 const EmployerApprovalPending = lazy(() => import('./pages/EmployerApprovalPending'))
 const LearnerTools = lazy(() => import('./pages/LearnerTools'))
 const LearnerSubsections = lazy(() => import('./pages/LearnerSubsections'))
+const EarnWork = lazy(() => import('./pages/EarnWork'))
 const VerifiedAssessments = lazy(() => import('./pages/VerifiedAssessments'))
 const StudentOnboarding = lazy(() => import('./pages/StudentOnboarding'))
 const ProfileAccessHub = lazy(() => import('./pages/ProfileAccessHub'))
@@ -377,7 +378,7 @@ export default function App() {
           {studentView === 'wallet' && <LearnerTools view="wallet" onBack={() => setStudentView('dashboard')} />}
           {studentView === 'challenges' && <LearnerSubsections view="challenges" onBack={() => setStudentView('dashboard')} />}
           {studentView === 'assessments' && <VerifiedAssessments onBack={() => setStudentView('dashboard')} />}
-          {studentView === 'earn-work' && <LearnerSubsections view="earn" onBack={() => setStudentView('dashboard')} />}
+          {studentView === 'earn-work' && <EarnWork stageKey={profile.education_stage_key} onBack={() => setStudentView('dashboard')} />}
           {studentView === 'safety' && <SafetyCenter onBack={() => setStudentView('dashboard')} />}
           {studentView === 'dashboard' && <StudentDashboard onNavigate={setStudentView} />}
         </>

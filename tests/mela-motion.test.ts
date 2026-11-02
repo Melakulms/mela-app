@@ -4,6 +4,7 @@ import { expect, it } from 'vitest'
 
 const motion = readFileSync(new URL('../src/mela-motion.css', import.meta.url), 'utf8')
 const entry = readFileSync(new URL('../src/main.tsx', import.meta.url), 'utf8')
+const professional = readFileSync(new URL('../src/mela-professional.css', import.meta.url), 'utf8')
 
 it('loads a shared motion layer for the whole learner app, not registration alone', () => {
   expect(entry).toContain("import './mela-motion.css'")
@@ -37,4 +38,9 @@ it('preserves disabled cards and limits staggering to the first six dashboard ti
   expect(motion).toContain(':not(:disabled):active')
   const tileRules = motion.match(/@keyframes mela-tile-enter \{([^}]*\}[^}]*)\}/)
   expect(tileRules?.[1]).not.toContain('opacity')
+})
+
+it('keeps the registration stripe after the professional stylesheet is loaded', () => {
+  expect(entry.indexOf("import './mela-professional.css'")).toBeGreaterThan(entry.indexOf("import './mela-motion.css'"))
+  expect(professional).toMatch(/\.auth-layout \.auth-card\s*\{[^}]*border-top:\s*3px\s+solid\s+var\(--gold\)/s)
 })

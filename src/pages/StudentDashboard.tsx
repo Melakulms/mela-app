@@ -116,7 +116,7 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
           <p>Explore your courses, practise your skills and build your future with tools connected to your MELA account.</p>
           <div className="mela-hero-actions">
             {feature_flags.practice && <button type="button" className="btn mela-hero-primary" onClick={() => onNavigate('practice')}>{t('startPracticing')} <BookOpen size={17} aria-hidden="true" /></button>}
-            {feature_flags.career_passport !== false && <button type="button" className="btn mela-hero-secondary" onClick={() => onNavigate('passport')}>Career Passport <ShieldCheck size={17} aria-hidden="true" /></button>}
+            {feature_flags.career_passport !== false && <button type="button" className="btn mela-hero-secondary" aria-label="Open Career Passport updates" onClick={() => onNavigate('passport')}>Career Passport <ShieldCheck size={17} aria-hidden="true" /></button>}
           </div>
         </div>
         <div className="mela-hero-art" aria-hidden="true">
@@ -135,7 +135,7 @@ export default function StudentDashboard({ onNavigate }: { onNavigate: (view: St
       </div>
 
       <section className="mela-quick-start" aria-label="Quick access to MELA features">
-        <div className="section-heading"><h2>Pick up where you left off</h2></div>
+        <div className="section-heading"><h2>Quick access</h2></div>
         <div className="mela-quick-grid">
           <button type="button" className="mela-quick-card" onClick={() => onNavigate('passport')} disabled={feature_flags.career_passport === false}>
             <span className="mela-quick-icon quick-passport"><ShieldCheck size={22}/></span>

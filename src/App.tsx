@@ -15,6 +15,7 @@ import VerifyEmail from './pages/VerifyEmail'
 import { hasVerifiedContact, hasTrustedTelegramSignup } from './lib/contact-verification'
 import ContactVerification from './pages/ContactVerification'
 import PendingRegistrationReview from './pages/PendingRegistrationReview'
+import PendingEmployerApplication from './pages/PendingEmployerApplication'
 const StudentDashboard = lazy(() => import('./pages/StudentDashboard'))
 const Practice = lazy(() => import('./pages/Practice'))
 const OpportunityHub = lazy(() => import('./pages/OpportunityHub'))
@@ -268,6 +269,11 @@ export default function App() {
   // or the trusted Telegram sign-up check above. Re-requesting email confirmation
   // cannot fix a pending profile review/synchronization state.
   if (profile.account_status === 'pending_verification') {
+    // Existing verified-contact employer accounts can submit organizational
+    // evidence for manual review; this never activates their restricted role.
+    if (profile.role === 'employer' && hasVerifiedContact(session.user)) {
+      return <PendingEmployerApplication onRefresh={reloadProfile} onSignOut={() => { void signOut() }} />
+    }
     return <PendingRegistrationReview role={profile.role} onRefresh={reloadProfile} onSignOut={() => { void signOut() }} />
   }
 

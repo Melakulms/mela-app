@@ -5,6 +5,7 @@ import EarnWork from '../src/pages/EarnWork'
 const mock = vi.hoisted(() => ({
   enabled: false, tasks: [] as any[], proposals: [] as any[],
   getUser: vi.fn(), rpc: vi.fn(), insert: vi.fn(),
+  eqs: [] as {table: string; field: string; value: unknown}[],
 }))
 vi.mock('../src/lib/supabase', () => ({
   supabase: {
@@ -13,7 +14,7 @@ vi.mock('../src/lib/supabase', () => ({
     from: (table: string) => {
       const query: any = {}
       query.select = () => query
-      query.eq = () => query
+      query.eq = (field: string, value: unknown) => { mock.eqs.push({table, field, value}); return query }
       query.order = () => query
       query.limit = () => Promise.resolve({
         data: table === 'marketplace_tasks' ? mock.tasks : mock.proposals, error: null,
@@ -22,6 +23,10 @@ vi.mock('../src/lib/supabase', () => ({
       return query
     },
   },
+}))
+vi.mock('../src/components/MembershipAndReferrals', () => ({
+  default: ({ userId }: { userId: string }) =>
+    <p>Membership and referrals loaded for {userId}</p>,
 }))
 vi.mock('../src/components/ContractDisputes', () => ({
   default: ({ workEnabled }: {workEnabled:boolean}) =>
@@ -36,6 +41,7 @@ const saved = { id: 'proposal-1', task_id: 'old-task', status: 'accepted', propo
   proposed_amount: 100, estimated_days: 3, submitted_at: '2026-11-01' }
 beforeEach(() => {
   vi.clearAllMocks()
+  mock.eqs = []
   mock.enabled = false; mock.tasks = [task]; mock.proposals = [saved]
   mock.getUser.mockResolvedValue({ data: { user: { id: 'learner-1' } }, error: null })
   mock.rpc.mockImplementation((action: string) =>
@@ -86,10 +92,22 @@ it('validates a non-school proposal and sends it only after the server feature g
     task_id:'task-1',user_id:'learner-1', status:'pending', proposed_amount:150.5, estimated_days:3,
   })))
   expect(mock.rpc).toHaveBeenCalledWith('mela_earn_work_readiness_v1')
+  expect(mock.eqs).toContainEqual({table:'marketplace_submissions',field:'user_id',value:'learner-1'})
 })
 
 it('shows a useful empty state for currently assigned production tasks', async () => {
   mock.tasks = []
   render(<EarnWork stageKey="university" onBack={vi.fn()} />)
   expect(await screen.findByText('No open employer tasks are available right now.')).toBeTruthy()
+})
+
+it('opens referrals as a dedicated screen without losing existing work records', async () => {
+  render(<EarnWork stageKey="university" onBack={vi.fn()} />)
+  await screen.findByText(/New paid work is currently paused/)
+  fireEvent.click(screen.getByRole('button',{name:'Membership & referral earnings'}))
+  expect(screen.getByText(/Membership and referrals loaded for learner-1/)).toBeTruthy()
+  expect(screen.getByText(/independently verified first Pro/)).toBeTruthy()
+  expect(screen.queryByText('No open employer tasks are available right now.')).toBeNull()
+  fireEvent.click(screen.getByRole('button',{name:'My proposals (1)'}))
+  expect(screen.getByRole('button',{name:'View proposal'})).toBeTruthy()
 })

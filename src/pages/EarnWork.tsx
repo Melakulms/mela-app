@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { withdrawMyProposal } from '../lib/contracts'
 import ContractDisputes from '../components/ContractDisputes'
+import MembershipAndReferrals from '../components/MembershipAndReferrals'
 
 type Task = {
   id: string; title: string; description: string | null; task_type: string | null;
@@ -10,9 +11,9 @@ type Task = {
 }
 type Proposal = {
   id: string; task_id: string; status: string; proposal_text: string | null;
-  proposed_amount: number | null; estimated_days: number | null; submitted_at: string | null
+  proposed_amount: number | null; estimated_days: number | null; submitted_at: string | null; currency?: string | null
 }
-type Section = 'browse' | 'proposals' | 'contracts'
+type Section = 'browse' | 'proposals' | 'contracts' | 'rewards'
 
 function displayReward(task: Task) {
   if (task.budget_amount != null && task.currency) return `${task.budget_amount} ${task.currency} proposed budget — not a guaranteed earning`
@@ -47,18 +48,20 @@ export default function EarnWork({ onBack, stageKey }: { onBack: () => void; sta
     setLoaded(false); setError('')
     void (async () => {
       try {
-        const [auth, flag, available, mine] = await Promise.all([
-          supabase.auth.getUser(),
+        // Authenticate first so My proposals cannot include other team members'
+        // rows in an account with multiple approved roles.
+        const auth = await supabase.auth.getUser()
+        if (auth.error) throw auth.error
+        if (!auth.data.user) throw new Error('Please sign in to view your work.')
+        const [flag, available, mine] = await Promise.all([
           supabase.rpc('mela_earn_work_readiness_v1'),
           supabase.from('marketplace_tasks')
             .select('id,title,description,task_type,budget_amount,reward_coins,currency,deadline,status,skills_required')
             .eq('status', 'open').order('deadline', { ascending: true }).limit(100),
           supabase.from('marketplace_submissions')
-            .select('id,task_id,status,proposal_text,proposed_amount,estimated_days,submitted_at')
-            .order('submitted_at', { ascending: false }).limit(100),
+            .select('id,task_id,status,proposal_text,proposed_amount,estimated_days,submitted_at,currency')
+            .eq('user_id', auth.data.user.id).order('submitted_at', { ascending: false }).limit(100),
         ])
-        if (auth.error) throw auth.error
-        if (!auth.data.user) throw new Error('Please sign in to view your work.')
         if (available.error) throw available.error
         if (mine.error) throw mine.error
         if (!active) return
@@ -126,6 +129,7 @@ export default function EarnWork({ onBack, stageKey }: { onBack: () => void; sta
       <button type="button" className="btn btn-secondary" aria-pressed={section==='browse'} onClick={() => changeSection('browse')}>Available work</button>
       <button type="button" className="btn btn-secondary" aria-pressed={section==='proposals'} onClick={() => changeSection('proposals')}>My proposals ({proposals.length})</button>
       <button type="button" className="btn btn-secondary" aria-pressed={section==='contracts'} onClick={() => changeSection('contracts')}>My contracts</button>
+      <button type="button" className="btn btn-secondary" aria-pressed={section==='rewards'} onClick={() => changeSection('rewards')}>Membership & referral earnings</button>
     </div>
     {error && <div className="banner banner-error" role="alert">{error}<button type="button" className="btn btn-secondary" onClick={reload} disabled={busy}>Retry</button></div>}
     {notice && <p role="status">{notice}</p>}
@@ -161,7 +165,7 @@ export default function EarnWork({ onBack, stageKey }: { onBack: () => void; sta
       <h2>My proposal</h2>
       <p><strong>Status:</strong> {selectedProposal.status}</p>
       <p>{selectedProposal.proposal_text}</p>
-      <p><strong>Proposed amount:</strong> {selectedProposal.proposed_amount ?? 'Unspecified'} ETB · <strong>Estimated days:</strong> {selectedProposal.estimated_days ?? 'Unspecified'}</p>
+      <p><strong>Proposed amount:</strong> {selectedProposal.proposed_amount ?? 'Unspecified'} {selectedProposal.currency ?? 'ETB'} · <strong>Estimated days:</strong> {selectedProposal.estimated_days ?? 'Unspecified'}</p>
       <p>A shortlisted or accepted proposal is not the same as a funded contract. Confirm details in My contracts before starting work.</p>
       {selectedProposal.status === 'pending' && <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => void withdraw(selectedProposal)}>Withdraw proposal</button>}
     </section> : <>
@@ -173,7 +177,11 @@ export default function EarnWork({ onBack, stageKey }: { onBack: () => void; sta
           <button type="button" className="btn btn-secondary" onClick={() => {setSelectedProposalId(row.id);setError('')}}>View proposal</button>
         </div>)}</div>}
     </>)}
-    {section === 'contracts' && <ContractDisputes currentUserId={userId} workEnabled={workEnabled && !schoolLearner} />}
+    {section === 'contracts' && loaded && userId && <ContractDisputes currentUserId={userId} workEnabled={workEnabled && !schoolLearner} />}
+    {section === 'rewards' && loaded && userId && <>
+      <p className="field-hint">Referral commission is recorded only after an eligible, independently verified first Pro (50 ETB) or Premium (100 ETB) subscription payment. A registration, proposal, or contract budget is not withdrawable cash.</p>
+      <MembershipAndReferrals userId={userId} />
+    </>}
     {loaded && <button type="button" className="btn btn-secondary" onClick={reload} disabled={busy}>Refresh Earn & Work</button>}
   </div>
 }

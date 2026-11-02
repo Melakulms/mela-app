@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { withdrawMyProposal } from '../lib/contracts'
 import ContractDisputes from '../components/ContractDisputes'
+import MembershipAndReferrals from '../components/MembershipAndReferrals'
 
 type Task = {
   id: string; title: string; description: string | null; task_type: string | null;
@@ -12,7 +13,7 @@ type Proposal = {
   id: string; task_id: string; status: string; proposal_text: string | null;
   proposed_amount: number | null; estimated_days: number | null; submitted_at: string | null
 }
-type Section = 'browse' | 'proposals' | 'contracts'
+type Section = 'browse' | 'proposals' | 'contracts' | 'rewards'
 
 function displayReward(task: Task) {
   if (task.budget_amount != null && task.currency) return `${task.budget_amount} ${task.currency} proposed budget — not a guaranteed earning`
@@ -126,6 +127,7 @@ export default function EarnWork({ onBack, stageKey }: { onBack: () => void; sta
       <button type="button" className="btn btn-secondary" aria-pressed={section==='browse'} onClick={() => changeSection('browse')}>Available work</button>
       <button type="button" className="btn btn-secondary" aria-pressed={section==='proposals'} onClick={() => changeSection('proposals')}>My proposals ({proposals.length})</button>
       <button type="button" className="btn btn-secondary" aria-pressed={section==='contracts'} onClick={() => changeSection('contracts')}>My contracts</button>
+      <button type="button" className="btn btn-secondary" aria-pressed={section==='rewards'} onClick={() => changeSection('rewards')}>Membership & referral earnings</button>
     </div>
     {error && <div className="banner banner-error" role="alert">{error}<button type="button" className="btn btn-secondary" onClick={reload} disabled={busy}>Retry</button></div>}
     {notice && <p role="status">{notice}</p>}
@@ -173,7 +175,11 @@ export default function EarnWork({ onBack, stageKey }: { onBack: () => void; sta
           <button type="button" className="btn btn-secondary" onClick={() => {setSelectedProposalId(row.id);setError('')}}>View proposal</button>
         </div>)}</div>}
     </>)}
-    {section === 'contracts' && <ContractDisputes currentUserId={userId} workEnabled={workEnabled && !schoolLearner} />}
+    {section === 'contracts' && loaded && userId && <ContractDisputes currentUserId={userId} workEnabled={workEnabled && !schoolLearner} />}
+    {section === 'rewards' && loaded && userId && <>
+      <p className="field-hint">Referral commission is recorded only after an eligible, independently verified first Pro (50 ETB) or Premium (100 ETB) subscription payment. A registration, proposal, or contract budget is not withdrawable cash.</p>
+      <MembershipAndReferrals userId={userId} />
+    </>}
     {loaded && <button type="button" className="btn btn-secondary" onClick={reload} disabled={busy}>Refresh Earn & Work</button>}
   </div>
 }

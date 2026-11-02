@@ -79,7 +79,7 @@ export function ChapterStudyResources({ chapterId, chapterTitle, grade, stageKey
     {loading && <p role="status">Loading free chapter materials…</p>}
     {error && <div className="banner banner-error" role="alert">{error}</div>}
     {!loading && !error && !resources.length && <p>No free chapter materials are currently available.</p>}
-    {resources.map(r => <div className="list-row" key={r.material_key}>
+    {!content && resources.map(r => <div className="list-row" key={r.material_key}>
       <div><strong>{r.title}</strong><p className="muted">{r.material_type.replaceAll('_', ' ')}</p></div>
       <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => void open(r.material_key)}>Read</button>
     </div>)}
@@ -89,7 +89,7 @@ export function ChapterStudyResources({ chapterId, chapterTitle, grade, stageKey
         ? <p>Content is unavailable under your current access.</p>
         : <p>{content.content_markdown}</p>}
       <p className="field-hint">Supplemental content — educator review and textbook alignment still need confirmation.</p>
-      <button className="btn btn-secondary" type="button" onClick={() => setContent(null)}>Close reading</button>
+      <button className="btn btn-secondary" type="button" onClick={() => setContent(null)}>Back to chapter materials</button>
     </article>}
   </section>
 }
@@ -125,11 +125,12 @@ export default function SchoolChapterLibrary({ programKey, grade, stageKey, onOp
   }, [programKey,valid])
   const chapter = chapters.find(c => c.id === selected)
   return <section aria-label="Grade-specific chapters and materials" className="list-panel">
-    <h3>Grade {grade} chapter lessons and guided practice</h3>
+    <h3>{chapter ? `Chapter ${chapter.chapter_number}: ${chapter.title}` : `Grade ${grade} chapter lessons and guided practice`}</h3>
+    {chapter && <button className="btn btn-secondary" type="button" onClick={() => setSelected('')}>Back to chapters</button>}
     {loading && <p role="status">Loading chapters…</p>}
     {error && <p role="alert">{error}</p>}
     {!loading && !error && !chapters.length && <p>Chapter materials are being reviewed for this subject.</p>}
-    {chapters.length > 0 && <div className="field">
+    {chapters.length > 0 && !chapter && <div className="field">
       <label htmlFor="school-chapter-select">Choose a chapter to study</label>
       <select id="school-chapter-select" value={selected} onChange={e=>setSelected(e.target.value)}>
         <option value="">Select chapter</option>
@@ -137,6 +138,6 @@ export default function SchoolChapterLibrary({ programKey, grade, stageKey, onOp
       </select>
     </div>}
     {chapter && <ChapterStudyResources chapterId={chapter.id} chapterTitle={chapter.title} grade={grade} stageKey={stageKey} />}
-    {onOpenPractice && <button type="button" className="btn btn-primary" onClick={onOpenPractice}>Practice my registered grade's questions</button>}
+    {!chapter && onOpenPractice && <button type="button" className="btn btn-primary" onClick={onOpenPractice}>Practice my registered grade's questions</button>}
   </section>
 }

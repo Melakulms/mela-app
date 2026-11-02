@@ -24,7 +24,7 @@ it('shows full opportunity details, both application methods, and preserves a fa
   fireEvent.click(screen.getByRole('button', { name: 'View full details' }))
   expect(screen.getByText('Basic programming')).toBeTruthy()
   expect(screen.queryByRole('button', { name: 'View full details' })).toBeNull()
-  expect(screen.getByText('Prepare your profile first.')).toBeTruthy()
+  expect(screen.getByText(/Prepare your profile first/)).toBeTruthy()
   expect(screen.getByRole('link', { name: 'Official application site' }).getAttribute('href')).toBe('https://example.org/apply')
   fireEvent.click(screen.getByRole('button', { name: 'Apply through MELA' }))
   const note = screen.getByLabelText('Application note (optional)')

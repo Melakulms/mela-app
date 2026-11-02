@@ -49,9 +49,9 @@ it('does not visually bypass server-disabled learning features', async () => {
 })
 
 it('ships the mobile layout and honors accessibility & low-data controls', () => {
-  const css=readFileSync(new URL('../src/mela-professional.css',import.meta.url),'utf8')
-  const app=readFileSync(new URL('../src/App.tsx',import.meta.url),'utf8')
-  const entry=readFileSync(new URL('../src/main.tsx',import.meta.url),'utf8')
+  const css=readFileSync('src/mela-professional.css','utf8')
+  const app=readFileSync('src/App.tsx','utf8')
+  const entry=readFileSync('src/main.tsx','utf8')
   expect(entry).toContain("import './mela-professional.css'")
   expect(app).toContain('className="app-shell mela-professional"')
   expect(css).toContain('@media (max-width: 390px)')

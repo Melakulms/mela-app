@@ -59,3 +59,28 @@ it('ships the mobile layout and honors accessibility & low-data controls', () =>
   expect(css).toContain('prefers-reduced-motion: no-preference')
   expect(css).toContain('html:not(.mela-reduced-motion):not(.mela-low-data)')
 })
+
+it('retains the original distinct backgrounds for every MELA section, not white-only cards', () => {
+  const theme = readFileSync('src/styles.css','utf8')
+  const professional = readFileSync('src/mela-professional.css','utf8')
+  const dashboard = readFileSync('src/pages/StudentDashboard.tsx','utf8')
+  const modules = [...dashboard.matchAll(/\{ key: '[a-z_]+', labelKey: '[a-zA-Z]+', blurbKey: '[a-zA-Z]+', view: '[a-z-]+', icon: [A-Za-z]+, cls: '(mc-[a-z_-]+)'/g)]
+    .map(match => match[1])
+  expect(modules).toHaveLength(18)
+  for (const selector of new Set(modules)) {
+    expect(theme).toContain(`.${selector} { --module-start:`)
+    expect(theme).toMatch(new RegExp(`\\.${selector} \\{ --module-start: #[a-f0-9]{6}; --module-end: #[a-f0-9]{6};`))
+  }
+  expect(professional).toContain('background-image: linear-gradient(135deg,var(--module-start')
+  expect(professional).toContain('background-color: var(--module-end')
+  expect(professional).toContain('background-image: none !important;')
+  expect(professional).toContain('color: #fff; font-size: 1rem; line-height: 1.5;')
+  expect(professional).toContain('color: #fff; font-size: 1.12rem;')
+})
+
+it('keeps readable section text and a narrow Android layout', () => {
+  const css=readFileSync('src/mela-professional.css','utf8')
+  expect(css).toContain('.mela-professional .dashboard-main .module-grid { grid-template-columns: 1fr; }')
+  expect(css).toContain('.mela-professional .dash-main { font-size: 1rem; line-height: 1.6; }')
+  expect(css).toContain('color: #fff; font-size: 1rem; line-height: 1.5;')
+})

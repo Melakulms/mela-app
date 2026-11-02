@@ -29,6 +29,11 @@ export default function EarnWork({ onBack, stageKey }: { onBack: () => void; sta
   const [selectedProposalId, setSelectedProposalId] = useState<string | null>(null)
   const [userId, setUserId] = useState('')
   const [workEnabled, setWorkEnabled] = useState(false)
+  const [featureAvailable, setFeatureAvailable] = useState(false)
+  const [eligibilityStatus, setEligibilityStatus] = useState('not_requested')
+  const [canRequest, setCanRequest] = useState(false)
+  const [policyAccepted, setPolicyAccepted] = useState(false)
+  const [adultDeclaration, setAdultDeclaration] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [revision, setRevision] = useState(0)
   const [error, setError] = useState('')
@@ -53,7 +58,7 @@ export default function EarnWork({ onBack, stageKey }: { onBack: () => void; sta
         const auth = await supabase.auth.getUser()
         if (auth.error) throw auth.error
         if (!auth.data.user) throw new Error('Please sign in to view your work.')
-        const [flag, available, mine] = await Promise.all([
+        const [flag, available, mine, eligibility] = await Promise.all([
           supabase.rpc('mela_earn_work_readiness_v1'),
           supabase.from('marketplace_tasks')
             .select('id,title,description,task_type,budget_amount,reward_coins,currency,deadline,status,skills_required')
@@ -61,13 +66,20 @@ export default function EarnWork({ onBack, stageKey }: { onBack: () => void; sta
           supabase.from('marketplace_submissions')
             .select('id,task_id,status,proposal_text,proposed_amount,estimated_days,submitted_at,currency')
             .eq('user_id', auth.data.user.id).order('submitted_at', { ascending: false }).limit(100),
+          supabase.rpc('mela_work_eligibility_status_v1'),
         ])
         if (available.error) throw available.error
         if (mine.error) throw mine.error
         if (!active) return
         setUserId(auth.data.user.id)
         // Fail closed: unavailable or invalid configuration never opens paid work.
-        setWorkEnabled(!flag.error && flag.data?.enabled === true && flag.data?.school_learner !== true)
+        const availableForWork = !flag.error && flag.data?.enabled === true
+        const eligible = !eligibility.error && eligibility.data?.can_apply === true
+        setFeatureAvailable(availableForWork)
+        setEligibilityStatus(!eligibility.error ? String(eligibility.data?.status ?? 'not_requested') : 'unavailable')
+        setCanRequest(!eligibility.error && eligibility.data?.can_request === true)
+        setPolicyAccepted(!eligibility.error && eligibility.data?.policy_accepted === true)
+        setWorkEnabled(availableForWork && eligible && !schoolLearner && flag.data?.school_learner !== true)
         setTasks((available.data ?? []) as Task[])
         setProposals((mine.data ?? []) as Proposal[])
       } catch (cause) {
@@ -78,6 +90,32 @@ export default function EarnWork({ onBack, stageKey }: { onBack: () => void; sta
   }, [revision])
 
   const reload = () => setRevision(value => value + 1)
+  const requestReview = async () => {
+    if (lock.current || schoolLearner || !canRequest || eligibilityStatus === 'approved' || eligibilityStatus === 'pending') return
+    if (!policyAccepted && !adultDeclaration) {
+      setError('Confirm that you are 18 or older and accept the adult-work policy before requesting verification.')
+      return
+    }
+    lock.current = true; setBusy(true); setError(''); setNotice('')
+    try {
+      if (!policyAccepted) {
+        const result = await supabase.rpc('record_my_policy_acknowledgement', {
+          p_policy_key: 'adult_work_eligibility', p_accept: true,
+          p_metadata: { source: 'earn_work', adult_age_self_declared: true },
+        })
+        if (result.error || result.data?.accepted !== true)
+          throw result.error ?? new Error('Your adult-work policy acknowledgement could not be confirmed.')
+      }
+      const result = await supabase.rpc('mela_request_work_eligibility_v1')
+      if (result.error || !['pending','approved'].includes(result.data?.status))
+        throw result.error ?? new Error('The independent eligibility review request was not recorded.')
+      setNotice('Request received. MELA staff must verify adult identity independently. You cannot start paid work until approved and real work is enabled.')
+      setAdultDeclaration(false)
+      reload()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Eligibility review request failed.')
+    } finally { lock.current = false; setBusy(false) }
+  }
   const changeSection = (next: Section) => {
     setSection(next); setSelectedTaskId(null); setSelectedProposalId(null); setError(''); setNotice('')
   }
@@ -122,9 +160,25 @@ export default function EarnWork({ onBack, stageKey }: { onBack: () => void; sta
     <div className="section-heading"><h1>Earn & Work</h1><button className="btn btn-secondary" type="button" onClick={onBack}>Back to MELA Home</button></div>
     <p className="muted">Find verified employer tasks, track your applications, and follow existing contracts in one place.</p>
     {!loaded && <p role="status">Checking work opportunities and your private records…</p>}
-    {loaded && !workEnabled && <div className="banner banner-info" role="status">New paid work is currently paused by MELA. You can view existing proposals and contracts or report an issue. Do not pay an advance fee or start work based only on a listing.</div>}
+    {loaded && !featureAvailable && <div className="banner banner-info" role="status">New paid work is currently paused by MELA. You can view existing proposals and contracts or report an issue. Do not pay an advance fee or start work based only on a listing.</div>}
     {schoolLearner && <div className="banner banner-info" role="status">Paid freelance work requires verified adult eligibility. School learners cannot apply here; learning and Career Passport tools remain available.</div>}
     <p className="field-hint">MELA coins, proposal budgets and unverified escrow are not withdrawable money. No payout is promised by applying.</p>
+    {loaded && !schoolLearner && <section className="list-panel" aria-label="Paid work identity eligibility">
+      <h2>Adult work eligibility</h2>
+      <p><strong>Review status:</strong> {eligibilityStatus.replace(/_/g, ' ')}</p>
+      {eligibilityStatus === 'approved'
+        ? <p>Your adult eligibility was reviewed. Applications remain subject to available verified jobs and MELA's work controls.</p>
+        : eligibilityStatus === 'pending'
+        ? <p>A MELA administrator must check your adult identity before you can apply for paid work. Do not submit identity documents in public messages.</p>
+        : eligibilityStatus === 'rejected'
+        ? <p>Your eligibility request was not approved. Contact MELA support for review; do not create another account to bypass restrictions.</p>
+        : canRequest ? <>
+          <p>Real-money freelance work is for independently verified adults aged 18 or older. Verification is not a payment, job offer, or approval to start work. No advance fee should ever be paid to an employer.</p>
+          {!policyAccepted && <label className="field"><input type="checkbox" checked={adultDeclaration} onChange={e => setAdultDeclaration(e.target.checked)} />
+            I am at least 18 and agree to MELA's adult-work eligibility policy. My declaration will be independently reviewed.</label>}
+          <button type="button" className="btn btn-secondary" disabled={busy || (!policyAccepted && !adultDeclaration)} onClick={() => void requestReview()}>Request adult work verification</button>
+        </> : <p>Paid work eligibility is unavailable to this account. Complete the appropriate profile or contact support.</p>}
+    </section>}
     <div className="module-grid" role="group" aria-label="Earn & Work sections">
       <button type="button" className="btn btn-secondary" aria-pressed={section==='browse'} onClick={() => changeSection('browse')}>Available work</button>
       <button type="button" className="btn btn-secondary" aria-pressed={section==='proposals'} onClick={() => changeSection('proposals')}>My proposals ({proposals.length})</button>

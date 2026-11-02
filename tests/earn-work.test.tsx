@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import EarnWork from '../src/pages/EarnWork'
 
 const mock = vi.hoisted(() => ({
-  enabled: false, tasks: [] as any[], proposals: [] as any[],
+  enabled: false, workerAllowed: true, eligibilityStatus: 'approved', policyAccepted: true, tasks: [] as any[], proposals: [] as any[],
   getUser: vi.fn(), rpc: vi.fn(), insert: vi.fn(),
   eqs: [] as {table: string; field: string; value: unknown}[],
 }))
@@ -42,10 +42,16 @@ const saved = { id: 'proposal-1', task_id: 'old-task', status: 'accepted', propo
 beforeEach(() => {
   vi.clearAllMocks()
   mock.eqs = []
-  mock.enabled = false; mock.tasks = [task]; mock.proposals = [saved]
+  mock.enabled = false; mock.workerAllowed = true; mock.eligibilityStatus = 'approved'; mock.policyAccepted = true; mock.tasks = [task]; mock.proposals = [saved]
   mock.getUser.mockResolvedValue({ data: { user: { id: 'learner-1' } }, error: null })
   mock.rpc.mockImplementation((action: string) =>
     action === 'mela_earn_work_readiness_v1' ? Promise.resolve({data: {enabled:mock.enabled, school_learner:false, payouts_enabled:false}, error: null}) :
+    action === 'mela_work_eligibility_status_v1' ? Promise.resolve({data:{
+      status:mock.eligibilityStatus,can_apply:mock.workerAllowed && mock.enabled,
+      can_request:true,policy_accepted:mock.policyAccepted,
+    },error:null}) :
+    action === 'record_my_policy_acknowledgement' ? Promise.resolve({data:{accepted:true},error:null}) :
+    action === 'mela_request_work_eligibility_v1' ? Promise.resolve({data:{status:'pending'},error:null}) :
       Promise.resolve({data: null, error: {message: 'Unexpected RPC'}}))
   mock.insert.mockResolvedValue({ data: null, error: null })
 })
@@ -110,4 +116,34 @@ it('opens referrals as a dedicated screen without losing existing work records',
   expect(screen.queryByText('No open employer tasks are available right now.')).toBeNull()
   fireEvent.click(screen.getByRole('button',{name:'My proposals (1)'}))
   expect(screen.getByRole('button',{name:'View proposal'})).toBeTruthy()
+})
+
+it('does not offer paid proposals to a non-school account without independent approval', async () => {
+  mock.enabled = true
+  mock.workerAllowed = false
+  mock.eligibilityStatus = 'pending'
+  render(<EarnWork stageKey="university" onBack={vi.fn()} />)
+  await screen.findByText(/A MELA administrator must check your adult identity/)
+  fireEvent.click(screen.getByRole('button',{name:'View details'}))
+  expect(screen.queryByRole('button',{name:'Send proposal'})).toBeNull()
+  expect(mock.insert).not.toHaveBeenCalled()
+})
+
+it('records explicit adult declaration before requesting staff review', async () => {
+  mock.workerAllowed = false
+  mock.eligibilityStatus = 'not_requested'
+  mock.policyAccepted = false
+  render(<EarnWork stageKey="university" onBack={vi.fn()} />)
+  await screen.findByText(/Adult work eligibility/)
+  const button = screen.getByRole('button',{name:'Request adult work verification'})
+  expect((button as HTMLButtonElement).disabled).toBe(true)
+  fireEvent.click(screen.getByRole('checkbox',{name:/I am at least 18/}))
+  fireEvent.click(button)
+  await waitFor(() => {
+    expect(mock.rpc).toHaveBeenCalledWith('record_my_policy_acknowledgement', expect.objectContaining({
+      p_policy_key:'adult_work_eligibility',p_accept:true,
+    }))
+    expect(mock.rpc).toHaveBeenCalledWith('mela_request_work_eligibility_v1')
+  })
+  expect(mock.insert).not.toHaveBeenCalled()
 })

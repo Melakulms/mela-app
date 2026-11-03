@@ -95,6 +95,19 @@ export default function DataRightsPanel() {
     } finally { setBusy(false) }
   }
 
+  async function copyRequestReference(id: string) {
+    setError('')
+    setNotice('')
+    try {
+      if (typeof navigator.clipboard?.writeText !== 'function')
+        throw new Error('Clipboard not supported')
+      await navigator.clipboard.writeText(id)
+      setNotice('Request reference copied. Share it only through a verified private MELA support channel.')
+    } catch {
+      setError('Automatic copy is unavailable on this device. Long-press the request reference below to copy it.')
+    }
+  }
+
   return <section className="list-panel" aria-label="Personal data rights requests">
     <h2>My privacy and data rights</h2>
     <p>Request access, correction, export, deletion, objection or restriction. Your request is private and reviewed by authorized MELA staff. Identity checks and legal retention requirements may apply.</p>
@@ -119,6 +132,11 @@ export default function DataRightsPanel() {
         {REQUEST_TYPES.find(type => type.value === request.request_type)?.label ?? request.request_type}
         {' · '}{request.status.replaceAll('_', ' ')}
         {' · '}{new Date(request.requested_at).toLocaleDateString()}
+        <p className="field-hint">Private request reference: <code>{request.id}</code>{' '}
+          <button type="button" className="btn btn-secondary" disabled={busy}
+            aria-label={`Copy reference for ${request.request_type} request`}
+            onClick={() => void copyRequestReference(request.id)}>Copy reference</button>
+        </p>
         {request.status === 'in_review' && request.updated_at && <p className="field-hint">Last review update: {new Date(request.updated_at).toLocaleString()}</p>}
         {request.response_notes && <p className="field-hint">Message from MELA review: {request.response_notes}</p>}
         {request.status === 'pending' && (cancelRequestId === request.id ? <div className="field">

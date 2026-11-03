@@ -2,6 +2,7 @@ import {lazy, Suspense, useState} from 'react'
 import type { MelaProfile } from '../lib/auth'
 const AdditionalRoleApplications = lazy(()=>import('../components/AdditionalRoleApplications'))
 const PolicySummaryReviewPanel = lazy(()=>import('../components/PolicySummaryReviewPanel'))
+const DataRightsPanel = lazy(()=>import('../components/DataRightsPanel'))
 import MembershipAndReferrals from '../components/MembershipAndReferrals'
 import { SHARED_ACCOUNT_FEATURES, workspaceItems } from '../lib/role-workspaces'
 

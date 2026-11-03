@@ -1,6 +1,7 @@
 import { useI18n } from '../i18n'
 import { useEffect, useState } from 'react'
 import { useSectionDrilldown } from '../hooks/useSectionDrilldown'
+import DataRightsPanel from '../components/DataRightsPanel'
 import {
   fetchMySafetyCenter,
   refreshSchoolSafetyStatus,

@@ -1,7 +1,7 @@
 import { useI18n } from '../i18n'
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useSectionDrilldown } from '../hooks/useSectionDrilldown'
-import DataRightsPanel from '../components/DataRightsPanel'
+const DataRightsPanel = lazy(() => import('../components/DataRightsPanel'))
 import {
   fetchMySafetyCenter,
   refreshSchoolSafetyStatus,
@@ -160,7 +160,7 @@ export default function SafetyCenter({ onBack }: { onBack: () => void }) {
           </div>}
         </section>}
 
-        {safetySection === 'data-rights' && <DataRightsPanel />}
+        {safetySection === 'data-rights' && <Suspense fallback={<p role="status">Loading privacy rights…</p>}><DataRightsPanel /></Suspense>}
 
         {safetySection === 'policies' && <section aria-labelledby="policy-heading">
           <div className="section-heading"><h2 id="policy-heading">Current policy records</h2></div>

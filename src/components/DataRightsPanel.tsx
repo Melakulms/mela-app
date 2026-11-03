@@ -55,10 +55,17 @@ export default function DataRightsPanel() {
     try {
       const { data: auth, error: authError } = await supabase.auth.getUser()
       if (authError || !auth.user) throw new Error('Sign in again to submit your request.')
-      const { error: writeError } = await supabase.from('data_subject_requests').insert({
-        user_id: auth.user.id, request_type: requestType, status: 'pending',
+      // The existing security-invoker RPC uses auth.uid() rather than a client-supplied owner ID.
+      // The partial unique index additionally closes simultaneous tab/device races.
+      const { error: writeError } = await supabase.rpc('request_my_data_subject_action', {
+        p_request_type: requestType,
       })
-      if (writeError) throw writeError
+      if (writeError) {
+        if (writeError.code === '23505' || /request of this type is already open/i.test(writeError.message)) {
+          throw new Error('A request of this type is already open. Refresh to see its status.')
+        }
+        throw writeError
+      }
       setNotice('Your request was recorded for authorized review. This does not automatically delete or export any information.')
       setRevision(value => value + 1)
     } catch (cause) {

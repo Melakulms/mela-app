@@ -19,5 +19,7 @@ describe('registration eligibility', () => {
   it('keeps optional marketing separate from mandatory acknowledgements',()=>{
     expect(registrationAttestation('18_plus',false).marketing_opt_in).toBe(false)
     expect(registrationAttestation('18_plus',true).marketing_opt_in).toBe(true)
+    expect(registrationAttestation('13_17',true).marketing_opt_in).toBe(false)
+    expect(registrationAttestation('under_13',true).marketing_opt_in).toBe(false)
   })
 })

@@ -1,6 +1,7 @@
 import { useI18n } from '../i18n'
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useSectionDrilldown } from '../hooks/useSectionDrilldown'
+const DataRightsPanel = lazy(() => import('../components/DataRightsPanel'))
 import {
   fetchMySafetyCenter,
   refreshSchoolSafetyStatus,
@@ -47,6 +48,7 @@ export default function SafetyCenter({ onBack }: { onBack: () => void }) {
     ...(schoolStageForList(profile) ? [{ id: 'guardian', label: 'Guardian consent', description: 'Request or review guardian verification' }] : []),
     { id: 'reports', label: 'My recent reports', description: 'See the status of your reports' },
     { id: 'policies', label: 'Current policy records', description: 'Review recorded policy versions' },
+    { id: 'data-rights', label: 'My privacy and data rights', description: 'Request access, export, correction or deletion and track review status' },
   ]
 
   useEffect(() => {
@@ -157,6 +159,8 @@ export default function SafetyCenter({ onBack }: { onBack: () => void }) {
             {reports.map((report) => <div className="list-row" key={report.id}><div><div className="list-row-title">{REPORT_REASONS.find(([value]) => value === report.reason)?.[1] ?? report.reason}</div><div className="list-row-meta">Submitted {new Date(report.created_at).toLocaleDateString()} · {report.status.replaceAll('_', ' ')}</div></div><span className="pill">{report.status}</span></div>)}
           </div>}
         </section>}
+
+        {safetySection === 'data-rights' && <Suspense fallback={<p role="status">Loading privacy rights…</p>}><DataRightsPanel /></Suspense>}
 
         {safetySection === 'policies' && <section aria-labelledby="policy-heading">
           <div className="section-heading"><h2 id="policy-heading">Current policy records</h2></div>

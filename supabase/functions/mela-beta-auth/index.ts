@@ -129,7 +129,8 @@ Deno.serve(async (req) => {
       const privacyAcknowledged = (body as any).privacy_acknowledged === true
       const termsVersion = String((body as any).terms_acknowledged_version ?? '')
       const privacyVersion = String((body as any).privacy_acknowledged_version ?? '')
-      const marketingOptIn = (body as any).marketing_opt_in === true
+      // Conservative minor protection: no under-18 marketing consent, including forged client payloads.
+      const marketingOptIn = ageBand === '18_plus' && (body as any).marketing_opt_in === true
       // Self-declared age is useful for initial routing, NOT proof of adulthood
       // for earning, professional or other regulated privileges.
       if (!['under_13', '13_17', '18_plus'].includes(ageBand)) {

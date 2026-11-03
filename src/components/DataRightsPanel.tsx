@@ -1,0 +1,96 @@
+import { useEffect, useState, type FormEvent } from 'react'
+import { supabase } from '../lib/supabase'
+
+type RequestType = 'access' | 'export' | 'rectification' | 'erasure' | 'objection' | 'restriction'
+type RightsRequest = { id: string; request_type: RequestType; status: string; requested_at: string }
+const REQUEST_TYPES: { value: RequestType; label: string }[] = [
+  { value: 'access', label: 'Access my personal information' },
+  { value: 'export', label: 'Request a copy of my information' },
+  { value: 'rectification', label: 'Correct inaccurate information' },
+  { value: 'erasure', label: 'Request deletion of my information or account' },
+  { value: 'objection', label: 'Object to processing of my information' },
+  { value: 'restriction', label: 'Request restricted processing' },
+]
+
+/** Uses the existing, owner-scoped public.data_subject_requests table.
+ * Requests are not automatic deletions or exports. Human review is required.
+ */
+export default function DataRightsPanel() {
+  const [requestType, setRequestType] = useState<RequestType>('access')
+  const [requests, setRequests] = useState<RightsRequest[]>([])
+  const [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState(false)
+  const [revision, setRevision] = useState(0)
+  const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
+
+  useEffect(() => {
+    let active = true
+    setLoading(true)
+    void (async () => {
+      try {
+        const { data: auth, error: authError } = await supabase.auth.getUser()
+        if (authError || !auth.user) throw new Error('Sign in again to view your privacy requests.')
+        const { data, error: readError } = await supabase.from('data_subject_requests')
+          .select('id,request_type,status,requested_at')
+          .eq('user_id', auth.user.id)
+          .order('requested_at', { ascending: false }).limit(30)
+        if (readError) throw readError
+        if (active) { setRequests((data ?? []) as RightsRequest[]); setError('') }
+      } catch (cause) {
+        if (active) setError(cause instanceof Error ? cause.message : 'Could not read your privacy requests.')
+      } finally { if (active) setLoading(false) }
+    })()
+    return () => { active = false }
+  }, [revision])
+
+  const outstanding = requests.some(request => request.request_type === requestType &&
+    (request.status === 'pending' || request.status === 'in_review'))
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (busy || loading || outstanding) return
+    setBusy(true); setError(''); setNotice('')
+    try {
+      const { data: auth, error: authError } = await supabase.auth.getUser()
+      if (authError || !auth.user) throw new Error('Sign in again to submit your request.')
+      const { error: writeError } = await supabase.from('data_subject_requests').insert({
+        user_id: auth.user.id, request_type: requestType, status: 'pending',
+      })
+      if (writeError) throw writeError
+      setNotice('Your request was recorded for authorized review. This does not automatically delete or export any information.')
+      setRevision(value => value + 1)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not submit your request.')
+    } finally { setBusy(false) }
+  }
+
+  return <section className="list-panel" aria-label="Personal data rights requests">
+    <h2>My privacy and data rights</h2>
+    <p>Request access, correction, export, deletion, objection or restriction. Your request is private and reviewed by authorized MELA staff. Identity checks and legal retention requirements may apply.</p>
+    <p className="field-hint">Do not send passwords, bank credentials or identity documents here. This request form does not automatically delete your account or release files.</p>
+    <a href={`${import.meta.env.BASE_URL}legal/mela-protection-plan.html`} target="_blank" rel="noopener noreferrer">Read MELA's 20-point protection plan (working draft)</a>
+    {error && <p className="banner banner-error" role="alert">{error}</p>}
+    {notice && <p className="banner banner-info" role="status">{notice}</p>}
+    <form onSubmit={submit}>
+      <div className="field">
+        <label htmlFor="mela-rights-request-type">What would you like to request?</label>
+        <select id="mela-rights-request-type" value={requestType} onChange={event => setRequestType(event.target.value as RequestType)} disabled={busy || loading}>
+          {REQUEST_TYPES.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+        </select>
+      </div>
+      {outstanding && <p role="status">You already have a request of this type awaiting review. See its status below.</p>}
+      <button className="btn btn-primary" type="submit" disabled={busy || loading || outstanding}>{busy ? 'Submitting request…' : 'Submit privacy request'}</button>
+    </form>
+    <h3>My recent requests</h3>
+    {loading ? <p role="status">Loading your requests…</p> : requests.length === 0 ?
+      <p>No privacy requests are recorded for this account.</p> :
+      <ul>{requests.map(request => <li key={request.id}>
+        {REQUEST_TYPES.find(type => type.value === request.request_type)?.label ?? request.request_type}
+        {' · '}{request.status.replaceAll('_', ' ')}
+        {' · '}{new Date(request.requested_at).toLocaleDateString()}
+      </li>)}</ul>}
+    <button type="button" className="btn btn-secondary" onClick={() => setRevision(value => value + 1)} disabled={busy || loading}>Refresh request status</button>
+    <p className="field-hint">If a request is urgent or you cannot sign in, contact an authorized MELA representative through an independently verified support channel. Do not share personal documents in public chats.</p>
+  </section>
+}

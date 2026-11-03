@@ -83,6 +83,15 @@ describe('Privacy rights access', () => {
     expect(mocks.insert).not.toHaveBeenCalled()
     expect(await screen.findByText(/Your request was recorded for authorized review/i)).toBeTruthy()
   })
+  it('shows the last review update time for an active case', async () => {
+    mocks.list.mockResolvedValue({data:[{...rows[0],status:'in_review',
+      updated_at:'2026-11-03T12:05:00Z',response_notes:'We are continuing the review.'}],error:null})
+    render(<DataRightsPanel />)
+    expect(await screen.findByText(/Last review update:/)).toBeTruthy()
+    expect(screen.getByText(/Message from MELA review:/)).toBeTruthy()
+    expect(screen.queryByRole('button',{name:/Cancel pending access request/})).toBeNull()
+  })
+
   it('displays the reviewer message to its owner as text and prevents cancellation once in review', async () => {
     const unsafe = '<script>not-executable()</script>'
     mocks.list.mockResolvedValue({data:[{...rows[0],status:'in_review',response_notes:unsafe}],error:null})

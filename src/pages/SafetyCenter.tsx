@@ -48,6 +48,7 @@ export default function SafetyCenter({ onBack }: { onBack: () => void }) {
     ...(schoolStageForList(profile) ? [{ id: 'guardian', label: 'Guardian consent', description: 'Request or review guardian verification' }] : []),
     { id: 'reports', label: 'My recent reports', description: 'See the status of your reports' },
     { id: 'policies', label: 'Current policy records', description: 'Review recorded policy versions' },
+    { id: 'data-rights', label: 'My privacy and data rights', description: 'Request access, export, correction or deletion and track review status' },
   ]
 
   useEffect(() => {

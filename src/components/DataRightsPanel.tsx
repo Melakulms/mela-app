@@ -23,6 +23,7 @@ export default function DataRightsPanel() {
   const [revision, setRevision] = useState(0)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [cancelRequestId, setCancelRequestId] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -65,6 +66,28 @@ export default function DataRightsPanel() {
     } finally { setBusy(false) }
   }
 
+  async function cancelPending(id: string) {
+    if (busy || loading || cancelRequestId !== id) return
+    setBusy(true); setError(''); setNotice('')
+    try {
+      const { data: auth, error: authError } = await supabase.auth.getUser()
+      if (authError || !auth.user) throw new Error('Please sign in again to cancel your request.')
+      const { data, error: updateError } = await supabase.from('data_subject_requests')
+        .update({ status: 'cancelled' })
+        .eq('id', id)
+        .eq('user_id', auth.user.id)
+        .eq('status', 'pending')
+        .select('id').maybeSingle()
+      if (updateError) throw updateError
+      if (!data) throw new Error('This request is no longer pending. Refresh to see its latest status.')
+      setCancelRequestId(null)
+      setNotice('Your pending request was cancelled. No personal records were deleted.')
+      setRevision(value => value + 1)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not cancel the request.')
+    } finally { setBusy(false) }
+  }
+
   return <section className="list-panel" aria-label="Personal data rights requests">
     <h2>My privacy and data rights</h2>
     <p>Request access, correction, export, deletion, objection or restriction. Your request is private and reviewed by authorized MELA staff. Identity checks and legal retention requirements may apply.</p>
@@ -89,8 +112,15 @@ export default function DataRightsPanel() {
         {REQUEST_TYPES.find(type => type.value === request.request_type)?.label ?? request.request_type}
         {' · '}{request.status.replaceAll('_', ' ')}
         {' · '}{new Date(request.requested_at).toLocaleDateString()}
+        {request.status === 'pending' && (cancelRequestId === request.id ? <div className="field">
+          <p>Cancel this pending request? This does not close your MELA account.</p>
+          <button type="button" className="btn btn-secondary" onClick={() => void cancelPending(request.id)} disabled={busy}>Confirm cancellation</button>{' '}
+          <button type="button" className="btn btn-secondary" onClick={() => setCancelRequestId(null)} disabled={busy}>Keep request</button>
+        </div> : <div>
+          <button type="button" className="btn btn-secondary" onClick={() => setCancelRequestId(request.id)} disabled={busy} aria-label={`Cancel pending ${request.request_type} request`}>Cancel pending request</button>
+        </div>)}
       </li>)}</ul>}
     <button type="button" className="btn btn-secondary" onClick={() => setRevision(value => value + 1)} disabled={busy || loading}>Refresh request status</button>
-    <p className="field-hint">If a request is urgent or you cannot sign in, contact an authorized MELA representative through an independently verified support channel. Do not share personal documents in public chats.</p>
+    <p className="field-hint">Requests marked in review cannot be cancelled here. Please contact an authorized reviewer to discuss them. If you cannot sign in, use an independently verified MELA support channel; never post personal documents in public chats.</p>
   </section>
 }

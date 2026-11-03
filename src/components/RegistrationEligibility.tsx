@@ -21,7 +21,7 @@ export default function RegistrationEligibility({
   return <section aria-label="Registration safety and privacy">
     <div className="field">
       <label htmlFor="registration-age-band">Age group (required)</label>
-      <select id="registration-age-band" value={ageBand} onChange={event => onAgeBandChange(event.target.value as RegistrationAgeBand)} disabled={disabled} required>
+      <select id="registration-age-band" value={ageBand} onChange={event => { const next = event.target.value as RegistrationAgeBand; if (next !== '18_plus') onMarketingChange(false); onAgeBandChange(next) }} disabled={disabled} required>
         <option value="">Choose age group</option>
         <option value="under_13">Under 13</option>
         <option value="13_17">13–17</option>

@@ -34,6 +34,7 @@ export function registrationAttestation(ageBand: Exclude<RegistrationAgeBand, ''
     privacy_acknowledged: true,
     terms_acknowledged_version: REGISTRATION_POLICY_VERSION,
     privacy_acknowledged_version: REGISTRATION_POLICY_VERSION,
-    marketing_opt_in: marketingConsent,
+    // The signup age band is conservative: never opt a minor into marketing.
+    marketing_opt_in: ageBand === '18_plus' && marketingConsent,
   }
 }

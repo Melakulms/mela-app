@@ -160,6 +160,8 @@ export default function SafetyCenter({ onBack }: { onBack: () => void }) {
           </div>}
         </section>}
 
+        {safetySection === 'data-rights' && <DataRightsPanel />}
+
         {safetySection === 'policies' && <section aria-labelledby="policy-heading">
           <div className="section-heading"><h2 id="policy-heading">Current policy records</h2></div>
           <div className="list-panel">

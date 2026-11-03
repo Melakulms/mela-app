@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
 
 type RequestType = 'access' | 'export' | 'rectification' | 'erasure' | 'objection' | 'restriction'
-type RightsRequest = { id: string; request_type: RequestType; status: string; requested_at: string }
+type RightsRequest = { id: string; request_type: RequestType; status: string; requested_at: string; response_notes: string | null }
 const REQUEST_TYPES: { value: RequestType; label: string }[] = [
   { value: 'access', label: 'Access my personal information' },
   { value: 'export', label: 'Request a copy of my information' },
@@ -33,7 +33,7 @@ export default function DataRightsPanel() {
         const { data: auth, error: authError } = await supabase.auth.getUser()
         if (authError || !auth.user) throw new Error('Sign in again to view your privacy requests.')
         const { data, error: readError } = await supabase.from('data_subject_requests')
-          .select('id,request_type,status,requested_at')
+          .select('id,request_type,status,requested_at,response_notes')
           .eq('user_id', auth.user.id)
           .order('requested_at', { ascending: false }).limit(30)
         if (readError) throw readError
@@ -112,6 +112,7 @@ export default function DataRightsPanel() {
         {REQUEST_TYPES.find(type => type.value === request.request_type)?.label ?? request.request_type}
         {' · '}{request.status.replaceAll('_', ' ')}
         {' · '}{new Date(request.requested_at).toLocaleDateString()}
+        {request.response_notes && <p className="field-hint">Message from MELA review: {request.response_notes}</p>}
         {request.status === 'pending' && (cancelRequestId === request.id ? <div className="field">
           <p>Cancel this pending request? This does not close your MELA account.</p>
           <button type="button" className="btn btn-secondary" onClick={() => void cancelPending(request.id)} disabled={busy}>Confirm cancellation</button>{' '}

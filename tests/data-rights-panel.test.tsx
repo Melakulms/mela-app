@@ -48,7 +48,7 @@ describe('Privacy rights access', () => {
   it('shows only the authenticated owner request and blocks a duplicate pending request', async () => {
     render(<DataRightsPanel />)
     await screen.findByRole('heading', {name:'My privacy and data rights'})
-    await screen.findByText(/pending/i)
+    await screen.findByRole('button',{name:'Cancel pending access request'})
     expect(mocks.filters).toHaveBeenCalledWith('user_id', 'owner-123')
     expect(screen.getByRole('button', {name: 'Submit privacy request'}).hasAttribute('disabled')).toBe(true)
   })
@@ -77,6 +77,6 @@ describe('Privacy rights access', () => {
     fireEvent.change(await screen.findByLabelText('What would you like to request?'), {target:{value:'erasure'}})
     fireEvent.click(screen.getByRole('button',{name:'Submit privacy request'}))
     await waitFor(() => expect(mocks.insert).toHaveBeenCalledWith({user_id:'owner-123',request_type:'erasure',status:'pending'}))
-    expect(await screen.findByText(/does not automatically delete/i)).toBeTruthy()
+    expect(await screen.findByText(/Your request was recorded for authorized review/i)).toBeTruthy()
   })
 })

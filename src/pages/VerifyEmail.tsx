@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { logoutUser } from '../lib/auth'
 
-export default function VerifyEmail({ email, onUseDifferentAccount, onRefresh, linkError = false }: { linkError?: boolean; email: string; onUseDifferentAccount: () => void; onRefresh?: () => void }) {
+export default function VerifyEmail({ email, onUseDifferentAccount, onRefresh, onOpenPrivacy, linkError = false }: { linkError?: boolean; email: string; onUseDifferentAccount: () => void; onRefresh?: () => void; onOpenPrivacy?: () => void }) {
   const { t } = useI18n()
   const [resendEmail, setResendEmail] = useState(email)
   const [sent, setSent] = useState(false)
@@ -50,6 +50,7 @@ export default function VerifyEmail({ email, onUseDifferentAccount, onRefresh, l
           {busy ? t('loading') : t('authResend')}
         </button>
         {onRefresh && <button className="btn btn-primary btn-block" onClick={onRefresh} disabled={busy}>{t('authConfirmedEmail')}</button>}
+        {onOpenPrivacy && <button className="btn btn-secondary btn-block" type="button" onClick={onOpenPrivacy} disabled={busy}>Privacy and data requests</button>}
         <div className="auth-switch">
           <button type="button" onClick={changeAccount} disabled={busy}>{t('authDifferentAccount')}</button>
         </div>

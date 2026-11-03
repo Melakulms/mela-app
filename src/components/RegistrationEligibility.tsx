@@ -49,10 +49,11 @@ export default function RegistrationEligibility({
         <input id="registration-privacy" type="checkbox" checked={privacy} onChange={e => onPrivacyChange(e.target.checked)} disabled={disabled} />
         {' '}I acknowledge MELA's Privacy Notice (required)
       </label>
-      <label htmlFor="registration-marketing">
+      {ageBand === '18_plus' ? <label htmlFor="registration-marketing">
         <input id="registration-marketing" type="checkbox" checked={marketing} onChange={e => onMarketingChange(e.target.checked)} disabled={disabled} />
         {' '}Send me optional product news and marketing (optional)
-      </label>
+      </label> : <p className="field-hint">MELA does not offer marketing opt-in to people under 18.</p>}
+      <p className="field-hint"><a href={`${import.meta.env.BASE_URL}legal/mela-protection-plan.html`} target="_blank" rel="noopener noreferrer">Read MELA's 20-point user protection plan (working draft)</a>. These summaries are not final legally approved policies.</p>
     </div>
   </section>
 }

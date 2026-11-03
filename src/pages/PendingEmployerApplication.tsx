@@ -18,9 +18,10 @@ const tidy = (value: string, max: number) => value.trim().slice(0,max)
  * separate organizational approval. This is an application, not a profile
  * completion, role promotion or authorization to contact learners.
  */
-export default function PendingEmployerApplication({onRefresh,onSignOut}:{
+export default function PendingEmployerApplication({onRefresh,onSignOut,onOpenPrivacy}:{
   onRefresh:()=>void
   onSignOut:()=>void
+  onOpenPrivacy?:()=>void
 }) {
   const [request,setRequest]=useState<EmployerRequest|null>(null)
   const [company,setCompany]=useState('')
@@ -105,6 +106,7 @@ export default function PendingEmployerApplication({onRefresh,onSignOut}:{
   return <main className="auth-shell"><div className="auth-card" style={{maxWidth:720}}>
     <span className="auth-wordmark">MELA · EMPLOYERS</span>
     <h1>Complete your organization application</h1>
+    {onOpenPrivacy && <button type="button" className="btn btn-secondary" onClick={onOpenPrivacy}>Privacy and data requests</button>}
     <p className="auth-subtitle">Your login contact is confirmed, but MELA has not approved this legacy employer account. Supply your organization's details for verification without registering again.</p>
     <p className="field-hint">Submitting this form does not activate your account or allow hiring, payments, student contact or publication.</p>
     {loading?<p role="status">Loading existing application…</p>:<>

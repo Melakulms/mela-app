@@ -79,4 +79,14 @@ describe('Privacy rights access', () => {
     await waitFor(() => expect(mocks.insert).toHaveBeenCalledWith({user_id:'owner-123',request_type:'erasure',status:'pending'}))
     expect(await screen.findByText(/Your request was recorded for authorized review/i)).toBeTruthy()
   })
+  it('displays the reviewer message to its owner as text and prevents cancellation once in review', async () => {
+    const unsafe = '<script>not-executable()</script>'
+    mocks.list.mockResolvedValue({data:[{...rows[0],status:'in_review',response_notes:unsafe}],error:null})
+    const view=render(<DataRightsPanel />)
+    expect(await screen.findByText(/Message from MELA review:/)).toBeTruthy()
+    expect(screen.getByText(/<script>not-executable\(\)<\/script>/)).toBeTruthy()
+    expect(view.container.querySelector('script')).toBeNull()
+    expect(screen.queryByRole('button',{name:/Cancel pending access request/})).toBeNull()
+  })
+
 })

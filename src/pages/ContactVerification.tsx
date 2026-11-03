@@ -6,9 +6,10 @@ import { supabase } from '../lib/supabase'
 /** Completing an invitation confirms possession of a code, not a real contact.
  * Keep all account features closed until Supabase Auth confirms email or phone.
  */
-export default function ContactVerification({ onRefresh, onSignOut }: {
+export default function ContactVerification({ onRefresh, onSignOut, onOpenPrivacy }: {
   onRefresh: () => void
   onSignOut: () => void
+  onOpenPrivacy?: () => void
 }) {
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -97,6 +98,7 @@ export default function ContactVerification({ onRefresh, onSignOut }: {
       <button type="submit" className="btn btn-primary btn-block" disabled={busy}>Verify phone</button>
     </form>}
     <button type="button" className="btn btn-secondary btn-block" onClick={onRefresh} disabled={busy}>I already verified — check again</button>
+    {onOpenPrivacy && <button type="button" className="btn btn-secondary btn-block" onClick={onOpenPrivacy} disabled={busy}>Privacy and data requests</button>}
     <button type="button" className="btn btn-secondary btn-block" onClick={onSignOut} disabled={busy}>Sign out</button>
   </div></main>
 }

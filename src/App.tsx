@@ -42,6 +42,7 @@ const StudentOnboarding = lazy(() => import('./pages/StudentOnboarding'))
 const ProfileAccessHub = lazy(() => import('./pages/ProfileAccessHub'))
 const QuestionBank = lazy(() => import('./pages/QuestionBank'))
 const SafetyCenter = lazy(() => import('./pages/SafetyCenter'))
+const DataRightsPanel = lazy(() => import('./components/DataRightsPanel'))
 
 import ErrorBoundary from './components/ErrorBoundary'
 import { useStudentNavigation, VIEW_LABELS, type StudentView } from './hooks/useStudentNavigation'
@@ -85,6 +86,7 @@ export default function App() {
   const [employerRegistration, setEmployerRegistration] = useState<{ status: string; company_name: string | null } | null>(null)
   const [editingEmployerProfile, setEditingEmployerProfile] = useState(false)
   const [showAccount, setShowAccount] = useState(false)
+  const [showDataRights, setShowDataRights] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -101,7 +103,7 @@ export default function App() {
         !window.location.hash.includes('access_token')
       if (event === 'SIGNED_OUT' || ordinaryRestore || (event === 'SIGNED_IN' && nextUserId !== observedUserId.current)) {
         clearCoachHistories()
-        setProfile(null); setEmployerRegistration(null); setShowAccount(false); setEditingEmployerProfile(false)
+        setProfile(null); setEmployerRegistration(null); setShowAccount(false); setEditingEmployerProfile(false); setShowDataRights(false)
         setActionError(''); setPendingEmail('')
         window.dispatchEvent(new Event('mela:session-boundary'))
       }
@@ -231,9 +233,22 @@ export default function App() {
     reloadProfile()
   }} />
 
+  // Account restrictions do not remove access to privacy-rights requests.
+  // This authenticated page exposes no coursework, payments or private profiles.
+  if (session && showDataRights) return <main className="auth-shell">
+    <div className="auth-card" style={{maxWidth:760}}>
+      <h1>MELA privacy and data requests</h1>
+      <p className="auth-subtitle">Your account access or verification status does not prevent you from asking about your own information. Submission does not grant normal feature access.</p>
+      <Suspense fallback={<p role="status">Loading secure privacy requests…</p>}><DataRightsPanel /></Suspense>
+      <button type="button" className="btn btn-secondary btn-block" onClick={() => setShowDataRights(false)}>Back to account status</button>
+      <button type="button" className="btn btn-secondary btn-block" onClick={() => void signOut()} disabled={signingOut}>Sign out</button>
+    </div>
+  </main>
+
   if (accountError) return <div className="auth-shell"><div className="auth-card">
     <h1>{t('unableToLoadAccount')}</h1><div className="banner banner-error" role="alert">{accountError}</div>{actionError && <p role="alert">{actionError}</p>}
     <button className="btn btn-primary" onClick={() => session ? reloadProfile() : setSessionRevision(value => value + 1)}>{t('retry')}</button>
+    <button className="btn btn-secondary" onClick={() => setShowDataRights(true)}>Privacy and data requests</button>
     <button className="btn btn-secondary" onClick={signOut} disabled={signingOut}>{t('logout')}</button>
   </div></div>
 
@@ -260,9 +275,9 @@ export default function App() {
     // Ordinary email signups retain their resend/confirmation screen.
     // Placeholder-email invitation accounts need a different real-contact flow.
     if (session.user.email && !session.user.email.toLowerCase().endsWith('@beta.mela.invalid')) {
-      return <VerifyEmail onRefresh={reloadProfile} email={session.user.email} onUseDifferentAccount={() => { void signOut() }} />
+      return <VerifyEmail onRefresh={reloadProfile} email={session.user.email} onUseDifferentAccount={() => { void signOut() }} onOpenPrivacy={() => setShowDataRights(true)} />
     }
-    return <ContactVerification onRefresh={reloadProfile} onSignOut={() => { void signOut() }} />
+    return <ContactVerification onRefresh={reloadProfile} onSignOut={() => { void signOut() }} onOpenPrivacy={() => setShowDataRights(true)} />
   }
 
   // A signed-in user reaches this branch only after Auth contact verification
@@ -272,20 +287,22 @@ export default function App() {
     // Existing verified-contact employer accounts can submit organizational
     // evidence for manual review; this never activates their restricted role.
     if (profile.role === 'employer' && hasVerifiedContact(session.user)) {
-      return <PendingEmployerApplication onRefresh={reloadProfile} onSignOut={() => { void signOut() }} />
+      return <PendingEmployerApplication onRefresh={reloadProfile} onSignOut={() => { void signOut() }} onOpenPrivacy={() => setShowDataRights(true)} />
     }
-    return <PendingRegistrationReview role={profile.role} onRefresh={reloadProfile} onSignOut={() => { void signOut() }} />
+    return <PendingRegistrationReview role={profile.role} onRefresh={reloadProfile} onSignOut={() => { void signOut() }} onOpenPrivacy={() => setShowDataRights(true)} />
   }
 
   if (profile.account_status !== 'active') {
     return <div className="auth-shell"><div className="auth-card"><h1>{t('accountUnavailable')}</h1>
       <p>{profile.account_status}. {t('accountUnavailableHelp')}</p>{actionError && <p role="alert">{actionError}</p>}
+      <button className="btn btn-secondary" onClick={() => setShowDataRights(true)}>Privacy and data requests</button>
       <button className="btn btn-secondary" onClick={signOut} disabled={signingOut}>{t('logout')}</button>
     </div></div>
   }
 
   if (profile.role === 'admin' || profile.role === 'super_admin') return <>
     <p className="banner banner-info" role="status">Sign in or register with a MELA user account to continue.</p>
+    <button type="button" className="btn btn-secondary" onClick={() => setShowDataRights(true)}>Privacy and data requests</button>
     {authView === 'login'
       ? <Login onSwitchToRegister={() => setAuthView('register')} />
       : <Register onSwitchToLogin={() => setAuthView('login')} onRegistered={(email) => setPendingEmail(email)} />}
@@ -329,6 +346,7 @@ export default function App() {
         companyName={employerRegistration.company_name}
         onRefresh={reloadProfile}
         onEdit={() => setEditingEmployerProfile(true)}
+        onOpenPrivacy={() => setShowDataRights(true)}
       />
     )
   }

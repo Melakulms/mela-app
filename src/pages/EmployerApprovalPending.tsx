@@ -1,8 +1,8 @@
 import { logoutUser } from '../lib/auth'
 
-type Props = { status: string; companyName?: string | null; onRefresh: () => void; onEdit: () => void }
+type Props = { status: string; companyName?: string | null; onRefresh: () => void; onEdit: () => void; onOpenPrivacy?: () => void }
 
-export default function EmployerApprovalPending({ status, companyName, onRefresh, onEdit }: Props) {
+export default function EmployerApprovalPending({ status, companyName, onRefresh, onEdit, onOpenPrivacy }: Props) {
   const normalized = status.toLowerCase()
   const rejected = normalized === 'rejected' || normalized === 'declined'
 
@@ -21,6 +21,7 @@ export default function EmployerApprovalPending({ status, companyName, onRefresh
         <div style={{ display: 'grid', gap: 10 }}>
           <button className="btn btn-primary btn-block" onClick={onRefresh}>Check status again</button>
           {rejected && <button className="btn btn-secondary btn-block" onClick={onEdit}>Review and resubmit information</button>}
+          {onOpenPrivacy && <button className="btn btn-secondary btn-block" onClick={onOpenPrivacy}>Privacy and data requests</button>}
           <button className="btn btn-secondary btn-block" onClick={() => logoutUser()}>Log out</button>
         </div>
       </div>

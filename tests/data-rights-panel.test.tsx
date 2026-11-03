@@ -118,4 +118,25 @@ describe('Privacy rights access', () => {
     expect(await screen.findByRole('alert')).toHaveProperty('textContent',expect.stringMatching(/request of this type is already open/i))
   })
 
+  it('shows an exact owner-only case reference and copies only the opaque ID', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText}})
+    render(<DataRightsPanel />)
+    expect(await screen.findByText(/Private request reference:/)).toBeTruthy()
+    expect(screen.getByText('own-request')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button',{name:'Copy reference for access request'}))
+    await waitFor(()=>expect(writeText).toHaveBeenCalledWith('own-request'))
+    expect(await screen.findByText(/Request reference copied/)).toBeTruthy()
+    expect(mocks.filters).toHaveBeenCalledWith('user_id','owner-123')
+    Object.defineProperty(navigator,'clipboard',{configurable:true,value:undefined})
+  })
+
+  it('provides an Android long-press fallback when clipboard access is unavailable', async () => {
+    Object.defineProperty(navigator,'clipboard',{configurable:true,value:undefined})
+    render(<DataRightsPanel />)
+    fireEvent.click(await screen.findByRole('button',{name:'Copy reference for access request'}))
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent',expect.stringMatching(/Long-press the request reference/i))
+    expect(screen.getByText('own-request')).toBeTruthy()
+  })
+
 })

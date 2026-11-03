@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
   list: vi.fn(),
   insert: vi.fn(),
+  rpc: vi.fn(),
   updateResult: vi.fn(),
   update: vi.fn(),
   filters: vi.fn(),
@@ -12,6 +13,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../src/lib/supabase', () => ({
   supabase: {
     auth: { getUser: mocks.getUser },
+    rpc: mocks.rpc,
     from: (table: string) => {
       if (table !== 'data_subject_requests') throw new Error('Unexpected database table')
       return {
@@ -40,6 +42,7 @@ beforeEach(() => {
   mocks.getUser.mockResolvedValue({ data: { user: {id:'owner-123'} }, error: null })
   mocks.list.mockResolvedValue({ data: rows, error: null })
   mocks.insert.mockResolvedValue({ error: null })
+  mocks.rpc.mockResolvedValue({ data: 'request-uuid', error: null })
   mocks.updateResult.mockResolvedValue({ data: { id: 'own-request' }, error: null })
 })
 afterEach(cleanup)
@@ -76,7 +79,8 @@ describe('Privacy rights access', () => {
     render(<DataRightsPanel />)
     fireEvent.change(await screen.findByLabelText('What would you like to request?'), {target:{value:'erasure'}})
     fireEvent.click(screen.getByRole('button',{name:'Submit privacy request'}))
-    await waitFor(() => expect(mocks.insert).toHaveBeenCalledWith({user_id:'owner-123',request_type:'erasure',status:'pending'}))
+    await waitFor(() => expect(mocks.rpc).toHaveBeenCalledWith('request_my_data_subject_action',{p_request_type:'erasure'}))
+    expect(mocks.insert).not.toHaveBeenCalled()
     expect(await screen.findByText(/Your request was recorded for authorized review/i)).toBeTruthy()
   })
   it('displays the reviewer message to its owner as text and prevents cancellation once in review', async () => {
@@ -87,6 +91,22 @@ describe('Privacy rights access', () => {
     expect(screen.getByText(/<script>not-executable\(\)<\/script>/)).toBeTruthy()
     expect(view.container.querySelector('script')).toBeNull()
     expect(screen.queryByRole('button',{name:/Cancel pending access request/})).toBeNull()
+  })
+
+  it('shows an understandable duplicate-request error and does not promise success', async () => {
+    mocks.list.mockResolvedValue({data:[],error:null})
+    mocks.rpc.mockResolvedValue({data:null,error:{code:'23505',message:'duplicate key value violates unique constraint'}})
+    render(<DataRightsPanel />)
+    fireEvent.click(await screen.findByRole('button',{name:'Submit privacy request'}))
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent',expect.stringMatching(/request of this type is already open/i))
+    expect(screen.queryByText(/Your request was recorded for authorized review/)).toBeNull()
+  })
+  it('handles the preexisting server-side duplicate check even without a constraint code', async () => {
+    mocks.list.mockResolvedValue({data:[],error:null})
+    mocks.rpc.mockResolvedValue({data:null,error:{message:'a request of this type is already open'}})
+    render(<DataRightsPanel />)
+    fireEvent.click(await screen.findByRole('button',{name:'Submit privacy request'}))
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent',expect.stringMatching(/request of this type is already open/i))
   })
 
 })

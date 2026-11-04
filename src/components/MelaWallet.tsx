@@ -203,9 +203,9 @@ export default function MelaWallet({ data, onBack, onRefresh }: {
           : 'Withdrawals are unavailable. MELA is completing provider, business and safeguarding verification. Do not send money to request a withdrawal.'}
       </div>
       <p><strong>Pending requested payouts:</strong> {etb(data.pending_payout)}</p>
-      <p><strong>Verified payout destination:</strong> {account?.active && account.masked_account
+      <p><strong>Saved active payout destination (not independently verified):</strong> {account?.active && account.masked_account
         ? [account.bank_name, account.masked_account].filter(Boolean).join(' · ')
-        : 'None registered as verified'}</p>
+        : 'No active destination is recorded'}</p>
       <h3>Recent payout requests</h3>
       {payouts.length ? <div className="mela-wallet-rows">{payouts.map(item =>
         <div className="mela-wallet-row" key={item.id}>

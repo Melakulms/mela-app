@@ -96,3 +96,23 @@ it('reloads the wallet only on explicit Refresh and supports Back', () => {
   expect(onRefresh).toHaveBeenCalledOnce()
   expect(onBack).toHaveBeenCalledOnce()
 })
+
+it('does not mislabel foreign-currency transactions or add them to ETB commissions', async () => {
+  mock.commissions.mockResolvedValue({ data: [
+    { id: 'foreign', amount: 100, status: 'pending', currency: 'USD', invitee_tier: 'pro' },
+    { id: 'local', amount: 20, status: 'pending', currency: 'ETB', invitee_tier: 'pro' },
+  ], error: null })
+  render(<MelaWallet data={{
+    ...snapshot,
+    recent_ledger: [{ id: 'foreign-tx', source_type: 'contract', net_amount: 3, currency: 'USD', status: 'pending' }],
+    payout_requests: [{ id: 'foreign-payout', amount_minor: 1250, currency: 'USD', status: 'pending' }],
+  }} onBack={vi.fn()} onRefresh={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', { name: 'Transactions' }))
+  expect(screen.getByText('3.00 USD')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Payouts' }))
+  expect(screen.getByText('12.50 USD')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Referrals' }))
+  expect((await screen.findAllByText('20.00 ETB')).length).toBeGreaterThan(0)
+  expect(screen.getByText('100.00 USD')).toBeTruthy()
+  expect(screen.queryByText('120.00 ETB')).toBeNull()
+})

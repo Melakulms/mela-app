@@ -1,0 +1,75 @@
+.mela-wallet {
+  --wallet-ink: #18243a;
+  --wallet-soft: #f6f7f9;
+  --wallet-gold: #f1c45f;
+  max-width: 1120px;
+  margin-inline: auto;
+}
+.mela-wallet .section-heading h1 { font-size: clamp(1.6rem, 4vw, 2.1rem); letter-spacing: -.025em; }
+.mela-wallet-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+.mela-wallet-actions button { min-height: 44px; }
+.mela-wallet-hero {
+  border-radius: 24px;
+  padding: clamp(1.5rem, 4vw, 2.7rem);
+  display: flex;
+  flex-direction: column;
+  gap: .7rem;
+  background: linear-gradient(130deg, #18243a 0%, #2d3c45 65%, #5e481d 100%);
+  color: #fff;
+  box-shadow: 0 12px 34px rgba(24,36,58,.15);
+}
+.mela-wallet-kicker { color: #fbe1a1; letter-spacing: .13em; font-size: .78rem; font-weight: 750; }
+.mela-wallet-hero-amount { display: block; font-size: clamp(2rem, 7vw, 3.35rem); line-height: 1.15; font-variant-numeric: tabular-nums; }
+.mela-wallet-hero p { max-width: 68ch; margin: .25rem 0 0; line-height: 1.55; color: #e2e9ee; }
+.mela-wallet-tabs {
+  display: flex; flex-wrap: wrap; gap: .5rem;
+  margin: 1.25rem 0; padding: .45rem;
+  background: var(--wallet-soft); border: 1px solid #d6dce2; border-radius: 16px;
+}
+.mela-wallet-tab {
+  appearance: none; border: 0; border-radius: 11px;
+  background: transparent; color: var(--wallet-ink);
+  font: inherit; font-size: 1rem; font-weight: 700;
+  min-height: 46px; padding: .7rem 1rem; cursor: pointer; flex: 1;
+}
+.mela-wallet-tab.selected { background: #fff; box-shadow: 0 3px 12px rgba(24,36,58,.1); }
+.mela-wallet-tab:focus-visible { outline: 3px solid #bd8e24; outline-offset: 2px; }
+.mela-wallet-stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 215px), 1fr));
+  gap: .9rem; margin: 1rem 0 1.3rem;
+}
+.mela-wallet-stats > div {
+  display: flex; flex-direction: column; gap: .55rem;
+  padding: 1.15rem; border-radius: 16px; border: 1px solid #d6dce2;
+  background: #fff; min-width: 0;
+}
+.mela-wallet-stats strong { font-size: clamp(1.2rem, 3vw, 1.55rem); font-variant-numeric: tabular-nums; color: #18243a; overflow-wrap: anywhere; }
+.mela-wallet-stats span { font-size: .97rem; line-height: 1.4; color: #415365; }
+.mela-wallet-panel {
+  padding: clamp(1rem, 3vw, 1.6rem);
+  border: 1px solid #d6dce2; border-radius: 18px; background: #fff;
+  margin-top: 1rem; overflow-wrap: anywhere;
+}
+.mela-wallet-panel h2 { font-size: 1.3rem; margin: 0 0 .7rem; }
+.mela-wallet-panel h3 { font-size: 1.1rem; }
+.mela-wallet-rows { margin-top: .9rem; }
+.mela-wallet-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; border-bottom: 1px solid #e3e8ed; padding: .9rem 0;
+}
+.mela-wallet-row:last-child { border-bottom: none; }
+.mela-wallet-row > div { display: flex; flex-direction: column; gap: .25rem; min-width: 0; }
+.mela-wallet-row strong { color: #203047; text-transform: capitalize; font-size: 1rem; }
+.mela-wallet-row small { color: #556475; font-size: .88rem; }
+.mela-wallet-row > span { flex-shrink: 0; font-weight: 700; color: #253954; font-variant-numeric: tabular-nums; }
+.mela-wallet-explainer { font-size: .96rem; line-height: 1.5; color: #45586d; }
+@media (max-width: 520px) {
+  .mela-wallet-actions { width: 100%; }
+  .mela-wallet-actions button { flex: 1; }
+  .mela-wallet-tab { min-width: calc(50% - .4rem); }
+  .mela-wallet-row { align-items: flex-start; flex-direction: column; gap: .35rem; }
+  .mela-wallet-row > span { align-self: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mela-wallet * { transition: none !important; animation: none !important; }
+}

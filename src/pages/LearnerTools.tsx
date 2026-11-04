@@ -6,6 +6,7 @@ import { learnerRoute } from '../lib/learner-routes'
 import { VIEW_LABELS, type StudentView } from '../hooks/useStudentNavigation'
 import { useI18n } from '../i18n'
 import { goalOptionsForStage } from '../lib/transition-goals'
+import MelaWallet from '../components/MelaWallet'
 
 type ToolView = 'mastery' | 'graph' | 'next' | 'wallet'
 
@@ -75,7 +76,7 @@ export default function LearnerTools({ view, onBack, onNavigate }: { view: ToolV
 
   if (view === 'mastery') return <Mastery data={data} onBack={onBack} onNavigate={onNavigate} />
   if (view === 'graph') return <Graph data={data} onBack={onBack} onNavigate={onNavigate} />
-  if (view === 'wallet') return <Wallet data={data} onBack={onBack} />
+  if (view === 'wallet') return <MelaWallet data={data} onBack={onBack} onRefresh={() => setRevision(value => value + 1)} />
 
   const plan = data.active_plan
   const steps = data.steps ?? []
@@ -148,10 +149,3 @@ function Graph({ data, onBack, onNavigate }: { data: any; onBack: () => void; on
  </div>
 }
 
-function Wallet({data,onBack}:{data:any;onBack:()=>void}) {
- return <div className="dash-main"><div className="section-heading"><h1>Mela Wallet</h1><button className="btn btn-secondary" onClick={onBack}>Back</button></div>
- <div className="stat-strip"><div><span className="stat-value">{data.available_balance ?? 0}</span><span className="stat-label">Available ETB</span></div><div><span className="stat-value">{data.pending_earnings ?? 0}</span><span className="stat-label">Pending</span></div><div><span className="stat-value">{data.paid_out ?? 0}</span><span className="stat-label">Paid out</span></div><div><span className="stat-value">{data.lifetime_earned ?? 0}</span><span className="stat-label">Lifetime</span></div></div>
- {data.payouts_enabled ? <div className="banner banner-info">Payouts are enabled for this account.</div> : <div className="banner banner-info">Payout initiation is currently disabled while payout readiness gates are completed.</div>}
- <div className="section-heading"><h2>Recent earnings</h2></div><div className="list-panel">{(data.recent_ledger ?? []).length ? data.recent_ledger.map((x:any)=><div className="list-row" key={x.id}><div><div className="list-row-title">{x.source_type}</div><div className="list-row-meta">{x.status} · {x.occurred_at ? new Date(x.occurred_at).toLocaleDateString() : ''}</div></div><span className="pill">{x.net_amount} {x.currency}</span></div>) : <div className="empty-panel">No earnings have been recorded yet.</div>}</div>
- </div>
-}

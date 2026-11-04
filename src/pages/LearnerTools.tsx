@@ -149,9 +149,32 @@ function Graph({ data, onBack, onNavigate }: { data: any; onBack: () => void; on
 }
 
 function Wallet({data,onBack}:{data:any;onBack:()=>void}) {
+ const [telegramLink,setTelegramLink]=useState('')
+ const [linkError,setLinkError]=useState('')
+ const [linkBusy,setLinkBusy]=useState(false)
+ async function connectTelegram() {
+   if(linkBusy)return
+   setLinkBusy(true);setLinkError('');setTelegramLink('')
+   try {
+     const {data,error}=await supabase.rpc('mela_worker_telegram_link_v1')
+     if(error)throw error
+     if(typeof data?.url!=='string'||!/^https:\/\/t\.me\/Mela_edu_bot\?start=work_[a-f0-9]{48}$/.test(data.url))
+       throw new Error('MELA could not create a secure Telegram link.')
+     setTelegramLink(data.url)
+   }catch(e){setLinkError(e instanceof Error?e.message:'Telegram linking unavailable.')}
+   finally{setLinkBusy(false)}
+ }
  return <div className="dash-main"><div className="section-heading"><h1>Mela Wallet</h1><button className="btn btn-secondary" onClick={onBack}>Back</button></div>
  <div className="stat-strip"><div><span className="stat-value">{data.available_balance ?? 0}</span><span className="stat-label">Available ETB</span></div><div><span className="stat-value">{data.pending_earnings ?? 0}</span><span className="stat-label">Pending</span></div><div><span className="stat-value">{data.paid_out ?? 0}</span><span className="stat-label">Paid out</span></div><div><span className="stat-value">{data.lifetime_earned ?? 0}</span><span className="stat-label">Lifetime</span></div></div>
  {data.payouts_enabled ? <div className="banner banner-info">Payouts are enabled for this account.</div> : <div className="banner banner-info">Payout initiation is currently disabled while payout readiness gates are completed.</div>}
+ <div className="list-panel" aria-label="Telegram worker wallet">
+   <h2>Worker wallet on Telegram</h2>
+   <p>Use @Mela_edu_bot to view your recorded earnings and payout request status. Telegram cannot approve or send money.</p>
+   <button className="btn btn-secondary" type="button" disabled={linkBusy} onClick={()=>void connectTelegram()}>{linkBusy?'Preparing private link…':'Connect Telegram securely'}</button>
+   {linkError&&<div role="alert" className="banner banner-error">{linkError}</div>}
+   {telegramLink&&<div><a href={telegramLink} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">Open private MELA Telegram link</a><p className="field-hint">Link expires after 10 minutes and works once. To disconnect later, send /unlink in Telegram.</p></div>}
+   <p className="field-hint">Check /earnings, /payouts and /withdraw in Telegram. Do not send your PIN, bank password, OTP or account number.</p>
+ </div>
  <div className="section-heading"><h2>Recent earnings</h2></div><div className="list-panel">{(data.recent_ledger ?? []).length ? data.recent_ledger.map((x:any)=><div className="list-row" key={x.id}><div><div className="list-row-title">{x.source_type}</div><div className="list-row-meta">{x.status} · {x.occurred_at ? new Date(x.occurred_at).toLocaleDateString() : ''}</div></div><span className="pill">{x.net_amount} {x.currency}</span></div>) : <div className="empty-panel">No earnings have been recorded yet.</div>}</div>
  </div>
 }

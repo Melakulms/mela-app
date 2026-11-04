@@ -2,6 +2,7 @@
  // it must never send money, approve a payout, or accept bank credentials.
 type WorkerStatus = {
  linked?: boolean;
+ unlinked?: boolean;
  currency?: string;
  available?: number;
  pending?: number;

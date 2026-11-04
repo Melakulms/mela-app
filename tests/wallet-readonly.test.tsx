@@ -4,7 +4,7 @@ import MelaWallet, { type WalletSnapshot } from '../src/components/MelaWallet'
 
 const mock = vi.hoisted(() => ({
   getUser: vi.fn(), rpc: vi.fn(), from: vi.fn(),
-  commissions: vi.fn(), profile: vi.fn(),
+  commissions: vi.fn(), profile: vi.fn(), commissionEq: vi.fn(), profileEq: vi.fn(),
 }))
 vi.mock('../src/lib/supabase', () => ({
   supabase: { auth: { getUser: mock.getUser }, rpc: mock.rpc, from: mock.from },
@@ -22,6 +22,8 @@ const snapshot: WalletSnapshot = {
 beforeEach(() => {
   vi.resetAllMocks()
   mock.getUser.mockResolvedValue({ data: { user: { id: 'owner-1' } }, error: null })
+  mock.commissionEq.mockReturnThis()
+  mock.profileEq.mockReturnThis()
   mock.commissions.mockResolvedValue({ data: [
     { id: 'c1', amount: 20, status: 'pending', currency: 'ETB', invitee_tier: 'pro', created_at: '2026-11-01' },
     { id: 'c2', amount: 40, status: 'paid', currency: 'ETB', invitee_tier: 'premium', created_at: '2026-11-02' },
@@ -29,11 +31,11 @@ beforeEach(() => {
   mock.profile.mockResolvedValue({ data: { coin_balance: 35 }, error: null })
   mock.from.mockImplementation((table: string) => {
     if (table === 'invitation_commissions') return {
-      select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(), eq: mock.commissionEq,
       order: mock.commissions,
     }
     if (table === 'profiles') return {
-      select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(), eq: mock.profileEq,
       maybeSingle: mock.profile,
     }
     throw new Error('Unexpected table: ' + table)
@@ -57,11 +59,12 @@ it('shows cash and learning coins separately, with accessible mobile wallet sect
 it('only reads the signed-in user\'s referral commissions; pending is never spendable cash', async () => {
   render(<MelaWallet data={snapshot} onBack={vi.fn()} onRefresh={vi.fn()} />)
   fireEvent.click(screen.getByRole('button', { name: 'Referrals' }))
-  expect(await screen.findByText('20.00 ETB')).toBeTruthy()
-  expect(screen.getByText('40.00 ETB')).toBeTruthy()
+  expect((await screen.findAllByText('20.00 ETB')).length).toBeGreaterThan(0)
+  expect(screen.getAllByText('40.00 ETB').length).toBeGreaterThan(0)
   expect(screen.getByText('Pending review · not withdrawable')).toBeTruthy()
   expect(screen.getByText('Recorded paid commissions')).toBeTruthy()
   expect(mock.from).toHaveBeenCalledWith('invitation_commissions')
+  expect(mock.commissionEq).toHaveBeenCalledWith('inviter_user_id', 'owner-1')
   expect(mock.commissions).toHaveBeenCalledWith('created_at', { ascending: false })
   expect(mock.rpc).not.toHaveBeenCalled()
 })

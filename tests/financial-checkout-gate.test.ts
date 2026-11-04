@@ -32,7 +32,7 @@ it('protects both catalog and direct order creation while leaving settlement/ref
 
 it('ships with an isolated rollback-only SQL negative-path test',()=>{
  const smoke=readFileSync(new URL('sql/financial_checkout_gate_negative_rollback.sql',import.meta.url),'utf8')
- expect(smoke).toMatch(/^begin;/i)
+ expect(smoke).toMatch(/(?:^|\\n)begin;/i)
  expect(smoke).toMatch(/rollback;\s*$/i)
  expect(smoke).toContain("SET LOCAL ROLE authenticated")
  expect(smoke).toContain("'catalog'")

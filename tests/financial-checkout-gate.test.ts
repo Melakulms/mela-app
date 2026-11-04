@@ -34,7 +34,7 @@ it('ships with an isolated rollback-only SQL negative-path test',()=>{
  const smoke=readFileSync(new URL('sql/financial_checkout_gate_negative_rollback.sql',import.meta.url),'utf8')
  expect(smoke).toContain('begin;')
  expect(smoke).toMatch(/rollback;\s*$/i)
- expect(smoke).toContain("SET LOCAL ROLE authenticated")
+ expect(smoke.toLowerCase()).toContain("set local role authenticated")
  expect(smoke).toContain("'catalog'")
  expect(smoke).toContain("'create_order'")
  expect(smoke).toContain("r.requirement_key in ('payments_provider', 'wallet_business_legal')")

@@ -84,6 +84,7 @@ it('correctly converts minor units, masks payout destination, and does not offer
   fireEvent.click(screen.getByRole('button', { name: 'Payouts' }))
   expect(screen.getAllByText('12.50 ETB').length).toBeGreaterThan(0)
   expect(screen.getByText('Test Bank · ••••1234')).toBeTruthy()
+  expect(screen.getByText('Saved active payout destination (not independently verified):')).toBeTruthy()
   expect(screen.getByText(/Withdrawals are unavailable/)).toBeTruthy()
   expect(screen.queryByRole('button', { name: /withdraw|transfer|cash out|request payout/i })).toBeNull()
 })

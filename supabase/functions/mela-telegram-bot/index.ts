@@ -1,4 +1,5 @@
 import { parseRegistration } from './registration.ts';
+import { workerReply } from './worker.ts';
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 // MELA production Telegram supports registration and (only when explicitly enabled)
@@ -59,6 +60,21 @@ async function paymentRpc(action:string,data:Record<string,unknown>={}){
    throw new Error('Payment service unavailable. No approval was made. Please try again later.');
  }
  return result;
+}
+
+async function workerRpc(action:string,data:Record<string,unknown>={}) {
+ const key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')||'';
+ if(!key) throw new Error('Worker wallet status is unavailable.');
+ const response=await fetch(PROJECT_URL+'/rest/v1/rpc/mela_worker_telegram_bot_v1',{
+   method:'POST',headers:{apikey:key,authorization:'Bearer '+key,'content-type':'application/json'},
+   body:JSON.stringify({p_action:action,p_data:data}),signal:AbortSignal.timeout(10000)
+ });
+ const body=await response.json();
+ if(!response.ok) {
+   if(body.code==='P0001'||body.code==='22023') throw new Error(String(body.message).slice(0,180));
+   throw new Error('Worker wallet service unavailable. No payout was made.');
+ }
+ return body;
 }
 
 async function orderRpc(action:string,data:Record<string,unknown>={}) {
@@ -159,9 +175,10 @@ function reply(input:string):string {
  const cmd=input.trim().split(/\s+/)[0].toLowerCase().split("@")[0];
  if(cmd==="/plans") return "MELA upcoming subscriptions (not yet available for purchase)\n\nFree Core: free\nPro: 50 ETB / 30 days\nPremium: 100 ETB / 30 days\n\nPlanned referral reward after a new member's FIRST independently verified paid subscription: Pro 20 ETB; Premium 40 ETB. No reward for sign-up alone.\n\nThese plans are not active in production checkout yet. Do NOT transfer money based on this message. Only follow a verified in-app payment order once MELA enables the new checkout.";
  if(cmd==="/start") return "Welcome to MELA Education! 🇪🇹\n\nFor email-free registration, open https://melakulms.github.io/mela-app/ and choose Get Telegram verification code, or send /register USERNAME ROLE in this chat (ROLE: student, parent, teacher, company). Use /plans for upcoming subscriptions. For payment, create a verified order in MELA and use its Telegram link when checkout is enabled. /status still checks existing payment cases. Free Core remains free.";
- if(cmd==="/privacy") return "For registration MELA stores a hash of your Telegram account ID, chosen username, verification time and code hash to prevent duplicate registration. For payments MELA stores your Telegram chat ID, claimed name, payment references, amount, service description and review result to verify payments and resolve disputes. Only your chat can request its status; the authorized reviewer uses MFA. Never send PINs, passwords, OTPs, identity documents or screenshots.";
+ if(cmd==="/work") return "MELA worker wallet: sign in to MELA Wallet, choose Connect Telegram, then use /earnings or /payouts. This bot never sends money.";
+ if(cmd==="/privacy") return "For registration MELA stores a hash of your Telegram account ID, chosen username, verification time and code hash to prevent duplicate registration. For payments MELA stores your Telegram chat ID, claimed name, payment references, amount, service description and review result to verify payments and resolve disputes. Only your chat can request its status; the authorized reviewer uses MFA. Worker-wallet linking stores a one-time hash and the linked Telegram chat ID; /unlink disconnects the link without changing financial records. Never send PINs, passwords, OTPs, identity documents or screenshots.";
  if(cmd==="/review") return "Authorized finance reviewers: open the official MELA Central Admin Payments screen, sign in and complete MFA. Never follow third-party payment-review links from Telegram.";
- return "MELA Education Bot\n/start — Welcome\n/register USERNAME ROLE — Private one-time registration code\n/plans — Upcoming Pro and Premium prices (not yet purchasable)\n/pay — Linked-order payment instructions\n/verify REFERENCE — Claim a transfer for your linked order (when enabled)\n/status — Your payment review status\n/privacy — Data notice\n/review — Administrator review screen\n\nApproval follows manual confirmation in the receiving account. References alone do not approve payments.";
+ return "MELA Education Bot\n/start — Welcome\n/register USERNAME ROLE — Private one-time registration code\n/plans — Upcoming Pro and Premium prices (not yet purchasable)\n/pay — Linked-order payment instructions\n/verify REFERENCE — Claim a transfer for your linked order (when enabled)\n/status — Your payment review status\n/work or /earnings — Recorded worker earnings\n/payouts — Worker payout request status\n/withdraw — Payout availability (no transfers)\n/unlink — Disconnect worker wallet\n/privacy — Data notice\n/review — Administrator review screen\n\nApproval follows manual confirmation in the receiving account. References alone do not approve payments.";
 }
 
 Deno.serve(async (req:Request):Promise<Response>=>{
@@ -192,7 +209,7 @@ Deno.serve(async (req:Request):Promise<Response>=>{
       configured:cfg.ready, bot:"@"+BOT_USERNAME,
       payments_enabled:paymentState,payment_mode:"manual_receipt_verification",account_linking_enabled:paymentState,registration_verification:"telegram_one_time_code",
       webhook_status:webhookStatus,pending_updates:pendingUpdates,
-      supported_commands:["/start","/help","/plans","/pay","/verify","/status","/privacy"],
+      supported_commands:["/start","/help","/plans","/pay","/verify","/status","/work","/earnings","/payouts","/withdraw","/unlink","/privacy"],
     });
   }
   // Deployment is complete. Setup never reclaims or moves the webhook.
@@ -222,7 +239,7 @@ Deno.serve(async (req:Request):Promise<Response>=>{
     let answer:string;
     try {
       answer=typeof message.text==="string" && message.text.length<=4096
-        ? (await livePaymentReply(message.text,message,update.update_id)) ?? (await registrationReply(message.text,chat.id)) ?? reply(message.text)
+        ? (await livePaymentReply(message.text,message,update.update_id)) ?? (await workerReply(message.text,String(chat.id),update.update_id,workerRpc)) ?? (await registrationReply(message.text,chat.id)) ?? reply(message.text)
         : "Attachments are not accepted. Send /verify to submit a transaction reference. Never send credentials or identity documents.";
     } catch(e) {
       answer=e instanceof Error ? e.message : "Payment service unavailable. Please try again later.";

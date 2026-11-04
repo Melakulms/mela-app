@@ -60,7 +60,7 @@ describe('Telegram worker-wallet commands',()=>{
    expect(sql).toContain("grant execute on function public.mela_worker_telegram_link_v1() to authenticated")
    expect(sql).toContain("grant execute on function public.mela_worker_telegram_bot_v1(text,jsonb) to service_role")
    expect(sql).toContain("revoke all on function public.mela_worker_telegram_bot_v1(text,jsonb) from public,anon,authenticated")
-   expect(sql).toContain('p_action=\'status\'')
+   expect(sql).toContain("p_action<>'status'")
    expect(sql).toContain('l.user_id=v_uid')
    expect(sql).toContain('freelancer_id=v_uid')
    expect(sql).not.toMatch(/update\s+public\.payout_requests|insert\s+into\s+public\.payout_requests|update\s+public\.platform_feature_flags/i)

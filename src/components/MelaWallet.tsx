@@ -52,6 +52,11 @@ function numeric(value: unknown): number {
 function etb(value: unknown) {
   return new Intl.NumberFormat('en-ET', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(numeric(value)) + ' ETB'
 }
+function amountWithCurrency(value: unknown, currency: unknown) {
+  const amount = new Intl.NumberFormat('en-ET', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(numeric(value))
+  const code = typeof currency === 'string' && /^[A-Z]{3}$/.test(currency.toUpperCase()) ? currency.toUpperCase() : 'currency unrecorded'
+  return amount + ' ' + code
+}
 function day(value: string | null | undefined) {
   if (!value) return 'Date unavailable'
   const timestamp = new Date(value)
@@ -61,7 +66,7 @@ function readable(value: string | null | undefined) {
   return value ? value.replaceAll('_', ' ') : 'Unknown'
 }
 function positiveCommissionTotal(rows: Commission[], status: string) {
-  return rows.filter(row => row.status === status && (row.currency ?? 'ETB') === 'ETB')
+  return rows.filter(row => row.status === status && row.currency?.toUpperCase() === 'ETB')
     .reduce((sum, row) => sum + numeric(row.amount), 0)
 }
 
@@ -154,8 +159,8 @@ export default function MelaWallet({ data, onBack, onRefresh }: {
         <h2>Earnings by source</h2>
         {sources.length ? <div className="mela-wallet-rows">{sources.map(source =>
           <div className="mela-wallet-row" key={source.source_type}>
-            <div><strong>{readable(source.source_type)}</strong><small>Available {etb(source.available)} · Pending {etb(source.pending)}</small></div>
-            <span>{etb(source.paid)} paid</span>
+            <div><strong>{readable(source.source_type)}</strong><small>Source categories only; aggregated amounts may mix currencies.</small></div>
+            <span>See transaction history</span>
           </div>)}</div> : <p>No work earnings have been recorded yet.</p>}
       </div>
       <p className="mela-wallet-explainer">Referral earnings are shown under Referrals, not added to the work-earnings balance. A pending referral commission is not payable until independently verified and approved.</p>
@@ -167,7 +172,7 @@ export default function MelaWallet({ data, onBack, onRefresh }: {
       {ledger.length ? <div className="mela-wallet-rows">{ledger.map(item =>
         <div className="mela-wallet-row" key={item.id}>
           <div><strong>{readable(item.source_type)}</strong><small>{readable(item.status)} · {day(item.occurred_at)}</small></div>
-          <span>{etb(item.net_amount)}</span>
+          <span>{amountWithCurrency(item.net_amount, item.currency)}</span>
         </div>)}</div> : <p>No earnings transactions have been recorded yet.</p>}
     </section>}
 
@@ -184,7 +189,7 @@ export default function MelaWallet({ data, onBack, onRefresh }: {
         {commissions.length ? <div className="mela-wallet-rows">{commissions.map(item =>
           <div className="mela-wallet-row" key={item.id}>
             <div><strong>{readable(item.invitee_tier) || 'Referral'}</strong><small>{readable(item.status)} · {day(item.created_at)}</small></div>
-            <span>{etb(item.amount)}</span>
+            <span>{amountWithCurrency(item.amount, item.currency)}</span>
           </div>)}</div> : <p>No referral commissions have been recorded yet.</p>}
       </>}
       <p className="field-hint">Commissions appear only when the server records an eligible verified first payment. They cannot be converted into learning coins or spent inside MELA.</p>
@@ -206,7 +211,7 @@ export default function MelaWallet({ data, onBack, onRefresh }: {
         <div className="mela-wallet-row" key={item.id}>
           <div><strong>{readable(item.status)}</strong><small>{day(item.created_at)} · {readable(item.provider)}</small>
             {item.status === 'failed' && <small>Contact MELA support to review a failed payout.</small>}</div>
-          <span>{etb(numeric(item.amount_minor) / 100)}</span>
+          <span>{amountWithCurrency(numeric(item.amount_minor) / 100, item.currency)}</span>
         </div>)}</div> : <p>No payout requests have been recorded for this account.</p>}
       <p className="field-hint">A paid status must correspond to independently confirmed outgoing transfer evidence. MELA does not offer a cash-out button until that workflow has passed review.</p>
     </section>}

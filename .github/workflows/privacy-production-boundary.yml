@@ -1,0 +1,40 @@
+name: MELA privacy production boundary smoke
+
+# Run only after the Pages release has completed, or as a nightly read-only
+# monitor; never attempt writes or real account actions in a production smoke.
+on:
+  workflow_run:
+    workflows: ["Deploy to GitHub Pages"]
+    types: [completed]
+  schedule:
+    - cron: '19 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mela-privacy-production-boundary
+  cancel-in-progress: false
+
+jobs:
+  privacy-boundary:
+    if: >-
+      ${{ github.event_name != 'workflow_run' ||
+          (github.event.workflow_run.conclusion == 'success' &&
+           github.event.workflow_run.head_branch == 'main' &&
+           github.event.workflow_run.head_repository.full_name == github.repository) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      SUPABASE_URL: https://duizgtmbptmlbyipreqg.supabase.co
+      # This is a publishable browser key, never a service_role key.
+      SUPABASE_PUBLISHABLE_KEY: sb_publishable_flQNx6AE3_dbPDHfYGNwWQ_7cMSsAng
+      EXPECTED_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Verify production privacy boundaries without credentials or data mutation
+        shell: bash
+        run: bash scripts/privacy-production-boundary-smoke.sh

@@ -22,6 +22,15 @@ values (
 )
 on conflict (requirement_key) do nothing;
 
+-- Production already has these launch requirements. Seed missing staging entries
+-- only; NEVER overwrite existing statuses or reviewer evidence.
+insert into public.platform_launch_requirements
+  (requirement_key, category, title, requirement_type, required, manual_status)
+values
+  ('payments_provider','Payments','Provider agreement and verified settlement process','conditional',true,'pending'),
+  ('legal_review','Legal','Qualified Ethiopian financial and business legal review','manual',true,'pending')
+on conflict (requirement_key) do nothing;
+
 -- Shared payment-provider and legal approval gate for web and Telegram.
 -- A verified receiving account is NOT provider authorization.
 create or replace function private.mela_financial_launch_approved()

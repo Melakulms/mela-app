@@ -24,7 +24,7 @@ Verified in staging on 2026-11-05:
 - Authenticated \`SELECT COUNT(*)\` over opportunities: succeeds.
 - No rows outside public opportunity criteria visible to anon in current dataset.
 - Unknown all-zero employer UUID returns false when queried by privileged QA.
-- 0 eligible public opportunities at time of test. **This does not certify real populated listings or signed-in employer end-to-end behavior.**
+- 0 eligible public opportunities in the existing staging dataset. Subsequently **a rollback-only synthetic test passed** (three inserted listings: verified/open/approved, unverified/open/approved, verified/closed; an anonymous query saw exactly one). All synthetic rows were confirmed absent afterward. This does not certify actual Android browsing or end-to-end signed-in employer/team workflows.
 
 ## Security baseline, staging
 Latest security advisor categories: 62 RLS-enabled tables with no policies (many may be intentionally private); 63 authenticated-callable SECURITY DEFINER functions requiring individual review; leaked-password protection warning still active. The previously reported anonymous SECURITY DEFINER finding is absent. This is not a security certification.

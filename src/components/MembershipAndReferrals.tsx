@@ -40,6 +40,7 @@ export default function MembershipAndReferrals({ userId }:{userId:string}) {
   const [telegramOrderUrl,setTelegramOrderUrl]=useState('')
   const [telegramOrderId,setTelegramOrderId]=useState('')
   const [error,setError]=useState('')
+  const [loadIssue,setLoadIssue]=useState('')
   const [notice,setNotice]=useState('')
   const [busy,setBusy]=useState(false)
   const [revision,setRevision]=useState(0)
@@ -49,7 +50,7 @@ export default function MembershipAndReferrals({ userId }:{userId:string}) {
   useEffect(()=>{
     let active=true
     async function load(){
-      setError('');setLoaded(false)
+      setError('');setLoadIssue('');setLoaded(false)
       try{
         const [p,s,paid,c,r,com,cat,ord]=await Promise.all([
           supabase.from('subscription_plans').select('id,plan_key,name,tier,price_minor,currency,billing_period_days').eq('active',true),
@@ -62,19 +63,27 @@ export default function MembershipAndReferrals({ userId }:{userId:string}) {
           supabase.rpc('payment_command_v1',{p_action:'my_orders',p_data:{}}),
         ])
         if(!active)return
-        for(const result of [p,s,paid,c,r,com])if(result.error)throw result.error
+        // A referral-summary permission or connectivity error must not hide the
+        // independently checked subscription catalog. Membership reads remain required.
+        for(const result of [p,s,paid])if(result.error)throw result.error
         setPlans(((p.data??[]) as Plan[]).filter(validPlan).sort((a,b)=>a.price_minor-b.price_minor))
         setSubscriptions((s.data??[]) as Subscription[])
         setPaidMemberships((paid.data??[]) as PaidMembership[])
-        setReferralCode(c.data?.code??'')
-        setReferralCount(((r.data??[]) as Referral[]).length)
-        setCommissions((com.data??[]) as Commission[])
+        setReferralCode(!c.error ? c.data?.code??'' : '')
+        setReferralCount(!r.error ? ((r.data??[]) as Referral[]).length : 0)
+        setCommissions(!com.error ? ((com.data??[]) as Commission[]) : [])
         // Fail closed on a catalog error or malformed financial response.
         const raw=(!cat.error && cat.data && typeof cat.data==='object')?cat.data as Partial<Catalog>:null
-        setCatalog(raw && raw.enabled===true && Array.isArray(raw.products) && Array.isArray(raw.accounts)
+        const ordersValid=!ord.error && Array.isArray(ord.data)
+        setCatalog(ordersValid && raw && raw.enabled===true && Array.isArray(raw.products) && Array.isArray(raw.accounts)
           ? {enabled:true,products:raw.products,accounts:raw.accounts}:emptyCatalog)
-        setOrders(!ord.error && Array.isArray(ord.data)?ord.data as Order[]:[])
-      }catch(e){if(active){setError(messageOf(e));setCatalog(emptyCatalog)}}
+        setOrders(ordersValid ? ord.data as Order[]:[])
+        if(cat.error || !ordersValid || !raw) {
+          setLoadIssue('Payment status cannot be checked right now. Checkout is unavailable. Do not transfer money; refresh or contact MELA support.')
+        }else if(c.error || r.error || com.error) {
+          setLoadIssue('Referral details are temporarily unavailable. This does not change your payment or membership status.')
+        }
+      }catch(e){if(active){setError(messageOf(e));setCatalog(emptyCatalog);setOrders([])}}
       finally{if(active)setLoaded(true)}
     }
     void load()
@@ -149,6 +158,7 @@ export default function MembershipAndReferrals({ userId }:{userId:string}) {
     <h2>My subscription and invitations</h2>
     {!loaded&&<p role="status">Checking your private MELA membership…</p>}
     {error&&<div className="banner banner-error" role="alert">{error}</div>}
+    {loadIssue&&<div className="banner banner-info" role="status">{loadIssue}</div>}
     {notice&&<div className="banner banner-info" role="status">{notice}</div>}
     <p><strong>Current membership:</strong> {activePlan?.name??'Free Core'} {activeSub?.expires_at?`(until ${new Date(activeSub.expires_at).toLocaleDateString()})`:''}</p>
     <p>Core learning stays free. Paid subscriptions are never activated just because a reference was submitted.</p>
@@ -170,7 +180,7 @@ export default function MembershipAndReferrals({ userId }:{userId:string}) {
             <option value="">Choose a payment method</option>
             {catalog.accounts.map(a=><option key={a.id} value={a.id}>{a.label}</option>)}
           </select>
-          <button className="btn btn-primary" type="button" disabled={busy||!account||!!openOrder} onClick={()=>void createOrder()}>Create verified {selected.name} order</button>
+          <button className="btn btn-primary" type="button" disabled={busy||!account||!!openOrder} onClick={()=>void createOrder()}>Create {selected.name} payment order</button>
         </>
       }
     </div>}

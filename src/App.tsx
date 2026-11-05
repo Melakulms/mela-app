@@ -375,7 +375,7 @@ export default function App() {
           </select>
           <span className="pill-stat coins">🪙 {profile.coin_balance}</span>
           <span className={`pill-stat ${online ? 'online' : 'offline'}`} role="status">{online ? <Wifi size={13} /> : <WifiOff size={13} />}{online ? t('connected') : t('offline')}</span>
-          <button type="button" className="btn btn-secondary" onClick={() => { if (isStudent) setStudentView('profile'); else setShowAccount(true) }} aria-label="Open my MELA account"><UserRound size={16} aria-hidden="true" /><span className="mela-topbar-label">My account</span></button>
+          <button type="button" className="btn btn-secondary" onClick={() => setShowAccount(true)} aria-label="Open my MELA account"><UserRound size={16} aria-hidden="true" /><span className="mela-topbar-label">My account</span></button>
           <button type="button" className="btn btn-secondary app-settings-button" onClick={() => window.dispatchEvent(new Event('mela:open-settings'))} aria-label="Open MELA settings"><SettingsIcon size={16} aria-hidden="true" /><span className="mela-topbar-label">Settings</span></button>
           <button className="icon-btn" onClick={signOut} disabled={signingOut} aria-label={t('logout')}><LogOut size={18} /></button>
         </div>

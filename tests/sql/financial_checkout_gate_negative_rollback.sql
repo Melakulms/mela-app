@@ -1,41 +1,46 @@
--- Issue #168, STAGING ONLY. Rollback-only negative-path test.
--- Requires migration 20261104193000_financial_launch_checkout_gate.sql first.
--- Do not run against production. No transfers, approvals or payouts occur.
+-- Staging only: rollback the negative-path customer and Telegram tests.
+-- No receipts, refunds, subscriptions, provider approvals or payouts are written.
 begin;
 
--- Explicitly force the launch gates closed inside a rollback transaction.
 update public.platform_launch_requirements r
 set manual_status='pending', completed_at=null, completed_by=null
-where r.requirement_key in ('payments_provider', 'wallet_business_legal');
+where r.requirement_key in ('payments_provider', 'wallet_business_legal', 'legal_review');
 
-set local role authenticated;
-select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
-select set_config('request.jwt.claims',
- '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","is_anonymous":false,"aal":"aal1"}', true);
-
+-- Telegram is service-only. The health check must refuse new payment cases,
+-- while historical order status can still be queried.
 do $tests$
-declare
- v_catalog jsonb;
- v_error text;
+declare v_health jsonb; v_old jsonb;
 begin
- v_catalog:=public.payment_command_v1('catalog', '{}'::jsonb);
- if coalesce((v_catalog->>'enabled')::boolean, true) is distinct from false
-    or jsonb_array_length(v_catalog->'products') <> 0
-    or jsonb_array_length(v_catalog->'accounts') <> 0
- then
-   raise exception 'Financial checkout catalogue was exposed while gates were pending';
- end if;
-
- begin
-   perform public.payment_command_v1('create_order', '{}'::jsonb);
-   raise exception 'Financial checkout created or accepted an order despite closed gates';
- exception when insufficient_privilege then
-   get stacked diagnostics v_error=message_text;
-   if position('financial-launch approval' in v_error)=0 then
-     raise exception 'Unexpected order denial: %',v_error;
-   end if;
- end;
+ v_health:=public.mela_telegram_order_bot_v1('health', '{}'::jsonb);
+ if coalesce((v_health->>'enabled')::boolean,true) is distinct from false
+ then raise exception 'Telegram is exposed with legal/provider approvals pending'; end if;
+ v_old:=public.mela_telegram_order_bot_v1('status','{"chat_id":"9999999999"}'::jsonb);
+ if jsonb_typeof(v_old)<>'array'
+ then raise exception 'Historical Telegram order status must remain accessible'; end if;
 end;
 $tests$;
 
+set local role authenticated;
+select set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',true);
+select set_config('request.jwt.claims',
+ '{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated","is_anonymous":false,"aal":"aal1"}',true);
+
+do $tests$
+declare v_catalog jsonb; v_error text;
+begin
+ v_catalog:=public.payment_command_v1('catalog', '{}'::jsonb);
+ if coalesce((v_catalog->>'enabled')::boolean, true) is distinct from false
+    or jsonb_array_length(v_catalog->'products')<>0
+    or jsonb_array_length(v_catalog->'accounts')<>0
+ then raise exception 'Payment catalog leaked while provider/legal approvals are pending'; end if;
+ begin
+   perform public.payment_command_v1('create_order', '{}'::jsonb);
+   raise exception 'New payment order bypassed legal/provider launch gates';
+ exception when insufficient_privilege then
+   get stacked diagnostics v_error=message_text;
+   if position('financial-launch approval' in v_error)=0
+     then raise exception 'Unexpected create-order denial: %',v_error; end if;
+ end;
+end;
+$tests$;
 rollback;

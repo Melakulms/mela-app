@@ -1,9 +1,9 @@
 import {readFileSync} from 'node:fs'
 import {describe,expect,it} from 'vitest'
 
-const migration=readFileSync(new URL('../supabase/staging-only/20261105_mela_opportunities_anon_public_read.sql',import.meta.url),'utf8')
-const rollback=readFileSync(new URL('../supabase/staging-only/20261105_mela_opportunities_anon_public_read_rollback.sql',import.meta.url),'utf8')
-const regression=readFileSync(new URL('./sql/20261105_opportunities_anon_read_regression.sql',import.meta.url),'utf8')
+const migration=readFileSync('supabase/staging-only/20261105_mela_opportunities_anon_public_read.sql','utf8')
+const rollback=readFileSync('supabase/staging-only/20261105_mela_opportunities_anon_public_read_rollback.sql','utf8')
+const regression=readFileSync('tests/sql/20261105_opportunities_anon_read_regression.sql','utf8')
 
 describe('staging-only public opportunity access repair',()=>{
   it('preserves anon/public boundaries without granting employer-table access',()=>{
